@@ -110,17 +110,25 @@ ns.RegisterModule("panels", { apply = Apply, restore = Restore })
 
 -- A window with its own row (the entry's toggle): dressed by the panels pass while on; off, the strip goes and the
 -- rest waits for the reload, as Window frames off does. Frame() is the dressed frame, once it exists.
+local stripOff = setmetatable({}, { __mode = "k" })   -- frame -> its row hid the strip (the loot skin hides its own)
 local function WindowRow(key, Frame)
     local function Apply()
         if not P.active then return end
         local frame = Frame()
-        if frame and frame.fcui and frame.fcui.titleStrip then frame.fcui.titleStrip:Show() end
+        if frame and stripOff[frame] then
+            stripOff[frame] = nil
+            if frame.fcui and frame.fcui.titleStrip then frame.fcui.titleStrip:Show() end
+        end
         SkinKnown()
     end
     local function Restore()
         local frame = Frame()
         if not frame or not P.skinned[frame] then return end
-        if frame.fcui and frame.fcui.titleStrip then frame.fcui.titleStrip:Hide() end
+        local strip = frame.fcui and frame.fcui.titleStrip
+        if strip and strip:IsShown() then
+            strip:Hide()
+            stripOff[frame] = true
+        end
         ns.needsReload = true
     end
     ns.RegisterModule(key, { apply = Apply, restore = Restore })
