@@ -115,6 +115,8 @@ local function OnItemRef(link)
         if ns.ShowStatus then ns.ShowStatus() end
     elseif target == "news" then
         ns.ShowWhatsNew()
+    elseif target == "bars" then
+        ns.ShowBarsNote()
     end
 end
 
@@ -214,6 +216,42 @@ function ns.ShowWhatsNew()
     newsWindow:Show()
 end
 
+-- For players coming from 0.11.0 (list 2), whose bar pieces flipped back with 0.11.1.
+local BARS_NOTE = "0.11.0 put a professions button and a full-size reagent bag on the classic bar, which made it too wide for bars 2 and 3. 0.11.1 goes back to the classic pieces: no professions button (professions open from the spellbook) and a round reagent bag on hover."
+    .. "\n\nIf you moved bars 2 and 3 to work around it, they now sit centred between the gryphons on their own: select one in edit mode and press Reset To Default Position, or drag it back. Every piece can be switched either way under Classic bar in the addon settings."
+
+local barsWindow
+function ns.ShowBarsNote()
+    if not barsWindow then
+        local frame = O.DialogWindow("ForeverClassicUIBarsNote", 120)
+        ns.DialogHeader(frame, "Your bars")
+        local body = BodyText(frame, BARS_NOTE)
+        local check = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+        check:SetSize(26, 26)
+        check:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 18, 18)
+        ns.SkinCheckbox(check)
+        local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        label:SetPoint("LEFT", check, "RIGHT", 2, 0)
+        label:SetText("Don't show this again")
+        check:SetScript("OnClick", function(self) ns.db.barsNoteOff = self:GetChecked() and true or false end)
+        frame.check = check
+        local okay = ns.PanelButton(frame, "Okay", 90)
+        okay:SetScript("OnClick", function() frame:Hide() end)
+        okay:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -22, 20)
+        frame:SetSize(WIDTH, 50 + body:GetStringHeight() + 70)
+        barsWindow = frame
+    end
+    barsWindow.check:SetChecked(ns.db.barsNoteOff == true)
+    barsWindow:Show()
+end
+
+-- Every login for a player who came from 0.11.0, until the note's box is ticked; the Addon messages row hushes it.
+function ns.AnnounceBarsNote()
+    if not ns.db or not ns.db.barsNote or ns.db.barsNoteOff or ns.db.addonMessages == false then return end
+    HookLinks()
+    ns.Print("Bars not where you expect? See " .. Link("bars", "here") .. ".")
+end
+
 -- Once per new version, as a chat line with a link; the dev addon clears the mark to see it again.
 function ns.AnnounceWhatsNew()
     if not ns.db then return end
@@ -221,6 +259,8 @@ function ns.AnnounceWhatsNew()
     if seen >= LATEST then return end
     ns.db.whatsNewFrom = seen
     ns.db.whatsNewSeen = LATEST
+    if seen == 2 then ns.db.barsNote = true end
+    if ns.db.addonMessages == false then return end
     HookLinks()
     local version = ns.AddonVersion and ns.AddonVersion() or ""
     ns.Print("updated to " .. version .. ". See what's new " .. Link("news", "here") .. ".")
@@ -243,6 +283,7 @@ function ns.FirstRun()
     if not ns.db.welcomed and Returning() then ns.db.welcomed = true end
     if ns.db.welcomed then
         ns.SafeCall(ns.AnnounceWhatsNew)
+        ns.SafeCall(ns.AnnounceBarsNote)
         ns.CheckLayoutPosition()
         return
     end

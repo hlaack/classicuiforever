@@ -98,6 +98,7 @@ ns.TOGGLES = {
 
     { "gameDamageNumbers", "Damage numbers", "The game's floating damage over your targets. This is the game's own setting.", group = "Other" },
     { "welcomeNote", "Welcome note", "The welcome note on a character's first login with the addon." },
+    { "addonMessages", "Addon messages", "The addon's lines in chat at login: what's new after an update and notes such as the one about the bars. Off keeps chat quiet.", search = "chat login lines quiet" },
 }
 
 -- Radio rows: key -> its group's keys (Core ToggleChanged keeps exactly one on).
