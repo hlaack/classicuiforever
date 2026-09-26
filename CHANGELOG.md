@@ -2,6 +2,12 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.11.1] - 2026-09-26
+
+### Changed
+- Classic bar pieces default to the 1.x look: the professions button is off the micro menu (professions open from the spellbook, as in 1.x) and the reagent bag is the round button that shows on hover, so bars 2 and 3 fit between the gryphons at every size. Anyone who picked either row keeps their pick; both rows stay under Classic bar in the options, and Reset classic layout puts them to these defaults.
+- The welcome note tells new players about those two pieces and where to change them.
+
 ## [0.11.0] - 2026-09-26
 
 ### Added
