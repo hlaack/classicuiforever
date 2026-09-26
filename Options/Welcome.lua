@@ -128,6 +128,9 @@ end
 -- What's New: new features only (fixes are the changelog's, one button away), by version, newest first. A player gets
 -- the chat line once per new version, and the box shows only the versions since the one they saw last.
 local WHATSNEW = {
+    { id = 4, version = "0.11.2",
+        { "Fixes", "Tabs take the mouse on the tab itself, a profession cast from the spellbook closes the book in a fight, and the loot window's header is clean. Details in the full changelog." },
+    },
     { id = 3, version = "0.11.1",
         { "Classic bar pieces", "As in classic, the professions button is off the micro menu (professions open from the spellbook) and the reagent bag is a round button on hover, so bars 2 and 3 fit between the gryphons. Both are rows under Classic bar in the options." },
     },
@@ -208,11 +211,12 @@ local function BuildNews()
     return frame
 end
 
--- The versions the chat line offered (whatsNewFrom), or the newest one alone.
+-- The versions the chat line offered (whatsNewFrom), else the newest one alone (a fresh install was offered none).
 function ns.ShowWhatsNew()
     if not newsWindow then newsWindow = BuildNews() end
-    local from = tonumber(ns.db and ns.db.whatsNewFrom)
-    newsWindow:Fill(from or LATEST - 1)
+    local from = tonumber(ns.db and ns.db.whatsNewFrom) or 0
+    if from <= 0 or from >= LATEST then from = LATEST - 1 end
+    newsWindow:Fill(from)
     newsWindow:Show()
 end
 

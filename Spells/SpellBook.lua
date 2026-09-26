@@ -302,6 +302,9 @@ local function ArmSpell(btn, slot, bank)
         btn:SetAttribute("type1", nil)
         btn:SetAttribute("spell", nil)
     end
+    -- A profession's spell opens its window: the book goes down with the cast, in a fight too (the click wrap).
+    local trade = id ~= nil and ns.prof and ns.prof.OpensTrade and ns.prof.OpensTrade(info) or nil
+    btn:SetAttribute("trade", trade and true or nil)
 end
 
 local function UpdateCooldown(btn)
@@ -433,6 +436,8 @@ end
 -- Fires on press and release; links on release.
 local function Button_PostClick(self, _, down)
     if down or not self.slot then return end
+    -- The wrap hid the layer for a profession cast; the book follows.
+    if self:GetAttribute("trade") and ns.HideSpellBook then ns.HideSpellBook() end
     if IsModifiedClick("CHATLINK") then
         -- Trade link first, as the client does: a profession links its recipe list.
         local bank = self.bank or state.bank
@@ -593,9 +598,14 @@ local function BookTab_OnClick(self)
     book:Refresh()
 end
 
+-- The drawn tab inside the 128 x 64 sheet: 100 x 30, 3 px above the middle. Mouse and pads take only that.
+local BOOK_TAB_HIT = { left = 14, right = 14, top = 14, bottom = 20 }
+ns.BOOK_TAB_HIT = BOOK_TAB_HIT
+
 local function CreateBookTab(parent, i, prev)
     local tab = CreateFrame("Button", nil, parent)
     tab:SetSize(128, 64)
+    tab:SetHitRectInsets(BOOK_TAB_HIT.left, BOOK_TAB_HIT.right, BOOK_TAB_HIT.top, BOOK_TAB_HIT.bottom)
     if prev then
         tab:SetPoint("LEFT", prev, "RIGHT", -20, 0)
     else
@@ -815,6 +825,15 @@ local function CreateBook()
         layer:ClearBindings()
     ]]
     SecureHandlerWrapScript(layerOff, "OnClick", layerWrap, LAYER_OFF)
+    -- A profession's spell button: after its cast, the layer goes as the "none" writers take it.
+    local TRADE_PRE = [[ if not down and self:GetAttribute("trade") then return nil, "trade" end ]]
+    local TRADE_POST = [[
+        local layer = control:GetFrameRef("clicks")
+        layer:SetAttribute("unit", "none")
+        layer:Hide()
+        layer:ClearBindings()
+    ]]
+    f.WrapTradeCast = function(btn) SecureHandlerWrapScript(btn, "OnClick", layerWrap, TRADE_PRE, TRADE_POST) end
     -- The book follows its layer down (Escape's key press in a fight, the quest log's openers).
     layerOff:SetScript("PostClick", function(_, _, down)
         if not down and ns.HideSpellBook then ns.HideSpellBook() end
@@ -1054,7 +1073,10 @@ local function CreateBook()
         layer:SetAllPoints(clicks)
         layer:SetFrameLevel(clicks:GetFrameLevel() + 10 + page * 12)
         layer.buttons = {}
-        for id = 1, SPELLS_PER_PAGE do layer.buttons[id] = CreatePageButton12(layer, id) end
+        for id = 1, SPELLS_PER_PAGE do
+            layer.buttons[id] = CreatePageButton12(layer, id)
+            f.WrapTradeCast(layer.buttons[id])
+        end
         layer.prev = NewPad(layer, f.PrevPage, 32, 32)
         layer.prev:SetPoint("CENTER", layer, "BOTTOMLEFT", 50, 105)
         layer.next = NewPad(layer, f.NextPage, 32, 32)

@@ -186,16 +186,31 @@ local function PlaceBookPads()
     if not bookPads or not frame or InCombatLockdown() then return end
     local k, left, bottom = frame:GetEffectiveScale(), frame:GetLeft(), frame:GetBottom()
     if not (k and k > 0 and left and bottom) then return end
+    local hit = ns.BOOK_TAB_HIT
     for i, pad in pairs(bookPads) do
         local tab = bookTabs[i]
         local s, tl, tb = tab:GetEffectiveScale(), tab:GetLeft(), tab:GetBottom()
-        local shown = tab:IsShown() and s and s > 0 and tl and tb and true or false
+        local shown = tab:IsVisible() and s and s > 0 and tl and tb and true or false
         if shown then
-            ns.SetPointOnce(pad, "BOTTOMLEFT", frame, "BOTTOMLEFT", (tl * s - left * k) / k, (tb * s - bottom * k) / k)
-            pad:SetSize(tab:GetWidth() * s / k, tab:GetHeight() * s / k)
+            -- The drawn tab only; the sheet's blank margin reached over the window's buttons.
+            ns.SetPointOnce(pad, "BOTTOMLEFT", frame, "BOTTOMLEFT", (tl * s - left * k) / k + hit.left * s / k,
+                (tb * s - bottom * k) / k + hit.bottom * s / k)
+            pad:SetSize((tab:GetWidth() - hit.left - hit.right) * s / k, (tab:GetHeight() - hit.top - hit.bottom) * s / k)
             pad:SetFrameLevel(tab:GetFrameLevel() + 5)
         end
         pad:SetShown(shown)
+    end
+end
+
+-- A crafting page hides the tabs' page under them; the pads, on the window, must follow, out of combat.
+local function SyncBookPads()
+    if not bookPads or InCombatLockdown() then return end
+    for i, pad in pairs(bookPads) do
+        local tab = bookTabs[i]
+        if tab and pad:IsShown() ~= tab:IsVisible() then
+            PlaceBookPads()
+            return
+        end
     end
 end
 
@@ -592,6 +607,7 @@ local function WatchTick(self, elapsed)
         FillTabIcons()
     end
     TabToggle()
+    SyncBookPads()
     SyncTabs()
     BookTabs()
     -- Size by face: book, trade skill, or the client's own when neither module is on.
