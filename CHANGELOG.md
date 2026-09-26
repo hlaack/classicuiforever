@@ -2,6 +2,14 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.11.2] - 2026-09-26
+
+### Fixed
+- The loot window no longer wears a stray stone strip over its header.
+- The spellbook's and professions window's foot tabs take the mouse on the drawn tab only; hovering near them no longer lights them.
+- On a crafting page (Cooking, Alchemy and the rest) the lower half of Create All and the buttons above the tab row no longer open the spellbook.
+- A profession opened from the spellbook's General tab during a fight closes the book, as it does out of combat.
+
 ## [0.11.1] - 2026-09-26
 
 ### Changed
