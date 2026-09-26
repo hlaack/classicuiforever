@@ -197,7 +197,10 @@ local function ResetNow()
     -- The band's own pieces back on it at their defaults: latency bar, key ring, the reagent bag in its full slot.
     ns.db.hideLatencyBar, ns.db.hideKeyRing = false, false
     ns.db.latencyPos, ns.db.keyRingPos = nil, nil
-    ns.db.reagentBagSlot, ns.db.reagentBagRound, ns.db.reagentBagHover = true, false, false
+    local defaults = ns.DB_DEFAULTS
+    ns.db.reagentBagSlot, ns.db.reagentBagRound, ns.db.reagentBagHover =
+        defaults.reagentBagSlot, defaults.reagentBagRound, defaults.reagentBagHover
+    ns.db.hideProfessionsButton = defaults.hideProfessionsButton
     -- Gryphons back on the band (the pin step then resets their edit mode spots).
     ns.db.capMoved, ns.db.capHeldLeft, ns.db.capHeldRight = nil, false, false
     -- Windows placed or sized in the windows edit mode (the map included) back to their own; Movable anytime is kept.
@@ -242,7 +245,7 @@ end
 
 -- Layout button pressed while already on the classic layout.
 ns.Popup("FCUI_LAYOUT_RESET", {
-    text = TITLE .. "\n\nYou are on the " .. LAYOUT_NAME .. " layout already. Reset it to its defaults? Every bar, the micro menu, the bags, the key ring, latency bar and reagent bag slot, the player, target and focus frames and the windows (map included) go back to their classic places and settings, bar art shown. Your other layouts are not touched. The interface reloads to do it.",
+    text = TITLE .. "\n\nYou are on the " .. LAYOUT_NAME .. " layout already. Reset it to its defaults? Every bar, the micro menu, the bags, the key ring, latency bar, reagent bag and professions button, the player, target and focus frames and the windows (map included) go back to their classic places and settings, bar art shown. Your other layouts are not touched. The interface reloads to do it.",
     button1 = "Reset and reload",
     button2 = CANCEL or "Cancel",
     OnAccept = function() ns.ResetClassicLayout(true) end,

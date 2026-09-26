@@ -10,6 +10,7 @@ local GITHUB_URL = "https://github.com/wowaddonmaker/classicuiforever/issues"
 
 local BODY = "This addon is a work in progress. Some pieces are still being measured against the old interface and will be finished before launch."
     .. "\n\nIf something looks wrong, say so. Every report helps. Reach us on CurseForge or on GitHub issues; the buttons below give you the address to copy."
+    .. "\n\nAs in classic, there is no professions button (professions open from the spellbook) and the reagent bag is a round button on hover. Both can be changed under Classic bar in the settings."
     .. "\n\nAny piece that misbehaves can be switched back to the modern look in the options window."
 
 local OnForever = ns.OnForever
@@ -122,30 +123,49 @@ local function HookLinks()
     ns.HookGlobal("SetItemRef", OnItemRef)
 end
 
--- What's New: new features only (fixes are the changelog's, one button away); bump WHATSNEW_ID whenever the list
--- changes, and each player gets the chat line once per bump.
-local WHATSNEW_ID = 2
+-- What's New: new features only (fixes are the changelog's, one button away), by version, newest first. A player gets
+-- the chat line once per new version, and the box shows only the versions since the one they saw last.
 local WHATSNEW = {
-    { "Windows edit mode", "Tick Windows in edit mode to move and resize the character sheet, spellbook, talents, quest log, professions and map." },
-    { "Profiles", "A Profiles tab in the options keeps named settings per character." },
-    { "Bronze or Dark", "The custom theme comes in Forever's bronze or a dark charcoal. See the Custom theme toggle in the options." },
-    { "Classic bar", "The bars are no longer reduced in size by default. The bar now carries the latency bar, key ring and reagent bag as classic did; each can be moved in edit mode or hidden under Classic bar in the options." },
-    { "Minimap buttons", "Other addons' minimap buttons can gather behind one button on the ring. See the Collect addon buttons toggle in the options." },
-    { "Options", "Quests and Map sections, and new rows for the map frame, loot window, loot rolls, hiding the game's tracker, the professions button and the key text." },
-    { "Reset classic layout", "Puts the windows, tracker, gryphons, bar pieces and layout settings back at once." },
+    { id = 3, version = "0.11.1",
+        { "Classic bar pieces", "As in classic, the professions button is off the micro menu (professions open from the spellbook) and the reagent bag is a round button on hover, so bars 2 and 3 fit between the gryphons. Both are rows under Classic bar in the options." },
+    },
+    { id = 2, version = "0.11.0",
+        { "Windows edit mode", "Tick Windows in edit mode to move and resize the character sheet, spellbook, talents, quest log, professions and map." },
+        { "Profiles", "A Profiles tab in the options keeps named settings per character." },
+        { "Bronze or Dark", "The custom theme comes in Forever's bronze or a dark charcoal. See the Custom theme toggle in the options." },
+        { "Classic bar", "The bars are no longer reduced in size by default. The bar now carries the latency bar, key ring and reagent bag as classic did; each can be moved in edit mode or hidden under Classic bar in the options." },
+        { "Minimap buttons", "Other addons' minimap buttons can gather behind one button on the ring. See the Collect addon buttons toggle in the options." },
+        { "Options", "Quests and Map sections, and new rows for the map frame, loot window, loot rolls, hiding the game's tracker, the professions button and the key text." },
+        { "Reset classic layout", "Puts the windows, tracker, gryphons, bar pieces and layout settings back at once." },
+    },
 }
-local GOLD = "|cffffd100"
+local LATEST = WHATSNEW[1].id
+local GOLD, GREY = "|cffffd100", "|cffa0a0a0"
 local CHANGELOG_URL = "https://github.com/wowaddonmaker/classicuiforever/blob/main/CHANGELOG.md"
 local NEWS_WIDTH, NEWS_BODY_MAX, NEWS_WHEEL = 480, 260, 28
 local NEWS_HEADER = { width = 320 }   -- the plate: "What's New in x.y.z" runs past the stock 256
 
 local function CopyChangelog() CopyLink(TITLE .. " changelog on GitHub", CHANGELOG_URL) end
 
+-- The entries of every version newer than seen, each version headed by its number when there is more than one.
+local function NewsText(seen)
+    local sections = {}
+    for _, section in ipairs(WHATSNEW) do
+        if section.id > seen then sections[#sections + 1] = section end
+    end
+    if #sections == 0 then sections[1] = WHATSNEW[1] end
+    local lines = {}
+    for _, section in ipairs(sections) do
+        if #sections > 1 then lines[#lines + 1] = GREY .. section.version .. "|r" end
+        for _, entry in ipairs(section) do lines[#lines + 1] = GOLD .. entry[1] .. ":|r " .. entry[2] end
+    end
+    return table.concat(lines, "\n")
+end
+
 local newsWindow
 local function BuildNews()
     local frame = O.DialogWindow("ForeverClassicUIWhatsNew", 120)
-    local version = ns.AddonVersion and ns.AddonVersion() or ""
-    ns.DialogHeader(frame, version ~= "" and ("What's New in " .. version) or "What's New", NEWS_HEADER)
+    ns.DialogHeader(frame, "What's New in " .. WHATSNEW[1].version, NEWS_HEADER)
     -- The list in a clipped box that scrolls by wheel when it runs past NEWS_BODY_MAX.
     local scroll = CreateFrame("ScrollFrame", nil, frame)
     scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -50)
@@ -160,15 +180,8 @@ local function BuildNews()
     body:SetJustifyH("LEFT")
     body:SetJustifyV("TOP")
     body:SetSpacing(3)
-    local lines = {}
-    for i = 1, #WHATSNEW do lines[i] = GOLD .. WHATSNEW[i][1] .. ":|r " .. WHATSNEW[i][2] end
-    body:SetText(table.concat(lines, "\n"))
-    local height = math.ceil(body:GetStringHeight())
-    child:SetHeight(height)
-    local shown = math.min(height, NEWS_BODY_MAX)
-    scroll:SetHeight(shown)
     scroll:SetScript("OnMouseWheel", function(self, delta)
-        local most = math.max(0, height - self:GetHeight())
+        local most = math.max(0, child:GetHeight() - self:GetHeight())
         self:SetVerticalScroll(math.min(most, math.max(0, self:GetVerticalScroll() - delta * NEWS_WHEEL)))
     end)
     local note = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
@@ -180,19 +193,34 @@ local function BuildNews()
     local okay = ns.PanelButton(frame, "Okay", 90)
     okay:SetScript("OnClick", function() frame:Hide() end)
     okay:SetPoint("BOTTOMLEFT", frame, "BOTTOM", 4, 20)
-    frame:SetSize(NEWS_WIDTH, 50 + shown + 10 + 14 + 16 + 22 + 20)
+    -- Refilled on every show: the versions since the one the player saw last.
+    frame.Fill = function(_, seen)
+        body:SetText(NewsText(seen))
+        local height = math.ceil(body:GetStringHeight())
+        child:SetHeight(height)
+        local shown = math.min(height, NEWS_BODY_MAX)
+        scroll:SetHeight(shown)
+        scroll:SetVerticalScroll(0)
+        frame:SetSize(NEWS_WIDTH, 50 + shown + 10 + 14 + 16 + 22 + 20)
+    end
     return frame
 end
 
+-- The versions the chat line offered (whatsNewFrom), or the newest one alone.
 function ns.ShowWhatsNew()
     if not newsWindow then newsWindow = BuildNews() end
+    local from = tonumber(ns.db and ns.db.whatsNewFrom)
+    newsWindow:Fill(from or LATEST - 1)
     newsWindow:Show()
 end
 
--- Once per WHATSNEW_ID, as a chat line with a link; the dev addon clears the mark to see it again.
+-- Once per new version, as a chat line with a link; the dev addon clears the mark to see it again.
 function ns.AnnounceWhatsNew()
-    if not ns.db or (tonumber(ns.db.whatsNewSeen) or 0) >= WHATSNEW_ID then return end
-    ns.db.whatsNewSeen = WHATSNEW_ID
+    if not ns.db then return end
+    local seen = tonumber(ns.db.whatsNewSeen) or 0
+    if seen >= LATEST then return end
+    ns.db.whatsNewFrom = seen
+    ns.db.whatsNewSeen = LATEST
     HookLinks()
     local version = ns.AddonVersion and ns.AddonVersion() or ""
     ns.Print("updated to " .. version .. ". See what's new " .. Link("news", "here") .. ".")
@@ -219,7 +247,7 @@ function ns.FirstRun()
         return
     end
     -- The welcome stands in for this list.
-    ns.db.whatsNewSeen = WHATSNEW_ID
+    ns.db.whatsNewSeen = LATEST
     if ns.db.welcomeNote == false then
         ns.db.welcomed = true
         ns.CheckLayoutPosition()
