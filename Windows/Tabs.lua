@@ -61,15 +61,103 @@ end
 -- Inactive art: left cap, middle, right cap.
 local OFF_COORDS = { { 0, 0.15625, 0, 1 }, { 0.15625, 0.84375, 0, 1 }, { 0.84375, 1, 0, 1 } }
 
--- The client's six pieces; the middles keep the client's anchors. Both sheets are 128 x 32; the picked face stands
--- 4 higher than the other and opens the window's foot, as 1.x's tabs did.
+-- Every foot tab row. Faces at their spots; the label at one height, picked or not.
+local TAB_PICKED_Y = 1   -- picked face: above the tab's top (+ up; covers the window's foot line)
+local TAB_OFF_Y = 0      -- unpicked faces: above the tab's top (+ up)
+local TAB_EXTRA = 4      -- both faces: the plain body under the window's foot lengthened by this (+ longer tabs)
+local TAB_TEXT_Y = -0.5  -- label: over the tab's middle, picked or not (+ up)
+ns.TAB_PICKED_Y, ns.TAB_OFF_Y = TAB_PICKED_Y, TAB_OFF_Y
+function ns.TabTextY() return TAB_TEXT_Y end
+
+-- The 32 row art in three: rows 0 to 16 (the opening and body) as drawn, 16 to 20 stretched by TAB_EXTRA, 20 to 32 (the
+-- chamfered foot) as drawn. Both faces' sides run straight on rows 8 to 21 (the chamfers start at 22 and 26).
+local SLICE_BODY, SLICE_RIM, ROWS = 16, 20, 32
+local slices = setmetatable({}, { __mode = "k" })   -- piece -> its body and rim textures
+
+-- piece: a dressed full height face piece hung by its top; u0, u1: its across coords. Again after every dress.
+function ns.LengthenTabPiece(piece, u0, u1)
+    if not piece then return end
+    local pair = slices[piece]
+    if not pair then
+        local owner, layer, sub = piece:GetParent(), piece:GetDrawLayer()
+        pair = { owner:CreateTexture(nil, layer, nil, sub), owner:CreateTexture(nil, layer, nil, sub) }
+        pair[1]:SetPoint("TOPLEFT", piece, "BOTTOMLEFT", 0, 0)
+        pair[1]:SetPoint("TOPRIGHT", piece, "BOTTOMRIGHT", 0, 0)
+        pair[2]:SetPoint("TOPLEFT", pair[1], "BOTTOMLEFT", 0, 0)
+        pair[2]:SetPoint("TOPRIGHT", pair[1], "BOTTOMRIGHT", 0, 0)
+        slices[piece] = pair
+    end
+    piece:SetHeight(SLICE_BODY)
+    piece:SetTexCoord(u0, u1, 0, SLICE_BODY / ROWS)
+    local file, r, g, b = piece:GetTexture(), piece:GetVertexColor()
+    local desat = piece:IsDesaturated()
+    local rows = { { SLICE_BODY, SLICE_RIM, SLICE_RIM - SLICE_BODY + TAB_EXTRA }, { SLICE_RIM, ROWS, ROWS - SLICE_RIM } }
+    for i, tex in ipairs(pair) do
+        local from, to, h = rows[i][1], rows[i][2], rows[i][3]
+        tex:SetTexture(file)
+        tex:SetTexCoord(u0, u1, from / ROWS, to / ROWS)
+        tex:SetHeight(h)
+        tex:SetVertexColor(r, g, b)
+        tex:SetDesaturated(desat)
+        tex:SetShown(piece:IsShown())
+    end
+end
+
+-- The art's top rows drawn px higher over a piece, where a window's line would cross a picked tab (0: none).
+local COVER_ROWS = 2
+local covers = setmetatable({}, { __mode = "k" })
+function ns.CoverTabPiece(piece, u0, u1, px)
+    if not piece then return end
+    local cover = covers[piece]
+    if not cover then
+        if not px or px <= 0 then return end
+        local layer, sub = piece:GetDrawLayer()
+        cover = piece:GetParent():CreateTexture(nil, layer, nil, sub)
+        cover:SetPoint("BOTTOMLEFT", piece, "TOPLEFT", 0, 0)
+        cover:SetPoint("BOTTOMRIGHT", piece, "TOPRIGHT", 0, 0)
+        covers[piece] = cover
+    end
+    local on = px and px > 0
+    if on then
+        local r, g, b = piece:GetVertexColor()
+        cover:SetTexture(piece:GetTexture())
+        cover:SetTexCoord(u0, u1, 0, COVER_ROWS / ROWS)
+        cover:SetHeight(px)
+        cover:SetVertexColor(r, g, b)
+        cover:SetDesaturated(piece:IsDesaturated())
+    end
+    cover:SetShown(on and piece:IsShown() and true or false)
+end
+
+-- A piece shown or hidden with its body, rim and cover.
+function ns.ShowTabPiece(piece, shown)
+    piece:SetShown(shown)
+    local pair = slices[piece]
+    if pair then
+        pair[1]:SetShown(shown)
+        pair[2]:SetShown(shown)
+    end
+    if covers[piece] and not shown then covers[piece]:Hide() end
+end
+
+-- The lowest texture of a piece (its rim once lengthened), for what spans the whole face.
+function ns.TabPieceFoot(piece)
+    local pair = piece and slices[piece]
+    return pair and pair[2] or piece
+end
+
+-- The client's six pieces; the middles keep the client's anchors. Both sheets are 128 x 32.
 local BOTTOM_TAB = {
-    { field = "LeftActive", key = "tabActive", coords = OFF_COORDS[1], w = 20, h = 32, horizTile = false, point = "TOPLEFT" },
-    { field = "RightActive", key = "tabActive", coords = OFF_COORDS[3], w = 20, h = 32, horizTile = false, point = "TOPRIGHT" },
-    { field = "MiddleActive", key = "tabActive", coords = OFF_COORDS[2], w = 88, h = 32, horizTile = false },
-    { field = "Left", key = "tabInactive", coords = OFF_COORDS[1], w = 20, h = 32, horizTile = false, point = "TOPLEFT", y = -4 },
-    { field = "Right", key = "tabInactive", coords = OFF_COORDS[3], w = 20, h = 32, horizTile = false, point = "TOPRIGHT", y = -4 },
-    { field = "Middle", key = "tabInactive", coords = OFF_COORDS[2], w = 88, h = 32, horizTile = false },
+    { field = "LeftActive", key = "tabActive", coords = OFF_COORDS[1], w = 20, h = ROWS, horizTile = false,
+        point = "TOPLEFT", y = TAB_PICKED_Y },
+    { field = "RightActive", key = "tabActive", coords = OFF_COORDS[3], w = 20, h = ROWS, horizTile = false,
+        point = "TOPRIGHT", y = TAB_PICKED_Y },
+    { field = "MiddleActive", key = "tabActive", coords = OFF_COORDS[2], w = 88, h = ROWS, horizTile = false },
+    { field = "Left", key = "tabInactive", coords = OFF_COORDS[1], w = 20, h = ROWS, horizTile = false,
+        point = "TOPLEFT", y = TAB_OFF_Y },
+    { field = "Right", key = "tabInactive", coords = OFF_COORDS[3], w = 20, h = ROWS, horizTile = false,
+        point = "TOPRIGHT", y = TAB_OFF_Y },
+    { field = "Middle", key = "tabInactive", coords = OFF_COORDS[2], w = 88, h = ROWS, horizTile = false },
 }
 local BOTTOM_GLOW = { key = "tabInactive", coords = OFF_COORDS }
 
@@ -80,15 +168,38 @@ local function OverBorder(tab)
     if slice and slice.GetFrameLevel then ns.SetLevelIf(tab, math.max(tab:GetFrameLevel(), slice:GetFrameLevel() + 1)) end
 end
 
+-- Label: one spot, picked or not; the client moves it on select and deselect, so it is set again after.
+local function PlaceText(tab)
+    local text = tab.Text
+    if not text then return end
+    ns.SetPointOnce(text, "CENTER", tab, "CENTER", 0, TAB_TEXT_Y)
+end
+-- The client shows and hides the faces on select and deselect; their body and rim follow.
+local FACE_FIELDS = { "LeftActive", "MiddleActive", "RightActive", "Left", "Middle", "Right" }
+local function TextAfterClient(tab)
+    if not (tab and tab.fcuiTab) then return end
+    PlaceText(tab)
+    for _, field in ipairs(FACE_FIELDS) do
+        local piece = tab[field]
+        if piece then ns.ShowTabPiece(piece, piece:IsShown()) end
+    end
+end
+ns.HookGlobal("PanelTemplates_SelectTab", TextAfterClient)
+ns.HookGlobal("PanelTemplates_DeselectTab", TextAfterClient)
+
 -- The client disables the picked tab (no highlight), so only the inactive face glows.
 function ns.SkinBottomTab(tab)
     if not tab or not tab.Left then return end
     ns.DressPieces(tab, BOTTOM_TAB)
+    for _, piece in ipairs(BOTTOM_TAB) do
+        ns.LengthenTabPiece(tab[piece.field], piece.coords[1], piece.coords[2])
+    end
     ns.FadeKeys(tab, ns.KEYS.TAB_GLOW)
     tab.fcuiTab = true
     ns.FitBottomTab(tab)
     OverBorder(tab)
-    ns.TabGlow(tab, "glow", BOTTOM_GLOW, tab.Left, tab.Middle, tab.Right)
+    ns.TabGlow(tab, "glow", BOTTOM_GLOW, tab.Left, tab.Middle, ns.TabPieceFoot(tab.Right))
+    PlaceText(tab)
 end
 
 -- Bottom tab art flipped and foot-anchored: the taller selected tab rises (macro window).

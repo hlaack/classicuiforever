@@ -64,8 +64,11 @@ local RIM = { layer = "ARTWORK", key = "skillsBarBorder", cap = CAP, ox = 5, oy 
     coords = { { 0, CAP / 256, 0, 1 }, { CAP / 256, 1 - CAP / 256, 0, 1 }, { 1 - CAP / 256, 1, 0, 1 } } }
 -- Both sheets are 128 x 32; the picked face stands 4 higher and opens the window's foot, as 1.x's tabs did.
 local FOOT_COORDS = { { 0, 0.15625, 0, 1 }, { 0.15625, 0.84375, 0, 1 }, { 0.84375, 1, 0, 1 } }
-local FOOT_ON = { layer = "BACKGROUND", key = "tabActive", cap = 20, height = 32, middle = "edge", coords = FOOT_COORDS }
-local FOOT_OFF = { layer = "BACKGROUND", key = "tabInactive", cap = 20, height = 32, oy = -4, middle = "edge", coords = FOOT_COORDS }
+-- The shared tab faces: one spot for both (a 4 lower unpicked face left a gap to the frame), the shared height.
+local FOOT_ON = { layer = "BACKGROUND", key = "tabActive", cap = 20, height = 32, oy = ns.TAB_PICKED_Y, middle = "edge",
+    coords = FOOT_COORDS }
+local FOOT_OFF = { layer = "BACKGROUND", key = "tabInactive", cap = 20, height = 32, oy = ns.TAB_OFF_Y, middle = "edge",
+    coords = FOOT_COORDS }
 local RESET_TIP = { text = function() return TALENT_FRAME_RESET_BUTTON_TOOLTIP_TITLE or "Reset Pending Changes" end }
 local TREE_EVENTS = { "TRAIT_CONFIG_UPDATED", "TRAIT_TREE_CURRENCY_INFO_UPDATED", "TRAIT_NODE_CHANGED", "PLAYER_TALENT_UPDATE",
     "ACTIVE_COMBAT_CONFIG_CHANGED", "PLAYER_LEVEL_UP" }
@@ -275,7 +278,8 @@ end
 -- disabled the picked tab).
 local function FootFace(tab, spec, face)
     local left, middle, right = ns.ThreeSlice(tab, nil, spec)
-    return { left, middle, right, face and ns.TabGlow(tab, face, spec, left, middle, right) or nil }
+    for i, piece in ipairs({ left, middle, right }) do ns.LengthenTabPiece(piece, FOOT_COORDS[i][1], FOOT_COORDS[i][2]) end
+    return { left, middle, right, face and ns.TabGlow(tab, face, spec, left, middle, ns.TabPieceFoot(right)) or nil }
 end
 
 -- Our own foot tab: the client template resizes and moves its tabs on every
@@ -287,7 +291,8 @@ local function FootTab(parent)
     tab.off = FootFace(tab, FOOT_OFF, "glowOff")
     -- One point and no width: the label is always its whole text.
     tab.label = tab:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-    tab.label:SetPoint("CENTER", tab, "CENTER", 0, -3)
+    -- One spot, picked or not: the shared tab label height.
+    tab.label:SetPoint("CENTER", tab, "CENTER", 0, ns.TabTextY())
     function tab:Set(text, picked)
         if self.text ~= text then
             self.text = text
@@ -296,8 +301,8 @@ local function FootTab(parent)
         end
         if self.picked ~= picked then
             self.picked = picked
-            for _, tex in ipairs(self.on) do tex:SetShown(picked) end
-            for _, tex in ipairs(self.off) do tex:SetShown(not picked) end
+            for _, tex in ipairs(self.on) do ns.ShowTabPiece(tex, picked) end
+            for _, tex in ipairs(self.off) do ns.ShowTabPiece(tex, not picked) end
             if picked then self.label:SetTextColor(1, 1, 1) else self.label:SetTextColor(1, 0.82, 0) end
         end
     end

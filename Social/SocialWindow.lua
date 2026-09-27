@@ -70,6 +70,9 @@ end
 -- The client's gap is measured once, before anything moves.
 local tabGap
 local SOCIAL_TAB_PAD = 38
+-- Foot tab row, placed from the window's foot; its faces are Era's (Windows/Tabs.lua).
+local SOCIAL_TAB_X = 5          -- first tab: its left from the window's left (+ right)
+local SOCIAL_TAB_Y = 2          -- tab row: its top above the window's foot (+ up; moves the picked tab too)
 function S.PlaceTabs()
     local blizzard = S.FriendsFrameTabs()
     if not tabGap then
@@ -111,7 +114,7 @@ function S.PlaceTabs()
                 entry:SetPoint("LEFT", previous, "RIGHT", tabGap, 0)
                 entry:SetPoint("BOTTOM", previous, "BOTTOM", 0, 0)
             else
-                entry:SetPoint("TOPLEFT", FriendsFrame, "BOTTOMLEFT", 5, 2)
+                entry:SetPoint("TOPLEFT", FriendsFrame, "BOTTOMLEFT", SOCIAL_TAB_X, SOCIAL_TAB_Y)
             end
             previous = entry
         end
