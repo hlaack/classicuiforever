@@ -74,6 +74,8 @@ local function CropRolesBand(region, band)
     end
 end
 
+local ROLE_GAP = 10
+
 local function DressListing(page, width)
     FootPair(page, page.BackButton, page.PostButton)
     -- Forever's divider under the roles (1.60.1 70009) is drawn for the client's wider window and sticks out of ours.
@@ -88,14 +90,19 @@ local function DressListing(page, width)
     if solo then
         ns.SetPointOnce(solo, "TOPLEFT", page, "TOPLEFT", 46, -41)
         if solo.Tank and solo.Healer and solo.DPS then
-            ns.SetPointOnce(solo.Healer, "LEFT", solo.Tank, "RIGHT", 10, 0)
-            ns.SetPointOnce(solo.DPS, "LEFT", solo.Healer, "RIGHT", 10, 0)
+            ns.SetPointOnce(solo.Healer, "LEFT", solo.Tank, "RIGHT", ROLE_GAP, 0)
+            ns.SetPointOnce(solo.DPS, "LEFT", solo.Healer, "RIGHT", ROLE_GAP, 0)
         end
     end
     ns.SetPointOnce(group, "TOPLEFT", page, "TOPLEFT", 64, -41)
     local friendly = page.NewPlayerFriendlyButton
     if friendly then
-        ns.SetPointOnce(friendly, "TOPRIGHT", page, "TOPRIGHT", -28, -41)
+        -- A fourth role on the row: the roles' step and middle.
+        if solo and solo.DPS then
+            ns.SetPointOnce(friendly, "CENTER", solo.DPS, "CENTER", solo.DPS:GetWidth() + ROLE_GAP, 0)
+        else
+            ns.SetPointOnce(friendly, "TOPRIGHT", page, "TOPRIGHT", -28, -30)
+        end
         if friendly.CheckButton then ns.SkinCheckbox(friendly.CheckButton) end
     end
     local band = page.RolesSection
