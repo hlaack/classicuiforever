@@ -39,14 +39,14 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
-              "DRAGPOINT", "CVARREG", "CHECKLABEL")
+              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -126,6 +126,8 @@ KEPT_API = frozenset((
 ))
 
 FIX = {
+    "LUA51": "WoW runs Lua 5.1: no statement starting with ';', no goto or labels, no // or bitwise operators "
+             "(the luac 5.4 here accepts them; the game refuses the whole file)",
     "CHECKLABEL": "make the label on the check itself (check:CreateFontString), so it hides with it; a dialog that "
                   "hides a row must not leave its label behind for the next row to land on (skill cuif-edit-mode-items)",
     "DRAGPOINT": "read the frame's place (GetLeft/GetTop/GetBottom) before StopMovingOrSizing, which can leave a frame "
@@ -194,6 +196,7 @@ FIX = {
 # Names counted only where they are used (called, wrapped in pcall, passed, or assigned),
 # never in existence guards like `if C_CVar and C_CVar.SetCVar then`. Run on code with strings blanked.
 USE_PATTERNS = {
+    "LUA51": re.compile(r"^\s*;|\bgoto\b|::\w+::|[^/]//[^/]|<const>|<close>"),
     "CVAR": re.compile(
         r"\b(?:SetCVar\w*|RegisterCVar|SetTempCVar|RemoveTempCVar|ResetTestC[Vv]ars|ConsoleExec|CreateCVarAccessor)\b"
         r"|\bSettings\s*\.\s*(?:SetValue|GetSetting)\b"),
@@ -298,6 +301,7 @@ NOT_A_CALL = {"and", "or", "not", "if", "elseif", "while", "until", "return", "i
               "type", "assert"}
 
 MESSAGES = {
+    "LUA51": "syntax WoW's Lua 5.1 refuses (the file would not load at all)",
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",
