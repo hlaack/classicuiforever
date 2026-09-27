@@ -57,6 +57,7 @@ ns.DB_DEFAULTS = {
     reagentBagRound = false,
     reagentBagHover = true,
     hideKeyText = false,
+    keyTextSize = 12,
     eliteFrames = false,
     eliteFramePlayer = true,
     eliteFrameTarget = true,

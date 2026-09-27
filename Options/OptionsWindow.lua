@@ -313,6 +313,15 @@ local function Build(canvas)
             Grouped(columns)
             Add(columns, "oneBag")
         end
+        if entry[1] == "hideKeyText" then
+            local size = Stepper(child, "keyTextSize", "Key text size",
+                "How big the key names on the action buttons are. 12 is Classic Era's size.",
+                ns.KEY_TEXT_MIN or 8, ns.KEY_TEXT_MAX or 20, ns.SetKeyTextSize)
+            size.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
+            size.keyLow = size.keyLow .. " keybind font hotkey"
+            Grouped(size)
+            Add(size, "buttons")
+        end
     end
 
     -- Word starts in name, keywords or section title first, tooltip only when nothing matched those; whole sections show,
@@ -454,11 +463,14 @@ local function Build(canvas)
         for _, entry in ipairs(ns.TOGGLES) do
             ns.db[entry[1]] = ns.DB_DEFAULTS[entry[1]]
         end
+        -- The number rows too, through their setters so they apply live.
+        if ns.SetKeyTextSize then ns.SetKeyTextSize(ns.DB_DEFAULTS.keyTextSize) end
+        if ns.SetOneBagColumns then ns.SetOneBagColumns(ns.DB_DEFAULTS.oneBagColumns) end
         ns.ApplyAll()
         ns.AskReloadIfNeeded()
         frame:Refresh()
     end)
-    defaults.tooltip = "Puts every checkbox back to its default. Nothing to do with edit mode layouts."
+    defaults.tooltip = "Puts every checkbox and number back to its default. Nothing to do with edit mode layouts."
     defaults.label = "Reset toggles"
     ns.AttachTip(defaults, OPTION_TIP)
     AddTabs(frame, list, child, { search, none, defaults, child }, listRows)

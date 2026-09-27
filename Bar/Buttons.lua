@@ -173,6 +173,35 @@ local function NewSpellFrameOff(button)
     if tex and icon and tex:IsShown() and not icon:IsShown() then tex:Hide() end
 end
 
+-- Key text as Classic Era draws it: its thick mono outline, the font grown with the slot; the size is the option's.
+local KEY_FLAGS = "THICKOUTLINE, MONOCHROME"
+local KEY_BASE = 12 -- Era's key text size on its 36 px button
+local keyFont = setmetatable({}, { __mode = "k" })
+local keySize = setmetatable({}, { __mode = "k" })
+
+local function KeyText(button, s)
+    local key = button.HotKey
+    if not key then return end
+    if not keyFont[key] then
+        local file, height, flags = key:GetFont()
+        if not file then return end
+        keyFont[key] = { file, height, flags or "" }
+    end
+    local base = keyFont[key]
+    local size = base[2] * (tonumber(ns.db.keyTextSize) or KEY_BASE) / KEY_BASE * s
+    if keySize[key] == size then return end
+    key:SetFont(base[1], size, KEY_FLAGS)
+    keySize[key] = size
+end
+
+local function UnKeyText(button)
+    local key = button.HotKey
+    local base = key and keyFont[key]
+    if not (base and keySize[key]) then return end
+    key:SetFont(base[1], base[2], base[3])
+    keySize[key] = nil
+end
+
 local function Skin(button)
     if not button then return end
     local band = walkBand
@@ -191,6 +220,7 @@ local function Skin(button)
     SkinNormal(button, s)
     -- Hide key text (option): alpha, which the client's own Show and Hide of the text never reset.
     if button.HotKey then ns.SetAlphaIf(button.HotKey, ns.db.hideKeyText and 0 or 1) end
+    KeyText(button, s)
     local pushed = ns.SetButtonTex(button, "Pushed", "slotPushed")
     if pushed then
         Centered(pushed, slot)
@@ -254,6 +284,7 @@ local function Unskin(button)
     if not button then return end
     if button.fcuiIconRim then button.fcuiIconRim:Hide() end
     if button.HotKey then button.HotKey:SetAlpha(1) end
+    UnKeyText(button)
     UnfitSlot(button)
     button.fcuiBand = nil
     if button.SlotArt then
@@ -441,6 +472,19 @@ end
 
 -- Anything else that dresses action buttons walks them from here.
 ns.ForEachActionButton = ForEachButton
+
+ns.KEY_TEXT_MIN, ns.KEY_TEXT_MAX = 8, 20
+
+-- Key text size (options stepper); applies live.
+function ns.SetKeyTextSize(size)
+    size = math.max(ns.KEY_TEXT_MIN, math.min(ns.KEY_TEXT_MAX, math.floor(tonumber(size) or KEY_BASE)))
+    ns.db.keyTextSize = size
+    if active then
+        ReadWalk()
+        ForEachButton(function(button) KeyText(button, (Geometry(button, walkBand))) end)
+    end
+    return size
+end
 
 -- The watch is awake exactly while active is set (made awake by the first StartWatch).
 local function Apply()
