@@ -38,14 +38,54 @@ local function Move(button, home)
     if not ok then geterrorhandler()(err) end
 end
 
+-- Each bar's slots hang on a holder of ours on the screen, never on the bar: the client rescales, moves and hides its
+-- bar frames (edit mode re-lays them on every grid show, in fights too). The holder copies the bar's show rules.
+local holderOf, driverOf = {}, {}
+local VISIBILITY = { InCombat = "[combat] show; hide", OutOfCombat = "[combat] hide; show" }
+
+local function Driver(bar)
+    if bar == PetActionBar then return "[petbattle][overridebar][vehicleui][possessbar] hide; [@pet,exists] show; hide" end
+    if bar == PossessActionBar then return "[possessbar] show; hide" end
+    local main = bar == ns.GetMainBar()
+    local on = main or bar.isShownExternal
+    if on == nil then on = bar:IsShown() end
+    if not on or bar.visibility == "Hidden" then return "hide" end
+    local lead = (main or bar == StanceBar) and "[petbattle][overridebar][vehicleui] hide; " or "[petbattle] hide; "
+    return lead .. (VISIBILITY[bar.visibility] or "show")
+end
+
+-- Out of combat: strata and show rules follow the bar's as the layout runs.
+local function Holder(bar)
+    local holder = holderOf[bar]
+    if not holder then
+        holder = CreateFrame("Frame", nil, UIParent, "SecureHandlerStateTemplate")
+        holder:SetAllPoints(UIParent)
+        holderOf[bar] = holder
+    end
+    -- Bars 6-8 are faded, not hidden (LayoutExtraBars).
+    holder:SetAlpha(bar:GetAlpha())
+    if not InCombatLockdown() then
+        ns.SetStrataIf(holder, bar:GetFrameStrata())
+        local driver = Driver(bar)
+        if driverOf[bar] ~= driver then
+            driverOf[bar] = driver
+            RegisterStateDriver(holder, "visibility", driver)
+        end
+    end
+    return holder
+end
+
 -- The button's slot, the button moved into it first; out of combat only, as the layout runs. Explicitly protected:
 -- a snippet's SetParent takes no other frame as the new parent.
-local function Slot(button)
+local function Slot(button, bar)
+    local holder = Holder(bar)
     local slot = slotOf[button]
     if not slot then
-        slot = CreateFrame("Frame", nil, button.bar or button.container:GetParent(), "SecureFrameTemplate")
+        slot = CreateFrame("Frame", nil, holder, "SecureFrameTemplate")
         slot:SetSize(button:GetWidth(), button:GetHeight())
         slotOf[button] = slot
+    elseif slot:GetParent() ~= holder then
+        slot:SetParent(holder)
     end
     if button:GetParent() ~= slot then Move(button, slot) end
     return slot
@@ -117,7 +157,7 @@ local function LayoutButtons(bar, rowIndex, point, relTo, relPoint, x, y, vertic
     local level = math.max(B.ButtonLevel(), bar:GetFrameLevel() + 2)
     for i, button in ipairs(bar.actionButtons) do
         count = i
-        local slot = Slot(button)
+        local slot = Slot(button, bar)
         ns.SetLevelIf(slot, level)
         slot:SetScale(scale * icon)
         slot:ClearAllPoints()
@@ -363,6 +403,7 @@ local function LayoutExtraBars(hide)
         local bar = _G[name]
         if bar then
             bar:SetAlpha(hide and 0 or 1)
+            if holderOf[bar] then holderOf[bar]:SetAlpha(hide and 0 or 1) end
             if not InCombatLockdown() then
                 for _, button in ipairs(bar.actionButtons or {}) do
                     button:EnableMouse(not hide)
@@ -398,7 +439,7 @@ end
 local function BarTop(bar)
     local first = bar.actionButtons and bar.actionButtons[1]
     local slot = first and slotOf[first]
-    if slot and bar:IsShown() then return TopOf(slot) end
+    if slot and slot:IsVisible() then return TopOf(slot) end
     return TopOf(bar)
 end
 
