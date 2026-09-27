@@ -2,6 +2,29 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.11.6] - 2026-09-27
+
+### Added
+- Key text size under Button style in the options sets how big the key names on the action buttons are.
+- Three spots for the calendar under Calendar button in the options: a small square with the date at the right end of the zone name (the default), on the minimap's ring under the day and night icon, or hidden behind that icon (clicking the icon opens the calendar).
+- ClassicUI Forever Windows (edit mode) has a Minimap heading with a Calendar box: drag it anywhere (round the minimap on the ring spot), click it for its Mode (the same spots as the options), its size and the Reset To Default Position and Reset To Default Size buttons, as the windows have. Save and Revert All Changes cover it too.
+
+### Changed
+- Key text on the action buttons is Classic Era's size and thick outline; on the classic bar it drew a fifth smaller than 1.x.
+- Every row of tabs at a window's foot (character sheet, talents, social and the rest) is drawn on Classic Era's tab template: the tabs meet the window's foot with no gap, the picked tab covers the frame's line, and the labels stay centred whether picked or not.
+
+### Fixed
+- Reset toggles puts the one bag Columns number back to its default too.
+- The group finder button opens the finder's first page, not the Who list left open there after a /who.
+- A right-click menu placed on a frame the game keeps secret no longer raises an error on every frame while it is open.
+- Pet spells and pet commands drag from the spellbook onto the bars during a fight, as often as wanted, and what lands on the bar is the real pet action. The pet bar is left alone.
+- The professions window's Spellbook and pet tabs work in a fight: they open the spellbook on that tab instead of saying it cannot be done in combat.
+- A spellbook or professions tab no longer stays lit after its click turns the page.
+- The action bars stay put during a fight when the professions window opens or closes or a spell is dragged. The game re-places its own bar frames at those moments, and the buttons no longer go with them.
+- In a fight the character sheet opens beside a spellbook that is up instead of over it, and the quest log and the spellbook no longer flash in turn.
+- Windows moved beside the character sheet no longer cause errors in the group finder's listings.
+- ClassicUI Forever Windows in edit mode: an item's dialog no longer lays its rows over each other when a row hides, the calendar keeps its spot as its size changes, Reset To Default Size updates at once, the calendar's box sits on the day and night icon when the calendar is hidden behind it, the panel's close button no longer covers an item's dialog, and the exit prompt uses the game's wording and buttons (Escape cancels).
+
 ## [0.11.5] - 2026-09-27
 
 ### Changed
