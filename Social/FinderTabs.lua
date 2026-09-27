@@ -78,6 +78,15 @@ end
 local RunCatchers
 local onFinder = false
 
+-- The finder's micro button, hovered while the finder is shut on another page (the Who list after a /who): the first
+-- page's tab lies over it, so the press turns the page in the client's name and the finder opens there.
+local function MicroHost(finder, up)
+    if up or finder.selectedTab == 1 then return nil end
+    local micro = _G["LFDMicroButton"]
+    if not (micro and micro:IsVisible() and micro:IsEnabled() and micro:IsMouseOver()) then return nil end
+    return micro
+end
+
 -- Over the Who tab's while those show and the finder is shut or hovered there, else the finder's.
 local function SyncCatchers()
     local finder = _G["LFGParentFrame"]
@@ -88,10 +97,12 @@ local function SyncCatchers()
         RunCatchers(finder, "finder.catchers")
     end
     local up = finder:IsShown()
+    local micro = MicroHost(finder, up)
     for index = 1, #CATCH_KEYS do
         local who = whoTabs[index]
         local onWho = who and who:IsVisible() and (not up or who:IsMouseOver())
         local host = onWho and who or finderTabs[index]
+        if index == 1 and micro then host = micro end
         if host then Lend(index, host) else GiveBack(index, finder) end
         local catcher, mine = Catcher(index), lent[index]
         if catcher and mine then
@@ -126,6 +137,13 @@ local function OpenOnPage()
     if FriendsFrame and FriendsFrame:IsShown() then ns.HidePanel(FriendsFrame) end
 end
 
+-- Nothing else runs the catchers while no finder or Who tab shows: the hover does.
+local function WatchMicro()
+    local micro = _G["LFDMicroButton"]
+    if not micro or not ns.Once(micro, "finderMicroWatch") then return end
+    micro:HookScript("OnEnter", SyncCatchers)
+end
+
 local clickWatch
 local function WatchClicks()
     if clickWatch then return end
@@ -138,7 +156,8 @@ local function WatchClicks()
         if button ~= "LeftButton" then return end
         for index = 1, #CATCH_KEYS do
             local host, catcher = lent[index], Catcher(index)
-            if host and host.onWho and catcher and catcher:IsVisible() and catcher:IsMouseOver() then
+            local opens = host and (host.onWho or host == _G["LFDMicroButton"])
+            if opens and catcher and catcher:IsVisible() and catcher:IsMouseOver() then
                 -- Next frame: the client's own mouse-up turns the page first.
                 pending = index
                 ns.Sched.NextFrame("finder.openOnPage", OpenOnPage)
@@ -191,6 +210,7 @@ function S.BuildWhoFinderTabs(host, panel)
     end
     RunCatchers(panel, "who.catchers")
     WatchClicks()
+    WatchMicro()
     whoToggle = ns.PanelToggle(panel, "ClassicUIForeverWhoTabsToggle", 24, "TOPRIGHT", host, "TOPRIGHT", -8, -28,
         panel:GetFrameLevel() + 20, function()
             ns.db.whoTabs = not FinderOpen()
@@ -220,6 +240,7 @@ function S.BuildFinderSideTabs(parent)
         side:Show()
         finderTabs[i] = side
     end
+    WatchMicro()
     SyncCatchers()
 end
 
