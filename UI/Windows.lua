@@ -443,6 +443,25 @@ local SHEET_NEXT = { left = { "center", "right" }, center = { "right" } }
 local sheetGap
 
 -- Moves a client window's left edge to x on its manager's anchor, on screen; nil if it cannot move.
+-- A protected client window moved by our code is tainted (PVEFrame's list then compares secrets): out of combat it
+-- moves inside a snippet instead, which runs securely; in combat it is not moved at all.
+local positioner
+local POSITION_BODY = [[
+    local f = self:GetFrameRef("f")
+    if not f then return end
+    f:ClearAllPoints()
+    f:SetPoint("TOPLEFT", self:GetParent(), "TOPLEFT", self:GetAttribute("x"), self:GetAttribute("y"))
+]]
+local function SecureTopLeft(panel, x, y)
+    if InCombatLockdown() then return false end
+    positioner = positioner or CreateFrame("Frame", nil, UIParent, "SecureHandlerBaseTemplate")
+    positioner:SetFrameRef("f", panel)
+    positioner:SetAttribute("x", x)
+    positioner:SetAttribute("y", y)
+    positioner:Execute(POSITION_BODY)
+    return true
+end
+
 local function StandAt(panel, x)
     if InCombatLockdown() and Locked(panel) then return end
     local left, right, k = Span(panel)
@@ -454,7 +473,12 @@ local function StandAt(panel, x)
     ox, oy = Plain(ox), Plain(oy)
     if not ox or not oy or Plain(point) ~= "TOPLEFT" or Plain(relPoint) ~= "TOPLEFT" then return end
     if rel ~= nil and Plain(rel) ~= UIParent then return end
-    if not pcall(panel.SetPoint, panel, "TOPLEFT", UIParent, "TOPLEFT", ox + (x - left) / k, oy) then return end
+    local newX = ox + (x - left) / k
+    if Locked(panel) then
+        if not SecureTopLeft(panel, newX, oy) then return end
+    elseif not pcall(panel.SetPoint, panel, "TOPLEFT", UIParent, "TOPLEFT", newX, oy) then
+        return
+    end
     return x
 end
 
@@ -488,9 +512,28 @@ local function CloseSheetGap()
     end
 end
 
+-- In a fight a held window of ours (the spellbook under its casting layer) keeps the left place the client's manager
+-- gives the sheet too; the sheet is not protected there, so it stands past the held window instead.
+local function SheetPastHeld()
+    if not InCombatLockdown() then return end
+    local sheetLeft, sheetRight = Span(CharacterFrame)
+    if not sheetLeft then return end
+    for frame in pairs(classicWindows) do
+        if frame:IsShown() and frame.fcuiHoldX and frame:fcuiHoldX() then
+            local left, right = Span(frame)
+            if left and sheetLeft < right and sheetRight > left then StandAt(CharacterFrame, math.floor(right + 0.5)) end
+        end
+    end
+end
+
+local function SheetPass()
+    SheetPastHeld()
+    CloseSheetGap()
+end
+
 -- Parented to the character window so it runs only while that is up.
 if CharacterFrame then
-    ns.Sched.OnFrame(CreateFrame("Frame", nil, CharacterFrame), { name = "windows.sheetGap", every = 0, fn = CloseSheetGap })
+    ns.Sched.OnFrame(CreateFrame("Frame", nil, CharacterFrame), { name = "windows.sheetGap", every = 0, fn = SheetPass })
 end
 
 function ns.RegisterClassicWindow(frame, shares)
@@ -508,8 +551,15 @@ function ns.RegisterClassicWindow(frame, shares)
         if windowJob then windowJob:Wake() end
         showCount = showCount + 1
         self.fcuiShownAt = showCount
+        -- A window held in a fight (the spellbook over its live casting layer) comes straight back when hidden, and
+        -- then hid this one: the two flashed in turn. A held one neither closes nor is closed; the rest lay out round it.
+        local selfHeld = self.fcuiHoldX and self:fcuiHoldX()
         for other in pairs(classicWindows) do
-            if other ~= self and other:IsShown() and not (self.fcuiShares and other.fcuiShares) then other:Hide() end
+            local otherHeld = other.fcuiHoldX and other:fcuiHoldX()
+            if other ~= self and other:IsShown() and not (self.fcuiShares and other.fcuiShares) and not selfHeld
+                and not otherHeld then
+                other:Hide()
+            end
         end
         -- fcuiKeep names the client window it belongs beside (the inspect window's talents).
         HideClientPanels(self.fcuiKeep and self:fcuiKeep() or nil)
