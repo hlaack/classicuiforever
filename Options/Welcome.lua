@@ -128,6 +128,9 @@ end
 -- What's New: new features only (fixes are the changelog's, one button away), by version, newest first. A player gets
 -- the chat line once per new version, and the box shows only the versions since the one they saw last.
 local WHATSNEW = {
+    { id = 6, version = "0.11.5",
+        { "Calendar button", "The calendar sits under the day and night icon on the minimap. To hide it, untick Calendar button under Minimap in the options." },
+    },
     { id = 5, version = "0.11.4",
         { "Fixes", "The group finder's new player friendly flag lines up with the role icons. Details in the full changelog." },
     },

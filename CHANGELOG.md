@@ -2,6 +2,11 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.11.5] - 2026-09-27
+
+### Changed
+- The calendar button sits on the minimap ring under the day and night icon, which covered it; the mail icon moves one spot down. A Calendar button row under Minimap in the options hides it.
+
 ## [0.11.4] - 2026-09-27
 
 ### Fixed
