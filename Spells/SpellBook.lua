@@ -372,6 +372,13 @@ local function SyncPetPool()
     end
 end
 
+-- Professions window pads that turn the book to their tab (ns.SpellBookTurnPad): { pad, pet, wrapped }.
+local turnPads = {}
+function ns.SpellBookTurnPad(pad, pet)
+    turnPads[#turnPads + 1] = { pad = pad, pet = pet }
+    if book and book.ArmTurns then book.ArmTurns() end
+end
+
 -- Arms a casting button; out of combat only.
 local function ArmSpell(btn, slot, bank)
     local info = slot and ItemInfo(slot, bank)
@@ -953,6 +960,11 @@ local function CreateBook()
         pad:SetScript("OnMouseUp", function() over:SetButtonState("NORMAL") end)
         pad:SetScript("OnEnter", function() over:LockHighlight() end)
         pad:SetScript("OnLeave", function() over:UnlockHighlight() end)
+        -- Hidden under the cursor (its click shut the page): no OnLeave comes, so the glow goes here.
+        pad:SetScript("OnHide", function()
+            over:UnlockHighlight()
+            over:SetButtonState("NORMAL")
+        end)
         return pad
     end
 
@@ -1101,6 +1113,37 @@ local function CreateBook()
         if show then show:Show() end
     ]]
 
+    -- The professions window's book tabs: their own click turns the book to their tab, then presses the key (a macro
+    -- pressing the key's macro never runs: macros do not nest).
+    local TURN_BODY = [[
+        if down then return end
+        local want, holder = self:GetAttribute("turnc"), self:GetFrameRef("holder")
+        if not want or not holder then return end
+        holder:SetAttribute("unit", self:GetAttribute("turnunit"))
+        for i = 1, control:GetAttribute("count") do
+            local c = control:GetFrameRef("c" .. i)
+            if c then
+                if i == want then c:Show() else c:Hide() end
+            end
+        end
+    ]]
+    -- Out of combat: wraps new pads and arms every pad with its tab's container.
+    function f.ArmTurns()
+        if InCombatLockdown() then return end
+        for _, turn in ipairs(turnPads) do
+            local pad = turn.pad
+            if not turn.wrapped then
+                turn.wrapped = true
+                SecureHandlerSetFrameRef(pad, "holder", holder)
+                SecureHandlerWrapScript(pad, "OnClick", pageWrap, TURN_BODY)
+            end
+            local lines = pages.lines or {}
+            local c = turn.pet and petContainer or (lines[1] and lineContainer[lines[1]])
+            pad:SetAttribute("turnc", c and c.index or nil)
+            pad:SetAttribute("turnunit", c and c.selector or nil)
+        end
+    end
+
     -- Secure pad over a book control: the write, then (out of combat) the control's own click. The write sits on a
     -- named twin, pressed by the pad's macro.
     local padCount = 0
@@ -1129,6 +1172,11 @@ local function CreateBook()
         pad:SetScript("OnLeave", function()
             over:UnlockHighlight()
             GameTooltip:Hide()
+        end)
+        -- Hidden under the cursor (a tab turned its page away): no OnLeave comes, so the glow goes here.
+        pad:SetScript("OnHide", function()
+            over:UnlockHighlight()
+            if over:IsEnabled() then over:SetButtonState("NORMAL") end
         end)
         pad:SetScript("PostClick", function(self, _, down)
             if down then return end
@@ -1292,6 +1340,7 @@ local function CreateBook()
         for _, c in pairs(containers) do
             if c.kind then ArmTabs(c, lines) end
         end
+        f.ArmTurns()
         pages.built = true
         -- Match the frames to the book now, so a first open in combat is already right.
         if f.ApplyPages then f.ApplyPages() end

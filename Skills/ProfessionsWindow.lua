@@ -181,24 +181,33 @@ local bookTabs
 -- too (a pad on UIParent is placed out of combat only). Anchored to the window, never the tabs: the window turns
 -- protected by them, and every write on it here already waits for a fight's end; the tabs stay free.
 local bookPads
+-- The first tab's centre on the window and the step between tabs (128 wide, 20 overlapped).
+local TAB_X, TAB_Y, TAB_STEP = 70, -7, 108
+
+-- Shown with its tab inside the window, never by the window: placed while it was shut, a pad went hidden for the fight.
+local function PadShown(i)
+    local page = Page()
+    return bookTabs[i]:IsShown() and page ~= nil and page:IsShown()
+end
+
+-- From the tabs' fixed layout, so a shut window places them too. From the window's top: the tabs hang from the shape's
+-- foot, a book's height down, and in a fight the shape stands past the window's foot.
 local function PlaceBookPads()
     local frame = ProfessionsFrame
     if not bookPads or not frame or InCombatLockdown() then return end
-    local k, left, bottom = frame:GetEffectiveScale(), frame:GetLeft(), frame:GetBottom()
-    if not (k and k > 0 and left and bottom) then return end
+    local k = frame:GetEffectiveScale()
+    if not (k and k > 0) then return end
     local hit = ns.BOOK_TAB_HIT
     for i, pad in pairs(bookPads) do
         local tab = bookTabs[i]
-        local s, tl, tb = tab:GetEffectiveScale(), tab:GetLeft(), tab:GetBottom()
-        local shown = tab:IsVisible() and s and s > 0 and tl and tb and true or false
-        if shown then
-            -- The drawn tab only; the sheet's blank margin reached over the window's buttons.
-            ns.SetPointOnce(pad, "BOTTOMLEFT", frame, "BOTTOMLEFT", (tl * s - left * k) / k + hit.left * s / k,
-                (tb * s - bottom * k) / k + hit.bottom * s / k)
-            pad:SetSize((tab:GetWidth() - hit.left - hit.right) * s / k, (tab:GetHeight() - hit.top - hit.bottom) * s / k)
-            pad:SetFrameLevel(tab:GetFrameLevel() + 5)
-        end
-        pad:SetShown(shown)
+        local r = tab:GetEffectiveScale() / k
+        local w, h = tab:GetWidth(), tab:GetHeight()
+        -- The drawn tab only; the sheet's blank margin reached over the window's buttons.
+        ns.SetPointOnce(pad, "BOTTOMLEFT", frame, "TOPLEFT", (TAB_X + (i - 1) * TAB_STEP - w / 2 + hit.left) * r,
+            (TAB_Y - h / 2 + hit.bottom) * r - BOOK_H)
+        pad:SetSize((w - hit.left - hit.right) * r, (h - hit.top - hit.bottom) * r)
+        pad:SetFrameLevel(tab:GetFrameLevel() + 5)
+        pad:SetShown(PadShown(i))
     end
 end
 
@@ -206,8 +215,7 @@ end
 local function SyncBookPads()
     if not bookPads or InCombatLockdown() then return end
     for i, pad in pairs(bookPads) do
-        local tab = bookTabs[i]
-        if tab and pad:IsShown() ~= tab:IsVisible() then
+        if bookTabs[i] and pad:IsShown() ~= PadShown(i) then
             PlaceBookPads()
             return
         end
@@ -223,7 +231,7 @@ local function BookTabs()
         bookTabs = {}
         for i = 1, 3 do bookTabs[i] = ns.NewBookTab(page, i, bookTabs[i - 1]) end
         -- Tucked under the bottom border like the old foot tabs; at -13 they floated clear of it.
-        ns.SetPointOnce(bookTabs[1], "CENTER", frame, "BOTTOMLEFT", 70, -7)
+        ns.SetPointOnce(bookTabs[1], "CENTER", frame, "BOTTOMLEFT", TAB_X, TAB_Y)
         bookTabs[1]:SetText(SPELLBOOK or "Spellbook")
         bookTabs[2]:SetText(TRADE_SKILLS or "Professions")
         bookTabs[2]:SetEnabled(false)
@@ -236,7 +244,8 @@ local function BookTabs()
                 ns.ShowSpellBookBank(i == 3)
             end)
         end
-        -- Each pad presses the spellbook key (its macro closes this window first): the book opens in a fight too.
+        -- Each pad turns the book to its tab (SpellBook's wrap), then presses the spellbook key (its macro closes this
+        -- window first): the book opens on that tab in a fight too.
         -- HIGH: the toplevel window raises itself over a same-strata pad on every click.
         local key = ns.SpellBookBindButton and ns.SpellBookBindButton()
         if key then
@@ -249,6 +258,7 @@ local function BookTabs()
                 pad:SetAttribute("useOnKeyDown", false)
                 pad:SetAttribute("type", "click")
                 pad:SetAttribute("clickbutton", key)
+                if ns.SpellBookTurnPad then ns.SpellBookTurnPad(pad, i == 3) end
                 pad:SetScript("PostClick", function(_, _, down)
                     if down or not ns.SpellBookTurnTo(i == 3) then return end
                     PlaySound(SOUNDKIT.IG_ABILITY_PAGE_TURN)
@@ -259,6 +269,11 @@ local function BookTabs()
                 pad:SetScript("OnMouseUp", function() if tab:IsEnabled() then tab:SetButtonState("NORMAL") end end)
                 pad:SetScript("OnEnter", function() tab:LockHighlight() end)
                 pad:SetScript("OnLeave", function() tab:UnlockHighlight() end)
+                -- Shut under the cursor by its own click: no OnLeave comes, so the glow goes here.
+                pad:SetScript("OnHide", function()
+                    tab:UnlockHighlight()
+                    if tab:IsEnabled() then tab:SetButtonState("NORMAL") end
+                end)
                 pad:Hide()
                 bookPads[i] = pad
             end
