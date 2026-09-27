@@ -112,8 +112,9 @@ local function LayoutButtons(bar, rowIndex, point, relTo, relPoint, x, y, vertic
     local shown = (slots and slots > 0) and math.min(slots, #bar.actionButtons) or #bar.actionButtons
     local per = math.max(1, math.ceil(shown / rows))
     local count = 0
-    -- Over the gryphons and the bar frame (edit mode lifts that to 50); the buttons follow their slot.
-    local level = B.ButtonLevel()
+    -- Over the gryphons and over this bar's own frame, which takes the mouse (edit mode lifts a bar's level and the
+    -- stance and pet bars stand higher than bar 1): a slot under its bar hid its button from the mouse.
+    local level = math.max(B.ButtonLevel(), bar:GetFrameLevel() + 2)
     for i, button in ipairs(bar.actionButtons) do
         count = i
         local slot = Slot(button)
