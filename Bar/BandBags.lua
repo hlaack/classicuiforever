@@ -252,7 +252,7 @@ local function BagsCheck(extra, rel, relPoint, x, y, label, onClick)
     check:SetPoint("TOPLEFT", rel, relPoint, x, y)
     check:SetScript("OnClick", onClick)
     ns.EditModeCheck(check)
-    local text = extra:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
+    local text = check:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
     text:SetPoint("LEFT", check, "RIGHT", 6, 0)
     text:SetText(label)
     return check

@@ -6,7 +6,7 @@ local _, ns = ...
 local W = ns.windowEdit
 local WINDOWS, Clean, ValidFlag, Places, Scales, Freed = W.WINDOWS, W.Clean, W.ValidFlag, W.Places, W.Scales, W.Freed
 local Ratio, PlaceAll, LayHandle, Refresh = W.Ratio, W.PlaceAll, W.LayHandle, W.Refresh
-local ShowHandle = W.ShowHandle
+local ShowHandle, Return = W.ShowHandle, W.Return
 local Plain = ns.Safe
 
 -- Shaped like the client's HUD Edit Mode (510 wide, 225 x 32 check rows in two columns, Revert All Changes and Save).
@@ -14,6 +14,7 @@ local Plain = ns.Safe
 -- our code they would taint its layouts.
 local MODE_W, MODE_PAD, ROW_W, ROW_H = 510, 20, 225, 32
 local MODE_TOP = 110
+local SECTION_GAP = 40
 local FOOT_W, FOOT_H, FOOT_X, FOOT_Y, FOOT_GAP = 220, 28, 15, 16, 14
 -- The toggle's top right from the client's window's, beside its layout dropdown; Back from our window's top left.
 local TOGGLE_X, TOGGLE_Y, TOGGLE_H = -20, -50, 26
@@ -48,6 +49,10 @@ local function Snapshot()
     for key, pos in pairs(Places()) do snap.pos[key] = { pos[1], pos[2] } end
     for key, scale in pairs(Scales()) do snap.scale[key] = scale end
     for key in pairs(Freed()) do snap.free[key] = true end
+    snap.ring = {}
+    for _, entry in ipairs(WINDOWS) do
+        if entry.ringKey then snap.ring[entry.key] = ns.db[entry.ringKey] or false end
+    end
     return snap
 end
 
@@ -59,6 +64,9 @@ end
 local function Dirty()
     if not saved then return false end
     if (ns.db.mapUnlocked == true) ~= saved.map then return true end
+    for _, entry in ipairs(WINDOWS) do
+        if entry.ringKey and (ns.db[entry.ringKey] or false) ~= saved.ring[entry.key] then return true end
+    end
     local places, scales, freed = Places(), Scales(), Freed()
     local dirty = false
     EachKey(function(_, key)
@@ -73,6 +81,12 @@ end
 -- Back to the snapshot; apply = false (logout) writes the saved tables only.
 local function Restore(snap, apply)
     local places, scales, freed = Places(), Scales(), Freed()
+    for _, entry in ipairs(WINDOWS) do
+        if entry.ringKey then
+            ns.db[entry.ringKey] = snap.ring[entry.key] or nil
+            if apply then Return(entry) end
+        end
+    end
     EachKey(function(entry, key)
         local frame = _G[entry.name]
         local placed = places[key] ~= nil
@@ -80,9 +94,7 @@ local function Restore(snap, apply)
         places[key] = pos and { pos[1], pos[2] } or nil
         scales[key] = snap.scale[key]
         freed[key] = snap.free[key]
-        if apply and frame and placed and not places[key] then
-            ns.ReturnClassicWindow(frame)
-        end
+        if apply and frame and placed and not places[key] then Return(entry) end
     end)
     if (ns.db.mapUnlocked == true) ~= snap.map then
         ns.db.mapUnlocked = snap.map
@@ -98,19 +110,25 @@ local function Save() saved = Snapshot() end
 local function RevertAll() if saved then Restore(saved, true) end end
 
 -- data: "close" when the close button asked; Back stays up (the choice made, it goes back on the next press).
+-- The client's own exit prompt, in its words and order: Save and Exit, Exit (drops the changes), Cancel.
 ns.Popup(UNSAVED, {
-    text = "The windows have unsaved changes.",
-    button1 = HUD_EDIT_MODE_SAVE_LAYOUT or "Save",
-    button2 = CANCEL,
-    button3 = HUD_EDIT_MODE_REVERT_ALL_CHANGES or "Revert All Changes",
+    text = _G.HUD_EDIT_MODE_UNSAVED_CHANGES_EXIT_DIALOG_TITLE
+        or "If you exit now you will lose any unsaved changes.\nHow would you like to proceed?",
+    button1 = _G.HUD_EDIT_MODE_SAVE_AND_EXIT or "Save and Exit",
+    button2 = _G.HUD_EDIT_MODE_EXIT or "Exit",
+    button3 = CANCEL,
     OnAccept = function(_, data)
         Save()
         if data == "close" and mode then mode:Hide() end
     end,
-    OnAlt = function(_, data)
+    OnCancel = function(_, data, reason)
+        if reason ~= "clicked" then return end
         RevertAll()
         if data == "close" and mode then mode:Hide() end
     end,
+    OnAlt = function() end,
+    -- Escape is Cancel, as on the client's.
+    OnEscape = function() end,
 })
 
 local function TryClose()
@@ -136,7 +154,7 @@ local function Toggle()
     check:SetPoint("LEFT", hit, "LEFT", 0, 0)
     check:EnableMouse(false)
     ns.EditModeCheck(check)
-    local label = hit:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    local label = check:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     label:SetPoint("LEFT", check, "RIGHT", 2, 0)
     label:SetText(MODE_TITLE)
     hit:SetWidth(TOGGLE_H + 4 + math.ceil(label:GetStringWidth()))
@@ -193,14 +211,14 @@ local function SyncToggle()
     end
 end
 
-local function ModeCheck(entry, index)
+local function ModeCheck(entry, index, top)
     local col, row = (index - 1) % 2, math.floor((index - 1) / 2)
     local check = CreateFrame("CheckButton", nil, mode, "UICheckButtonTemplate")
     check:SetSize(ROW_H, ROW_H)
-    check:SetPoint("TOPLEFT", mode, "TOPLEFT", MODE_PAD + col * ROW_W, -(MODE_TOP + row * ROW_H))
+    check:SetPoint("TOPLEFT", mode, "TOPLEFT", MODE_PAD + col * ROW_W, -(top + row * ROW_H))
     check:SetHitRectInsets(0, -(ROW_W - ROW_H), 0, 0)
     ns.EditModeCheck(check)
-    local label = mode:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
+    local label = check:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
     label:SetPoint("LEFT", check, "RIGHT", 5, 0)
     label:SetText(entry.label)
     check.entry = entry
@@ -246,11 +264,16 @@ end
 
 local function Mode()
     if mode then return mode end
-    local rows = math.ceil(#WINDOWS / 2)
-    mode = ns.band.EditDialog("ForeverClassicUIWindowsEditMode", MODE_W,
-        MODE_TOP + rows * ROW_H + FOOT_GAP + FOOT_H + FOOT_Y, MODE_TITLE)
-    -- Under a window's own dialog (200).
-    mode:SetFrameLevel(150)
+    -- The windows first, then each piece section (the minimap's) under its own heading.
+    local windows, pieces = {}, {}
+    for _, entry in ipairs(WINDOWS) do
+        local list = entry.section and pieces or windows
+        list[#list + 1] = entry
+    end
+    local pieceTop = MODE_TOP + math.ceil(#windows / 2) * ROW_H + SECTION_GAP
+    local tall = #pieces > 0 and pieceTop + math.ceil(#pieces / 2) * ROW_H or pieceTop - SECTION_GAP
+    -- Under a window's own dialog (200), children and all: lowered after they were made, its close stood over it.
+    mode = ns.band.EditDialog("ForeverClassicUIWindowsEditMode", MODE_W, tall + FOOT_GAP + FOOT_H + FOOT_Y, MODE_TITLE, 150)
     mode.close:SetScript("OnClick", TryClose)
     local back = CreateFrame("Button", nil, mode, "UIPanelButtonTemplate")
     back:SetSize(BACK_W, BACK_H)
@@ -272,7 +295,13 @@ local function Mode()
     head:SetPoint("BOTTOMLEFT", mode, "TOPLEFT", MODE_PAD + 5, -(MODE_TOP - 6))
     head:SetText("Windows")
     mode.checks = {}
-    for i, entry in ipairs(WINDOWS) do mode.checks[i] = ModeCheck(entry, i) end
+    for i, entry in ipairs(windows) do mode.checks[#mode.checks + 1] = ModeCheck(entry, i, MODE_TOP) end
+    if #pieces > 0 then
+        local sub = mode:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+        sub:SetPoint("BOTTOMLEFT", mode, "TOPLEFT", MODE_PAD + 5, -(pieceTop - 6))
+        sub:SetText(pieces[1].section)
+        for i, entry in ipairs(pieces) do mode.checks[#mode.checks + 1] = ModeCheck(entry, i, pieceTop) end
+    end
     mode.revert = FootButton(HUD_EDIT_MODE_REVERT_ALL_CHANGES or "Revert All Changes", "BOTTOMLEFT", FOOT_X, RevertAll)
     mode.save = FootButton(HUD_EDIT_MODE_SAVE_LAYOUT or "Save", "BOTTOMRIGHT", -FOOT_X, Save)
     ns.Sched.Attach(mode, { name = "windows.dirty", every = 0.2, fn = SyncFoot })

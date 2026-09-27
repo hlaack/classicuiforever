@@ -75,6 +75,7 @@ Units\CastBars.lua
 Units\MirrorTimers.lua
 Units\ComboPoints.lua
 Map\Minimap.lua
+Map\MinimapCalendar.lua
 Map\TrackingBuff.lua
 Map\MinimapEye.lua
 Map\MinimapButton.lua

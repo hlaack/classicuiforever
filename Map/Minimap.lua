@@ -47,8 +47,6 @@ local TRACK_BORDER = { layer = "ARTWORK", w = TRACK_RING, h = TRACK_RING, point 
 local TRACK_EVENTS = { "MINIMAP_UPDATE_TRACKING", "SPELLS_CHANGED", "PLAYER_ENTERING_WORLD" }
 
 local function TrackingOn() return MM.active and ns.db and ns.db.classicTracking ~= false end
-local CALENDAR_SCALE = 0.7 -- under the day/night, inside the cluster's edge
-local function CalendarOn() return not (ns.db and ns.db.minimapCalendar == false) end
 
 local function ActiveTrackingSpell()
     if not (C_Minimap and C_Minimap.GetNumTrackingTypes and C_Minimap.GetTrackingInfo) then return nil end
@@ -289,7 +287,7 @@ local function Layout()
 
     -- Mail on the upper right of the map, a spot lower while the calendar stands under the day/night.
     local indicator = cluster.IndicatorFrame
-    local mailY = (cluster.DielFrame and CalendarOn()) and -70 or -37
+    local mailY = MM.CalendarUnderDiel() and -70 or -37
     if indicator then
         indicator:SetParent(cluster)
         indicator:SetFrameLevel(above)
@@ -311,24 +309,13 @@ local function Layout()
         end
     end
 
-    -- Day/night top right; the calendar under it on the ring (it hid behind it), or in its spot without one.
+    -- Day/night top right; the calendar at its picked spot (MinimapCalendar.lua).
     local diel = cluster.DielFrame
     if diel then
         ns.SetPointOnce(diel, "TOPRIGHT", map, "TOPRIGHT", 20, -2)
     end
     if GameTimeFrame then
-        GameTimeFrame:SetParent(map)
-        GameTimeFrame:SetFrameLevel(above)
-        GameTimeFrame:SetSize(40, 40)
-        if diel then
-            GameTimeFrame:SetScale(CALENDAR_SCALE)
-            ns.SetPointOnce(GameTimeFrame, "TOPRIGHT", map, "TOPRIGHT", 16 / CALENDAR_SCALE, -46 / CALENDAR_SCALE)
-        else
-            GameTimeFrame:SetScale(1)
-            ns.SetPointOnce(GameTimeFrame, "TOPRIGHT", map, "TOPRIGHT", 20, -2)
-        end
-        GameTimeFrame:SetShown(CalendarOn())
-        GameTimeFrame:SetHitRectInsets(6, 0, 5, 10)
+        MM.PlaceCalendar(cluster, map, above)
         ns.SkinCalendar()
     end
 
@@ -371,6 +358,22 @@ local function Layout()
     if ns.OnMinimapLaid then ns.OnMinimapLaid(ldbi) end
 end
 
+-- Ring maths for pieces dragged round the minimap: the cursor's angle about its middle (degrees, 0 = right, counter-
+-- clockwise), and a frame's middle at an angle and radius (map units; k: the frame's scale over the map's).
+function ns.MinimapCursorAngle()
+    local mx, my = Minimap:GetCenter()
+    local scale = Minimap:GetEffectiveScale()
+    local cx, cy = GetCursorPosition()
+    local angle = math.deg(math.atan2(cy / scale - my, cx / scale - mx))
+    if angle < 0 then angle = angle + 360 end
+    return angle
+end
+
+function ns.RingPoint(frame, degrees, radius, k)
+    local a, f = math.rad(degrees), 1 / (k or 1)
+    ns.SetPointOnce(frame, "CENTER", Minimap, "CENTER", math.cos(a) * radius * f, math.sin(a) * radius * f)
+end
+
 -- The 1.x calendar button: the day number on the stone calendar art.
 function ns.SkinCalendar()
     local button = GameTimeFrame
@@ -388,6 +391,7 @@ function ns.SkinCalendar()
     ns.SetPointOnce(fs, "CENTER", button, "CENTER", -1, -1)
     fs:SetDrawLayer("OVERLAY")
     if day then button:SetText(day) end
+    MM.SquareDay()
 end
 
 --------------------------------------------------------------------- module
@@ -395,6 +399,7 @@ end
 local function LayoutIfActive()
     if MM.active then Layout() end
 end
+MM.Relayout = LayoutIfActive
 
 local function HideLanding(self)
     if MM.active then self:SetAlpha(0); self:EnableMouse(false) end
@@ -450,6 +455,7 @@ local function Restore()
     SetActive(false)
     HideOwn(MinimapCluster)
     HideOwn(MinimapBackdrop)
+    MM.HideCalendar()
     if MinimapCluster and MinimapCluster.BorderTop then ns.Unfade(MinimapCluster.BorderTop) end
     ns.needsReload = true
 end

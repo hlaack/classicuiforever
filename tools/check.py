@@ -964,7 +964,7 @@ def throttle_frame_hits(lx):
 
 CHECK_MADE = re.compile(r"\b(\w+)\s*=\s*CreateFrame\(\s*\"CheckButton\"")
 LABEL_MADE = re.compile(r"\blocal\s+(\w+)\s*=\s*([\w.]+):CreateFontString\(")
-LABEL_BESIDE = re.compile(r"\b(\w+):SetPoint\(\s*\"LEFT\"\s*,\s*([\w.]+)\s*,\s*\"RIGHT\"")
+LABEL_BESIDE = re.compile(r"(?<![.\w])(\w+):SetPoint\(\s*\"LEFT\"\s*,\s*([\w.]+)\s*,\s*\"RIGHT\"")
 
 
 def check_label_hits(lx):

@@ -46,8 +46,7 @@ local function Position(ring)
     local r = Radius()
     if degrees == ring.placedAngle and r == ring.placedRadius then return end
     ring.placedAngle, ring.placedRadius = degrees, r
-    local angle = math.rad(degrees)
-    ns.SetPointOnce(button, "CENTER", Minimap, "CENTER", math.cos(angle) * r, math.sin(angle) * r)
+    ns.RingPoint(button, degrees, r)
 end
 
 local function PositionAll()
@@ -64,10 +63,7 @@ local function OnDragUpdate(job)
     local cx, cy = GetCursorPosition()
     if cx == ring.dragX and cy == ring.dragY and mx == ring.dragMX and my == ring.dragMY and scale == ring.dragScale then return end
     ring.dragX, ring.dragY, ring.dragMX, ring.dragMY, ring.dragScale = cx, cy, mx, my, scale
-    cx, cy = cx / scale, cy / scale
-    local angle = math.deg(math.atan2(cy - my, cx - mx))
-    if angle < 0 then angle = angle + 360 end
-    ns.db[ring.angleKey] = angle
+    ns.db[ring.angleKey] = ns.MinimapCursorAngle()
     Position(ring)
 end
 

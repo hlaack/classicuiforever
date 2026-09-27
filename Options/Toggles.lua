@@ -92,7 +92,10 @@ ns.TOGGLES = {
 
     { "minimap", "Minimap", "The round 1.x minimap with the zone name on top and the old tracking, zoom, mail and clock spots.", group = "Minimap and chat" },
     { "classicTracking", "Tracking icon", "Your tracking spell's icon in a ring on the minimap, as in classic. Right-click it to stop tracking.", parent = "minimap" },
-    { "minimapCalendar", "Calendar button", "The calendar button with the day's date, under the day and night icon. Off hides it.", parent = "minimap", search = "date events" },
+    { "minimapCalendar", "Calendar button", "The calendar button with the day's date, at the spot picked below. Move or resize it with Calendar under Minimap in ClassicUI Forever Windows (edit mode). Off hides it.", parent = "minimap", search = "date events" },
+    { "calendarZone", "Calendar: by the zone name", "A small square calendar with the date at the right end of the zone name, where 1.x had the minimap toggle.", parent = "minimapCalendar", radio = "calendarSpot", search = "square banner" },
+    { "calendarRing", "Calendar: on the ring", "The calendar under the day and night icon, on the minimap's ring.", parent = "minimapCalendar", radio = "calendarSpot" },
+    { "calendarBehind", "Calendar: behind day and night", "The calendar hidden behind the day and night icon; clicking the icon opens it.", parent = "minimapCalendar", radio = "calendarSpot" },
     { "minimapButton", "Options button", "A button on the minimap ring that opens these options. Drag it around the ring." },
     { "minimapCollector", "Collect addon buttons", "The other addons' minimap buttons gathered behind one button on the ring; click it for a grid of them. Drag it around the ring.", search = "minimap icons bag" },
     { "classicChat", "Chat buttons", "The chat buttons in one column down the chat's left, as in 1.x. The scroll bar goes; arrows and the wheel scroll." },

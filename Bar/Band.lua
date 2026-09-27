@@ -389,11 +389,12 @@ function B.PanelBorder(frame)
 end
 
 -- Our settings dialog shaped like the client's edit mode one (same templates): border, title, close; hidden.
-function B.EditDialog(name, width, height, text)
+-- level: set before its children are made, so none stands above a dialog meant to be over it (200 by default).
+function B.EditDialog(name, width, height, text, level)
     local dialog = CreateFrame("Frame", name, UIParent)
     dialog:SetSize(width, height)
     dialog:SetFrameStrata("DIALOG")
-    dialog:SetFrameLevel(200)
+    dialog:SetFrameLevel(level or 200)
     ns.MakeDraggable(dialog)
     dialog:Hide()
     B.PanelBorder(dialog)

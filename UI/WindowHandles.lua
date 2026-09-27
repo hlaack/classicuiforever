@@ -4,9 +4,9 @@ local _, ns = ...
 -- anytime, Size and resets. Places (db.windowPos, UIParent units) and sizes (db.windowScale) are put back the frame after
 -- anyone moves the window, never inside the client's pass.
 
--- w, h: placeholder size before the window is first made; cut: right and bottom of a 384 x 512 frame its old art leaves
--- bare (the 1.x frame's hit rect); stripRight: title strip inset from the right; toggle: the option that holds its unlock
--- (the map's lock button and settings box); quests: the map, which its quest log pane widens.
+-- w, h: box before made; cut: a 384 x 512 old frame's bare edges; stripRight: strip inset; toggle: unlock option;
+-- quests: the map; section: heading; piece: laid by ns.LayPiece; ringKey: its angle, dragged round the minimap
+-- while ringIf is on; fixedIf: no drag while that is on; choice: an options radio group as a dropdown.
 local WINDOWS = {
     { key = "character", label = "Character", name = "CharacterFrame", w = 354, h = 467, cut = { 30, 45 } },
     { key = "professions", label = "Professions", name = "ProfessionsFrame", w = 550, h = 525 },
@@ -14,6 +14,9 @@ local WINDOWS = {
     { key = "questLog", label = "Quest log", name = "ForeverClassicUIQuestLog", w = 349, h = 437, cut = { 35, 75 } },
     { key = "map", label = "World map", name = "WorldMapFrame", w = 1035, h = 534, stripRight = 90, toggle = "mapUnlocked",
         quests = true },
+    { key = "calendar", label = "Calendar", name = "ForeverClassicUICalendarHome", w = 28, h = 28, section = "Minimap",
+        piece = true, ringKey = "calendarAngle", ringIf = "calendarRing", fixedIf = "calendarBehind", choice = "calendarSpot",
+        choiceLabel = "Mode" },
 }
 local SLOT_LEFT, SLOT_TOP = 0, 104
 local STRIP_H, STRIP_LEFT, STRIP_RIGHT = 24, 60, 30
@@ -44,6 +47,7 @@ local function Freed() return Clean("windowFree", ValidFlag) end
 local function Scales() return Clean("windowScale", ValidScale) end
 -- A saved size by window key, for a secure re-apply (the client fits a panel to 1 as it shows it).
 function ns.WindowScale(key) return Scales()[key] end
+function ns.WindowPlaced(key) return Places()[key] ~= nil end
 
 local function IsFree(entry)
     if entry.toggle then return ns.db[entry.toggle] == true end
@@ -84,6 +88,10 @@ local function OnScreen(entry, frame, k, left, top)
 end
 
 local PlaceAll
+
+-- A piece on the minimap ring drags round it: an angle, not a place.
+local function OnRing(entry) return entry.ringKey ~= nil and ns.db[entry.ringIf] == true end
+local function Fixed(entry) return entry.fixedIf ~= nil and ns.db[entry.fixedIf] == true end
 
 local function Apply(entry)
     local frame = _G[entry.name]
@@ -256,10 +264,19 @@ local handles = {}
 local mapOnly = false
 
 -- Back where the client or our slots put it: ours go back on the slots now, the client's on their next opening.
+local function Return(entry)
+    local frame = _G[entry.name]
+    if entry.piece then
+        if ns.LayPiece then ns.LayPiece(entry.key) end
+    elseif frame then
+        ns.ReturnClassicWindow(frame)
+    end
+end
+
 local function Reset(entry)
     Places()[entry.key] = nil
-    local frame = _G[entry.name]
-    if frame then ns.ReturnClassicWindow(frame) end
+    if entry.ringKey then ns.db[entry.ringKey] = nil end
+    Return(entry)
 end
 
 -- The client's map: 702 x 534, plus 333 for its quest log pane.
@@ -283,7 +300,7 @@ local function HandleRect(entry)
     local k = (frame and not full and Ratio(frame)) or Scales()[entry.key] or 1
     local w, h = PreviewSize(entry, frame)
     w, h = w * k, h * k
-    if pos then return pos[1], pos[2], w, h end
+    if pos and not OnRing(entry) then return pos[1], pos[2], w, h end
     if frame and not full and frame:IsShown() then
         local left, top = Plain(frame:GetLeft()), Plain(frame:GetTop())
         if left and top then return left * k, top * k, w, h end
@@ -314,6 +331,7 @@ local function DressHandles()
 end
 
 local DIALOG_H, VIEW_H, FREE_Y = 214, 34, -44
+local CONTROL_W = 200 -- floor: the size slider's width, which the choice dropdown matches (its longest row fits)
 -- The map's extra rows: its view switch over Movable anytime, Fade while moving under it.
 local MAP_ROWS = 2
 
@@ -327,12 +345,30 @@ local function Refresh()
     dialog.narrow:SetChecked(mapOnly)
     ns.SetPointOnce(dialog.check, "TOPLEFT", dialog, "TOPLEFT", 20, views and FREE_Y - VIEW_H or FREE_Y)
     dialog.check:SetChecked(IsFree(selected))
+    dialog.check:SetShown(not selected.piece)
     -- The map's fade is the addon's own setting (the game's mapFade), the same as in the options.
     dialog.fade:SetShown(views)
     dialog.fade:SetChecked(ns.db.mapFade == true)
-    ns.SetPointOnce(dialog.sizeLabel, "TOPLEFT", views and dialog.fade or dialog.check, "BOTTOMLEFT", 0, -4)
-    dialog.reset:SetEnabled(Places()[key] ~= nil)
-    dialog.resize:SetEnabled(Scales()[key] ~= nil)
+    local choice = selected.choice ~= nil
+    dialog.choice:SetShown(choice)
+    if choice then
+        dialog.choice.label:SetText(selected.choiceLabel)
+        dialog.choice.dropdown:GenerateMenu()
+    end
+    if selected.piece then
+        -- Rows from those shown: the choice, then size.
+        if choice then
+            ns.SetPointOnce(dialog.choice, "TOPLEFT", dialog, "TOPLEFT", 20, FREE_Y)
+            ns.SetPointOnce(dialog.sizeLabel, "TOPLEFT", dialog.choice, "BOTTOMLEFT", 0, -4)
+        else
+            ns.SetPointOnce(dialog.sizeLabel, "TOPLEFT", dialog, "TOPLEFT", 20, FREE_Y)
+        end
+        dialog:SetHeight(choice and DIALOG_H or DIALOG_H - VIEW_H)
+    else
+        ns.SetPointOnce(dialog.sizeLabel, "TOPLEFT", views and dialog.fade or dialog.check, "BOTTOMLEFT", 0, -4)
+    end
+    dialog.reset:SetEnabled(Places()[key] ~= nil or (OnRing(selected) and ns.db[selected.ringKey] ~= nil))
+    dialog.resize:SetEnabled(Scales()[key] ~= nil and not Fixed(selected))
     if dialog.InitSlider then dialog.InitSlider() end
 end
 
@@ -347,6 +383,49 @@ local function SetFree(entry, on)
     PlaceAll()
 end
 
+-- A choice's rows: its radio group's toggles, the label past "Calendar: " as the item's own words.
+local function ChoiceRows(group)
+    local rows = {}
+    for _, toggle in ipairs(ns.TOGGLES) do
+        if toggle.radio == group then
+            local text = toggle[2]:match(":%s*(.+)$") or toggle[2]
+            rows[#rows + 1] = { key = toggle[1], text = (text:gsub("^%l", string.upper)) }
+        end
+    end
+    return rows
+end
+
+-- The same switch as the options row: the options follow, and the item is laid again.
+local function PickChoice(key)
+    ns.db[key] = true
+    ns.ToggleChanged(key)
+    if selected then LayHandle(selected) end
+    Refresh()
+end
+
+local function ChoiceRow(dialog)
+    local row = CreateFrame("Frame", nil, dialog)
+    row:SetSize(343, 32)
+    local label = row:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
+    label:SetSize(100, 32)
+    label:SetJustifyH("LEFT")
+    label:SetPoint("LEFT", row, "LEFT", 0, 0)
+    row.label = label
+    local dropdown = CreateFrame("DropdownButton", nil, row, "WowStyle1DropdownTemplate")
+    dropdown:SetWidth(CONTROL_W)
+    dropdown:SetPoint("LEFT", label, "RIGHT", 5, 0)
+    -- The old drop down box, as the settings window's, not the client's bronze one.
+    ns.SkinDropdown(dropdown)
+    dropdown:SetupMenu(function(_, root)
+        if not (selected and selected.choice) then return end
+        for _, choice in ipairs(ChoiceRows(selected.choice)) do
+            root:CreateRadio(choice.text, function(key) return ns.db[key] == true end, PickChoice, choice.key)
+        end
+    end)
+    row.dropdown = dropdown
+    return row
+end
+
 local function Percent(value) return string.format("%d%%", value) end
 local function SizeValues()
     local scale = selected and Scales()[selected.key] or 1
@@ -359,7 +438,10 @@ local function OnSize(value)
     local scale = math.max(0.5, math.min(1.5, value / 100))
     Scales()[selected.key] = math.abs(scale - 1) > 0.001 and scale or nil
     PlaceAll()
+    -- A piece at its own spot keeps that spot's middle as it grows.
+    if selected.piece and ns.LayPiece then ns.LayPiece(selected.key) end
     LayHandle(selected)
+    if dialog then dialog.resize:SetEnabled(Scales()[selected.key] ~= nil) end
 end
 
 -- The map's placeholder width.
@@ -375,7 +457,7 @@ local function ViewCheck(parent, text, x, only)
     check:SetSize(30, 30)
     check:SetPoint("LEFT", parent, "LEFT", x, 0)
     ns.EditModeCheck(check)
-    local label = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
+    local label = check:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
     label:SetPoint("LEFT", check, "RIGHT", 4, 0)
     label:SetText(text)
     check:SetScript("OnClick", function() PickView(only) end)
@@ -406,12 +488,14 @@ local function Dialog()
     check:SetSize(30, 30)
     check:SetPoint("TOPLEFT", dialog, "TOPLEFT", 20, FREE_Y)
     ns.EditModeCheck(check)
-    local label = dialog:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
+    -- On the check itself, so it hides with it (a piece has no Movable anytime row).
+    local label = check:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
     label:SetPoint("LEFT", check, "RIGHT", 4, 0)
     label:SetText("Movable anytime, by its title bar")
     check:SetScript("OnClick", function(self) SetFree(selected, self:GetChecked() and true or false) end)
     ns.AttachTip(check, FREE_TIP)
     dialog.check = check
+    dialog.choice = ChoiceRow(dialog)
     local fade = CreateFrame("CheckButton", nil, dialog, "UICheckButtonTemplate")
     fade:SetSize(30, 30)
     fade:SetPoint("TOPLEFT", check, "BOTTOMLEFT", 0, -4)
@@ -432,9 +516,11 @@ local function Dialog()
     size:SetJustifyH("LEFT")
     size:SetPoint("TOPLEFT", check, "BOTTOMLEFT", 0, -4)
     size:SetText(HUD_EDIT_MODE_SETTING_MICRO_MENU_SIZE or "Size")
-    local slider, formatters = B.StepperSlider(dialog, 200, size, 5, Percent)
+    local slider, formatters = B.StepperSlider(dialog, CONTROL_W, size, 5, Percent)
     if slider then
-        dialog.InitSlider = B.GuardedSlider(slider, SizeValues, OnSize, { formatters = formatters, owner = dialog })
+        -- Greyed while the piece is fixed (the calendar behind the day/night: sized by the icon).
+        dialog.InitSlider = B.GuardedSlider(slider, SizeValues, OnSize, { formatters = formatters, owner = dialog,
+            enabled = function() return not (selected and Fixed(selected)) end, label = size })
     end
     dialog.reset = B.EditDialogReset(dialog, function()
         Reset(selected)
@@ -455,14 +541,27 @@ local function Dialog()
     return dialog
 end
 
+local DIALOG_GAP = 8
+
 local function Select(entry)
     selected = entry
     local d = Dialog()
     local handle = handles[entry.key]
-    local right, top, bottom = Plain(handle:GetRight()), Plain(handle:GetTop()), Plain(handle:GetBottom())
-    -- Placed once: hung on the placeholder, it moved with each size step under the slider's hand.
-    if right and top and bottom then
-        ns.SetPointOnce(d, "LEFT", UIParent, "BOTTOMLEFT", right + 8, (top + bottom) / 2)
+    local left, right = Plain(handle:GetLeft()), Plain(handle:GetRight())
+    local top, bottom = Plain(handle:GetTop()), Plain(handle:GetBottom())
+    -- Placed on its first open only, then it stays where it is or is dragged, as the client's settings dialog does.
+    if left and right and top and bottom and d:GetNumPoints() == 0 then
+        -- Beside the box on the side with room, else under or over it: never on it (the clamp pushed it back on).
+        local w, screenW = d:GetWidth(), UIParent:GetWidth()
+        if right + DIALOG_GAP + w <= screenW then
+            ns.SetPointOnce(d, "LEFT", UIParent, "BOTTOMLEFT", right + DIALOG_GAP, (top + bottom) / 2)
+        elseif left - DIALOG_GAP - w >= 0 then
+            ns.SetPointOnce(d, "RIGHT", UIParent, "BOTTOMLEFT", left - DIALOG_GAP, (top + bottom) / 2)
+        elseif bottom - DIALOG_GAP - d:GetHeight() >= 0 then
+            ns.SetPointOnce(d, "TOP", UIParent, "BOTTOMLEFT", (left + right) / 2, bottom - DIALOG_GAP)
+        else
+            ns.SetPointOnce(d, "BOTTOM", UIParent, "BOTTOMLEFT", (left + right) / 2, top + DIALOG_GAP)
+        end
     end
     d:Show()
     DressHandles()
@@ -471,8 +570,26 @@ end
 
 local function HandleDown(self) dragged[self] = nil end
 
+-- Round the ring: the angle follows the cursor each frame and the piece is laid there, its box with it.
+local ringJob
+local function RingStep(job)
+    local entry = job.entry
+    if not (entry and ns.MinimapCursorAngle) then return end
+    ns.db[entry.ringKey] = ns.MinimapCursorAngle()
+    Return(entry)
+    LayHandle(entry)
+end
+
 local function HandleDragStart(self)
     dragged[self] = true
+    if Fixed(self.entry) then return end
+    if OnRing(self.entry) then
+        ringJob = ringJob or ns.Sched.OnFrame(CreateFrame("Frame"), { name = "windows.ringDrag", every = 0, awake = false,
+            fn = RingStep })
+        ringJob.entry = self.entry
+        ringJob:Wake()
+        return
+    end
     self:StartMoving()
 end
 
@@ -483,8 +600,19 @@ end
 -- A drop gives the window its place at once.
 local function HandleDropped(self)
     local entry = self.entry
+    if ringJob and ringJob.entry == entry then
+        ringJob:Sleep()
+        ringJob.entry = nil
+        LayHandle(entry)
+        if selected == entry then Refresh() end
+        return
+    end
     local left, top = Plain(self:GetLeft()), Plain(self:GetTop())
     if not (left and top) then return end
+    if Fixed(entry) then
+        LayHandle(entry)
+        return
+    end
     Places()[entry.key] = { left, top }
     LayHandle(entry)
     PlaceAll()
@@ -529,7 +657,7 @@ end
 
 -- Shared with UI/WindowsEditMode.lua, the mode window around these placeholders.
 ns.windowEdit = {
-    WINDOWS = WINDOWS, Clean = Clean, ValidFlag = ValidFlag, Places = Places, Scales = Scales, Freed = Freed,
+    WINDOWS = WINDOWS, Return = Return, Clean = Clean, ValidFlag = ValidFlag, Places = Places, Scales = Scales, Freed = Freed,
     Ratio = Ratio, PlaceAll = PlaceAll, LayHandle = LayHandle, Refresh = Refresh,
     ShowHandle = ShowHandle,
     HideDialog = function() if dialog then dialog:Hide() end end,
