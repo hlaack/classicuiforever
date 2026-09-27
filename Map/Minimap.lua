@@ -47,6 +47,8 @@ local TRACK_BORDER = { layer = "ARTWORK", w = TRACK_RING, h = TRACK_RING, point 
 local TRACK_EVENTS = { "MINIMAP_UPDATE_TRACKING", "SPELLS_CHANGED", "PLAYER_ENTERING_WORLD" }
 
 local function TrackingOn() return MM.active and ns.db and ns.db.classicTracking ~= false end
+local CALENDAR_SCALE = 0.7 -- under the day/night, inside the cluster's edge
+local function CalendarOn() return not (ns.db and ns.db.minimapCalendar == false) end
 
 local function ActiveTrackingSpell()
     if not (C_Minimap and C_Minimap.GetNumTrackingTypes and C_Minimap.GetTrackingInfo) then return nil end
@@ -285,16 +287,17 @@ local function Layout()
         end
     end
 
-    -- Mail on the upper right of the map.
+    -- Mail on the upper right of the map, a spot lower while the calendar stands under the day/night.
     local indicator = cluster.IndicatorFrame
+    local mailY = (cluster.DielFrame and CalendarOn()) and -70 or -37
     if indicator then
         indicator:SetParent(cluster)
         indicator:SetFrameLevel(above)
         indicator:SetSize(33, 33)
-        ns.SetPointOnce(indicator, "TOPRIGHT", map, "TOPRIGHT", 24, -37)
+        ns.SetPointOnce(indicator, "TOPRIGHT", map, "TOPRIGHT", 24, mailY)
         if indicator.MailFrame then
             indicator.MailFrame:SetSize(33, 33)
-            ns.SetPointOnce(indicator.MailFrame, "TOPRIGHT", map, "TOPRIGHT", 24, -37)
+            ns.SetPointOnce(indicator.MailFrame, "TOPRIGHT", map, "TOPRIGHT", 24, mailY)
             ns.DressNew(indicator.MailFrame, "trackingBorder", MAIL_RING)
             if MiniMapMailIcon then
                 MiniMapMailIcon:SetTexture("Interface\\Icons\\INV_Letter_15")
@@ -308,15 +311,23 @@ local function Layout()
         end
     end
 
-    -- Day/night: Forever's cycle frame or the calendar button, top right.
-    if cluster.DielFrame then
-        ns.SetPointOnce(cluster.DielFrame, "TOPRIGHT", map, "TOPRIGHT", 20, -2)
+    -- Day/night top right; the calendar under it on the ring (it hid behind it), or in its spot without one.
+    local diel = cluster.DielFrame
+    if diel then
+        ns.SetPointOnce(diel, "TOPRIGHT", map, "TOPRIGHT", 20, -2)
     end
     if GameTimeFrame then
         GameTimeFrame:SetParent(map)
         GameTimeFrame:SetFrameLevel(above)
         GameTimeFrame:SetSize(40, 40)
-        ns.SetPointOnce(GameTimeFrame, "TOPRIGHT", map, "TOPRIGHT", 20, -2)
+        if diel then
+            GameTimeFrame:SetScale(CALENDAR_SCALE)
+            ns.SetPointOnce(GameTimeFrame, "TOPRIGHT", map, "TOPRIGHT", 16 / CALENDAR_SCALE, -46 / CALENDAR_SCALE)
+        else
+            GameTimeFrame:SetScale(1)
+            ns.SetPointOnce(GameTimeFrame, "TOPRIGHT", map, "TOPRIGHT", 20, -2)
+        end
+        GameTimeFrame:SetShown(CalendarOn())
         GameTimeFrame:SetHitRectInsets(6, 0, 5, 10)
         ns.SkinCalendar()
     end

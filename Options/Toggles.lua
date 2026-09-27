@@ -92,6 +92,7 @@ ns.TOGGLES = {
 
     { "minimap", "Minimap", "The round 1.x minimap with the zone name on top and the old tracking, zoom, mail and clock spots.", group = "Minimap and chat" },
     { "classicTracking", "Tracking icon", "Your tracking spell's icon in a ring on the minimap, as in classic. Right-click it to stop tracking.", parent = "minimap" },
+    { "minimapCalendar", "Calendar button", "The calendar button with the day's date, under the day and night icon. Off hides it.", parent = "minimap", search = "date events" },
     { "minimapButton", "Options button", "A button on the minimap ring that opens these options. Drag it around the ring." },
     { "minimapCollector", "Collect addon buttons", "The other addons' minimap buttons gathered behind one button on the ring; click it for a grid of them. Drag it around the ring.", search = "minimap icons bag" },
     { "classicChat", "Chat buttons", "The chat buttons in one column down the chat's left, as in 1.x. The scroll bar goes; arrows and the wheel scroll." },

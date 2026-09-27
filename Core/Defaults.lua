@@ -72,6 +72,7 @@ ns.DB_DEFAULTS = {
     barsNoteOff = false,
     minimap = true,
     classicTracking = true,
+    minimapCalendar = true,
     minimapButton = true,
     minimapCollector = false,
     hideLatencyBar = false,
