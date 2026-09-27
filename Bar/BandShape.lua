@@ -100,7 +100,9 @@ local function BandPlan(microOn, bagsOn, bagsFirst, region)
         end
         plan.microEnd = x
         local before = x
-        x = Tail(plan, x, false, bagsOn)
+        -- The row ends on a post (the bag sheet's) and the section starts past it, as 1.x drew them.
+        x = Tail(plan, x + POST_W, true, bagsOn)
+        if plan.tailStart then plan.microPost = before else x = before end
         -- Last on the band, the section's own post ends it; a micro region standing last leaves room for the end post.
         plan.ownEnd = plan.tailStart ~= nil and not bagsOn
         if bagsOn then
@@ -182,6 +184,7 @@ function B.Segments()
         list[#list + 1] = { half, head, 3, 0, head / 256, "bar" }
         if third > head then list[#list + 1] = { half + head, third - head, 3, head / 256, third / 256, "micro" } end
         if region > 256 then list[#list + 1] = { half + 256, region - 256, 4, 0, (region - 256) / 256, "micro" } end
+        if plan.microPost then list[#list + 1] = { plan.microPost, POST_W, 4, POST_U / 256, (POST_U + POST_W) / 256, "micro" } end
     elseif not plan.microFirst and not plan.noPages then
         local room = plan.pageRoom or PAGE_ROOM
         list[#list + 1] = { half, room, 3, 0, room / 256, "bar" }
