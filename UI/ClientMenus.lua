@@ -120,7 +120,8 @@ end
 -- The client clamped the menu as it opened, before our rim; new insets don't re-clamp, so shift it by what sticks out.
 local function OnScreen(frame, rim)
     local left, right, top, bottom = rim:GetLeft(), rim:GetRight(), rim:GetTop(), rim:GetBottom()
-    if not (left and right and top and bottom) then return end
+    -- A menu on a secret-placed frame has secret edges: left where the client clamped it.
+    if not (left and right and top and bottom) or ns.AnySecret(left, right, top, bottom) then return end
     local k = rim:GetEffectiveScale() / UIParent:GetEffectiveScale()
     local width, height = UIParent:GetWidth(), UIParent:GetHeight()
     local dx, dy = 0, 0
@@ -128,7 +129,7 @@ local function OnScreen(frame, rim)
     if right * k > width then dx = width - right * k elseif left * k < 0 then dx = -left * k end
     if dx == 0 and dy == 0 then return end
     local point, rel, relPoint, x, y = frame:GetPoint(1)
-    if not point then return end
+    if not point or ns.AnySecret(x, y) then return end
     local f = UIParent:GetEffectiveScale() / frame:GetEffectiveScale()
     frame:SetPoint(point, rel, relPoint, (x or 0) + dx * f, (y or 0) + dy * f)
 end
@@ -147,7 +148,7 @@ local function Dress(frame)
     if not rim:IsShown() then rim:Show() end
     -- The client clamps the menu frame and resets its insets per open; our rim hangs out, so the clamp counts it.
     local ok, l, r, t, b = pcall(frame.GetClampRectInsets, frame)
-    if not ok or l ~= -7 or r ~= 7 or t ~= 6 or b ~= -1 then pcall(frame.SetClampRectInsets, frame, -7, 7, 6, -1) end
+    if not ok or ns.AnySecret(l, r, t, b) or l ~= -7 or r ~= 7 or t ~= 6 or b ~= -1 then pcall(frame.SetClampRectInsets, frame, -7, 7, 6, -1) end
     OnScreen(frame, rim)
 end
 
