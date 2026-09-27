@@ -39,14 +39,14 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
-              "DRAGPOINT", "CVARREG")
+              "DRAGPOINT", "CVARREG", "CHECKLABEL")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -126,6 +126,8 @@ KEPT_API = frozenset((
 ))
 
 FIX = {
+    "CHECKLABEL": "make the label on the check itself (check:CreateFontString), so it hides with it; a dialog that "
+                  "hides a row must not leave its label behind for the next row to land on (skill cuif-edit-mode-items)",
     "DRAGPOINT": "read the frame's place (GetLeft/GetTop/GetBottom) before StopMovingOrSizing, which can leave a frame "
                  "others hang on with no anchor; ns.MakeDraggable (UI/Dialogs.lua) already does",
     "CVAR": "our settings through ns.SetCVar and only on a player action; the player's own value or a hand-back "
@@ -296,6 +298,7 @@ NOT_A_CALL = {"and", "or", "not", "if", "elseif", "while", "until", "return", "i
               "type", "assert"}
 
 MESSAGES = {
+    "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",
     "CVARREAD": "raw CVar read outside the ns.GetCVar / ns.GetCVarBool wrappers",
@@ -959,6 +962,28 @@ def throttle_frame_hits(lx):
     return found
 
 
+CHECK_MADE = re.compile(r"\b(\w+)\s*=\s*CreateFrame\(\s*\"CheckButton\"")
+LABEL_MADE = re.compile(r"\blocal\s+(\w+)\s*=\s*([\w.]+):CreateFontString\(")
+LABEL_BESIDE = re.compile(r"\b(\w+):SetPoint\(\s*\"LEFT\"\s*,\s*([\w.]+)\s*,\s*\"RIGHT\"")
+
+
+def check_label_hits(lx):
+    """A font string set beside a check button (LEFT to its RIGHT) but made on another frame."""
+    found = set()
+    checks, labels = set(), {}
+    for no, line in enumerate(lx.keep, 1):
+        for m in CHECK_MADE.finditer(line):
+            checks.add(m.group(1))
+        for m in LABEL_MADE.finditer(line):
+            labels[m.group(1)] = (m.group(2), no)
+        for m in LABEL_BESIDE.finditer(line):
+            label, beside = m.group(1), m.group(2)
+            made = labels.get(label)
+            if made and beside in checks and made[0] != beside:
+                found.add(("CHECKLABEL", made[1]))
+    return found
+
+
 def drag_point_hits(lx, funcs):
     """GetPoint read after StopMovingOrSizing in the same function body (callbacks inside it excluded)."""
     found = set()
@@ -1014,6 +1039,7 @@ def pattern_hits(path, lx, funcs):
             found.add(("ONUPDATE", no))
     found |= structure_hits(path, lx)
     found |= drag_point_hits(lx, funcs)
+    found |= check_label_hits(lx)
     found |= cvar_login_hits(lx, funcs)
     if not allowed("THROTTLEFRAME", path):
         found |= throttle_frame_hits(lx)
