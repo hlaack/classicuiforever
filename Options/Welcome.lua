@@ -8,10 +8,10 @@ local WIDTH = 420
 local CURSEFORGE_URL = "https://www.curseforge.com/projects/1700043"
 local GITHUB_URL = "https://github.com/wowaddonmaker/classicuiforever/issues"
 
-local BODY = "This addon is a work in progress. Some pieces are still being measured against the old interface and will be finished before launch."
-    .. "\n\nIf something looks wrong, say so. Every report helps. Reach us on CurseForge or on GitHub issues; the buttons below give you the address to copy."
-    .. "\n\nAs in classic, there is no professions button (professions open from the spellbook) and the reagent bag is a round button on hover. Both can be changed under Classic bar in the settings."
-    .. "\n\nAny piece that misbehaves can be switched back to the modern look in the options window."
+local BODY = "ClassicUI Forever brings back the look of the original interface. It is still a work in progress, and some pieces are still being matched to the old one."
+    .. "\n\nIf something looks wrong or stops working, please report it on CurseForge or GitHub. The buttons below give you the address to copy."
+    .. "\n\nClassic had no professions button and no reagent bag. Here, professions open from the spellbook, and the reagent bag shows as a small round button when you hover over your bags. Both can be changed under Classic bar in the options."
+    .. "\n\nAny piece that misbehaves can be switched back to the game's own look in the options."
 
 local OnForever = ns.OnForever
 
@@ -142,7 +142,7 @@ local WHATSNEW = {
         { "Fixes", "Tabs take the mouse on the tab itself, a profession cast from the spellbook closes the book in a fight, and the loot window's header is clean. Details in the full changelog." },
     },
     { id = 3, version = "0.11.1",
-        { "Classic bar pieces", "As in classic, the professions button is off the micro menu (professions open from the spellbook) and the reagent bag is a round button on hover, so bars 2 and 3 fit between the gryphons. Both are rows under Classic bar in the options." },
+        { "Classic bar pieces", "Classic had no professions button and no reagent bag, so the professions button is off the micro menu (professions open from the spellbook) and the reagent bag is a small round button on hover. Bars 2 and 3 fit between the gryphons again. Both are rows under Classic bar in the options." },
     },
     { id = 2, version = "0.11.0",
         { "Windows edit mode", "Tick Windows in edit mode to move and resize the character sheet, spellbook, talents, quest log, professions and map." },
@@ -231,7 +231,7 @@ function ns.ShowWhatsNew()
 end
 
 -- For players coming from 0.11.0 (list 2), whose bar pieces flipped back with 0.11.1.
-local BARS_NOTE = "0.11.0 put a professions button and a full-size reagent bag on the classic bar, which made it too wide for bars 2 and 3. 0.11.1 goes back to the classic pieces: no professions button (professions open from the spellbook) and a round reagent bag on hover."
+local BARS_NOTE = "0.11.0 put a professions button and a full-size reagent bag on the classic bar, which made it too wide for bars 2 and 3. 0.11.1 takes both off the bar, as classic had neither: professions open from the spellbook, and the reagent bag is a small round button on hover."
     .. "\n\nIf you moved bars 2 and 3 to work around it, they now sit centred between the gryphons on their own: select one in edit mode and press Reset To Default Position, or drag it back. Every piece can be switched either way under Classic bar in the addon settings."
 
 local barsWindow
