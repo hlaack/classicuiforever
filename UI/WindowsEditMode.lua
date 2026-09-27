@@ -5,6 +5,7 @@ local _, ns = ...
 
 local W = ns.windowEdit
 local WINDOWS, Clean, ValidFlag, Places, Scales, Freed = W.WINDOWS, W.Clean, W.ValidFlag, W.Places, W.Scales, W.Freed
+local Set, DialogKeys = W.Set, W.DialogKeys
 local Ratio, PlaceAll, LayHandle, Refresh = W.Ratio, W.PlaceAll, W.LayHandle, W.Refresh
 local ShowHandle, Return = W.ShowHandle, W.Return
 local Plain = ns.Safe
@@ -53,6 +54,8 @@ local function Snapshot()
     for _, entry in ipairs(WINDOWS) do
         if entry.ringKey then snap.ring[entry.key] = ns.db[entry.ringKey] or false end
     end
+    snap.set = {}
+    for _, key in ipairs(DialogKeys()) do snap.set[key] = ns.db[key] or false end
     return snap
 end
 
@@ -64,6 +67,9 @@ end
 local function Dirty()
     if not saved then return false end
     if (ns.db.mapUnlocked == true) ~= saved.map then return true end
+    for _, key in ipairs(DialogKeys()) do
+        if (ns.db[key] or false) ~= saved.set[key] then return true end
+    end
     for _, entry in ipairs(WINDOWS) do
         if entry.ringKey and (ns.db[entry.ringKey] or false) ~= saved.ring[entry.key] then return true end
     end
@@ -83,7 +89,7 @@ local function Restore(snap, apply)
     local places, scales, freed = Places(), Scales(), Freed()
     for _, entry in ipairs(WINDOWS) do
         if entry.ringKey then
-            ns.db[entry.ringKey] = snap.ring[entry.key] or nil
+            Set(entry.ringKey, snap.ring[entry.key] or nil)
             if apply then Return(entry) end
         end
     end
@@ -97,9 +103,17 @@ local function Restore(snap, apply)
         if apply and frame and placed and not places[key] then Return(entry) end
     end)
     if (ns.db.mapUnlocked == true) ~= snap.map then
-        ns.db.mapUnlocked = snap.map
+        Set("mapUnlocked", snap.map)
         if apply then ns.ToggleChanged("mapUnlocked") end
     end
+    local changed = {}
+    for _, key in ipairs(DialogKeys()) do
+        if (ns.db[key] or false) ~= snap.set[key] then
+            Set(key, snap.set[key] or nil)
+            changed[#changed + 1] = key
+        end
+    end
+    if apply and #changed > 0 then ns.TogglesChanged(changed) end
     if not apply then return end
     PlaceAll()
     for _, entry in ipairs(WINDOWS) do LayHandle(entry) end

@@ -45,6 +45,38 @@ local function Places() return Clean("windowPos", ValidSpot) end
 
 local function Freed() return Clean("windowFree", ValidFlag) end
 local function Scales() return Clean("windowScale", ValidScale) end
+
+-- A choice's rows: its radio group's toggles, the label past "Calendar: " as the item's own words.
+local function ChoiceRows(group)
+    local rows = {}
+    for _, toggle in ipairs(ns.TOGGLES) do
+        if toggle.radio == group then
+            local text = toggle[2]:match(":%s*(.+)$") or toggle[2]
+            rows[#rows + 1] = { key = toggle[1], text = (text:gsub("^%l", string.upper)) }
+        end
+    end
+    return rows
+end
+
+-- Settings the item dialogs write beyond places, sizes and unlocks: Save lights for them, Revert puts them back.
+local function DialogKeys()
+    local keys = { "mapFade" }
+    for _, entry in ipairs(WINDOWS) do
+        if entry.choice then
+            for _, row in ipairs(ChoiceRows(entry.choice)) do keys[#keys + 1] = row.key end
+        end
+    end
+    return keys
+end
+
+-- Every setting this mode writes goes through here (checker EDITSAVE); a key outside Save and Revert is an error.
+local function Set(key, value)
+    local covered = key == "mapUnlocked"
+    for _, entry in ipairs(WINDOWS) do covered = covered or key == entry.toggle or key == entry.ringKey end
+    for _, k in ipairs(DialogKeys()) do covered = covered or k == key end
+    if not covered then geterrorhandler()("windows edit mode: " .. tostring(key) .. " is outside Save and Revert") end
+    rawset(ns.db, key, value)
+end
 -- A saved size by window key, for a secure re-apply (the client fits a panel to 1 as it shows it).
 function ns.WindowScale(key) return Scales()[key] end
 function ns.WindowPlaced(key) return Places()[key] ~= nil end
@@ -234,7 +266,7 @@ MapLock = function()
         lock:SetPoint("TOPRIGHT", map, "TOPRIGHT", -56, -2)
     end
     lock:SetScript("OnClick", function()
-        ns.db.mapUnlocked = not ns.db.mapUnlocked
+        Set("mapUnlocked", not ns.db.mapUnlocked)
         ns.ToggleChanged("mapUnlocked")
     end)
     ns.AttachTip(lock, LOCK_TIP)
@@ -275,7 +307,7 @@ end
 
 local function Reset(entry)
     Places()[entry.key] = nil
-    if entry.ringKey then ns.db[entry.ringKey] = nil end
+    if entry.ringKey then Set(entry.ringKey, nil) end
     Return(entry)
 end
 
@@ -375,7 +407,7 @@ end
 -- Unlock: the map's goes through its option (lock button and settings box follow); the rest are kept here.
 local function SetFree(entry, on)
     if entry.toggle then
-        ns.db[entry.toggle] = on
+        Set(entry.toggle, on)
         ns.ToggleChanged(entry.toggle)
     else
         Freed()[entry.key] = on or nil
@@ -383,21 +415,9 @@ local function SetFree(entry, on)
     PlaceAll()
 end
 
--- A choice's rows: its radio group's toggles, the label past "Calendar: " as the item's own words.
-local function ChoiceRows(group)
-    local rows = {}
-    for _, toggle in ipairs(ns.TOGGLES) do
-        if toggle.radio == group then
-            local text = toggle[2]:match(":%s*(.+)$") or toggle[2]
-            rows[#rows + 1] = { key = toggle[1], text = (text:gsub("^%l", string.upper)) }
-        end
-    end
-    return rows
-end
-
 -- The same switch as the options row: the options follow, and the item is laid again.
 local function PickChoice(key)
-    ns.db[key] = true
+    Set(key, true)
     ns.ToggleChanged(key)
     if selected then LayHandle(selected) end
     Refresh()
@@ -505,7 +525,7 @@ local function Dialog()
     fadeLabel:SetPoint("LEFT", fade, "RIGHT", 4, 0)
     fadeLabel:SetText("Fade while moving")
     fade:SetScript("OnClick", function(self)
-        ns.db.mapFade = self:GetChecked() and true or false
+        Set("mapFade", self:GetChecked() and true or false)
         ns.ToggleChanged("mapFade")
     end)
     ns.AttachTip(fade, FADE_TIP)
@@ -575,7 +595,7 @@ local ringJob
 local function RingStep(job)
     local entry = job.entry
     if not (entry and ns.MinimapCursorAngle) then return end
-    ns.db[entry.ringKey] = ns.MinimapCursorAngle()
+    Set(entry.ringKey, ns.MinimapCursorAngle())
     Return(entry)
     LayHandle(entry)
 end
@@ -659,7 +679,7 @@ end
 ns.windowEdit = {
     WINDOWS = WINDOWS, Return = Return, Clean = Clean, ValidFlag = ValidFlag, Places = Places, Scales = Scales, Freed = Freed,
     Ratio = Ratio, PlaceAll = PlaceAll, LayHandle = LayHandle, Refresh = Refresh,
-    ShowHandle = ShowHandle,
+    ShowHandle = ShowHandle, Set = Set, DialogKeys = DialogKeys,
     HideDialog = function() if dialog then dialog:Hide() end end,
 }
 

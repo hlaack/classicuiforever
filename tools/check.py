@@ -39,14 +39,14 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "EDITSAVE", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
-              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51")
+              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -128,6 +128,8 @@ KEPT_API = frozenset((
 FIX = {
     "LUA51": "WoW runs Lua 5.1: no statement starting with ';', no goto or labels, no // or bitwise operators "
              "(the luac 5.4 here accepts them; the game refuses the whole file)",
+    "EDITSAVE": "write it with Set(key, value) (UI/WindowHandles.lua), and add a new key to DialogKeys, so Save lights "
+                "and Revert puts it back",
     "CHECKLABEL": "make the label on the check itself (check:CreateFontString), so it hides with it; a dialog that "
                   "hides a row must not leave its label behind for the next row to land on (skill cuif-edit-mode-items)",
     "DRAGPOINT": "read the frame's place (GetLeft/GetTop/GetBottom) before StopMovingOrSizing, which can leave a frame "
@@ -248,6 +250,9 @@ LINE_PATTERNS = {
 }
 # SYSBASE in Bar/: bar, frame and piece there are the band's edit mode systems.
 SYSBASE_BAND = re.compile(r"(?<![\w.])(?:bar|frame|piece)\s*:\s*(?:SetPoint|ClearAllPoints|SetScale|SetAllPoints)\s*\(")
+# The windows edit mode: a setting written straight to ns.db skips its Save light and Revert (Set is the way).
+EDITSAVE_FILES = ("UI/WindowHandles.lua", "UI/WindowsEditMode.lua")
+EDITSAVE_RX = re.compile(r"\bns\s*\.\s*db\s*(?:\.\s*\w+|\[[^\]]*\])\s*=(?!=)")
 # Plain matches per line, on code with strings kept (macro text, securecall names, art paths).
 KEEP_PATTERNS = {
     "CVAR": re.compile(r"[\"']\s*/console\b|[\"']SetCVar\w*[\"']"),
@@ -302,6 +307,7 @@ NOT_A_CALL = {"and", "or", "not", "if", "elseif", "while", "until", "return", "i
 
 MESSAGES = {
     "LUA51": "syntax WoW's Lua 5.1 refuses (the file would not load at all)",
+    "EDITSAVE": "a setting written straight to ns.db in the windows edit mode (Save never lights, Revert misses it)",
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",
@@ -1041,6 +1047,10 @@ def pattern_hits(path, lx, funcs):
     if not allowed("ONUPDATE", path):
         for no in onupdate_lines(lx):
             found.add(("ONUPDATE", no))
+    if path in EDITSAVE_FILES:
+        for no, line in enumerate(lx.blank, 1):
+            if EDITSAVE_RX.search(line):
+                found.add(("EDITSAVE", no))
     found |= structure_hits(path, lx)
     found |= drag_point_hits(lx, funcs)
     found |= check_label_hits(lx)
