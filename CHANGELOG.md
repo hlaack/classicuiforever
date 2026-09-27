@@ -2,6 +2,14 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.11.3] - 2026-09-26
+
+### Changed
+- The micro menu row ends on its own post before the latency bar and key ring, as the 1.x bar did.
+
+### Fixed
+- Stance, form and aura buttons take clicks again (the stance bar's frame sat over them on some characters since 0.11.0); the pet bar the same.
+
 ## [0.11.2] - 2026-09-26
 
 ### Fixed
