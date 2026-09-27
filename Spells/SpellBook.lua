@@ -320,25 +320,48 @@ local function ClearOldMacros()
     end
 end
 
--- Out of combat: shares the pool among the pet's entries and fills every copy missing.
+local function ActionIcon(slot)
+    local get = C_ActionBar and C_ActionBar.GetActionTexture or GetActionTexture
+    return get and get(slot)
+end
+
+-- A pool slot is ours to fill when empty or holding a pet action: nothing else lands on the stance pages without forms.
+local function PoolFree(slot, icons)
+    if not HasAction(slot) then return true end
+    local kind, _, sub = GetActionInfo(slot)
+    return sub == "pet" or kind == "petaction" or icons[ActionIcon(slot) or 0] == true
+end
+
+-- The slot already holds this entry.
+local function Holds(slot, e)
+    if not HasAction(slot) then return false end
+    local kind, id, sub = GetActionInfo(slot)
+    if sub == "pet" and e.spellID then return id == e.spellID end
+    return kind ~= "spell" and ActionIcon(slot) == e.icon
+end
+
+-- Out of combat: shares the pool among the pet's entries and fills every copy missing. Read from the slots
+-- themselves, never from saved settings: the copies live on the server, so a fresh install finds them too.
 local function SyncPetPool()
     if InCombatLockdown() then return end
     ClearOldMacros()
     wipe(petPool)
-    if not ns.char or GetNumShapeshiftForms() > 0 then return end
-    ns.char.petPool = ns.char.petPool or {}
-    local owned = ns.char.petPool
-    local entries = {}
+    if GetNumShapeshiftForms() > 0 then return end
+    local entries, icons = {}, {}
     for i = 1, PetSpellCount() do
         local info = C_SpellBook.GetSpellBookItemInfo(i, BANK_PET)
         local key = info and not info.isPassive and (info.actionID or info.spellID)
-        if key and not IsSecret(key) then entries[#entries + 1] = { slot = i, key = key } end
+        if key and not IsSecret(key) then
+            local icon = C_SpellBook.GetSpellBookItemTexture(i, BANK_PET) or info.iconID
+            entries[#entries + 1] = { slot = i, spellID = info.spellID, icon = icon }
+            if icon then icons[icon] = true end
+        end
     end
     -- No pet out: the copies stay for the next one.
     if #entries == 0 then return end
     local free = {}
     for slot = POOL_FIRST, POOL_LAST do
-        if owned[slot] or not HasAction(slot) then free[#free + 1] = slot end
+        if PoolFree(slot, icons) then free[#free + 1] = slot end
     end
     local copies = math.min(POOL_MAX, math.floor(#free / #entries))
     local want, n = {}, 0
@@ -358,16 +381,14 @@ local function SyncPetPool()
     for _, slot in ipairs(free) do
         local e = want[slot]
         if not e then
-            if owned[slot] and HasAction(slot) then
+            if HasAction(slot) then
                 PickupAction(slot)
                 ClearCursor()
             end
-            owned[slot] = nil
-        elseif owned[slot] ~= e.key or not HasAction(slot) then
+        elseif not Holds(slot, e) then
             C_SpellBook.PickupSpellBookItem(e.slot, BANK_PET)
             PlaceAction(slot)
             ClearCursor()
-            owned[slot] = HasAction(slot) and e.key or nil
         end
     end
 end
