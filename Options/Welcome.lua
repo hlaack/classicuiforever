@@ -128,6 +128,9 @@ end
 -- What's New: new features only (fixes are the changelog's, one button away), by version, newest first. A player gets
 -- the chat line once per new version, and the box shows only the versions since the one they saw last.
 local WHATSNEW = {
+    { id = 5, version = "0.11.4",
+        { "Fixes", "The group finder's new player friendly flag lines up with the role icons. Details in the full changelog." },
+    },
     { id = 4, version = "0.11.2",
         { "Fixes", "Tabs take the mouse on the tab itself, a profession cast from the spellbook closes the book in a fight, and the loot window's header is clean. Details in the full changelog." },
     },

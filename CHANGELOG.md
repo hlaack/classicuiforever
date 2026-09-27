@@ -2,6 +2,11 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.11.4] - 2026-09-27
+
+### Fixed
+- The group finder's new player friendly flag stands in the role row as a fourth role: same spacing and height as tank, healer and damage.
+
 ## [0.11.3] - 2026-09-26
 
 ### Changed
