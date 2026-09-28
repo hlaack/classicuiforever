@@ -348,6 +348,14 @@ local function UpdateUsable(btn)
         icon:SetVertexColor(1, 1, 1)
         return
     end
+    -- Pet commands and stances are no spells: the game calls them never usable.
+    if (btn.bank or state.bank) == BANK_PET then
+        local info = C_SpellBook.GetSpellBookItemInfo(btn.slot, BANK_PET)
+        if not info or (not IsSecret(info.spellID) and not info.spellID) then
+            icon:SetVertexColor(1, 1, 1)
+            return
+        end
+    end
     local ok, usable, noPower = pcall(C_SpellBook.IsSpellBookItemUsable, btn.slot, state.bank)
     if not ok or IsSecret(usable) or IsSecret(noPower) or usable then
         icon:SetVertexColor(1, 1, 1)
@@ -625,6 +633,8 @@ local function CreateBookTab(parent, i, prev)
     tab.Text:SetHeight(13)
     tab.Text:SetPoint("CENTER", tab, "CENTER", 0, 3)
     tab:SetFontString(tab.Text)
+    -- Gold unpicked, white picked (disabled); without the normal font a tab picked once stayed white.
+    tab:SetNormalFontObject(GameFontNormalSmall)
     tab:SetDisabledFontObject(GameFontHighlightSmall)
     ns.DressStates(tab, "sbTabUnselected", nil, i == 3 and "sbTab3Selected" or "sbTab1Selected", "sbTabHighlight", ADD_HL)
     tab:SetScript("OnClick", BookTab_OnClick)
