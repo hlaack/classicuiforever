@@ -42,17 +42,10 @@ local heldLine
 -- Secure drag from our own casting buttons: the wrap hands the game "spell, id" and the game picks it up itself,
 -- in a fight too (SecureHandlers PickupAny). Nothing of the client's spellbook is borrowed.
 local dragWrap = CreateFrame("Frame", nil, UIParent, "SecureHandlerBaseTemplate")
--- A pet's entry is no "spell" to the game: in a fight it drags from its pool (see Pet pool), out of combat from the book.
+-- A pet's entry is no "spell" to the game: it drags from the book out of combat (the plain drag).
 local DRAG_BODY = [[
     local id = self:GetAttribute("dragspell")
     if id then return "spell", id end
-    if not PlayerInCombat() then return end
-    local i, slot = 1, self:GetAttribute("pool1")
-    while slot do
-        if HasAction(slot) then return "action", slot end
-        i = i + 1
-        slot = self:GetAttribute("pool" .. i)
-    end
 ]]
 
 local function BookMacro()
@@ -295,104 +288,6 @@ local function CastID(info, bank)
     return info.actionID or info.spellID
 end
 
----------------------------------------------------------------------------
--- Pet pool
----------------------------------------------------------------------------
-
--- A fight's pickups of a pet action move it, so real copies wait on the stance pages' slots (unseen without forms),
--- filled from the book out of combat; the fight's drag takes the first copy still there.
-local POOL_FIRST, POOL_LAST, POOL_MAX = 73, 120, 6
-local PET_MACRO_TAG = "#fcuipet"
--- Pet book slot -> its pool slots, armed onto the pet buttons.
-local petPool = {}
-
--- Once: the macros an earlier build dragged go, highest index first (a delete shifts those above).
-local macrosCleared = false
-local function ClearOldMacros()
-    if macrosCleared then return end
-    macrosCleared = true
-    local consts = Constants and Constants.MacroConsts
-    local base = consts and consts.MAX_ACCOUNT_MACROS or 120
-    local _, perChar = GetNumMacros()
-    for i = base + (perChar or 0), base + 1, -1 do
-        local _, _, body = GetMacroInfo(i)
-        if body and body:find(PET_MACRO_TAG, 1, true) then DeleteMacro(i) end
-    end
-end
-
-local function ActionIcon(slot)
-    local get = C_ActionBar and C_ActionBar.GetActionTexture or GetActionTexture
-    return get and get(slot)
-end
-
--- A pool slot is ours to fill when empty or holding a pet action: nothing else lands on the stance pages without forms.
-local function PoolFree(slot, icons)
-    if not HasAction(slot) then return true end
-    local kind, _, sub = GetActionInfo(slot)
-    return sub == "pet" or kind == "petaction" or icons[ActionIcon(slot) or 0] == true
-end
-
--- The slot already holds this entry.
-local function Holds(slot, e)
-    if not HasAction(slot) then return false end
-    local kind, id, sub = GetActionInfo(slot)
-    if sub == "pet" and e.spellID then return id == e.spellID end
-    return kind ~= "spell" and ActionIcon(slot) == e.icon
-end
-
--- Out of combat: shares the pool among the pet's entries and fills every copy missing. Read from the slots
--- themselves, never from saved settings: the copies live on the server, so a fresh install finds them too.
-local function SyncPetPool()
-    if InCombatLockdown() then return end
-    ClearOldMacros()
-    wipe(petPool)
-    if GetNumShapeshiftForms() > 0 then return end
-    local entries, icons = {}, {}
-    for i = 1, PetSpellCount() do
-        local info = C_SpellBook.GetSpellBookItemInfo(i, BANK_PET)
-        local key = info and not info.isPassive and (info.actionID or info.spellID)
-        if key and not IsSecret(key) then
-            local icon = C_SpellBook.GetSpellBookItemTexture(i, BANK_PET) or info.iconID
-            entries[#entries + 1] = { slot = i, spellID = info.spellID, icon = icon }
-            if icon then icons[icon] = true end
-        end
-    end
-    -- No pet out: the copies stay for the next one.
-    if #entries == 0 then return end
-    local free = {}
-    for slot = POOL_FIRST, POOL_LAST do
-        if PoolFree(slot, icons) then free[#free + 1] = slot end
-    end
-    local copies = math.min(POOL_MAX, math.floor(#free / #entries))
-    local want, n = {}, 0
-    for _, e in ipairs(entries) do
-        local list = {}
-        for i = 1, copies do
-            list[i] = free[n + i]
-            want[free[n + i]] = e
-        end
-        n = n + copies
-        petPool[e.slot] = list
-    end
-    if GetCursorInfo() then
-        C_Timer.After(1, SyncPetPool)
-        return
-    end
-    for _, slot in ipairs(free) do
-        local e = want[slot]
-        if not e then
-            if HasAction(slot) then
-                PickupAction(slot)
-                ClearCursor()
-            end
-        elseif not Holds(slot, e) then
-            C_SpellBook.PickupSpellBookItem(e.slot, BANK_PET)
-            PlaceAction(slot)
-            ClearCursor()
-        end
-    end
-end
-
 -- Professions window pads that turn the book to their tab (ns.SpellBookTurnPad): { pad, pet, wrapped }.
 local turnPads = {}
 function ns.SpellBookTurnPad(pad, pet)
@@ -415,13 +310,8 @@ local function ArmSpell(btn, slot, bank)
         btn:SetAttribute("type1", nil)
         btn:SetAttribute("spell", nil)
     end
-    -- The secure drag takes our own spells by id and a pet's from its pool.
+    -- The secure drag takes our own spells by id.
     btn:SetAttribute("dragspell", bank == BANK_PLAYER and btn:GetAttribute("spell") or nil)
-    local pool = bank == BANK_PET and info and petPool[slot] or nil
-    for i = 1, math.max(btn.poolCount or 0, pool and #pool or 0) do
-        btn:SetAttribute("pool" .. i, pool and pool[i] or nil)
-    end
-    btn.poolCount = pool and #pool or 0
     -- A profession's spell opens its window: the book goes down with the cast, in a fight too (the click wrap).
     local trade = id ~= nil and ns.prof and ns.prof.OpensTrade and ns.prof.OpensTrade(info) or nil
     btn:SetAttribute("trade", trade and true or nil)
@@ -1322,8 +1212,6 @@ local function CreateBook()
         end
         pages.dirty = false
         f.tradeSig = TradeSignature()
-        -- The pool first: the pet pages arm with it.
-        SyncPetPool()
         local lines = {}
         local n = C_SpellBook.GetNumSpellBookSkillLines() or 0
         for i = 1, n do
@@ -1472,8 +1360,7 @@ local function CreateBook()
         rebuildQueued = true
         C_Timer.After(0.1, function()
             rebuildQueued = false
-            -- A fight's drags emptied pool slots: refilled at its end.
-            if self.Pages.dirty and not InCombatLockdown() then self:BuildPages() else SyncPetPool() end
+            if self.Pages.dirty and not InCombatLockdown() then self:BuildPages() end
             if self:IsShown() then self:Refresh() end
         end)
     end)
