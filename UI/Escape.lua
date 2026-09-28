@@ -37,6 +37,8 @@ escButton:RegisterForClicks("AnyDown", "AnyUp")
 escButton:SetAttribute("useOnKeyDown", false)
 escButton:SetAttribute("type", "macro")
 escButton:SetAttribute("macrotext", "")
+-- Escape binds to its key proxy: the close lands on the press, as the game's own does.
+ns.KeyProxy("ForeverClassicUIEscButton")
 
 -- A window opened in a fight by a secure opener (a key's button, a micro pad): Lua cannot bind Escape then, so the
 -- opener's click does and names the window (armed); the same opener again is its close and clears it, as do the
@@ -57,7 +59,7 @@ local ESC_ARM = [[
         return
     end
     control:SetAttribute("armed", name)
-    control:SetBindingClick(true, "ESCAPE", "ForeverClassicUIEscButton")
+    control:SetBindingClick(true, "ESCAPE", "ForeverClassicUIEscButtonKey")
     control:GetFrameRef("esc"):SetAttribute("macrotext", "/click ForeverClassicUISpellBookLayerOff\n/click ForeverClassicUIEscIdle")
 ]]
 -- name: the window the button opens and closes.
@@ -122,7 +124,7 @@ end
 -- shows a press reaching our button), a secure one does, in a fight too.
 local function EscBind()
     ClearOverrideBindings(escButton)
-    escHeader:Execute([[ self:ClearBindings() self:SetBindingClick(true, "ESCAPE", "ForeverClassicUIEscButton") ]])
+    escHeader:Execute([[ self:ClearBindings() self:SetBindingClick(true, "ESCAPE", "ForeverClassicUIEscButtonKey") ]])
 end
 local function EscUnbind()
     ClearOverrideBindings(escButton)

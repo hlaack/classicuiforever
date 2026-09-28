@@ -700,7 +700,7 @@ local function UpdateBinding()
     if not active then return end
     local key, second = GetBindingKey("TOGGLETALENTS")
     for _, k in ipairs({ key, second }) do
-        if k then SetOverrideBindingClick(bindButton, true, k, BIND_NAME, "LeftButton") end
+        if k then SetOverrideBindingClick(bindButton, true, k, ns.KeyProxy(BIND_NAME), "LeftButton") end
     end
 end
 

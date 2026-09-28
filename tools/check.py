@@ -39,14 +39,14 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "EDITSAVE", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
-              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE")
+              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -130,6 +130,8 @@ FIX = {
              "(the luac 5.4 here accepts them; the game refuses the whole file)",
     "EDITSAVE": "write it with Set(key, value) (UI/WindowHandles.lua), and add a new key to DialogKeys, so Save lights "
                 "and Revert puts it back",
+    "KEYUP": "bind the key to ns.KeyProxy(name) (Core/Util.lua): it acts on press, as the game's own windows do, and "
+             "clicks the button; a snippet's SetBindingClick names that proxy (name .. \"Key\")",
     "CHECKLABEL": "make the label on the check itself (check:CreateFontString), so it hides with it; a dialog that "
                   "hides a row must not leave its label behind for the next row to land on (skill cuif-edit-mode-items)",
     "DRAGPOINT": "read the frame's place (GetLeft/GetTop/GetBottom) before StopMovingOrSizing, which can leave a frame "
@@ -255,6 +257,7 @@ EDITSAVE_FILES = ("UI/WindowHandles.lua", "UI/WindowsEditMode.lua")
 EDITSAVE_RX = re.compile(r"\bns\s*\.\s*db\s*(?:\.\s*\w+|\[[^\]]*\])\s*=(?!=)")
 # Plain matches per line, on code with strings kept (macro text, securecall names, art paths).
 KEEP_PATTERNS = {
+    "KEYUP": re.compile(r"SetOverrideBindingClick\s*\((?![^\n]*ns\.KeyProxy\()|SetBindingClick\s*\([^\n]*[\"']\w*(?<!Key)[\"']\s*\)"),
     "CVAR": re.compile(r"[\"']\s*/console\b|[\"']SetCVar\w*[\"']"),
     "PANELMGR": re.compile(r"\bSetAttribute\b[^\n]*[\"']UIPanelLayout-"),
 }
@@ -308,6 +311,7 @@ NOT_A_CALL = {"and", "or", "not", "if", "elseif", "while", "until", "return", "i
 MESSAGES = {
     "LUA51": "syntax WoW's Lua 5.1 refuses (the file would not load at all)",
     "EDITSAVE": "a setting written straight to ns.db in the windows edit mode (Save never lights, Revert misses it)",
+    "KEYUP": "a key bound straight to a release-acting button (it opens on release; the game's windows on press)",
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",

@@ -69,6 +69,25 @@ local function RegisterOne(frame, event, unit1, unit2)
     return pcall(frame.RegisterEvent, frame, event)
 end
 
+-- The button a key binds to: acts on press (the game's key down setting, as its own windows) and clicks target, whose
+-- release action and chained /clicks stay as they are. Out of combat, once per target; returns its name.
+local keyProxies = {}
+function ns.KeyProxy(targetName)
+    local name = targetName .. "Key"
+    if keyProxies[name] then return name end
+    local target = _G[targetName]
+    if not target or InCombatLockdown() then return targetName end
+    local proxy = CreateFrame("Button", name, UIParent, "SecureActionButtonTemplate")
+    proxy:SetSize(1, 1)
+    proxy:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -500, 500)
+    proxy:EnableMouse(false)
+    proxy:RegisterForClicks("AnyDown", "AnyUp")
+    proxy:SetAttribute("type", "click")
+    proxy:SetAttribute("clickbutton", target)
+    keyProxies[name] = proxy
+    return name
+end
+
 -- Returns how many registered.
 function ns.RegisterEvents(frame, list, unit1, unit2)
     if not frame or type(list) ~= "table" then return 0 end

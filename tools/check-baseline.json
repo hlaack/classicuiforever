@@ -2,19 +2,11 @@
   "about": "Violations that existed when the checker arrived; a file passes a rule while its count is at or below this number. Regenerate with python tools/check.py --update-baseline after a cleanup.",
   "rules": {
     "CVAR": {
-      "Core/Settings.lua": 1,
-      "Social/GuildNoteBridge.lua": 1,
-      "Spells/SpellBook.lua": 2
-    },
-    "CVARREAD": {
-      "Core/Settings.lua": 2,
-      "Spells/SpellBook.lua": 1
+      "Social/GuildNoteBridge.lua": 1
     },
     "CVARLOGIN": {
-      "Bar/ClassicBar.lua": 1,
       "Character/CharacterSheet.lua": 1,
       "Map/MapFade.lua": 1,
-      "Spells/SpellBook.lua": 3,
       "Units/LastNames.lua": 2,
       "Units/NamePlateOptions.lua": 1
     },
@@ -57,11 +49,10 @@
     },
     "LOADADDON": {
       "Skills/ProfessionsWindow.lua": 4,
-      "Social/GroupFinder.lua": 1,
-      "Spells/SpellBook.lua": 1
+      "Social/GroupFinder.lua": 1
     },
     "EDITMODE": {
-      "Options/Layout.lua": 11
+      "Options/Layout.lua": 9
     },
     "EDITQUERY": {
       "Bar/BandPins.lua": 2,
@@ -70,17 +61,13 @@
     "PANELMGR": {
       "Bar/BandWatch.lua": 2,
       "Skills/ProfessionsWindow.lua": 2,
-      "Social/GuildNoteBridge.lua": 2,
-      "Spells/SpellBook.lua": 2
+      "Social/GuildNoteBridge.lua": 2
     },
     "WALK": {
-      "Social/GuildNoteBridge.lua": 2,
-      "Spells/SpellBook.lua": 1
+      "Social/GuildNoteBridge.lua": 2
     },
     "REGEVENTS": {
       "Bar/BandWatch.lua": 3,
-      "Quest/QuestLog.lua": 1,
-      "Skills/Talents.lua": 1,
       "Social/GuildOpeners.lua": 1,
       "Spells/SpellBook.lua": 5,
       "Units/LastNames.lua": 1
@@ -99,13 +86,12 @@
       "Units/UnitFrames.lua": 1
     },
     "POINTONCE": {
-      "Spells/SpellBook.lua": 8
+      "Spells/SpellBook.lua": 3
     },
     "SETIF": {
       "Bar/BandStatus.lua": 1,
       "Character/CharacterSheet.lua": 1,
       "Map/MinimapEye.lua": 1,
-      "Spells/SpellBook.lua": 8,
       "UI/ClientMenus.lua": 1,
       "Units/CastBars.lua": 1,
       "Units/LastNames.lua": 1
@@ -118,7 +104,7 @@
       "Skills/TradeSkill.lua": 1,
       "Social/GroupFinder.lua": 1,
       "Social/GuildOpeners.lua": 2,
-      "Spells/SpellBook.lua": 3,
+      "Spells/SpellBook.lua": 2,
       "UI/Controls.lua": 1,
       "UI/ScrollBars.lua": 3,
       "Windows/Bank.lua": 3,
@@ -146,13 +132,13 @@
       "Social/GroupFinder.lua": 1,
       "Social/GuildOpeners.lua": 3,
       "Social/SocialWindow.lua": 1,
-      "Spells/SpellBook.lua": 6,
+      "Spells/SpellBook.lua": 4,
       "UI/Controls.lua": 1,
       "UI/Dialogs.lua": 2,
       "UI/Escape.lua": 2,
       "UI/FriendsWindow.lua": 3,
       "UI/Portraits.lua": 4,
-      "UI/ScrollBars.lua": 7,
+      "UI/ScrollBars.lua": 6,
       "UI/Windows.lua": 4,
       "Units/NamePlateOptions.lua": 2,
       "Units/NamePlates.lua": 1,
@@ -185,10 +171,7 @@
     },
     "COMMENT": {
       "Social/GuildNoteBridge.lua": 3,
-      "Spells/SpellBook.lua": 5
-    },
-    "DUP": {
-      "Spells/SpellBook.lua": 2
+      "Spells/SpellBook.lua": 4
     }
   }
 }

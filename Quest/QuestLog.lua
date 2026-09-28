@@ -19,7 +19,7 @@ local function UpdateBinding()
     ClearOverrideBindings(bindButton)
     if not QL.active then return end
     local key = GetBindingKey("TOGGLEQUESTLOG")
-    if key then SetOverrideBindingClick(bindButton, true, key, BIND_NAME, "LeftButton") end
+    if key then SetOverrideBindingClick(bindButton, true, key, ns.KeyProxy(BIND_NAME), "LeftButton") end
 end
 
 local function BindClick(_, _, down)

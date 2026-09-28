@@ -813,6 +813,8 @@ local function CreateBook()
     layerOff:SetAttribute("attribute-frame", clicks)
     layerOff:SetAttribute("attribute-name", "unit")
     layerOff:SetAttribute("attribute-value", "none")
+    -- Escape in a fight binds to its key proxy, so the book shuts on the press.
+    ns.KeyProxy("ForeverClassicUISpellBookLayerOff")
 
     -- The layer's own click toggles it and the "none" writers hide it on the spot; the unit watch (0.2 s poll) then agrees.
     -- Opened in a fight, the layer binds Escape to the "none" writer itself: our Escape binding is set out of combat only.
@@ -825,7 +827,7 @@ local function CreateBook()
             self:ClearBindings()
         else
             self:Show()
-            if PlayerInCombat() then self:SetBindingClick(true, "ESCAPE", "ForeverClassicUISpellBookLayerOff") end
+            if PlayerInCombat() then self:SetBindingClick(true, "ESCAPE", "ForeverClassicUISpellBookLayerOffKey") end
         end
     ]])
     local LAYER_OFF = [[
@@ -1685,7 +1687,7 @@ local function UpdateBinding()
     if not active then return end
     if profBind then
         for _, k in ipairs({ GetBindingKey("TOGGLEPROFESSIONBOOK") }) do
-            SetOverrideBindingClick(profBind, true, k, PROF_BIND_NAME, "LeftButton")
+            SetOverrideBindingClick(profBind, true, k, ns.KeyProxy(PROF_BIND_NAME), "LeftButton")
         end
     end
     -- The spellbook's own keys only; the talents key stays the client's.
@@ -1693,7 +1695,7 @@ local function UpdateBinding()
         local key, second = GetBindingKey(binding)
         for _, k in ipairs({ key, second }) do
             if k then
-                SetOverrideBindingClick(bindButton, true, k, BIND_NAME, "LeftButton")
+                SetOverrideBindingClick(bindButton, true, k, ns.KeyProxy(BIND_NAME), "LeftButton")
                 boundKeys[#boundKeys + 1] = binding .. "=" .. k
             end
         end

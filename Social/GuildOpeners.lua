@@ -247,7 +247,7 @@ local function UpdateGuildBinding()
     for _, binding in ipairs(GUILD_BINDINGS) do
         local key, second = GetBindingKey(binding)
         for _, k in ipairs({ key, second }) do
-            if k then SetOverrideBindingClick(guildBind, true, k, GUILD_BIND, "LeftButton") end
+            if k then SetOverrideBindingClick(guildBind, true, k, ns.KeyProxy(GUILD_BIND), "LeftButton") end
         end
     end
 end
