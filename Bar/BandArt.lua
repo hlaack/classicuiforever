@@ -34,6 +34,7 @@ function B.BuildArt()
     local capLayer = CreateFrame("Frame", nil, art)
     capLayer:SetAllPoints(art)
     capLayer:SetFrameLevel(CAP_LEVEL)
+    art.capLayer = capLayer
     art.leftCap = capLayer:CreateTexture(nil, "OVERLAY", nil, 5)
     art.leftCap:SetSize(CAP_SIZE, CAP_SIZE)
     art.leftCap:SetPoint("BOTTOM", art, "BOTTOM", -544, 0)
@@ -63,6 +64,8 @@ end
 
 function B.PaintArt()
     local art = B.art
+    -- Gryphons over bars: their layer above every button slot (pet and stance slots stand near 73).
+    ns.SetLevelIf(art.capLayer, ns.db.gryphonsOverBars and B.ButtonLevel() + 40 or CAP_LEVEL)
     local segments = Segments()
     -- Hide Bar Art on Action Bar 1 drops its runs and the gryphons like the client's art; the micro menu's and the bags'
     -- runs go by their own Hide Bar Art. Buttons and the xp bar stay.

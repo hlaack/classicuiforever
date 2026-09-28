@@ -29,6 +29,7 @@ ns.TOGGLES = {
     { "hideKeyRing", "Hide key ring", "Takes the key ring off the band. The latency bar closes up.", parent = "classicBar" },
     { "hideBagsArt", "Hide bags bar art", "The bags' own run of band art goes, on the bar or moved off it. The bag buttons stay. Separate from Action Bar 1's Hide Bar Art.", parent = "classicBar" },
     { "hideMicroArt", "Hide micro menu bar art", "The micro menu's own run of band art goes, on the bar or moved off it. The buttons stay. Separate from Action Bar 1's Hide Bar Art.", parent = "classicBar" },
+    { "gryphonsOverBars", "Gryphons over bars", "The gryphons stand in front of the action buttons, so bars 2 and 3 run under them. Off, the bars cover the gryphons, as 1.x drew them.", parent = "classicBar" },
     { "bagsAboveRow", "Bags above bag buttons", "Opened bags stand above the bag buttons and follow them. Off, they open at the bottom right.", parent = "classicBar" },
     { "hideExtraBars", "Hide bars 6 to 8", "1.x had five bars. Bars 6 to 8 fade out and ignore clicks; their keybinds still work." },
 

@@ -83,6 +83,7 @@ ns.DB_DEFAULTS = {
     hideKeyRing = false,
     hideBagsArt = false,
     hideMicroArt = false,
+    gryphonsOverBars = false,
     mapUnlocked = false,
     minimapCollectorAngle = 160,
     minimapButtonAngle = 200,
