@@ -2,7 +2,7 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
-## [0.11.6] - 2026-09-27
+## [0.11.6] - 2026-09-28
 
 ### Added
 - Key text size under Button style in the options sets how big the key names on the action buttons are.
@@ -17,7 +17,7 @@ All notable changes to ClassicUI Forever are documented here.
 - Reset toggles puts the one bag Columns number back to its default too.
 - The group finder button opens the finder's first page, not the Who list left open there after a /who.
 - A right-click menu placed on a frame the game keeps secret no longer raises an error on every frame while it is open.
-- Pet spells and pet commands drag from the spellbook onto the bars during a fight, as often as wanted, and what lands on the bar is the real pet action. The pet bar is left alone.
+- Pet spells and pet commands drag from the spellbook onto the bars again, out of combat.
 - The professions window's Spellbook and pet tabs work in a fight: they open the spellbook on that tab instead of saying it cannot be done in combat.
 - A spellbook or professions tab no longer stays lit after its click turns the page.
 - The action bars stay put during a fight when the professions window opens or closes or a spell is dragged. The game re-places its own bar frames at those moments, and the buttons no longer go with them.
