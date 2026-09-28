@@ -55,6 +55,9 @@ local function Driver(bar)
 end
 
 -- Out of combat: strata and show rules follow the bar's as the layout runs.
+-- Bars whose own mouse we turned off (given back on the band's hand-back).
+local mouseOff = {}
+
 local function Holder(bar)
     local holder = holderOf[bar]
     if not holder then
@@ -65,7 +68,14 @@ local function Holder(bar)
     -- Bars 6-8 are faded, not hidden (LayoutExtraBars).
     holder:SetAlpha(bar:GetAlpha())
     if not InCombatLockdown() then
-        ns.SetStrataIf(holder, bar:GetFrameStrata())
+        -- A spell drag lifts the bar to TOOLTIP for the drop: never copied, and its frame takes no mouse, or the lifted empty
+        -- frame over our slots eats the drop (bar 1 is mouse-enabled).
+        local strata = bar:GetFrameStrata()
+        if strata ~= "TOOLTIP" then ns.SetStrataIf(holder, strata) end
+        if bar:IsMouseEnabled() then
+            bar:EnableMouse(false)
+            mouseOff[bar] = true
+        end
         local driver = Driver(bar)
         if driverOf[bar] ~= driver then
             driverOf[bar] = driver
@@ -102,6 +112,8 @@ function B.ButtonsHome()
             ns.SetPointOnce(button, "CENTER", container, "CENTER", 0, 0)
         end
     end
+    for bar in pairs(mouseOff) do bar:EnableMouse(true) end
+    wipe(mouseOff)
 end
 
 -- A row hangs on the band while its buttons stand on it, else on the screen (a column at the screen edge, scaled by bar 1's size).
