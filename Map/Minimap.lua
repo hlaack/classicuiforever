@@ -15,6 +15,8 @@ local hooked = false
 
 -- Art specs. Re-anchors in Layout stay unconditional, like SetPointOnce itself.
 local RING_TOP = { own = "borderTop", layer = "ARTWORK", coords = { 0.25, 1, 0, 0.125 }, w = CLUSTER, h = 32, point = "TOPRIGHT" }
+-- The zone bar runs 20 to 188 of that 192 cut: its middle stands 8 right of the cluster's, where the zone name goes.
+local ZONE_X = 8
 local RING = { own = "ring", layer = "ARTWORK", coords = { 0.25, 1, 0.125, 0.875 }, fill = true }
 local NORTH = { own = "north", layer = "OVERLAY", w = 16, h = 16, point = "CENTER", y = 67 }
 local COMPASS = { coords = FULL, w = 256, h = 256, point = "CENTER", x = -2, layer = "OVERLAY" }
@@ -227,15 +229,15 @@ local function Layout()
     if MinimapCompassTexture then MinimapCompassTexture:SetShown(rotate and true or false) end
     if cluster.fcuiNorth then cluster.fcuiNorth:SetShown(not rotate) end
 
-    -- Zone name across the top of the ring.
+    -- Zone name centred on the zone bar, whatever the calendar's spot.
     if MinimapZoneText then
         MinimapZoneText:SetSize(MAP, 12)
         MinimapZoneText:SetJustifyH("CENTER")
-        ns.SetPointOnce(MinimapZoneText, "CENTER", cluster, "TOP", 0, -12)
+        ns.SetPointOnce(MinimapZoneText, "CENTER", cluster, "TOP", ZONE_X, -12)
     end
     if cluster.ZoneTextButton then
         cluster.ZoneTextButton:SetSize(MAP, 12)
-        ns.SetPointOnce(cluster.ZoneTextButton, "CENTER", cluster, "TOP", 0, -12)
+        ns.SetPointOnce(cluster.ZoneTextButton, "CENTER", cluster, "TOP", ZONE_X, -12)
     end
 
     -- Buttons over the map's edge must stand above it to take clicks.
