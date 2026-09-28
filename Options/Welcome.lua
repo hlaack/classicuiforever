@@ -128,6 +128,11 @@ end
 -- What's New: new features only (fixes are the changelog's, one button away), by version, newest first. A player gets
 -- the chat line once per new version, and the box shows only the versions since the one they saw last.
 local WHATSNEW = {
+    { id = 8, version = "0.11.7",
+        { "Gryphons over bars", "Tick Gryphons over bars under Classic bar in the options to draw the gryphons in front of bars 2 and 3." },
+        { "Windows open on key press", "The spellbook, professions, talents, guild and quest log keys and Escape act on the press, as the game's own windows do." },
+        { "Fixes", "Spells drag onto Action Bar 1 again, the zone name is centred on the minimap bar wherever the calendar sits, and the spellbook's tabs and pet commands look right." },
+    },
     { id = 7, version = "0.11.6",
         { "Classic key text", "Key names on the action buttons are Classic Era's size and outline. Key text size under Button style in the options makes them bigger or smaller." },
         { "Calendar spots", "The calendar is a small square by the zone name; put it on the ring or behind the day and night icon under Calendar button in the options. Tick Calendar under Minimap in ClassicUI Forever Windows in edit mode to move or resize it." },

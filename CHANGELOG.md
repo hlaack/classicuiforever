@@ -2,6 +2,20 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.11.7] - 2026-09-28
+
+### Added
+- Gryphons over bars under Classic bar in the options: the gryphons stand in front of the action buttons, so bars 2 and 3 run under them. Off (the default), the bars cover them, as 1.x drew them.
+
+### Changed
+- The spellbook, professions, talents, guild and quest log keys open their windows on the key press, as the game's own windows do, and Escape closes them on the press. They waited for the key to come up. The game's cast on key down setting is followed.
+
+### Fixed
+- Spells can be dragged onto Action Bar 1 and off it again.
+- The minimap's zone name is centred on its bar, wherever the calendar sits.
+- Only the picked tab at the foot of the spellbook and the professions window has a white label.
+- In a fight the Demon page no longer greys out pet commands and stances.
+
 ## [0.11.6] - 2026-09-28
 
 ### Added
