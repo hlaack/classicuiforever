@@ -18,6 +18,7 @@ All notable changes to ClassicUI Forever are documented here.
 - The group finder button opens the finder's first page, not the Who list left open there after a /who.
 - A right-click menu placed on a frame the game keeps secret no longer raises an error on every frame while it is open.
 - Pet spells and pet commands drag from the spellbook onto the bars again, out of combat.
+- The need and greed roll windows are left where the game puts them; the classic bar no longer moves them. Some players saw no roll window in a dungeon.
 - The professions window's Spellbook and pet tabs work in a fight: they open the spellbook on that tab instead of saying it cannot be done in combat.
 - A spellbook or professions tab no longer stays lit after its click turns the page.
 - The action bars stay put during a fight when the professions window opens or closes or a spell is dragged. The game re-places its own bar frames at those moments, and the buttons no longer go with them.
