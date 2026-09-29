@@ -53,6 +53,28 @@ MM.PIECE_KEYS = PIECES
 local SHOW_IDS = { "MinimapZone", "MinimapTracking", "MinimapMail", "MinimapZoomIn", "MinimapZoomOut", "MinimapClock",
     "MinimapDiel", "MinimapCalendar" }
 local ZOOM_R = 79
+local DIEL_RING = "UI-HUD-Minimap-Frame-Cycle"
+-- Other addons' minimap buttons wear the old gold tracking ring (MiniMap-TrackingBorder): tinted as ours.
+local TRACKING_RING = 136430
+local RING_SHARE = { dark = 1.28 }
+local function TintRing(region)
+    if not (region.GetTexture and region.IsObjectType and region:IsObjectType("Texture")) then return end
+    local file = region:GetTexture()
+    if file == TRACKING_RING or (type(file) == "string" and file:lower():find("minimap%-trackingborder")) then
+        if ns.Once(region, "themeRing") then ns.BronzeTint(region, RING_SHARE) end
+    end
+end
+function ns.ThemeAddonRing(button)
+    local name = button and button.GetName and button:GetName()
+    if not button or (name and name:find("^ForeverClassicUI")) then return end
+    ns.EachRegion(button, TintRing)
+end
+local function RingOfChild(child)
+    if child.IsObjectType and child:IsObjectType("Button") then ns.ThemeAddonRing(child) end
+end
+local function DrainDielRing(region)
+    if region.GetAtlas and region:GetAtlas() == DIEL_RING then ns.DrainBronze(region) end
+end
 local homes = {}
 
 ---------------------------------------------------------------- shown, on hover, hidden
@@ -440,6 +462,8 @@ local function Layout()
     if diel then
         ns.SetPointOnce(diel, "TOPRIGHT", map, "TOPRIGHT", 20, -2)
         ns.MinimapShow(diel, "MinimapDiel", true)
+        -- Its bronze ring follows the theme (silver off, darkened with Dark).
+        if ns.Once(diel, "themeRing") then ns.EachRegion(diel, DrainDielRing) end
     end
     if GameTimeFrame then
         MM.PlaceCalendar(cluster, map, above)
@@ -481,8 +505,10 @@ local function Layout()
         for _, name in ipairs(ldbi:GetButtonList()) do
             local button = ldbi.GetMinimapButton and ldbi:GetMinimapButton(name)
             if not (ns.MinimapCollected and ns.MinimapCollected(button)) then pcall(ldbi.Refresh, ldbi, name) end
+            if button then ns.ThemeAddonRing(button) end
         end
     end
+    ns.EachChild(map, RingOfChild)
     if ns.OnMinimapLaid then ns.OnMinimapLaid(ldbi) end
 end
 

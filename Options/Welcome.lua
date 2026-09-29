@@ -179,7 +179,7 @@ local WHATSNEW = {
 local LATEST = WHATSNEW[1].id
 local GOLD, GREY = "|cffffd100", "|cffa0a0a0"
 local CHANGELOG_URL = "https://github.com/wowaddonmaker/classicuiforever/blob/main/CHANGELOG.md"
--- One size every time: the text scrolls in its box.
+-- The box fits the text up to NEWS_BODY_H; past that it stays that tall and the bar scrolls the rest.
 local NEWS_WIDTH, NEWS_BODY_H, NEWS_WHEEL = 480, 280, 28
 local NEWS_BAR_ROOM = 24
 local NEWS_HEADER = { width = 320 }   -- the plate: "What's New in x.y.z" runs past the stock 256
@@ -206,21 +206,19 @@ local function BuildNews()
     local frame = O.DialogWindow("ForeverClassicUIWhatsNew", 120)
     ns.DialogHeader(frame, "What's New in " .. WHATSNEW[1].version, NEWS_HEADER)
     -- The text in a fixed box, scrolled by the classic bar or the wheel.
-    local textW = NEWS_WIDTH - 48 - NEWS_BAR_ROOM
+    local fullW = NEWS_WIDTH - 48
     local scroll = CreateFrame("ScrollFrame", nil, frame)
     scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -50)
-    scroll:SetSize(textW, NEWS_BODY_H)
     scroll:EnableMouseWheel(true)
     local child = CreateFrame("Frame", nil, scroll)
-    child:SetWidth(textW)
     scroll:SetScrollChild(child)
     local body = child:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     body:SetPoint("TOPLEFT", child, "TOPLEFT", 0, 0)
-    body:SetWidth(textW)
     body:SetJustifyH("LEFT")
     body:SetJustifyV("TOP")
     body:SetSpacing(3)
     local bar = ns.ClassicScrollBar(frame, scroll, function(value) scroll:SetVerticalScroll(value or 0) end)
+    bar.hideWhenIdle = true
     scroll:SetScript("OnMouseWheel", function(_, delta) bar:SetValue(bar:GetValue() - delta * NEWS_WHEEL) end)
     local changelog = ns.PanelButton(frame, "Full changelog", 120)
     changelog:SetScript("OnClick", CopyChangelog)
@@ -230,13 +228,24 @@ local function BuildNews()
     okay:SetPoint("BOTTOMLEFT", frame, "BOTTOM", 4, 20)
     -- Refilled on every show: the versions since the one the player saw last.
     frame.Fill = function(_, seen)
+        -- Full width first; only text taller than the box gives up room for the bar.
         body:SetText(NewsText(seen))
+        body:SetWidth(fullW)
         local height = math.ceil(body:GetStringHeight())
-        child:SetHeight(height)
+        local textW = fullW
+        if height > NEWS_BODY_H then
+            textW = fullW - NEWS_BAR_ROOM
+            body:SetWidth(textW)
+            height = math.ceil(body:GetStringHeight())
+        end
+        local boxH = math.min(height, NEWS_BODY_H)
+        scroll:SetSize(textW, boxH)
+        child:SetSize(textW, height)
         bar:SetValue(0)
-        bar:SetRange(height - NEWS_BODY_H, NEWS_WHEEL)
+        bar:SetRange(height - boxH, NEWS_WHEEL)
         scroll:SetVerticalScroll(0)
-        frame:SetSize(NEWS_WIDTH, 50 + NEWS_BODY_H + 16 + 22 + 20)
+        scroll:EnableMouseWheel(height > boxH)
+        frame:SetSize(NEWS_WIDTH, 50 + boxH + 16 + 22 + 20)
     end
     return frame
 end

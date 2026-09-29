@@ -65,9 +65,21 @@ function ns.Backdrop(frame, info, how)
     return true
 end
 
+-- Our backdrop frames skip the edge tiling while their size is secret (hung on a unit's menu in an instance).
+local function SafeCoords(self)
+    local w, h = self:GetSize()
+    if ns.AnySecret(w, h) then return end
+    BackdropTemplateMixin.SetupTextureCoordinates(self)
+end
+function ns.OwnBackdropFrame(parent)
+    local frame = CreateFrame("Frame", nil, parent, ns.BACKDROP_TEMPLATE)
+    if frame.SetupTextureCoordinates then frame.SetupTextureCoordinates = SafeCoords end
+    return frame
+end
+
 -- Backdrop on our own child, never on the client's frame.
 function ns.DialogBacking(host, info, how)
-    local backing = CreateFrame("Frame", nil, host, ns.BACKDROP_TEMPLATE)
+    local backing = ns.OwnBackdropFrame(host)
     ns.Backdrop(backing, info or ns.BACKDROP.DIALOG, how)
     backing:SetAllPoints(host)
     backing:SetFrameLevel(host:GetFrameLevel())

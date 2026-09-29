@@ -136,12 +136,8 @@ local function StyleString(block, fontString, text, _, colorStyle)
         SetFontIf(fontString, SIZE_TITLE + SizeStep())
         local level, r, g, b = QuestLevelAndColor(block)
         if level then
+            -- The level itself is the game's (Show Quest Levels, the Quest levels option).
             fontString:SetTextColor(r, g, b)
-            if text and not text:find("^%[") then
-                fontString:SetText("[" .. level .. "] " .. text)
-                -- Drop the prefix if it overflows the client's measured width.
-                if fontString:GetStringWidth() > fontString:GetWidth() then fontString:SetText(text) end
-            end
         else
             fontString:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
         end

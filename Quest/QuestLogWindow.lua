@@ -209,7 +209,9 @@ function FillRow(row, info)
     row.icon:Hide()
     local party = PartyOnQuest(info.questID)
     row.party = party
-    row.text:SetText("  " .. (#party > 0 and ("[" .. #party .. "] ") or "") .. (info.title or ""))
+    local level = ns.db.questLevels and tonumber(info.difficultyLevel or info.level)
+    row.text:SetText("  " .. (level and level > 0 and ("[" .. level .. "] ") or "")
+        .. (#party > 0 and ("[" .. #party .. "] ") or "") .. (info.title or ""))
     local tag = TagFor(info)
     row.tagText = tag
     row.tag:SetText(tag and ("(" .. tag .. ")") or "")
@@ -769,3 +771,24 @@ end
 function QL.Frame() return frame end
 -- The quest the detail pane shows; its reward buttons read it live.
 function QL.SelectedID() return selectedID end
+
+-- questLevels mirrors the game's showQuestLevel CVar (ns.ToggleChanged writes it); the map's filter changes it too.
+local function ReadQuestLevels()
+    if not ns.db then return end
+    local value = ns.GetCVar("showQuestLevel")
+    if value ~= nil then ns.db.questLevels = tostring(value) == "1" end
+end
+ns.RegisterModule("questLevels", { apply = ReadQuestLevels, restore = ReadQuestLevels })
+
+local function LevelsChanged()
+    if frame and frame:IsShown() then UpdateList() end
+end
+ns.OnToggle(function(key)
+    if key == "questLevels" then LevelsChanged() end
+end)
+ns.EventFrame("CVAR_UPDATE", function(_, _, name)
+    if name ~= "showQuestLevel" then return end
+    ReadQuestLevels()
+    LevelsChanged()
+    if ns.RefreshOptionsWindow then ns.RefreshOptionsWindow() end
+end)

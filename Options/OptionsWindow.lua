@@ -36,7 +36,7 @@ local PREFERRED_TIP = { text = "Why GitHub", r = 1, g = 1, b = 1, lines = {
 } }
 
 -- Not part of the classic look, so Toggle none leaves them (the minimap button leads back here), nor the radio picks.
-local NOT_IN_NONE = { minimapButton = true, welcomeNote = true }
+local NOT_IN_NONE = { minimapButton = true, welcomeNote = true, questLevels = true }
 local function InNone(key) return not NOT_IN_NONE[key] and not ns.TOGGLE_RADIO[key] end
 
 local window

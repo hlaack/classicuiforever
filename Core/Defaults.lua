@@ -115,6 +115,9 @@ ns.DB_DEFAULTS = {
     microTips = true,
     plateNameSize = 0,
     barUnitTips = true,
+    questLevels = false,
+    hideChatButtons = false,
+    chatScrollBar = false,
     showMinimapZone = true, hoverMinimapZone = false, hideMinimapZone = false,
     showMinimapTracking = true, hoverMinimapTracking = false, hideMinimapTracking = false,
     showMinimapMail = true, hoverMinimapMail = false, hideMinimapMail = false,
@@ -168,6 +171,9 @@ ns.MODULE_ORDER = {
 -- or client handlers our hand-back leaves tainted (blocked in combat). A child is off while its parent is, unless own = true.
 -- Off-only: owed on every turn-off. Both ways: owed while it differs from the session start (pins, spellbook key: once a session).
 ns.RELOAD_KEYS = {
+    -- The game reads showQuestLevel as its windows build; open ones keep the old titles.
+    questLevels = { own = true, on = "Quest levels show everywhere once the interface reloads.",
+        off = "Quest levels leave the map and tracker once the interface reloads." },
     classicBar = {
         -- ns.PinBandBars writes the layout only in ns.ReloadForLayout; unpinned, combat moves the bars.
         on = "The action bars are fixed in the classic bar's places as the interface reloads; until then a fight can move them.",

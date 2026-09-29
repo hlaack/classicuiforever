@@ -52,8 +52,9 @@ local function SetWithFallback(texture, primary, fallback, ...)
 end
 B.SetWithFallback = SetWithFallback
 
--- Metal with the softer share: the action slot ring.
-local SOFT_KEYS = { slotNormal = true }
+-- Tint share per key, a number or by theme. Dark takes the bright tracking ring (0.48 against the minimap border's
+-- 0.26) further, so it matches the other metal.
+local SHARE = { slotNormal = 0.9, trackingBorder = { dark = 1.28 } }
 
 -- Falls back to the other copy so a missing file never leaves a blank region; extra args go to SetTexture.
 function ns.SetTex(texture, key, ...)
@@ -73,7 +74,7 @@ function ns.SetTex(texture, key, ...)
         swapped[texture] = nil
     end
     if B.METAL[key] then
-        ns.BronzeTint(texture, SOFT_KEYS[key] and ns.BRONZE_SOFT or nil)
+        ns.BronzeTint(texture, SHARE[key])
     elseif B.tinted[texture] then
         -- Texture reused for non-metal art: clear the tint.
         ns.UntintBronze(texture)

@@ -91,6 +91,7 @@ ns.TOGGLES = {
 
     { "questLog", "Quest log", "The 1.x quest log in its own window. The quest button, key and tracker clicks open it instead of the map.", group = "Quests" },
     { "questLogDual", "Double pane", "The wider 3.x quest log: the list on the left, the quest on parchment beside it. Off is the 1.x single pane.", parent = "questLog" },
+    { "questLevels", "Quest levels", "Each quest's level in front of its name on the map, in the tracker and in the quest log. This is the game's Show Quest Levels setting.", search = "level map filter" },
     { "questTracker", "Quest tracker", "Old stone headers and small collapse buttons on the objective tracker." },
     { "hideObjectiveTracker", "Hide objective tracker", "Hides the game's objective tracker, for a quest tracker from another addon. Its quest item buttons go with it. Changes wait for the end of a fight.", search = "quest watch objectives" },
     { "worldMap", "World map", "The old metal border, title strip and corner close button on the world map. Off takes full effect after a reload.", group = "Map" },
@@ -144,6 +145,8 @@ ns.TOGGLES = {
     { "showAddonBag", "Show: always", "Always shown, or only while the mouse is over the minimap.", parent = "minimapCollector", radio = "addonBagShow", drop = true },
     { "hoverAddonBag", "Show: on hover", "Always shown, or only while the mouse is over the minimap.", parent = "minimapCollector", radio = "addonBagShow", drop = true },
     { "classicChat", "Chat buttons", "The chat buttons in one column down the chat's left, as in 1.x. The scroll bar goes; arrows and the wheel scroll." },
+    { "hideChatButtons", "Hide chat buttons", "Takes every button off the left of the chat, so it can sit at the screen's edge. The mouse wheel scrolls; Shift with it jumps to the top or bottom.", parent = "classicChat", search = "flush left edge" },
+    { "chatScrollBar", "Chat scroll bar", "WoW Forever's scroll bar on the right of the chat. 1.x had none.", parent = "classicChat", search = "scrollbar right" },
 
     { "gameDamageNumbers", "Damage numbers", "The game's floating damage over your targets. This is the game's own setting.", group = "Other" },
     { "welcomeNote", "Welcome note", "The welcome note on a character's first login with the addon." },

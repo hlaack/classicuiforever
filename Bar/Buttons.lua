@@ -151,6 +151,16 @@ end
 
 -- Forever's thin bronze frame round an ability icon with the bronze theme: over the grey bevel every icon carries
 -- (a square icon shows it whole), under the slot ring, only where the slot holds something.
+-- Its bronze art is bright: Dark takes it further, or it reads light grey against the dark slots.
+local ICON_RIM_SHARE = { bronze = ns.BRONZE_SOFT, dark = 1.28 }
+-- The frame's line sits 1 px in on its 64 px art: pushed out by that much of the icon's width, it covers the icon's
+-- outermost pixels, which otherwise showed as a light sliver outside it (probe /fcuidev icons, 2026-09-29).
+local ICON_RIM_OUT = 1 / 64
+local rimOut = setmetatable({}, { __mode = "k" })
+-- Every icon's own light bevel cropped off while the rim shows, as Lorti-UI (10%) and EllesmereUI (5.5%) do; whole
+-- without a theme, as 1.x drew it.
+local ICON_CROP = 0.08
+local cropped = setmetatable({}, { __mode = "k" })
 local function IconRim(button)
     local icon = button and button.icon
     if not icon then return end
@@ -160,11 +170,24 @@ local function IconRim(button)
         if not want then return end
         rim = button:CreateTexture(nil, "ARTWORK", nil, 7)
         ns.SetTex(rim, "iconFrame")
-        rim:SetAllPoints(icon)
-        ns.BronzeTint(rim, ns.BRONZE_SOFT)
+        ns.BronzeTint(rim, ICON_RIM_SHARE)
         button.fcuiIconRim = rim
     end
+    local out = (icon:GetWidth() or 0) * ICON_RIM_OUT
+    if rimOut[rim] ~= out then
+        rimOut[rim] = out
+        rim:ClearAllPoints()
+        rim:SetPoint("TOPLEFT", icon, "TOPLEFT", -out, out)
+        rim:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", out, -out)
+    end
     ns.SetShownIf(rim, want)
+    if want then
+        icon:SetTexCoord(ICON_CROP, 1 - ICON_CROP, ICON_CROP, 1 - ICON_CROP)
+        cropped[icon] = true
+    elseif cropped[icon] then
+        icon:SetTexCoord(0, 1, 0, 1)
+        cropped[icon] = nil
+    end
 end
 
 -- The client's repaint of an emptied slot never hides its new-spell frame (ActionButton.lua Update): a lit one stays lit.

@@ -51,6 +51,7 @@ local function PaintTint(texture)
     local theme = Theme()
     if theme then
         local tint, share = theme.tint, tinted[texture]
+        if type(share) == "table" then share = share[ThemeName()] end
         share = type(share) == "number" and share or 1
         texture:SetDesaturated(true)
         texture:SetVertexColor(1 + (tint[1] - 1) * share, 1 + (tint[2] - 1) * share, 1 + (tint[3] - 1) * share)

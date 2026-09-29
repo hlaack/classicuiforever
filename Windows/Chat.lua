@@ -233,9 +233,32 @@ local function Edge(region, point, chat, relPoint, x)
     end
 end
 
+-- Chat scroll bar keeps the client's bar track and its room on the right.
+local function KeepBar() return ns.db and ns.db.chatScrollBar == true end
+local RIGHT_REGIONS = { "Background", "editBox", "CombatLogQuickButtonFrame" }
+
+local function UnfitRight(chat)
+    for _, key in ipairs(RIGHT_REGIONS) do
+        local region = chat[key]
+        if region and was[region] then
+            RestorePoints(region, was[region])
+            was[region] = nil
+        end
+    end
+end
+
+local function BarBack(chat)
+    local track = chat.ScrollBar and chat.ScrollBar.Track
+    local info = track and held[track]
+    if not info then return end
+    track:SetParent(info.parent)
+    held[track] = nil
+end
+
 -- The room the client keeps on the right for the bar goes with it.
 local function FitRight(chat)
     if not chat.ScrollBar then return end
+    if KeepBar() then UnfitRight(chat) return end
     Edge(chat.Background, "TOPRIGHT", chat, "TOPRIGHT", BG_RIGHT)
     Edge(chat.Background, "BOTTOMRIGHT", chat, "BOTTOMRIGHT", BG_RIGHT)
     Edge(chat.editBox, "RIGHT", chat, "RIGHT", EDIT_RIGHT)
@@ -316,7 +339,7 @@ local function DressChat(chat)
     col.bottom:Show()
     local bar = chat.ScrollBar
     if bar then
-        SetAside(bar.Track)
+        if KeepBar() then BarBack(chat) else SetAside(bar.Track) end
         DressStepper(bar.Back, col.up, "ScrollUp")
         DressStepper(bar.Forward, col.down, "ScrollDown")
     end
@@ -447,6 +470,97 @@ local function Watch()
     GuardChannel()
 end
 
+-- Hide chat buttons: every button left of the chat goes, so the chat can sit flush at the screen's edge; the wheel
+-- still scrolls (Shift jumps to either end). Held every 0.25 s: the client fades these in with the mouse.
+local HIDE_NAMES = { "ChatFrameMenuButton", "ChatFrameChannelButton", "ChatFrameToggleVoiceDeafenButton",
+    "ChatFrameToggleVoiceMuteButton", "QuickJoinToastButton" }
+local OWN_BUTTONS = { "upButton", "downButton", "bottomButton", "minimizeButton" }
+local buttonsOff = {}   -- client button -> faded by this option
+local holdJob
+
+local function EachChatButton(fn)
+    for _, name in ipairs(HIDE_NAMES) do
+        if _G[name] then fn(_G[name]) end
+    end
+    local list = _G.CHAT_FRAMES or ns.EMPTY
+    for i = 1, #list do
+        local chat = _G[list[i]]
+        if chat then
+            local bar = chat.ScrollBar
+            if bar then
+                if bar.Back then fn(bar.Back) end
+                if bar.Forward then fn(bar.Forward) end
+            end
+            if chat.ScrollToBottomButton then fn(chat.ScrollToBottomButton) end
+            local frame = chat.buttonFrame
+            if frame then
+                for _, key in ipairs(OWN_BUTTONS) do
+                    if frame[key] then fn(frame[key]) end
+                end
+            end
+        end
+    end
+end
+
+-- Our faces ignore the button's alpha (the client fades it); while held they follow it again.
+local function FacesFollow(button, follow)
+    if not faces[button] then return end
+    ns.EachState(button, FACES, IgnoreParentAlpha, not follow)
+    if button.Flash then button.Flash:SetIgnoreParentAlpha(not follow) end
+end
+
+local function HoldOne(button)
+    ns.SetAlphaIf(button, 0)
+    if button:IsMouseEnabled() then button:EnableMouse(false) end
+    -- Each pass: a theme turn dresses the faces again.
+    FacesFollow(button, true)
+    buttonsOff[button] = true
+end
+
+-- Edit mode's box keeps 32 px left of the chat for the buttons (EditModeChatFrameSystemTemplate) and holds that box on
+-- screen: with the buttons gone it starts at the chat's own edge, so the chat can sit flush.
+local SELECTION_LEFT, SELECTION_TOP, SELECTION_FLUSH = -32, 60, -4
+local selectionLeft
+local function SelectionEdge(flush)
+    local chat = _G.ChatFrame1
+    local selection = chat and chat.Selection
+    if not selection or InCombatLockdown() then return end
+    local want = flush and SELECTION_FLUSH or SELECTION_LEFT
+    if selectionLeft == want then return end
+    selectionLeft = want
+    selection:SetPoint("TOPLEFT", chat, "TOPLEFT", want, SELECTION_TOP)
+    if chat.UpdateClampOffsets then pcall(chat.UpdateClampOffsets, chat) end
+    -- Back from flush: the client clamps the chat again, now counting the buttons' room, so they come back on screen.
+    if not flush then
+        pcall(chat.SetClampedToScreen, chat, false)
+        pcall(chat.SetClampedToScreen, chat, true)
+    end
+end
+
+local function HoldButtons()
+    if active and ns.db.hideChatButtons then
+        EachChatButton(HoldOne)
+        SelectionEdge(true)
+        return
+    end
+    if selectionLeft == SELECTION_FLUSH then SelectionEdge(false) end
+    for button in pairs(buttonsOff) do
+        button:SetAlpha(1)
+        button:EnableMouse(true)
+        FacesFollow(button, false)
+    end
+    wipe(buttonsOff)
+    if holdJob then holdJob:Sleep() end
+end
+
+local function ChatButtonsOption()
+    if active and ns.db.hideChatButtons then
+        holdJob = holdJob or ns.Sched.Job({ name = "chat.hideButtons", every = 0.25, awake = false, fn = HoldButtons })
+        holdJob:Wake()
+    end
+    HoldButtons()
+end
+
 local function WatchBurst(job, now)
     Watch()
     if now >= burstUntil then job:Sleep() end
@@ -478,6 +592,7 @@ local function Apply()
     primaryChat = _G.ChatFrame1
     Redress(ns.ThemeTurned(theme) and theme.was ~= nil)
     WatchNextFrame()
+    ChatButtonsOption()
 end
 
 local function Restore()
@@ -505,6 +620,12 @@ local function Restore()
     UndressChannel(_G.ChatFrameChannelButton)
     for frame, saved in pairs(was) do RestorePoints(frame, saved) end
     wipe(was)
+    HoldButtons()
 end
 
 ns.RegisterModule("classicChat", { apply = Apply, restore = Restore })
+
+ns.OnToggle(function(key)
+    if key == "hideChatButtons" then ChatButtonsOption() end
+    if key == "chatScrollBar" and active then DressAll() end
+end)

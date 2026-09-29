@@ -41,6 +41,7 @@ local function Pocket(button)
     button.showOnMouseover = false
     if button.fadeOut and button.fadeOut:IsPlaying() then button.fadeOut:Stop() end
     ns.SetAlphaIf(button, 1)
+    ns.ThemeAddonRing(button)
 end
 
 local function Take(button, libName)
