@@ -356,3 +356,32 @@ local function Restore()
 end
 
 ns.RegisterModule("hideLastNames", { apply = Apply, restore = Restore })
+
+-- Forever's own frames write no name for you with "My Secondary Name" off (its first name split finds nothing to split
+-- and returns nil), so the last unit's name stayed: yours written after it, whatever our toggle.
+local SELF_FRAMES = {
+    { "TargetFrame", "target", "TargetFrameContent", "TargetFrameContentMain", "Name" },
+    { "TargetFrame", "targettarget", "totFrame", "Name" },
+    { "FocusFrame", "focus", "TargetFrameContent", "TargetFrameContentMain", "Name" },
+    { "FocusFrame", "focustarget", "totFrame", "Name" },
+}
+
+local function SelfNames()
+    local info = C_PlayerInfo
+    if not (info and info.ShouldDisplaySurname) or info.ShouldDisplaySurname() then return end
+    local mine = UnitName("player")
+    if IsSecret(mine) or type(mine) ~= "string" or mine == "" then return end
+    for _, spec in ipairs(SELF_FRAMES) do
+        local text = ns.Path(_G[spec[1]], select(3, unpack(spec)))
+        local me = text and text:IsVisible() and UnitIsUnit(spec[2], "player")
+        if me and not IsSecret(me) then
+            local shown = text:GetText()
+            if IsSecret(shown) or shown ~= mine then text:SetText(mine) end
+        end
+    end
+end
+
+-- A tenth of a second after the client's own writes, only while the target or focus frame shows.
+for _, name in ipairs({ "TargetFrame", "FocusFrame" }) do
+    if _G[name] then ns.Sched.Attach(_G[name], { name = "names.self", every = 0.1, fn = SelfNames }) end
+end

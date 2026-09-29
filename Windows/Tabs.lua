@@ -14,12 +14,19 @@ local function LiftTab(tab)
     tab:SetPoint(point, rel, relPoint, x or 0, tab.fcuiLiftedY)
 end
 
--- Label width plus caps: 25 a side, or fcuiPad where tabs crowd (social window).
+-- Era rows (its dump): unpicked under the border, faces at the shared spots.
+local ERA_STEP = -16      -- next tab's left from this one's right (- overlaps); a row may give its own
+local ERA_TAB_PAD = 40    -- tab width: label plus both caps
+local eraRows = setmetatable({}, { __mode = "k" })   -- tab -> the tab it follows (true for the first)
+local eraSteps = setmetatable({}, { __mode = "k" })  -- tab -> its row's step
+
+-- Label width plus caps: 25 a side, fcuiPad where tabs crowd (social window), Era's on an Era row.
 function ns.FitBottomTab(tab)
     LiftTab(tab)
     local text = tab.Text or (tab.GetFontString and tab:GetFontString())
     if not text then return end
-    local width = math.ceil(text:GetStringWidth() or 0) + (tab.fcuiPad or 50)
+    local pad = eraRows[tab] and ERA_TAB_PAD or tab.fcuiPad or 50
+    local width = math.ceil(text:GetStringWidth() or 0) + pad
     tab:SetWidth(width)
     if tab.Middle then tab.Middle:SetWidth(width - 40) end
     if tab.MiddleActive then tab.MiddleActive:SetWidth(width - 40) end
@@ -161,11 +168,36 @@ local BOTTOM_TAB = {
 }
 local BOTTOM_GLOW = { key = "tabInactive", coords = OFF_COORDS }
 
--- Over the window's border frame, so the picked face covers its line and opens it.
+local function PickedFace(tab) return tab.LeftActive ~= nil and tab.LeftActive:IsShown() end
+
+-- Over the window's border frame, so the picked face covers its line and opens it; an Era row's unpicked tab under it.
 local function OverBorder(tab)
     local parent = tab:GetParent()
     local slice = parent and parent.NineSlice
-    if slice and slice.GetFrameLevel then ns.SetLevelIf(tab, math.max(tab:GetFrameLevel(), slice:GetFrameLevel() + 1)) end
+    if not (slice and slice.GetFrameLevel) then return end
+    local level = slice:GetFrameLevel()
+    if eraRows[tab] and not PickedFace(tab) then
+        ns.SetLevelIf(tab, math.max(1, level - 1))
+    else
+        ns.SetLevelIf(tab, math.max(tab:GetFrameLevel(), level + 1))
+    end
+end
+
+local function EraPlace(tab)
+    local after = eraRows[tab]
+    if not after then return end
+    if after ~= true then ns.SetPointOnce(tab, "LEFT", after, "RIGHT", eraSteps[tab] or ERA_STEP, 0) end
+    OverBorder(tab)
+end
+
+-- tabs: a foot row in order, laid on Era's numbers from here on; step: its overlap when not the vendor's.
+function ns.EraTabRow(tabs, step)
+    for i, tab in ipairs(tabs) do
+        eraRows[tab] = tabs[i - 1] or true
+        eraSteps[tab] = step
+        ns.FitBottomTab(tab)
+        EraPlace(tab)
+    end
 end
 
 -- Label: one spot, picked or not; the client moves it on select and deselect, so it is set again after.
@@ -179,6 +211,7 @@ local FACE_FIELDS = { "LeftActive", "MiddleActive", "RightActive", "Left", "Midd
 local function TextAfterClient(tab)
     if not (tab and tab.fcuiTab) then return end
     PlaceText(tab)
+    EraPlace(tab)
     for _, field in ipairs(FACE_FIELDS) do
         local piece = tab[field]
         if piece then ns.ShowTabPiece(piece, piece:IsShown()) end
@@ -200,6 +233,7 @@ function ns.SkinBottomTab(tab)
     OverBorder(tab)
     ns.TabGlow(tab, "glow", BOTTOM_GLOW, tab.Left, tab.Middle, ns.TabPieceFoot(tab.Right))
     PlaceText(tab)
+    EraPlace(tab)
 end
 
 -- Bottom tab art flipped and foot-anchored: the taller selected tab rises (macro window).

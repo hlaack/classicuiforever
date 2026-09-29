@@ -84,21 +84,36 @@ end
 -- account and every profile (profiles keep only what differs from the defaults), and is offered the new size once.
 function ns.KeepBarSize(big)
     local db = ns.db
-    if not big then db.defaultBarSize = false end
+    if not big then db.classicBarSize = true end
     for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
-        if type(shot) == "table" and shot.defaultBarSize == nil then shot.defaultBarSize = false end
+        if type(shot) == "table" and shot.defaultBarSize == nil and shot.classicBarSize == nil then shot.classicBarSize = true end
     end
     db.barSizeOffer = not big or nil
     db.dbVersion = 2
 end
 
+-- Game-sized bar (on by default) became Classic-sized bars (off by default): a box unticked before is ticked now,
+-- in the account and every profile.
+function ns.BarSizeKey()
+    local db = ns.db
+    local function Turn(t)
+        if t.defaultBarSize == nil then return end
+        if t.defaultBarSize == false then t.classicBarSize = true end
+        t.defaultBarSize = nil
+    end
+    Turn(db)
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" then Turn(shot) end
+    end
+end
+
 ns.Popup("FCUI_BAR_SIZE_OFFER", {
-    text = TITLE .. "\n\nThe classic bar now comes at the game's own size (45 px buttons) for new installs. Yours keeps the 1.x size (36 px).\n\nSwitch to the game's size? The Game-sized bar option changes it any time.",
+    text = TITLE .. "\n\nThe classic bar now comes at the game's own size (45 px buttons) for new installs. Yours keeps the 1.x size (36 px).\n\nSwitch to the game's size? The Classic-sized bars option changes it any time.",
     button1 = "Game size",
     button2 = "Keep mine",
     OnAccept = function()
-        ns.db.defaultBarSize = true
-        ns.TogglesChanged({ "defaultBarSize" })
+        ns.db.classicBarSize = false
+        ns.TogglesChanged({ "classicBarSize" })
     end,
 })
 
@@ -163,16 +178,31 @@ function ns.ClassicTrackerHeightRaw()
 end
 
 -- Its right edge clear of the side bars at the screen's right, as the bags open beside them; the default 110 in at least.
+-- Forever holds it by RIGHT, retail by TOPRIGHT; a spot further in than ours is the player's and stays. Held off its
+-- default too: a default tracker is laid by the client's right-side container, flush with the edge whatever its offset.
 local TRACKER_X, TRACKER_GAP = -110, 10
+local TRACKER_EDGE_POINTS = { RIGHT = true, TOPRIGHT = true }
 local function PlaceTracker(system)
     local info = system.anchorInfo
-    if type(info) ~= "table" or info.point ~= "TOPRIGHT" then return end
+    if type(info) ~= "table" or not TRACKER_EDGE_POINTS[info.point] or info.relativePoint ~= info.point then return false end
+    if info.relativeTo ~= nil and info.relativeTo ~= "UIParent" then return false end
     local side = ns.band and ns.band.SideColumnsWidth and ns.band.SideColumnsWidth() or 0
     local x = math.min(TRACKER_X, -(side + TRACKER_GAP))
-    if info.offsetX ~= x then
-        info.offsetX = x
-        system.isInDefaultPosition = false
+    if (info.offsetX or 0) < x - 0.5 then return false end
+    if info.offsetX == x and system.isInDefaultPosition == false then return false end
+    info.offsetX = x
+    system.isInDefaultPosition = false
+    return true
+end
+
+-- The classic layout's tracker placed beside the side bars as they stand now, in the session's end write.
+function ns.PlaceClassicTracker()
+    if not ns.sessionEnding or not ns.ClassicLayoutActive() then return false end
+    local active = ns.ActiveLayoutInfo()
+    for _, system in ipairs(active and active.systems or {}) do
+        if system.system == Enum.EditModeSystem.ObjectiveTracker then return PlaceTracker(system) end
     end
+    return false
 end
 
 local function FitTracker(system)

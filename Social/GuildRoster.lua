@@ -13,20 +13,28 @@ local CHECK_HOVER = ns.ART.CHECK .. "Highlight"
 
 -- 1.x column proportions.
 local COLUMNS = {
-    { key = "name", label = NAME or "Name", x = 4, w = 96, justify = "LEFT" },
-    { key = "zone", label = ZONE or "Zone", x = 100, w = 112, justify = "LEFT" },
-    { key = "level", label = LEVEL_ABBR or "Lvl", x = 212, w = 34, justify = "LEFT" },
-    { key = "class", label = CLASS or "Class", x = 246, w = 92, justify = "LEFT" },
+    { key = "name", label = NAME or "Name", x = 4, w = 88, justify = "LEFT" },
+    { key = "zone", label = ZONE or "Zone", x = 92, w = 100, justify = "LEFT" },
+    { key = "level", label = LEVEL_ABBR or "Lvl", x = 192, w = 32, justify = "LEFT" },
+    { key = "class", label = CLASS or "Class", x = 224, w = 92, justify = "LEFT" },
 }
 -- The status view (foot arrow): rank, note, last online in the same slots.
 local STATUS_COLUMNS = {
-    { key = "name", label = NAME or "Name", x = 4, w = 96 },
-    { key = "rank", label = RANK or "Rank", x = 100, w = 80 },
-    { key = "note", label = LABEL_NOTE or "Note", x = 180, w = 84 },
-    { key = "lastOnline", label = LASTONLINE or "Last Online", x = 264, w = 74 },
+    { key = "name", label = NAME or "Name", x = 4, w = 88 },
+    { key = "rank", label = RANK or "Rank", x = 92, w = 76 },
+    { key = "note", label = LABEL_NOTE or "Note", x = 168, w = 76 },
+    { key = "lastOnline", label = LASTONLINE or "Last Online", x = 244, w = 72 },
 }
 local ROW_TEXTS = { "Name", "Zone", "Level", "Class" }
 local ROSTER_EVENTS = { "GUILD_ROSTER_UPDATE", "PLAYER_GUILD_UPDATE", "GUILD_MOTD" }
+-- Foot buttons (Classic Era: 123, 98, 104 wide at 3, 128, 228 from the window's left; the panel starts 8 in).
+local GUILD_INFO_BUTTON_X = -5
+local GUILD_INFO_BUTTON_WIDTH = 123
+local GUILD_ADD_MEMBER_BUTTON_X = 120
+local GUILD_ADD_MEMBER_BUTTON_WIDTH = 98
+local GUILD_CONTROL_BUTTON_X = 220
+local GUILD_CONTROL_BUTTON_WIDTH = 104
+local GUILD_BUTTONS_Y = -7
 local statusView = false
 
 -- The offline pill: the trainer's filter border cut in three.
@@ -132,18 +140,20 @@ local function NotMe(entry) return entry.name ~= UnitName("player") end
 local function ShowRowMenu(entry)
     if not rowMenu then
         rowMenu = ns.RowMenu({
-            { WHISPER or "Whisper", function(e) ns.Whisper(e.name) end,
-              function(e) return NotMe(e) and e.online end },
+            { section = S.MENU_INTERACT },
             { INVITE or "Invite", function(e) S.Invite(e.name) end,
               function(e) return NotMe(e) and e.online end },
-            { ADD_FRIEND or "Add Friend", function(e) S.AddFriend(e.name) end,
-              NotMe },
+            { WHISPER or "Whisper", function(e) ns.Whisper(e.name) end,
+              function(e) return NotMe(e) and e.online end },
             { GUILD_PROMOTE or "Promote", function(e) GuildCall("Promote", e.name) end,
               function(e) return NotMe(e) and CanGuildPromote and CanGuildPromote() end },
             { GUILD_DEMOTE or "Demote", function(e) GuildCall("Demote", e.name) end,
               function(e) return NotMe(e) and CanGuildDemote and CanGuildDemote() end },
             { REMOVE or "Remove", function(e) GuildCall("Uninvite", e.name) end,
               function(e) return NotMe(e) and CanGuildRemove and CanGuildRemove() end },
+            { section = S.MENU_OTHER },
+            { ADD_FRIEND or "Add Friend", function(e) S.AddFriend(e.name) end, NotMe },
+            { IGNORE or "Ignore", function(e) S.Ignore(e.name) end, NotMe },
         })
         rowMenu:Follow(G.panel)
     end
@@ -219,8 +229,8 @@ function G.Build()
     end)
 
     -- The foot: the three old buttons.
-    panel.add = ns.PanelButton(panel, ADDMEMBER or "Add Member", 118)
-    panel.add:SetPoint("BOTTOM", panel, "BOTTOM", 4, -8)
+    panel.add = ns.PanelButton(panel, ADDMEMBER or "Add Member", GUILD_ADD_MEMBER_BUTTON_WIDTH)
+    panel.add:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", GUILD_ADD_MEMBER_BUTTON_X, GUILD_BUTTONS_Y)
     panel.add:SetScript("OnClick", function()
         -- The client's dialog errors unless told the guild's club.
         if StaticPopup_Show then
@@ -229,8 +239,8 @@ function G.Build()
         end
     end)
 
-    panel.control = ns.PanelButton(panel, GUILDCONTROL or "Guild Control", 110)
-    panel.control:SetPoint("LEFT", panel.add, "RIGHT", 2, 0)
+    panel.control = ns.PanelButton(panel, GUILDCONTROL or "Guild Control", GUILD_CONTROL_BUTTON_WIDTH)
+    panel.control:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", GUILD_CONTROL_BUTTON_X, GUILD_BUTTONS_Y)
     panel.control:SetScript("OnClick", function()
         -- Loaded on demand; the client's own opener loads and shows it.
         if GuildControlUI and GuildControlUI:IsShown() then
@@ -248,8 +258,8 @@ function G.Build()
         end
     end)
 
-    panel.info = ns.PanelButton(panel, GUILD_INFORMATION or "Guild Information", 126)
-    panel.info:SetPoint("RIGHT", panel.add, "LEFT", 1, 0)
+    panel.info = ns.PanelButton(panel, GUILD_INFORMATION or "Guild Information", GUILD_INFO_BUTTON_WIDTH)
+    panel.info:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", GUILD_INFO_BUTTON_X, GUILD_BUTTONS_Y)
     panel.info:SetScript("OnClick", function()
         -- The client's guild window via the kept toggle; the ghost is dropped first.
         G.DropGhost()

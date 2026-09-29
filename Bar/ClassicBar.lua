@@ -269,6 +269,7 @@ local function UnskinRows()
     if KeyRingButton then ns.UnskinKeyRing(KeyRingButton) end
     B.KeyRingBack()
     B.BagDividers(1)
+    B.MainBarDividers(1)
     -- Give every micro button a place before any goes home: the client re-lays its menu as each returns, measuring from its
     -- end buttons, and one with no place (the help button 1.x never showed) errored ("attempt to compare nil with number").
     for _, name in ipairs(MICRO_BUTTONS) do

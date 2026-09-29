@@ -11,11 +11,12 @@ local results = {}
 local sort = { field = "name", reverse = false }
 local clientWho -- LFGWhoListFrame from its first sighting: a global frame is never replaced
 
+-- Classic Era's header widths; x is each row text's start, under its header.
 local COLUMNS = {
-    { key = "name", label = NAME or "Name", x = 4, w = 104, justify = "LEFT" },
-    { key = "zone", label = ZONE or "Zone", x = 108, w = 104, justify = "LEFT" },
-    { key = "level", label = LEVEL_ABBR or "Lvl", x = 212, w = 34, justify = "LEFT" },
-    { key = "class", label = CLASS or "Class", x = 246, w = 92, justify = "LEFT" },
+    { key = "name", label = NAME or "Name", x = 4, w = 83, justify = "LEFT" },
+    { key = "zone", label = ZONE or "Zone", x = 87, w = 105, justify = "LEFT" },
+    { key = "level", label = LEVEL_ABBR or "Lvl", x = 192, w = 32, justify = "LEFT" },
+    { key = "class", label = CLASS or "Class", x = 224, w = 92, justify = "LEFT" },
 }
 
 -- The second column is zone, guild or race, picked from its header's arrow; it shows and sorts by it.
@@ -25,7 +26,17 @@ local WHO_FIELDS = {
     { key = "race", label = _G.RACE or "Race" },
 }
 local SCROLL_DOWN = "Interface/ChatFrame/UI-ChatIcon-ScrollDown-"
+-- Foot buttons (Classic Era: 85, 120, 120 wide at 7, 92, 212 from the window's left; the panel starts 8 in).
+local WHO_REFRESH_BUTTON_X = -1
+local WHO_REFRESH_BUTTON_WIDTH = 85
+local WHO_ADD_FRIEND_BUTTON_X = 84
+local WHO_ADD_FRIEND_BUTTON_WIDTH = 120
+local WHO_GROUP_INVITE_BUTTON_X = 204
+local WHO_GROUP_INVITE_BUTTON_WIDTH = 120
+local WHO_BUTTONS_Y = -7
 local FIELD_ARROW = { set = "file", highlightSet = "raw", add = true }
+-- Era's common-dropdown-classic-textholder (the wide one: the small one ovals out over a plate this wide), round a 24 tall button.
+local HOLDER_COORDS, HOLDER_BUTTON_H = { 0.38672, 0.81641, 0.00391, 0.16406 }, 24
 
 local function WhoField()
     local want = ns.db and ns.db.whoColumn
@@ -113,15 +124,17 @@ local function Refresh()
     UpdateButtons()
 end
 
--- The old lists' right-click menu: whisper, invite, add friend, ignore.
+-- Right-click menu in Era's sections (Report and Copy Name are the client's alone).
 local rowMenu
 local function ShowRowMenu(entry)
     if not rowMenu then
         rowMenu = ns.RowMenu({
-            { WHISPER or "Whisper", function(who) ns.Whisper(who.name) end },
+            { section = S.MENU_INTERACT },
             { INVITE or "Invite", function(who) S.Invite(who.name) end },
+            { WHISPER or "Whisper", function(who) ns.Whisper(who.name) end },
+            { section = S.MENU_OTHER },
             { ADD_FRIEND or "Add Friend", function(who) S.AddFriend(who.name) end },
-            { IGNORE or "Ignore", function(who) if C_FriendList and C_FriendList.AddIgnore then C_FriendList.AddIgnore(who.name) end end },
+            { IGNORE or "Ignore", function(who) S.Ignore(who.name) end },
         })
     end
     rowMenu:Follow(panel)
@@ -197,6 +210,13 @@ end
 local function FieldArrow(header, column)
     if column.key ~= "zone" then return end
     if header.Text then header.Text:SetText(WhoField().label) end
+    -- Era's dropdown box round the plate: its text holder, shadow margins scaled to the plate's height.
+    local holder = header:CreateTexture(nil, "ARTWORK", nil, -8)
+    ns.SetTex(holder, "dropdownClassic")
+    holder:SetTexCoord(unpack(HOLDER_COORDS))
+    local k = header:GetHeight() / HOLDER_BUTTON_H
+    holder:SetPoint("TOPLEFT", header, "TOPLEFT", -9 * k, 8 * k)
+    holder:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 8 * k, -9 * k)
     local arrow = CreateFrame("Button", nil, header)
     arrow:SetSize(22, 22)
     arrow:SetPoint("RIGHT", header, "RIGHT", 1, 0)
@@ -208,23 +228,23 @@ local function FieldArrow(header, column)
             if header.Text then header.Text:SetText(field.label) end
             sort.field, sort.reverse = "zone", false
             Refresh()
-        end }
+        end, function() return WhoField() == field end }
     end
     local menu
     arrow:SetScript("OnClick", function()
         if not menu then
-            menu = ns.RowMenu(entries)
+            menu = ns.DropList(entries)
             menu:Follow(panel)
         end
-        menu:Open(WHO_FIELDS, "")
+        menu:Toggle(header)
     end)
 end
 
 -- The bar runs the pane's full height, down beside the count to the search line.
 local function PlaceBar(bar, list)
     bar:ClearAllPoints()
-    bar:SetPoint("TOPLEFT", list, "TOPRIGHT", 6, -14)
-    bar:SetPoint("BOTTOMLEFT", list, "BOTTOMRIGHT", 6, 4)
+    bar:SetPoint("TOPLEFT", list, "TOPRIGHT", 6, -13)
+    bar:SetPoint("BOTTOMLEFT", list, "BOTTOMRIGHT", 6, 1)
 end
 
 local function Build()
@@ -232,11 +252,11 @@ local function Build()
     if not host then return end
     panel = S.NewPanel(host, "ClassicUIForeverWhoPanel")
 
-    -- The foot in the old order, Refresh, Add Friend, Group Invite: the middle stood first.
-    panel.add = ns.PanelButton(panel, ADD_FRIEND or "Add Friend", 127)
-    panel.add:SetPoint("BOTTOM", panel, "BOTTOM", -6, -7)
-    panel.refresh = ns.PanelButton(panel, REFRESH or "Refresh", 112)
-    panel.refresh:SetPoint("RIGHT", panel.add, "LEFT", 1.5, 0)
+    -- The foot as Classic Era lays it: Refresh, Add Friend, Group Invite at its widths, each from the panel's left.
+    panel.add = ns.PanelButton(panel, ADD_FRIEND or "Add Friend", WHO_ADD_FRIEND_BUTTON_WIDTH)
+    panel.add:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", WHO_ADD_FRIEND_BUTTON_X, WHO_BUTTONS_Y)
+    panel.refresh = ns.PanelButton(panel, REFRESH or "Refresh", WHO_REFRESH_BUTTON_WIDTH)
+    panel.refresh:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", WHO_REFRESH_BUTTON_X, WHO_BUTTONS_Y)
     panel.refresh:SetScript("OnClick", function()
         if C_FriendList and C_FriendList.SendWho then
             pcall(C_FriendList.SendWho, panel.query and panel.query:GetText() or "")
@@ -248,8 +268,8 @@ local function Build()
         if entry then S.AddFriend(entry.name) end
     end)
 
-    panel.invite = ns.PanelButton(panel, GROUP_INVITE or "Group Invite", 123)
-    panel.invite:SetPoint("LEFT", panel.add, "RIGHT", -3.5, 0)
+    panel.invite = ns.PanelButton(panel, GROUP_INVITE or "Group Invite", WHO_GROUP_INVITE_BUTTON_WIDTH)
+    panel.invite:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", WHO_GROUP_INVITE_BUTTON_X, WHO_BUTTONS_Y)
     panel.invite:SetScript("OnClick", function()
         local entry = SelectedEntry()
         if entry then S.Invite(entry.name) end
@@ -288,14 +308,6 @@ local function Build()
     query:HookScript("OnTextChanged", function(self)
         clear:SetShown((self:GetText() or "") ~= "")
     end)
-    -- The old window's lighter metal round the line, out to the window's edges.
-    local queryBox = CreateFrame("Frame", nil, panel.listBox, ns.BACKDROP_TEMPLATE)
-    queryBox:SetPoint("TOP", query, "TOP", 0, 7)
-    queryBox:SetPoint("BOTTOM", query, "BOTTOM", 0, -7)
-    queryBox:SetPoint("LEFT", host, "LEFT", -2, 0)
-    queryBox:SetPoint("RIGHT", host, "RIGHT", 0, 0)
-    queryBox:SetFrameLevel(query:GetFrameLevel())
-    ns.Backdrop(queryBox, ns.DialogEdge(20))
     query:SetAutoFocus(false)
     query:SetFontObject("ChatFontNormal")
     query:SetMaxLetters(60)
@@ -305,6 +317,8 @@ local function Build()
         self:ClearFocus()
     end)
 
+    -- Era's inset runs down round the search line to the buttons.
+    panel.insetFoot = panel.refresh
     S.ScrollRows(panel, panel.found, 2, UpdateRows, COLUMNS, Row_OnClick, Row_OnDoubleClick, PlaceBar)
 
     panel:SetScript("OnShow", function()

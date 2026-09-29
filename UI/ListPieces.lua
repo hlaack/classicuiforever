@@ -25,6 +25,42 @@ function ns.SectionBox(parent)
     return box
 end
 
+-- Era's list inset border (the client's UI-Frame-Inner art): 6 px corners, 3 px edges.
+local INNER_CORNER, INNER_EDGE = 6, 3
+local INNER_CORNERS = {
+    { "UI-Frame-InnerTopLeft", "TOPLEFT" }, { "UI-Frame-InnerTopRight", "TOPRIGHT" },
+    { "UI-Frame-InnerBotLeftCorner", "BOTTOMLEFT" }, { "UI-Frame-InnerBotRight", "BOTTOMRIGHT" },
+}
+local INNER_EDGES = {
+    { "_UI-Frame-InnerTopTile", "TOPLEFT", "TOPRIGHT", "TOP" }, { "_UI-Frame-InnerBotTile", "BOTTOMLEFT", "BOTTOMRIGHT", "BOTTOM" },
+    { "!UI-Frame-InnerLeftTile", "TOPLEFT", "BOTTOMLEFT", "LEFT" }, { "!UI-Frame-InnerRightTile", "TOPRIGHT", "BOTTOMRIGHT", "RIGHT" },
+}
+function ns.InnerBorder(box)
+    local corners = {}
+    for _, c in ipairs(INNER_CORNERS) do
+        local tex = box:CreateTexture(nil, "BORDER", nil, -5)
+        tex:SetAtlas(c[1])
+        tex:SetSize(INNER_CORNER, INNER_CORNER)
+        tex:SetPoint(c[2], box, c[2], 0, 0)
+        corners[c[2]] = tex
+    end
+    for _, e in ipairs(INNER_EDGES) do
+        local tex = box:CreateTexture(nil, "BORDER", nil, -5)
+        tex:SetAtlas(e[1])
+        local across = e[4] == "TOP" or e[4] == "BOTTOM"
+        local from, to = corners[e[2]], corners[e[3]]
+        if across then
+            tex:SetHeight(INNER_EDGE)
+            tex:SetPoint(e[4] .. "LEFT", from, e[4] .. "RIGHT", 0, 0)
+            tex:SetPoint(e[4] .. "RIGHT", to, e[4] .. "LEFT", 0, 0)
+        else
+            tex:SetWidth(INNER_EDGE)
+            tex:SetPoint("TOP" .. e[4], from, "BOTTOM" .. e[4], 0, 0)
+            tex:SetPoint("BOTTOM" .. e[4], to, "TOP" .. e[4], 0, 0)
+        end
+    end
+end
+
 local STONE_LIT = { coords = { 0, 1, 0, 1 }, shade = { 1.25, 1.2, 1.1 } }
 
 function ns.StoneFill(frame, layer)

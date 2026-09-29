@@ -330,9 +330,12 @@ ns.WindowLocked = Locked
 
 -- Our last anchor x per window; any other anchor means the player or a window mover moved it.
 local placedX = setmetatable({}, { __mode = "k" })
+local editKeys = setmetatable({}, { __mode = "k" })   -- window -> its edit mode key, where a slot holds it
 
--- Moved off its slot: left where it was put. Not the spellbook: its casting layer keeps the slot.
+-- Moved off its slot: left where it was put. Not the spellbook unless placed in edit mode: its casting layer keeps it.
 local function Moved(frame)
+    local key = editKeys[frame]
+    if key and ns.WindowPlaced and ns.WindowPlaced(key) then return true end
     local x = placedX[frame]
     if not x or frame.fcuiHoldX then return false end
     local count = frame:GetNumPoints()
@@ -347,9 +350,10 @@ end
 -- Where a window must stay, or nil: its own fcuiHoldX (the spellbook under live casting
 -- buttons), a moved window's place, or in combat a protected window's actual place.
 local function HeldAt(frame)
-    local at = frame.fcuiHoldX and frame:fcuiHoldX()
+    local moved = Moved(frame)
+    local at = not moved and frame.fcuiHoldX and frame:fcuiHoldX()
     if at then return at end
-    if not Moved(frame) and not (InCombatLockdown() and Locked(frame)) then return nil end
+    if not moved and not (InCombatLockdown() and Locked(frame)) then return nil end
     local left = Span(frame)
     return left and math.floor(left + 0.5) or frame.fcuiSlotX or 0
 end
@@ -526,7 +530,28 @@ local function SheetPastHeld()
     end
 end
 
+-- The client stands the sheet where its new-style windows stand (16, -116); Era stands the old sheet art at 0, -104, its
+-- margins lining the art up with the rest. Only the client's own placings move: a y we set is left alone (the gap and
+-- held-window passes keep y), and an edit mode place wins.
+local SHEET_ERA_X, SHEET_ERA_Y = -16, 12
+local sheetY   -- the y this pass last set
+
+local function SheetAtEraSpot()
+    if ns.WindowPlaced and ns.WindowPlaced("character") then return end
+    local frame = CharacterFrame
+    if Plain(frame:GetNumPoints()) ~= 1 then return end
+    local point, rel, relPoint, x, y = frame:GetPoint(1)
+    x, y = Plain(x), Plain(y)
+    if Plain(point) ~= "TOPLEFT" or Plain(relPoint) ~= "TOPLEFT" or not x or not y then return end
+    if rel ~= nil and Plain(rel) ~= UIParent then return end
+    if sheetY and math.abs(y - sheetY) < 0.5 then return end
+    if InCombatLockdown() and Locked(frame) then return end
+    sheetY = y + SHEET_ERA_Y
+    pcall(frame.SetPoint, frame, "TOPLEFT", UIParent, "TOPLEFT", x + SHEET_ERA_X, sheetY)
+end
+
 local function SheetPass()
+    SheetAtEraSpot()
     SheetPastHeld()
     CloseSheetGap()
 end
@@ -536,9 +561,10 @@ if CharacterFrame then
     ns.Sched.OnFrame(CreateFrame("Frame", nil, CharacterFrame), { name = "windows.sheetGap", every = 0, fn = SheetPass })
 end
 
-function ns.RegisterClassicWindow(frame, shares)
+function ns.RegisterClassicWindow(frame, shares, editKey)
     if not frame or classicWindows[frame] then return end
     classicWindows[frame] = true
+    editKeys[frame] = editKey
     -- A micro button's window made on first open; a place given in edit mode applies from now.
     if ns.MicroWindowsChanged then ns.MicroWindowsChanged() end
     if ns.PlaceSavedWindows then ns.PlaceSavedWindows() end

@@ -55,14 +55,15 @@ ns.FONT_GOLD_SMALL = GoldFont("ClassicUIForeverGoldSmall", "GameFontNormalSmall"
 -- A global font name others may use; nothing here reads it.
 GoldFont("ClassicUIForeverGoldLarge", "GameFontNormalLarge")
 
--- 1.x skull: over ten levels above, or -1 (bosses), attackable units only.
--- UnitCanAttack is secret in a fight; the skull stands then.
+-- 1.x skull: over ten levels above, or -1 (bosses), hostile units only (neutral keeps the number).
+-- UnitIsEnemy is secret in a fight; the skull stands then.
 function ns.SkullLevel(level, unit)
     if level == nil then return false end
     if IsSecret(level) then return false end
     if level < 0 then return true end
-    if unit and UnitCanAttack then
-        local foe = UnitCanAttack("player", unit)
+    local isEnemy = _G.UnitIsEnemy
+    if unit and isEnemy then
+        local foe = isEnemy("player", unit)
         if not IsSecret(foe) and not foe then return false end
     end
     local mine = UnitLevel("player")

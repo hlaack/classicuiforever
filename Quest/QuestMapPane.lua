@@ -53,6 +53,16 @@ local QUEST_SCROLL = {
     knobReach = QUEST_SCROLL_KNOB_TRAVEL,
 }
 
+-- Rewards: at the text's end as Era's quest log, on the spacer the client sizes to them (x + right, y + up).
+local QUEST_REWARDS_X = -10
+local QUEST_REWARDS_Y = 0
+
+-- Parchment: the top-left 300x336 of the 512 sheet (the rest is dark).
+local PARCHMENT_U0, PARCHMENT_U1, PARCHMENT_V0, PARCHMENT_V1 = 8 / 512, 300 / 512, 4 / 512, 336 / 512
+
+-- The client's drawer spot (its XML), restored when the module is off.
+local CLIENT_DRAWER_X, CLIENT_DRAWER_Y = 0, 23
+
 -- UI-Background-Rock, the map window's backing; its coords run 0..size/1024 from its top left.
 local MAP_ROCK = 374155
 local ROCK_SPAN = 1024
@@ -151,6 +161,9 @@ local function DressCheckRegion(region, box)
     region:SetTexCoord(0, 1, 0, 1)
 end
 
+-- Title hover: the settings list's picked gold (Era's options_list_active, 255 210 0).
+local TITLE_HOVER_R, TITLE_HOVER_G, TITLE_HOVER_B = 1, 0.82, 0
+
 -- 1.x row highlight and check box; storyline and task icons faded.
 local function SkinTitle(button)
     if ns.Once(button, "questTitle") then
@@ -161,6 +174,7 @@ local function SkinTitle(button)
             ns.SetTex(hl, "questLogHighlight")
             hl:SetTexCoord(0, 1, 0, 1)
             hl:SetBlendMode("ADD")
+            hl:SetVertexColor(TITLE_HOVER_R, TITLE_HOVER_G, TITLE_HOVER_B)
             hl:ClearAllPoints()
             hl:SetPoint("TOPLEFT", button, "TOPLEFT", 0, -2)
             hl:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 2)
@@ -236,6 +250,42 @@ end
 
 ------------------------------------------------------------------ header band
 
+local backWas   -- the client's point and size for the Back button, for Restore
+
+local function PlaceBack(on)
+    local details = QuestMapFrame.DetailsFrame
+    local back = details and details.BackFrame and details.BackFrame.BackButton
+    if not back then return end
+    if on then
+        backWas = backWas or { { back:GetPoint(1) }, back:GetWidth(), back:GetHeight() }
+        ns.SetPointIf(back, "TOPLEFT", details, "TOPLEFT", QUEST_DETAILS_BACK_BUTTON_X,
+            QUEST_DETAILS_BACK_BUTTON_Y + ns.MapDetailsLift())
+        ns.SetSizeIf(back, QUEST_DETAILS_BACK_BUTTON_WIDTH, QUEST_DETAILS_BACK_BUTTON_HEIGHT)
+    elseif backWas then
+        ns.SetPointOnce(back, unpack(backWas[1]))
+        back:SetSize(backWas[2], backWas[3])
+        backWas = nil
+    end
+end
+
+-- The client's rewards drawer stays pinned over the text's foot; ours hang on the text's end spacer, and the drawer
+-- is only their window, clipped to the text's.
+local function PlaceRewards(on)
+    local details = QuestMapFrame.DetailsFrame
+    local box = details and details.RewardsFrameContainer
+    local rewards = box and box.RewardsFrame
+    local text = details and details.ScrollFrame
+    local spacer = _G.QuestInfoSpacerFrame
+    if not (rewards and text) then return end
+    if on and spacer then
+        ns.SetTwoPointsIf(box, "TOPLEFT", text, "TOPLEFT", 0, 0, "BOTTOMRIGHT", text, "BOTTOMRIGHT", 0, 0)
+        ns.SetPointIf(rewards, "TOPLEFT", spacer, "TOPLEFT", QUEST_REWARDS_X, QUEST_REWARDS_Y)
+    elseif not on then
+        ns.SetPointIf(box, "BOTTOMLEFT", details, "BOTTOMLEFT", CLIENT_DRAWER_X, CLIENT_DRAWER_Y)
+        ns.SetPointIf(rewards, "TOPLEFT", box, "TOPLEFT", 0, 0)
+    end
+end
+
 local mapRock   -- nil: not looked for yet; false: the map has none
 local function FindRock(region)
     if mapRock or not region:IsObjectType("Texture") then return end
@@ -258,6 +308,10 @@ local function LayHeader()
         "BOTTOMRIGHT", details, "BOTTOMRIGHT", QUEST_DETAILS_PARCHMENT_RIGHT, QUEST_DETAILS_PARCHMENT_BOTTOM)
     ns.SetTwoPointsIf(headerTex, "TOPLEFT", details, "TOPLEFT", QUEST_DETAILS_HEADER_LEFT, QUEST_DETAILS_HEADER_TOP,
         "BOTTOMRIGHT", details, "TOPRIGHT", QUEST_DETAILS_HEADER_RIGHT, drop)
+    -- Lifted to the details' top (Era's map), the band has no room left.
+    ns.SetShownIf(headerTex, drop < QUEST_DETAILS_HEADER_TOP)
+    PlaceRewards(true)
+    PlaceBack(true)
     if mapRock == nil then
         mapRock = false
         ns.EachRegion(WorldMapFrame, FindRock)
@@ -273,23 +327,6 @@ local function LayHeader()
     if laid[1] == u0 and laid[2] == u1 and laid[3] == v0 and laid[4] == v1 then return end
     laid[1], laid[2], laid[3], laid[4] = u0, u1, v0, v1
     headerTex:SetTexCoord(u0, u1, v0, v1)
-end
-
-local backWas   -- the client's point and size for the Back button, for Restore
-
-local function PlaceBack(on)
-    local details = QuestMapFrame.DetailsFrame
-    local back = details and details.BackFrame and details.BackFrame.BackButton
-    if not back then return end
-    if on then
-        backWas = backWas or { { back:GetPoint(1) }, back:GetWidth(), back:GetHeight() }
-        ns.SetPointIf(back, "TOPLEFT", details, "TOPLEFT", QUEST_DETAILS_BACK_BUTTON_X, QUEST_DETAILS_BACK_BUTTON_Y)
-        ns.SetSizeIf(back, QUEST_DETAILS_BACK_BUTTON_WIDTH, QUEST_DETAILS_BACK_BUTTON_HEIGHT)
-    elseif backWas then
-        ns.SetPointOnce(back, unpack(backWas[1]))
-        back:SetSize(backWas[2], backWas[3])
-        backWas = nil
-    end
 end
 
 ------------------------------------------------------------------ chrome
@@ -337,7 +374,7 @@ local function Build()
         parchmentTex = ns.OwnTexture(details, "parchment", "BACKGROUND", -2)
         -- Parchment is the top-left 300x336 of the 512 sheet; the rest is dark.
         parchmentTex:SetTexture(ns.TexPath("questParchment"))
-        parchmentTex:SetTexCoord(8 / 512, 300 / 512, 4 / 512, 336 / 512)
+        parchmentTex:SetTexCoord(PARCHMENT_U0, PARCHMENT_U1, PARCHMENT_V0, PARCHMENT_V1)
         parchmentTex:SetPoint("TOPLEFT", details, "TOPLEFT", QUEST_DETAILS_PARCHMENT_LEFT, QUEST_DETAILS_PARCHMENT_TOP)
         parchmentTex:SetPoint("BOTTOMRIGHT", details, "BOTTOMRIGHT", QUEST_DETAILS_PARCHMENT_RIGHT, QUEST_DETAILS_PARCHMENT_BOTTOM)
         headerTex = ns.OwnTexture(details, "header", "BACKGROUND", -2)
@@ -371,6 +408,7 @@ local function Restore()
     if parchmentTex then parchmentTex:Hide() end
     if headerTex then headerTex:Hide() end
     PlaceBack(false)
+    PlaceRewards(false)
     EachTrim(ns.UndrainBronze)
     ns.needsReload = true
 end

@@ -33,8 +33,9 @@ local function PinnedByUs(frame, info)
     local relativeTo = info.relativeTo
     if type(relativeTo) == "table" then relativeTo = relativeTo.GetName and relativeTo:GetName() end
     -- By shape too (records made before a layout reset may be gone): no edit mode drop, snap or nudge holds BOTTOMLEFT to
-    -- screen BOTTOM.
+    -- screen BOTTOM, or a right column's TOPRIGHT to the screen's BOTTOMRIGHT.
     if relativeTo == "UIParent" and info.point == "BOTTOMLEFT" and info.relativePoint == "BOTTOM" then return true end
+    if relativeTo == "UIParent" and info.point == "TOPRIGHT" and info.relativePoint == "BOTTOMRIGHT" then return true end
     if not pin then return false end
     return info.point == pin.point and info.relativePoint == pin.relativePoint and relativeTo == "UIParent"
         and math.abs((info.offsetX or 0) - (pin.offsetX or 0)) < 0.5
@@ -102,9 +103,12 @@ local function PinSpot(frame)
 end
 
 -- Anchor a bar's band spot to the screen, not the band: the layout is read before the band exists and outlives it.
+-- Right columns keep their hang from the screen's bottom-right corner: a spot from the screen's middle drifted off the
+-- edge whenever its width changed (UI scale), and the layout shows it as saved with the addon off.
 local function AnchorToScreen(frame)
     local point, relativeTo, relativePoint = frame:GetPoint(1)
     if relativeTo == UIParent and point == "BOTTOMLEFT" and relativePoint == "BOTTOM" then return true end
+    if relativeTo == UIParent and point == "TOPRIGHT" and relativePoint == "BOTTOMRIGHT" then return true end
     local x, y = PinSpot(frame)
     if not x then return false end
     ns.SetPointOnce(frame, "BOTTOMLEFT", UIParent, "BOTTOM", x, y)
@@ -259,6 +263,8 @@ function ns.PinBandBars()
     B.applying = true
     -- Unstacked (sessionEnding) first, or the second holder would be pinned on the XP bar's home.
     if B.LayoutStatusBars then pcall(B.LayoutStatusBars) end
+    -- Right columns at their corner spots as the rule sets them, not wherever the session left them.
+    if B.LayoutSideBars then pcall(B.LayoutSideBars) end
     for _, frame in ipairs(ns.BandBarsToPin()) do
         if AnchorToScreen(frame) then
             local ok, did = pcall(mgr.UpdateSystemAnchorInfo, mgr, frame)
@@ -277,6 +283,7 @@ function ns.PinBandBars()
         end
     end
     if WidthsToBand(mgr) then changed = true end
+    if ns.PlaceClassicTracker and ns.PlaceClassicTracker() then changed = true end
     B.applying = false
     if ResetEndCaps() then changed = true end
     if changed then pcall(mgr.SaveLayouts, mgr) end

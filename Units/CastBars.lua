@@ -193,8 +193,17 @@ local function Skin(bar)
         ns.HookMethod(bar, "PlayFinishAnim", function(b)
             if active then StopFinishAnims(b) end
         end)
+        -- Interrupt as in classic: red bar full at once (no 0.1 s spark wait), no shake unless opted in.
         ns.HookMethod(bar, "PlayInterruptAnims", function(b)
-            if active then HideFx(b) end
+            if not active then return end
+            HideFx(b)
+            local shake = b.InterruptShakeAnim
+            if shake and not ns.db.castBarShake then shake:Stop() end
+            local _, max = b:GetMinMaxValues()
+            if max ~= nil and not IsSecret(max) then
+                b:SetValue(max)
+                if b.Spark then b.Spark:Hide() end
+            end
         end)
     end
     DressBar(bar)

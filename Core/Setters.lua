@@ -198,17 +198,6 @@ function ns.Unfade(region)
     if region and region.SetAlpha then region:SetAlpha(1) end
 end
 
-local EachRegion = ns.EachRegion
-
-local function FadeTexture(region)
-    if region:IsObjectType("Texture") then region:SetAlpha(0) end
-end
-
--- Texture regions only.
-function ns.FadeRegions(frame)
-    EachRegion(frame, FadeTexture)
-end
-
 -- 12.x level and PvP circles: any "SmallCircle" atlas texture under any key.
 -- ns.FadeAtlas (UI/Dress.lua) loads later, so it is looked up per call.
 function ns.FadeCircles(frame)

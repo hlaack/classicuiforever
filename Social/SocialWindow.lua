@@ -7,6 +7,8 @@ local S = {}
 ns.social = S
 
 local ROW_H = 16
+-- A row's text ends this short of its column, so a long one cuts with "..." instead of meeting the next.
+local COLUMN_TEXT_GAP = 6
 
 -- The client's panels inside the social window, faded under our lists.
 local CLIENT_PANELS = { "FriendsListFrame", "IgnoreListFrame", "WhoFrame", "RaidFrame", "QuickJoinFrame", "FriendsFrameBroadcastInput" }
@@ -218,7 +220,7 @@ local function ListRow(parent, index, columns, onClick, onDoubleClick)
     for _, column in ipairs(columns) do
         local text = row:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
         text:SetPoint("LEFT", row, "LEFT", column.x, 0)
-        text:SetWidth(column.w)
+        text:SetWidth(column.w - COLUMN_TEXT_GAP)
         text:SetJustifyH(column.justify)
         text:SetWordWrap(false)
         row[column.key:gsub("^%l", string.upper)] = text
@@ -276,6 +278,17 @@ function S.ScrollRows(panel, foot, gap, onValue, columns, onClick, onDoubleClick
     -- No bar until the list outgrows its box, then the old scroll column round it.
     bar.hideWhenIdle = true
     ns.ScrollColumnOn(bar)
+    -- Era's list inset: top 2 under the plates, right on the scroll column's, foot on panel.insetFoot (the Who buttons).
+    local inset = CreateFrame("Frame", nil, panel.listBox)
+    inset:SetPoint("LEFT", panel.listBox, "LEFT", 0, 0)
+    inset:SetPoint("TOP", panel.listBox, "TOP", 0, 3)
+    inset:SetPoint("RIGHT", bar.up, "RIGHT", 6.5, 0)
+    if panel.insetFoot then
+        inset:SetPoint("BOTTOM", panel.insetFoot, "TOP", 0, 0)
+    else
+        inset:SetPoint("BOTTOM", panel.listBox, "BOTTOM", 0, 0)
+    end
+    ns.InnerBorder(inset)
     list:SetScript("OnMouseWheel", function(_, delta)
         bar:SetValue((bar:GetValue() or 0) - delta)
     end)
@@ -331,6 +344,14 @@ end
 function S.AddFriend(name)
     if C_FriendList and C_FriendList.AddFriend then C_FriendList.AddFriend(name) end
 end
+
+function S.Ignore(name)
+    if C_FriendList and C_FriendList.AddIgnore then C_FriendList.AddIgnore(name) end
+end
+
+-- Era's player menu section heads.
+S.MENU_INTERACT = _G.UNIT_FRAME_DROPDOWN_SUBSECTION_TITLE_INTERACT or "Interact"
+S.MENU_OTHER = _G.UNIT_FRAME_DROPDOWN_SUBSECTION_TITLE_OTHER or "Other Options"
 
 ---------------------------------------------------------------- recent allies
 

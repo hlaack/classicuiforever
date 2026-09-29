@@ -9,9 +9,6 @@ local Once = ns.Once
 local PANEL_BUTTON = ART.PANEL_BUTTON
 local CHECK = ART.CHECK
 local HILIGHT = ART.HILIGHT
-local SLIDER_BORDER = "Interface\\Buttons\\UI-SliderBar-Border"
-local SLIDER_BG = "Interface\\Buttons\\UI-SliderBar-Background"
-local SLIDER_THUMB = "Interface\\Buttons\\UI-SliderBar-Button-Horizontal"
 local DROPDOWN = "Interface\\Glues\\CharacterCreate\\CharacterCreate-LabelFrame"
 local DROPDOWN_ARROW = "Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-"
 
@@ -23,7 +20,6 @@ ns.RED_STATES = { set = "file", highlightSet = "raw", coords = ns.RED_COORDS, fi
 local RED = ns.RED_STATES
 local BOX = { set = "file", highlightSet = "raw", checked = CHECK .. "Check", disabledChecked = CHECK .. "Check-Disabled",
     coords = FULL, fill = true, add = true, states = { "Normal", "Pushed", "Highlight", "Checked", "DisabledChecked" } }
-local STEPPER = { set = "file", highlightSet = "raw", center = { 26, 26 }, add = true }
 
 -- The 1.x red button sheet; false when this client lacks the file.
 function ns.RedButtonArt(button, how)
@@ -49,55 +45,6 @@ function ns.SkinCheckbox(check)
     local ok = check:SetNormalTexture(CHECK .. "Up")
     if ok == false then return end
     DressStates(check, CHECK .. "Up", CHECK .. "Down", nil, CHECK .. "Highlight", BOX)
-end
-
--- The steppers beside a drop down or slider.
-function ns.SkinStepper(button, forward)
-    if not button or not Once(button, "stepper") then return end
-    ns.FadeRegions(button)
-    local sheet = forward and ART.PAGE_NEXT or ART.PAGE_PREV
-    local ok = button:SetNormalTexture(sheet .. "Up")
-    if ok == false then return end
-    DressStates(button, sheet .. "Up", sheet .. "Down", sheet .. "Disabled", HILIGHT, STEPPER)
-end
-
-local SLIDER_BACKDROP = {
-    bgFile = SLIDER_BG, edgeFile = SLIDER_BORDER, tile = true, tileSize = 8, edgeSize = 8,
-    insets = { left = 3, right = 3, top = 6, bottom = 6 },
-}
-local STEP_ENDS = { "Back", "Forward" }
-
-local function Drain(tex) ns.DrainBronze(tex) end
-
-function ns.SkinSliderWithSteppers(frame)
-    if not frame or not Once(frame, "slider") then return end
-    local slider = frame.Slider or frame
-    FadeKeys(slider, KEYS.LRM)
-    local track = CreateFrame("Frame", nil, slider, "BackdropTemplate")
-    track:SetPoint("LEFT", slider, "LEFT", 0, 0)
-    track:SetPoint("RIGHT", slider, "RIGHT", 0, 0)
-    track:SetHeight(17)
-    track:SetFrameLevel(math.max(0, slider:GetFrameLevel() - 1))
-    ns.Backdrop(track, SLIDER_BACKDROP)
-    if slider.SetThumbTexture then
-        slider:SetThumbTexture(SLIDER_THUMB)
-        local thumb = slider:GetThumbTexture()
-        if thumb then
-            ns.SetFile(thumb, SLIDER_THUMB)
-            thumb:SetTexCoord(0, 1, 0, 1)
-            thumb:SetSize(32, 32)
-        end
-    end
-    -- Drain, not hide: the client re-shows the end arrows on every slider setup.
-    for _, key in ipairs(STEP_ENDS) do
-        local button = frame[key]
-        if button then
-            button:SetAlpha(1)
-            button:EnableMouse(true)
-            ns.EachTexture(button, Drain)
-            ns.EachState(button, KEYS.STATES, Drain)
-        end
-    end
 end
 
 -- A page-arrow toggle on a window; the global name is kept.
@@ -188,36 +135,3 @@ function ns.SkinDropdown(dropdown)
     end
 end
 
--- Minimal tabs (a panel's top tabs) wear the old tab art flipped onto the box below.
-local function TabSelected(tab)
-    if tab.IsSelected then return tab:IsSelected() end
-    return tab.selected or false
-end
-
-local MINIMAL_TAB = { own = "mt", layer = "BACKGROUND", cap = 20, height = 32, edge = "BOTTOM", middle = "edge", show = true,
-    coords = { { 0, 0.15625, 0, 1 }, { 0.15625, 0.84375, 0, 1 }, { 0.84375, 1, 0, 1 } } }
-local TAB_HOOKS = { "SetSelected", "SetSelectedState", "UpdateTab" }
-
-local function DressMinimalTab(tab)
-    local selected = TabSelected(tab)
-    ns.ThreeSlice(tab, selected and "optionsTabActive" or "optionsTabInactive", MINIMAL_TAB, tab)
-    if tab.Text then tab.Text:SetFontObject(selected and "GameFontHighlightSmall" or "GameFontNormalSmall") end
-end
-
-function ns.SkinMinimalTab(tab)
-    if not tab then return end
-    if not tab.fcuiTab then
-        tab.fcuiTab = true
-        FadeKeys(tab, KEYS.LMR)
-        for _, method in ipairs(TAB_HOOKS) do
-            if type(tab[method]) == "function" then
-                hooksecurefunc(tab, method, function(self) DressMinimalTab(self) end)
-            end
-        end
-        tab:HookScript("OnShow", DressMinimalTab)
-        -- Redress after the client's click has run; one closure per tab keeps one pending wait.
-        local function Redress() DressMinimalTab(tab) end
-        tab:HookScript("OnClick", function() ns.Sched.NextFrame(tab, Redress) end)
-    end
-    DressMinimalTab(tab)
-end

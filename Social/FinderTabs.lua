@@ -221,10 +221,11 @@ end
 
 ---------------------------------------------------------------- on the finder
 
-function S.BuildFinderSideTabs(parent)
+-- anchor: the frame the art's edges are (the finder's Era origin); the window when absent.
+function S.BuildFinderSideTabs(parent, anchor)
     if #finderTabs > 0 or not ns.NewSideTab then return end
     for i, entry in ipairs(Entries()) do
-        local side = NewFinderTab(parent, i, finderTabs[i - 1], entry, parent)
+        local side = NewFinderTab(parent, i, finderTabs[i - 1], entry, anchor or parent)
         side.index = entry.index
         side:SetScript("OnClick", function(self)
             if entry.who then

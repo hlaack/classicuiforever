@@ -23,6 +23,7 @@ globals = { "ToggleGuildFrame",
 }
 
 read_globals = {
+    "C_Map", "WORLD_MAP",
     "date",
     "CLOSE", "UIParent", "Minimap", "MinimapCluster", "GetCursorPosition", "UnitLevel", "UnitEffectiveLevel", "GetCreatureDifficultyColor", "CASTBAR_CLASSIC_YELLOW", "CASTBAR_CLASSIC_GREEN", "CASTBAR_CLASSIC_GRAY", "CASTBAR_CLASSIC_RED", "CreateColor", "GameTooltip",
     "hooksecurefunc", "wipe", "geterrorhandler",

@@ -682,7 +682,7 @@ local function CreateBook()
     -- book stuck open). Escape and placement are ours: the left window slot,
     -- like the classic quest log.
     f.fcuiSlotWidth = 392
-    ns.RegisterClassicWindow(f, true)
+    ns.RegisterClassicWindow(f, true, "spellBook")
     ns.db.spellBookPos = nil
     -- Our Escape out of combat: the client's clears the target first, 1.x closed
     -- windows first. Closes like the X: a bare hide in combat leaves the layer up
@@ -732,6 +732,7 @@ local function CreateBook()
     search:SetPoint("TOPRIGHT", f, "TOPRIGHT", -42, -47)
     search:SetAutoFocus(false)
     search:SetMaxLetters(40)
+    ns.DrainInput(search)
     local hint = search:CreateFontString(nil, "ARTWORK", "GameFontDisable")
     hint:SetPoint("LEFT", search, "LEFT", 2, 0)
     hint:SetText(SEARCH or "Search")
@@ -788,14 +789,21 @@ local function CreateBook()
     clicks:SetFrameStrata("HIGH")
     clicks:Hide()
     f.Clicks = clicks
-    -- Follows the book's slot (it may sit right of the talent window); moved out
-    -- of combat only, re-placed at combat end.
+    -- Follows the book's place and size (slot or edit mode); moved out of combat only, re-placed at combat end.
     local function FollowBook()
         if InCombatLockdown() and clicks:IsProtected() then return end
+        local left, top = f:GetLeft(), f:GetTop()
+        ns.SetScaleIf(clicks, f:GetScale())
         clicks:ClearAllPoints()
-        clicks:SetPoint("TOPLEFT", UIParent, "TOPLEFT", f.fcuiSlotX or 0, -104)
+        if left and top then
+            clicks:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+        else
+            clicks:SetPoint("TOPLEFT", UIParent, "TOPLEFT", f.fcuiSlotX or 0, -104)
+        end
     end
     f.OnClassicPlaced = function() FollowBook() end
+    ns.HookMethod(f, "SetPoint", FollowBook)
+    ns.HookMethod(f, "SetScale", FollowBook)
     -- The layer cannot move in combat: while up, the book keeps its slot and new
     -- windows lay out around it.
     f.LayerUp = function()

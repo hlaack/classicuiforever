@@ -4,21 +4,50 @@ local _, ns = ...
 -- Load-on-demand windows are dressed when their Blizzard addon loads.
 
 local P = ns.panels
+
+-- Era's scroll on every social tab; the client writes its Battle.net portrait on each update.
+local SCROLL_ICON = "Interface\\FriendsFrame\\FriendsFrameScrollIcon"
+local function ScrollIconBack(icon, file)
+    if file ~= SCROLL_ICON then
+        icon:SetTexture(SCROLL_ICON)
+        icon:SetTexCoord(0, 1, 0, 1)
+    end
+end
+function ns.KeepScrollIcon(icon)
+    if not icon then return end
+    if ns.Once(icon, "scrollIcon") then ns.HookMethod(icon, "SetTexture", ScrollIconBack) end
+    ScrollIconBack(icon)
+end
+
 local A = P.after
+local SOCIAL_WIDTH = 338
+-- Merchant tabs: up from the client's spot (+ up); 1 sets their tops on the metal line, as the social row's.
+local MERCHANT_TAB_LIFT = 1
+-- Mail tabs: the client's spot already has their tops on the line (+ up); Send Mail 8 into Inbox, as Era's.
+local MAIL_TAB_LIFT = 0
+local MAIL_TAB_STEP = -8
 
 local WINDOWS = {
     -- Its own row under Map (toggle): the pass skips it while that is off.
     { "WorldMapFrame", child = "BorderFrame", toggle = "worldMap", portrait = false, backing = false, lift = P.MAP_LIFT,
         after = A.WorldMapFrame },
-    { "MerchantFrame", lift = 5, after = A.MerchantFrame },
+    { "MerchantFrame", lift = 5, tabLift = MERCHANT_TAB_LIFT, after = A.MerchantFrame },
     -- Half lift: the send row sits near the bottom edge.
-    { "MailFrame", lift = 5 },
+    { "MailFrame", lift = 5, tabLift = MAIL_TAB_LIFT, after = function()
+        ns.EraTabRow({ _G["MailFrameTab1"], _G["MailFrameTab2"] }, MAIL_TAB_STEP)
+    end },
     -- Smaller tab lift: the full one pushed the tabs through the border.
     { "FriendsFrame", lift = 5, tabLift = 3, after = function(frame)
-        -- Narrower, as in 1.x; the lists hang from its edges.
-        if frame:GetWidth() and math.abs(frame:GetWidth() - 385) < 1 then frame:SetWidth(360) end
+        -- Classic Era's width (measured 338, as its macro window); the lists hang from its edges.
+        if frame:GetWidth() and math.abs(frame:GetWidth() - 385) < 1 then frame:SetWidth(SOCIAL_WIDTH) end
         P.ShadeFloor(frame)
         if ns.PlaceRecentAllyRows then ns.PlaceRecentAllyRows() end
+        ns.KeepScrollIcon(_G["FriendsFrameIcon"])
+    end },
+    -- The contacts tab's pop-out ignore list: no portrait, its button in the old red.
+    { "FriendsFrame", child = "IgnoreListWindow", portrait = false, lift = 5, after = function(frame)
+        ns.SkinRedButton(frame.UnignorePlayerButton)
+        if frame.Inset then ns.DrainSlice(frame.Inset.NineSlice) end
     end },
     -- Voice chat button's window. Half lift: Add and Settings sit near the bottom edge.
     -- Its after dresses the scroll bars without client hooks.
@@ -31,15 +60,14 @@ local WINDOWS = {
     { "DressUpFrame", after = A.DressUpFrame },
     { "PetStableFrame" },
     { "ItemTextFrame", after = A.ItemTextFrame },
-    { "TabardFrame" },
-    { "GuildRegistrarFrame" },
-    { "PetitionFrame" },
+    -- Half lift, as the vendor's: Accept, Purchase, Sign and Cancel sit 4 up from the bottom edge.
+    { "TabardFrame", lift = 5 },
+    { "GuildRegistrarFrame", lift = 5, after = A.GuildRegistrarFrame },
+    { "PetitionFrame", lift = 5 },
     { "GuildControlUI", addon = "Blizzard_GuildControlUI", portrait = false, after = A.GuildControlUI },
     { "BankFrame", after = function(frame) if ns.SkinBank then ns.SkinBank(frame) end end },
     { "LootFrame", toggle = "lootWindow", backing = false, after = A.LootFrame },
     -- Social window's lift, so the two read as one window when they swap.
-    { "LFGListingFrame", addon = "Blizzard_GroupFinder_VanillaStyle", lift = 5, after = A.LFGListingFrame },
-    { "LFGBrowseFrame", addon = "Blizzard_GroupFinder_VanillaStyle", lift = 5 },
     { "LFGWhoListFrame", addon = "Blizzard_GroupFinder_VanillaStyle", lift = 5 },
     { "InspectFrame", addon = "Blizzard_InspectUI", after = A.InspectFrame },
     { "MacroFrame", addon = "Blizzard_MacroUI", topTabs = true, lift = 2, after = A.MacroFrame },

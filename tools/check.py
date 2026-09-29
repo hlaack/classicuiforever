@@ -39,14 +39,14 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
-              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP")
+              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -132,6 +132,8 @@ FIX = {
                 "and Revert puts it back",
     "KEYUP": "bind the key to ns.KeyProxy(name) (Core/Util.lua): it acts on press, as the game's own windows do, and "
              "clicks the button; a snippet's SetBindingClick names that proxy (name .. \"Key\")",
+    "MOUSEORDER": "set OnEnter/OnLeave/OnMouse* first, then SetMouseClickEnabled(false) (the hover sensor over the "
+                  "unit frame bars ate every targeting click, 2026-09-28)",
     "CHECKLABEL": "make the label on the check itself (check:CreateFontString), so it hides with it; a dialog that "
                   "hides a row must not leave its label behind for the next row to land on (skill cuif-edit-mode-items)",
     "DRAGPOINT": "read the frame's place (GetLeft/GetTop/GetBottom) before StopMovingOrSizing, which can leave a frame "
@@ -179,6 +181,8 @@ FIX = {
     "FORBIDDEN": "use ns.IsForbidden(object) (Core/Util.lua)",
     "DEADNS": "delete it, or add it to DEV_NAMES (ClassicUIForeverDev reads it) or KEPT_API (planned shared API) "
               "in tools/check.py",
+    "UNDEFNS": "define it, or call the helper that exists (grep '^function ns.' Core/); a field set some other way "
+               "goes in NS_DYNAMIC in tools/check.py",
     "REGISTRY": "use our own signal (ns.SignalSheetLaid pattern) or our own event frame (ns.RegisterEvents)",
     "HOOK": "use ns.HookMethod / ns.HookGlobal / ns.HookScriptOnce (Core/Hooks.lua), and prefer a watch (ns.Sched)",
     "ONUPDATE": "use ns.Sched.OnFrame(frame, spec) or ns.Sched.Job(spec) (Core/Scheduler.lua)",
@@ -313,6 +317,7 @@ MESSAGES = {
     "EDITSAVE": "a setting written straight to ns.db in the windows edit mode (Save never lights, Revert misses it)",
     "KEYUP": "a key bound straight to a release-acting button (it opens on release; the game's windows on press)",
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
+    "MOUSEORDER": "a mouse script set after the frame's clicks were switched off (setting it turns clicks back on)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",
     "CVARREAD": "raw CVar read outside the ns.GetCVar / ns.GetCVarBool wrappers",
@@ -998,6 +1003,24 @@ def check_label_hits(lx):
     return found
 
 
+CLICKS_OFF = re.compile(r"(?:\b(\w+):SetMouseClickEnabled\(\s*false|pcall\(\s*(\w+)\.SetMouseClickEnabled\s*,\s*\w+\s*,\s*false)")
+# A nil handler clears a script and turns nothing on.
+MOUSE_SCRIPT = re.compile(r"\b(\w+):(?:SetScript|HookScript)\(\s*\"(?:OnEnter|OnLeave|OnMouseDown|OnMouseUp|OnMouseWheel)\"\s*,(?!\s*nil\b)")
+
+
+def mouse_order_hits(lx):
+    """A mouse script set on a frame after its clicks were switched off, in the same file."""
+    found = set()
+    off = {}
+    for no, line in enumerate(lx.keep, 1):
+        for m in CLICKS_OFF.finditer(line):
+            off[m.group(1) or m.group(2)] = no
+        for m in MOUSE_SCRIPT.finditer(line):
+            if m.group(1) in off:
+                found.add(("MOUSEORDER", no))
+    return found
+
+
 def drag_point_hits(lx, funcs):
     """GetPoint read after StopMovingOrSizing in the same function body (callbacks inside it excluded)."""
     found = set()
@@ -1058,6 +1081,7 @@ def pattern_hits(path, lx, funcs):
     found |= structure_hits(path, lx)
     found |= drag_point_hits(lx, funcs)
     found |= check_label_hits(lx)
+    found |= mouse_order_hits(lx)
     found |= cvar_login_hits(lx, funcs)
     if not allowed("THROTTLEFRAME", path):
         found |= throttle_frame_hits(lx)
@@ -1237,6 +1261,35 @@ def deadns_hits(corpus_lex):
     return hits
 
 
+# ns fields set by a loop or a table copy the patterns cannot see; UNDEFNS never reports them.
+NS_DYNAMIC = frozenset()
+NS_DEF_ANY = re.compile(r"\bfunction\s+ns\s*[.:]\s*(\w+)\s*\(|\bns\s*\.\s*(\w+)\s*=(?!=)")
+# ns.A, ns.B = 1, 2: every name on the left.
+NS_DEF_LIST = re.compile(r"^\s*((?:ns\s*\.\s*\w+\s*,\s*)+ns\s*\.\s*\w+)\s*=(?!=)")
+
+
+def undefns_hits(corpus_lex):
+    """ns fields read or called somewhere and defined nowhere in the corpus: a typo or a helper that does not exist."""
+    defs, uses = set(), {}
+    for path, lx in corpus_lex.items():
+        for no, line in enumerate(lx.blank, 1):
+            for m in NS_DEF_ANY.finditer(line):
+                defs.add(m.group(1) or m.group(2))
+            m = NS_DEF_LIST.match(line)
+            if m:
+                defs.update(NS_REF.findall(m.group(1)))
+            for m in NS_REF.finditer(line):
+                uses.setdefault(m.group(1), []).append((path, no))
+    hits = {}
+    for name, places in uses.items():
+        # DEV_NAMES are attach points the dev addon fills in.
+        if name in defs or name in NS_DYNAMIC or name in DEV_NAMES:
+            continue
+        for path, no in places:
+            hits.setdefault(path, []).append(("UNDEFNS", no, "ns.%s is used but never defined" % name))
+    return hits
+
+
 def toc_entries(text):
     directive = re.compile(r"\s+\[[^\]]*\]\s*$")
     for no, raw in enumerate(text.replace("\r\n", "\n").split("\n"), 1):
@@ -1283,6 +1336,8 @@ def analyse(corpus):
             if not any(s <= start and end <= e for s, e in same_fn.get(p, ())):
                 hits[p].append((rule, start, msg))
     for p, items in deadns_hits(lexed).items():
+        hits[p].extend(items)
+    for p, items in undefns_hits(lexed).items():
         hits[p].extend(items)
     return hits
 

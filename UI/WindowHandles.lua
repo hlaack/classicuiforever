@@ -17,6 +17,8 @@ local WINDOWS = {
     { key = "calendar", label = "Calendar", name = "ForeverClassicUICalendarHome", w = 28, h = 28, section = "Minimap",
         piece = true, ringKey = "calendarAngle", ringIf = "calendarRing", fixedIf = "calendarBehind", choice = "calendarSpot",
         choiceLabel = "Mode" },
+    { key = "spellBook", label = "Spellbook", name = "ForeverClassicUISpellBook", w = 384, h = 512, stripRight = 64,
+        calm = true },
 }
 local SLOT_LEFT, SLOT_TOP = 0, 104
 local STRIP_H, STRIP_LEFT, STRIP_RIGHT = 24, 60, 30
@@ -131,7 +133,8 @@ local function Apply(entry)
     local pos, scale = Places()[entry.key], Scales()[entry.key]
     if Full(entry, frame) then pos, scale = nil, nil end
     if not (pos or scale or scaled[frame]) then return end
-    if InCombatLockdown() and ns.WindowLocked(frame) then
+    -- calm: its casting layer moves out of combat only.
+    if InCombatLockdown() and (entry.calm or ns.WindowLocked(frame)) then
         ns.WhenCalm("windowPlaces", PlaceAll)
         return
     end
@@ -164,7 +167,8 @@ end
 
 local function StripDragStart(self)
     local frame = self:GetParent()
-    if (InCombatLockdown() and ns.WindowLocked(frame)) or Full(entryOf[frame], frame) then return end
+    local entry = entryOf[frame]
+    if (InCombatLockdown() and (entry.calm or ns.WindowLocked(frame))) or Full(entry, frame) then return end
     moving[frame] = true
     ns.Sched.LetGo(frame, true)
     -- Held on the screen while dragged.
@@ -311,12 +315,12 @@ local function Reset(entry)
     Return(entry)
 end
 
--- The client's map: 702 x 534, plus 333 for its quest log pane.
-local MAP_W, MAP_H, MAP_QUESTS = 702, 534, 333
-
--- The placeholder's size in the window's own units: as drawn, the map in the width picked.
+-- The placeholder's size in the window's own units: as drawn, the map (Era's or the client's) in the width picked.
 local function PreviewSize(entry, frame)
-    if entry.quests then return MAP_W + (mapOnly and 0 or MAP_QUESTS), MAP_H end
+    if entry.quests then
+        local w, h, quests = ns.ClassicMapSize()
+        return w + (mapOnly and 0 or quests), h
+    end
     if frame then
         local w, h = DrawnSize(entry, frame)
         if w then return w, h end

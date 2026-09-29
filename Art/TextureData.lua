@@ -157,6 +157,20 @@ ns.TEX = {
     -- Old options dialog top tabs: active open at the bottom, inactive closed.
     optionsTabActive = "!UI-OptionsFrame-ActiveTab",
     optionsTabInactive = "!UI-OptionsFrame-InActiveTab",
+    -- Era's dropdown sheet (file 5767279), which this client lacks: its classic text holder boxes the Who Zone plate.
+    dropdownClassic = "!CommonDropdownClassic",
+    -- Era's settings window art where this client redrew it (Era's files, unchanged): options sheet, key binding bars,
+    -- dropdown buttons, scroll bars, search box.
+    eraOptions = "!EraOptions",
+    eraOptionsListExpand = "!EraOptionsListExpand",
+    eraDropdownC = "!EraDropdownC",
+    eraScrollBarArrows = "!EraScrollBarArrows",
+    eraScrollBarTrack = "!EraScrollBarTrack",
+    eraScrollBarThumbCaps = "!EraScrollBarThumbCaps",
+    eraSearchBox = "!EraSearchBox",
+    -- Era's group finder sheets (files 337495, 341546): the whole window, Create Listing and the browser's top.
+    eraLfgFrame = "!EraLFGFrame",
+    eraLfgBrowseTop = "!EraLFGBrowseTop",
     exhaustionTick = "=MainMenuBar\\UI-ExhaustionTickNormal",
     exhaustionTickHighlight = "=MainMenuBar\\UI-ExhaustionTickHighlight",
     questParchment = "!QuestBG",

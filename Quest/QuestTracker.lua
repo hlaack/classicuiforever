@@ -260,8 +260,19 @@ ns.RegisterModule("questTracker", { apply = Apply, restore = Restore })
 ------------------------------------------------------------------ the client's tracker hidden
 
 -- For a tracker from another addon. Under a hidden parent of ours, not Hide(): the client shows its tracker on every
--- update. Only out of a fight (it holds secure quest item buttons); its own parent comes back when the option goes off.
-local hideHolder, trackerParent
+-- update. Only out of a fight (it holds secure quest item buttons). Hidden and shown in a snippet, so its managed
+-- container's passes run as the client's; the parent swap runs hidden, when no pass fires.
+local HIDE = [[ self:GetFrameRef("tracker"):Hide(true) ]]
+local SHOW = [[ self:GetFrameRef("tracker"):Show(true) ]]
+local hideHolder, trackerParent, mover
+
+local function Run(body)
+    if not mover then mover = CreateFrame("Frame", nil, UIParent, "SecureHandlerBaseTemplate") end
+    mover:SetFrameRef("tracker", ObjectiveTrackerFrame)
+    local ok, err = pcall(mover.Execute, mover, body)
+    if not ok then geterrorhandler()("objective tracker: " .. tostring(err)) end
+    return ok
+end
 
 local function HideTracker()
     local tracker = ObjectiveTrackerFrame
@@ -272,13 +283,16 @@ local function HideTracker()
     end
     if tracker:GetParent() == hideHolder then return end
     trackerParent = tracker:GetParent()
-    tracker:SetParent(hideHolder)
+    if Run(HIDE) then tracker:SetParent(hideHolder) end
 end
 
+-- Back under its parent, then shown for the container to lay it out and the client to refill it.
 local function ShowTracker()
     local tracker = ObjectiveTrackerFrame
     if not tracker or not hideHolder or tracker:GetParent() ~= hideHolder then return end
+    if not Run(HIDE) then return end
     tracker:SetParent(trackerParent or UIParent)
+    Run(SHOW)
 end
 
 local function HideApply()

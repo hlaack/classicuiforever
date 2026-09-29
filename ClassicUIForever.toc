@@ -108,6 +108,7 @@ Social\FinderTabs.lua
 Social\GroupFinder.lua
 Units\LastNames.lua
 Map\MapFade.lua
+Map\WorldMapClassic.lua
 Windows\BagBand.lua
 Windows\Bags.lua
 Character\CharacterModel.lua

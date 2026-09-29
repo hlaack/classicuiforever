@@ -21,11 +21,63 @@ end
 
 ---------------------------------------------------------------- dressing room
 
+-- Race background: 256 art rows on top, 76 of the bottom files' 128 (the rest empty). Fitted to the scene together,
+-- the bottom cut to its art; the client's fixed 348 + 175 ran past the small window's foot.
+local DRESS_BG_TOP_ROWS, DRESS_BG_BOTTOM_ROWS, DRESS_BG_BOTTOM_FILE_ROWS = 256, 76, 128
+local DRESS_BG_TOPS = { "BGTopLeft", "BGTopRight" }
+local DRESS_BG_BOTTOMS = { "BGBottomLeft", "BGBottomRight" }
+-- Dressing room title buttons: close from the top right corner, the size button's gap left of it.
+local DRESS_CLOSE_BUTTON_X = -0.4
+local DRESS_CLOSE_BUTTON_Y = -11
+local DRESS_SIZE_BUTTON_GAP = 8
+
+local function Fit(scene, keys, h, coordBottom)
+    for _, key in ipairs(keys) do
+        local tex = scene[key]
+        if tex then
+            tex:SetHeight(h)
+            tex:SetTexCoord(0, 1, 0, coordBottom)
+        end
+    end
+end
+
+local function FitDressBackground(frame)
+    local scene = frame.ModelScene
+    local h = scene and ns.Safe(scene:GetHeight())
+    local first, foot = scene and scene.BGTopLeft, scene and scene.BGBottomLeft
+    if not (h and first and foot) then return end
+    local k = h / (DRESS_BG_TOP_ROWS + DRESS_BG_BOTTOM_ROWS)
+    local top, bottom = DRESS_BG_TOP_ROWS * k, DRESS_BG_BOTTOM_ROWS * k
+    local footCoord = DRESS_BG_BOTTOM_ROWS / DRESS_BG_BOTTOM_FILE_ROWS
+    -- Read back from the art: a new race's texture may bring its own coords.
+    local _, _, _, footEnd = foot:GetTexCoord()
+    if ns.Near(first:GetHeight(), top) and ns.Near(foot:GetHeight(), bottom) and ns.Near(footEnd, footCoord) then return end
+    Fit(scene, DRESS_BG_TOPS, top, 1)
+    Fit(scene, DRESS_BG_BOTTOMS, bottom, footCoord)
+end
+
+-- The client lays the title buttons again on each size swap: placed every pass, only when moved.
+local function PlaceDressTitleButtons(frame)
+    local close, sizer = frame.CloseButton, frame.MaximizeMinimizeFrame
+    local corner = frame.NineSlice and frame.NineSlice.TopRightCorner
+    if close and corner then
+        ns.SetPointIf(close, "TOPRIGHT", corner, "TOPRIGHT", DRESS_CLOSE_BUTTON_X, DRESS_CLOSE_BUTTON_Y)
+    end
+    if sizer and close then ns.SetPointIf(sizer, "RIGHT", close, "LEFT", DRESS_SIZE_BUTTON_GAP, 0) end
+end
+
 -- Footer 2 up off the lifted bottom edge: Close (Reset hangs from it) and Link.
 function A.DressUpFrame(frame)
     local close, link = Named("DressUpFrameCancelButton"), frame.LinkButton
     if close then ns.SetPointIf(close, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -7, 6) end
     if link then ns.SetPointIf(link, "BOTTOMLEFT", frame, "BOTTOMLEFT", 2, 6) end
+    -- The size button in the classic look and size the map's has.
+    if frame.MaximizeMinimizeFrame then P.MaxMinBeside(frame.MaximizeMinimizeFrame, frame.CloseButton, DRESS_SIZE_BUTTON_GAP) end
+    -- The small and full size swap the scene's height and the title buttons while the window shows.
+    ns.Sched.Attach(frame, { name = "dressup.background", every = 0, fn = function()
+        FitDressBackground(frame)
+        PlaceDressTitleButtons(frame)
+    end })
 end
 
 ---------------------------------------------------------------- world map
@@ -73,6 +125,7 @@ end
 
 function A.MerchantFrame(frame)
     ns.FadeTextures(frame, 0, OWN_ONLY)
+    ns.EraTabRow({ _G["MerchantFrameTab1"], _G["MerchantFrameTab2"] })
     FadeTree(frame.Inset or _G["MerchantFrameInset"])
     FadeTree(_G["MerchantExtraCurrencyInset"])
     FadeTree(_G["MerchantExtraCurrencyBg"])
@@ -147,6 +200,19 @@ function A.TradeFrame(frame)
     end
 end
 
+----------------------------------------------------------------- guild charter
+
+-- Escape in the guild name box: the client only moves focus to chat, so the window never closed from it.
+function A.GuildRegistrarFrame(frame)
+    local box = _G["GuildRegistrarFrameEditBox"]
+    if box and ns.Once(box, "escapeCloses") then
+        box:HookScript("OnEscapePressed", function(self)
+            self:ClearFocus()
+            ns.HidePanel(frame)
+        end)
+    end
+end
+
 ---------------------------------------------------------------- item text
 
 -- Book, plaque or letter: scroll column only while the page overflows (1.x), on
@@ -210,19 +276,6 @@ end
 function A.GuildControlUI(frame)
     DressControls(frame, 5)
     ns.EachRegion(frame, GoldWords)
-end
-
-------------------------------------------------------------- group finder
-
--- Both pages share one bare parent, which owns the close button.
-function A.LFGListingFrame(frame)
-    local close = _G["LFGParentFrameCloseButton"]
-    if close then
-        ns.SkinCloseButton(close, true)
-        -- In the corner socket; either page's corner works.
-        P.PlaceInSocket(close, frame)
-        close:SetFrameLevel(frame:GetFrameLevel() + 20)
-    end
 end
 
 ------------------------------------------------------------------ inspect

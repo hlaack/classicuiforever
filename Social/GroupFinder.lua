@@ -9,116 +9,276 @@ local S = ns.social
 local ADDON_NAME = "Blizzard_GroupFinder_VanillaStyle"
 -- The client's who side tab put away; its page tabs lie unseen over ours (FinderTabs.lua).
 local CLIENT_TABS = { "WhoListingTab" }
+local PAGES = { "LFGBrowseFrame", "LFGListingFrame" }
 local QUIET = { changed = true, mouseOff = true }
 local BAR_TEXTURES = { "SelectedTexture", "HighlightTexture" }
 local active = false
 local dressed = false
 
-local function Size()
-    local social = FriendsFrame
-    local width, height = social and social:GetWidth() or 0, social and social:GetHeight() or 0
-    if width < 300 then width, height = 360, 424 end
-    return math.floor(width + 0.5), math.floor(height + 0.5)
-end
+-- Era's window, laid from its dump (frame units, top left): drawn size, sheets, and every piece's spot.
+local ERA_W, ERA_H = 354, 440
+-- Era's frame spot against the client's: Era stands this old-art window at 0, -104, the client at 16, -116.
+local ERA_ORIGIN_X, ERA_ORIGIN_Y = -16, 12
+local origin
 
-local function Red(button, width, height)
-    if not button then return end
-    ns.SkinRedButton(button)
-    if width then button:SetSize(width, height or 22) end
+-- Every Era number in this file counts from here.
+local function Origin()
+    if not origin then
+        local parent = _G["LFGParentFrame"]
+        origin = CreateFrame("Frame", nil, parent)
+        origin:SetSize(ERA_W, ERA_H)
+        origin:SetPoint("TOPLEFT", parent, "TOPLEFT", ERA_ORIGIN_X, ERA_ORIGIN_Y)
+        -- The art's own strip left of the client's frame takes clicks too, not the world under it.
+        origin:EnableMouse(true)
+    end
+    return origin
 end
+local LIST_X, LIST_Y, LIST_W, LIST_H = 22, 128, 324, 282
+-- Era's comment box under a category's activities.
+local ACTIVITY_COMMENT_WIDTH = 285
+-- Group Browser list and dropdowns (frame units from the page's top left; the old column hangs 12.5 past the bar's right).
+local GROUP_LIST_SCROLL_BAR_RIGHT = 333.5
+local GROUP_LIST_SCROLL_BAR_TOP = 135
+local GROUP_LIST_SCROLL_BAR_BOTTOM = 403
+local GROUP_LIST_ROWS_RIGHT = 311
+-- The empty list's "No groups found" text: down from the list's top, and its width (Era: 40, 240).
+local GROUP_LIST_EMPTY_TEXT_Y = 40
+local GROUP_LIST_EMPTY_TEXT_WIDTH = 240
+-- A player row's "Roles:" label and a group row's member icons, from the row's right (its role icons follow the label).
+local GROUP_ROW_ROLES_LABEL_RIGHT = -52
+local GROUP_ROW_PARTY_ICONS_RIGHT = -16
+local CATEGORY_DROPDOWN_ARROW_X = -1
+local CATEGORY_DROPDOWN_ARROW_Y = -1
+local CATEGORY_DROPDOWN_LABEL_RIGHT = -24
+local ACTIVITY_DROPDOWN_ARROW_X = -1
+local ACTIVITY_DROPDOWN_ARROW_Y = -1
+local ACTIVITY_DROPDOWN_LABEL_RIGHT = -24
+local FOOT_Y, FOOT_H, FOOT_LEFT, FOOT_RIGHT = 411, 22, { 19, 111 }, { 235, 109 }
+-- Create Listing is one sheet; the browser swaps the top for its own, rows 0 to 121.
+local LISTING_SHEETS = { { key = "eraLfgFrame", tc = { 0, 1, 0, 1 }, x = 0, y = 0, w = 512, h = 512 } }
+local BROWSE_SHEETS = {
+    { key = "eraLfgBrowseTop", tc = { 0, 1, 0, 0.236 }, x = -1, y = 0, w = 512, h = 121 },
+    { key = "eraLfgFrame", tc = { 0, 1, 0.236, 0.5 }, x = 0, y = -121, w = 512, h = 135 },
+    { key = "eraLfgFrame", tc = { 0, 1, 0.5, 1 }, x = 0, y = -256, w = 512, h = 256 },
+}
+-- Era's classic dropdown on its sheet: the text holder round the button, the gold arrow at its right.
+local HOLDER_COORDS = { 0.38672, 0.81641, 0.00391, 0.16406 }
+local ARROW_COORDS = { 0.80078, 0.89063, 0.17188, 0.25781 }
+-- Role buttons: Era's 48 at a 73 step, 60 down; this client's are 64 (the new player box 84).
+local ROLE_SCALE, ROLE_STEP, ROLE_X, ROLE_Y = 48 / 64, 73, 67, 60
+-- The new player flag drawn as big as a role (its 84 art to the roles' 85 drawn), centred one role step on.
+local FRIENDLY_SCALE = ROLE_SCALE * 85 / 84
+-- Era's portrait files, the same in this client's data: the eye sheet (8 x 4 frames) and its black backing.
+local ERA_EYE, ERA_EYE_BACK = 136317, 337500
+-- Where Era draws them in the window (its dump): eye 9, 5 and backing 12, 5, both 64 square.
+local ERA_EYE_X, ERA_EYE_Y, ERA_EYE_BACK_X, ERA_EYE_BACK_Y = 9, 5, 12, 5
+local eyeHost
+local FRIENDLY_CX, ROLE_CY = ROLE_X + 24 + 3 * ROLE_STEP, ROLE_Y + 24
+
+local function Size() return ERA_W, ERA_H end
 
 local function Hide(region)
     if region and region.SetAlpha then region:SetAlpha(0) end
 end
 
--- Two red buttons in a page's foot corners.
-local function FootPair(page, left, right)
-    Red(left, 124)
-    Red(right, 124)
-    ns.SetPointOnce(left, "BOTTOMLEFT", page, "BOTTOMLEFT", 8, 9)
-    ns.SetPointOnce(right, "BOTTOMRIGHT", page, "BOTTOMRIGHT", -8, 9)
+local function HideAll(frame)
+    if frame then ns.EachRegion(frame, Hide) end
 end
 
--- The options button where the Create Listing page has it.
-local function PlaceOptions(page)
-    ns.SetPointOnce(page.OptionsButton, "TOPRIGHT", page, "TOPRIGHT", -12, -30)
+-- Only writes what moved: the layout is laid again on every pass (the client re-lays its lists).
+local function PointIf(region, point, rel, relPoint, x, y)
+    if region and not ns.IsAt(region, point, rel, relPoint, x, y) then ns.SetPointOnce(region, point, rel, relPoint, x, y) end
 end
 
-local function DressBrowse(page, width)
-    Hide(page.BackgroundArt)
-    if page.Inset then Hide(page.Inset.CustomBG) end
-    local category, activity, refresh = page.CategoryDropdown, page.ActivityDropdown, page.RefreshButton
-    if category and activity then
-        ns.SetPointOnce(category, "TOPLEFT", page, "TOPLEFT", 41, -52)
-        category:SetWidth(100)
-        ns.SetPointOnce(activity, "LEFT", category, "RIGHT", 8, 0)
-        activity:SetWidth(width - 66 - 100 - 8 - 6 - 30 - 12)
-        if refresh then
-            ns.SetPointOnce(refresh, "LEFT", activity, "RIGHT", 6, 0)
-            refresh:SetSize(28, 28)
-        end
-        ns.DressDropdown(category, 14)
-        ns.DressDropdown(activity, 14)
-    end
-    PlaceOptions(page)
-    FootPair(page, page.SendMessageButton, page.GroupInviteButton)
-    ns.SkinScrollBarsUnder(page, 2)
+local function At(region, x, y, w, h)
+    if not region then return end
+    PointIf(region, "TOPLEFT", Origin(), "TOPLEFT", x, -y)
+    if w then ns.SetSizeIf(region, w, h or region:GetHeight()) end
 end
 
--- The roles' blue band art overhangs 250 for the wide window: cropped to its painted part.
-local function CropRolesBand(region, band)
-    if region.IsObjectType and region:IsObjectType("Texture") then
-        region:ClearAllPoints()
-        region:SetAllPoints(band)
-        region:SetTexCoord(0, 454 / 704, 0, 102 / 144)
-    end
-end
-
-local ROLE_GAP = 10
-
-local function DressListing(page, width)
-    FootPair(page, page.BackButton, page.PostButton)
-    -- Forever's divider under the roles (1.60.1 70009) is drawn for the client's wider window and sticks out of ours.
+-- This client's chrome off, Era's sheets and list art on (once).
+local function EraArtOnce(page, sheets)
+    HideAll(page.NineSlice)
+    HideAll(page.Inset)
+    HideAll(page.RolesSection)
     Hide(page.DividerFrame)
+    Hide(page.BackgroundArt)
+    Hide(page.TopTileStreaks)
+    Hide(page.Bg or (page:GetName() and _G[page:GetName() .. "Bg"]))
+    for i, s in ipairs(sheets) do
+        local tex = ns.OwnTexture(page, "eraSheet" .. i, "BACKGROUND", -1)
+        ns.SetTex(tex, s.key)
+        tex:SetTexCoord(unpack(s.tc))
+        tex:SetSize(s.w, s.h)
+        ns.SetPointOnce(tex, "TOPLEFT", Origin(), "TOPLEFT", s.x, s.y)
+    end
+    ns.OwnTexture(page, "eraArt", "BACKGROUND", 0):SetAtlas("groupfinder-background-classic")
+end
+
+-- This client's page art the sheets replace; the client redraws its border on every re-lay, so faded each pass.
+local CLIENT_ART = { ["groupfinder-ScrollLine"] = true, ["groupfinder-Stat-StoneBG"] = true, ["_UI-Frame-TopTileStreaks"] = true }
+local CLIENT_ROCK = 374155
+
+local function ClientArtOff(region)
+    if not (region.IsObjectType and region:IsObjectType("Texture")) then return end
+    local atlas = region:GetAtlas()
+    if (atlas and CLIENT_ART[atlas]) or region:GetTextureFileID() == CLIENT_ROCK then ns.SetAlphaIf(region, 0) end
+end
+
+local function EraChrome(page, sheets, first)
+    if first then EraArtOnce(page, sheets) end
+    ns.SetAlphaIf(page.NineSlice, 0)
+    ns.EachRegion(page, ClientArtOff)
+    At(ns.OwnTexture(page, "eraArt", "BACKGROUND", 0), LIST_X, LIST_Y + 1, LIST_W, LIST_H)
+    local title = page.TitleContainer
+    if title then
+        ns.SetTwoPointsIf(title, "TOPLEFT", Origin(), "TOPLEFT", 74, -14, "TOPRIGHT", Origin(), "TOPLEFT", 310, -14)
+    end
+    At(page.OptionsButton, 328, 44)
+end
+
+local function Red(button, width)
+    if not button then return end
+    ns.SkinRedButton(button)
+    if width then button:SetSize(width, FOOT_H) end
+end
+
+-- Two red buttons in the sheet's left and right foot slots.
+local function FootPair(left, right, first)
+    if first then
+        Red(left)
+        Red(right)
+    end
+    At(left, FOOT_LEFT[1], FOOT_Y, FOOT_LEFT[2], FOOT_H)
+    At(right, FOOT_RIGHT[1], FOOT_Y, FOOT_RIGHT[2], FOOT_H)
+end
+
+local function EraDropdown(dropdown, x, y, width, first, arrowX, arrowY, labelRight)
+    if not dropdown then return end
+    At(dropdown, x, y, width, 24)
+    local holder = ns.OwnTexture(dropdown, "eraHolder", "BACKGROUND", 1)
+    local arrow = ns.OwnTexture(dropdown, "eraArrow", "OVERLAY", 1)
+    if first then
+        Hide(dropdown.Background)
+        Hide(dropdown.Arrow)
+        ns.SetTex(holder, "dropdownClassic")
+        holder:SetTexCoord(unpack(HOLDER_COORDS))
+        ns.SetTex(arrow, "dropdownClassic")
+        arrow:SetTexCoord(unpack(ARROW_COORDS))
+        arrow:SetSize(23, 22)
+    end
+    ns.SetTwoPointsIf(holder, "TOPLEFT", dropdown, "TOPLEFT", -9, 8, "BOTTOMRIGHT", dropdown, "BOTTOMRIGHT", 8, -9)
+    PointIf(arrow, "TOPRIGHT", dropdown, "TOPRIGHT", arrowX, arrowY)
+    -- Era's label: right-aligned against the arrow, 9 in from the left.
+    local text = dropdown.Text
+    if text then
+        text:SetJustifyH("RIGHT")
+        ns.SetTwoPointsIf(text, "LEFT", dropdown, "LEFT", 9, 0, "RIGHT", dropdown, "RIGHT", labelRight, 0)
+    end
+end
+
+local function DressBrowse(page, first)
+    EraChrome(page, BROWSE_SHEETS, first)
+    EraDropdown(page.CategoryDropdown, 26, 94, 118, first, CATEGORY_DROPDOWN_ARROW_X, CATEGORY_DROPDOWN_ARROW_Y,
+        CATEGORY_DROPDOWN_LABEL_RIGHT)
+    EraDropdown(page.ActivityDropdown, 149, 94, 167, first, ACTIVITY_DROPDOWN_ARROW_X, ACTIVITY_DROPDOWN_ARROW_Y,
+        ACTIVITY_DROPDOWN_LABEL_RIGHT)
+    At(page.RefreshButton, 315, 90, 32, 32)
+    local box, bar = page.ScrollBox, page.ScrollBar
+    if box then
+        ns.SetTwoPointsIf(box, "TOPLEFT", Origin(), "TOPLEFT", LIST_X, -LIST_Y,
+            "BOTTOMRIGHT", Origin(), "TOPLEFT", GROUP_LIST_ROWS_RIGHT, -(LIST_Y + LIST_H))
+    end
+    -- The old column (31 wide: 10.5 left of the 8 wide bar, 12.5 right, 7 over it) flush with the list box, as Era's Who.
+    if bar then
+        ns.SetTwoPointsIf(bar, "TOPRIGHT", Origin(), "TOPLEFT", GROUP_LIST_SCROLL_BAR_RIGHT, -GROUP_LIST_SCROLL_BAR_TOP,
+            "BOTTOMRIGHT", Origin(), "TOPLEFT", GROUP_LIST_SCROLL_BAR_RIGHT, -GROUP_LIST_SCROLL_BAR_BOTTOM)
+    end
+    local empty = page.NoResultsFound
+    if empty then
+        PointIf(empty, "TOP", Origin(), "TOPLEFT", LIST_X + LIST_W / 2, -(LIST_Y + GROUP_LIST_EMPTY_TEXT_Y))
+        if math.abs(empty:GetWidth() - GROUP_LIST_EMPTY_TEXT_WIDTH) > 0.5 then empty:SetWidth(GROUP_LIST_EMPTY_TEXT_WIDTH) end
+    end
+    FootPair(page.SendMessageButton, page.GroupInviteButton, first)
+    if first then ns.SkinScrollBarsUnder(page, 2) end
+end
+
+local function DressListing(page, first)
+    EraChrome(page, LISTING_SHEETS, first)
+    FootPair(page.BackButton, page.PostButton, first)
     local group = page.GroupRoleButtons
-    if group then
+    if group and first then
         Red(group.RolePollButton)
         if group.RoleDropdown then ns.DressDropdown(group.RoleDropdown, 14) end
     end
-    -- The role row was laid out 100 wider (the new player box sat on the third role).
+    -- Offsets count in the scaled frame's own units.
     local solo = page.SoloRoleButtons
     if solo then
-        ns.SetPointOnce(solo, "TOPLEFT", page, "TOPLEFT", 46, -41)
+        ns.SetScaleIf(solo, ROLE_SCALE)
+        PointIf(solo, "TOPLEFT", Origin(), "TOPLEFT", ROLE_X / ROLE_SCALE, -ROLE_Y / ROLE_SCALE)
         if solo.Tank and solo.Healer and solo.DPS then
-            ns.SetPointOnce(solo.Healer, "LEFT", solo.Tank, "RIGHT", ROLE_GAP, 0)
-            ns.SetPointOnce(solo.DPS, "LEFT", solo.Healer, "RIGHT", ROLE_GAP, 0)
+            local gap = ROLE_STEP / ROLE_SCALE - solo.Tank:GetWidth()
+            PointIf(solo.Healer, "LEFT", solo.Tank, "RIGHT", gap, 0)
+            PointIf(solo.DPS, "LEFT", solo.Healer, "RIGHT", gap, 0)
         end
     end
-    ns.SetPointOnce(group, "TOPLEFT", page, "TOPLEFT", 64, -41)
+    PointIf(group, "TOPLEFT", Origin(), "TOPLEFT", 64, -41)
     local friendly = page.NewPlayerFriendlyButton
     if friendly then
-        -- A fourth role on the row: the roles' step and middle.
-        if solo and solo.DPS then
-            ns.SetPointOnce(friendly, "CENTER", solo.DPS, "CENTER", solo.DPS:GetWidth() + ROLE_GAP, 0)
-        else
-            ns.SetPointOnce(friendly, "TOPRIGHT", page, "TOPRIGHT", -28, -30)
-        end
-        if friendly.CheckButton then ns.SkinCheckbox(friendly.CheckButton) end
+        ns.SetScaleIf(friendly, FRIENDLY_SCALE)
+        PointIf(friendly, "CENTER", Origin(), "TOPLEFT", FRIENDLY_CX / FRIENDLY_SCALE, -ROLE_CY / FRIENDLY_SCALE)
+        if first and friendly.CheckButton then ns.SkinCheckbox(friendly.CheckButton) end
     end
-    local band = page.RolesSection
-    ns.EachRegion(band, CropRolesBand, band)
-    PlaceOptions(page)
-    local view = page.ActivityView
+    local view = page.CategoryView
     if view then
-        if view.Comment then view.Comment:SetWidth(width - 40) end
-        ns.SkinScrollBarsUnder(view, 2)
+        ns.SetTwoPointsIf(view, "TOPLEFT", Origin(), "TOPLEFT", LIST_X, -LIST_Y,
+            "BOTTOMRIGHT", Origin(), "TOPLEFT", LIST_X + LIST_W, -(LIST_Y + LIST_H))
     end
+    -- A category's activities (and the comment box) in Era's list box, as its category bars.
+    local activity = page.ActivityView
+    if activity then
+        ns.SetTwoPointsIf(activity, "TOPLEFT", Origin(), "TOPLEFT", LIST_X, -LIST_Y,
+            "BOTTOMRIGHT", Origin(), "TOPLEFT", LIST_X + LIST_W, -(LIST_Y + LIST_H))
+        local comment = activity.Comment
+        if comment and not ns.Near(comment:GetWidth(), ACTIVITY_COMMENT_WIDTH) then comment:SetWidth(ACTIVITY_COMMENT_WIDTH) end
+        if first then ns.SkinScrollBarsUnder(activity, 2) end
+    end
+end
+
+-- The shared parent's close button and portrait, in the sheet's socket and ring.
+local function DressParent(parent, first)
+    local close = _G["LFGParentFrameCloseButton"]
+    if close then
+        if first then ns.SkinCloseButton(close, true) end
+        At(close, 326, 8, 32, 32)
+        ns.SetLevelIf(close, parent:GetFrameLevel() + 20)
+    end
+    -- Era's eye (the first frame of its sheet) on its black backing, UNDER the pages: their ring overlaps it, as in Era.
+    -- This client's own eye button is faded, not moved; it animates that one.
+    local portrait = _G["LFGParentFramePortrait"]
+    if portrait and first then Hide(portrait.texture) end
+    local eyeFrame = eyeHost or CreateFrame("Frame", nil, parent)
+    if not eyeHost then
+        eyeHost = eyeFrame
+        eyeFrame:SetSize(ERA_W, ERA_H)
+        local back = eyeFrame:CreateTexture(nil, "BACKGROUND")
+        ns.SetFile(back, ERA_EYE_BACK)
+        back:SetSize(64, 64)
+        back:SetPoint("TOPLEFT", eyeFrame, "TOPLEFT", ERA_EYE_BACK_X, -ERA_EYE_BACK_Y)
+        local eye = eyeFrame:CreateTexture(nil, "ARTWORK")
+        ns.SetFile(eye, ERA_EYE)
+        eye:SetTexCoord(0, 0.125, 0, 0.25)
+        eye:SetSize(64, 64)
+        eye:SetPoint("TOPLEFT", eyeFrame, "TOPLEFT", ERA_EYE_X, -ERA_EYE_Y)
+    end
+    PointIf(eyeFrame, "TOPLEFT", Origin(), "TOPLEFT", 0, 0)
+    ns.SetLevelIf(eyeFrame, parent:GetFrameLevel())
 end
 
 -- The category bars are made as the page first shows, for the wider window: cut to this one each time. Forever builds
 -- them from the retail template (sized to its cover art, a pressed cover, a hover cover); Classic Era's has the cover
 -- drawn to the bar and the PvP queue sheet's glow lines, 44 tall.
-local BAR_H, GLOW_H = 44, 34
+local BAR_W, BAR_H, GLOW_H = 287, 44, 34
 local GLOW_FILE = "Interface\\PVPFrame\\PvPMegaQueue"
 local GLOW_COORDS = { 0.00195313, 0.63867188, 0.70703125, 0.76757813 }
 
@@ -143,14 +303,14 @@ local function CategoryBars()
     return type(bars) == "table" and bars or nil, view
 end
 
-local function FitCategories(width)
+local function FitCategories()
     local bars, view = CategoryBars()
     if not bars then return end
-    local wide = width - 20
-    -- The first bar stands 8 under the role band, not 20; the rest follow it.
+    local wide = BAR_W
+    -- The first bar stands 15 into Era's list, as its dump has it; the rest follow it.
     local first = bars[1]
     if first and ns.Once(first, "finderRaised") then
-        ns.SetPointOnce(first, "TOP", view, "TOP", 0, -8)
+        ns.SetPointOnce(first, "TOP", view, "TOP", 0, -15)
     end
     for _, bar in ipairs(bars) do
         if ns.Once(bar, "finderClassic") then ClassicBar(bar) end
@@ -166,7 +326,7 @@ end
 local function CategoriesOff()
     local bars, view = CategoryBars()
     if not (bars and view:IsVisible()) then return false end
-    local wide = Size() - 20
+    local wide = BAR_W
     for i = 1, #bars do
         local bar = bars[i]
         if bar:IsShown() and math.abs(bar:GetWidth() - wide) > 0.5 then return true end
@@ -181,14 +341,16 @@ local function DressRow(row)
     local display = row.DataDisplay
     if not display then return end
     row.fcuiRow = true
+    -- Era's rows are plain: no rounded plate.
+    if row.ResultBG then row.ResultBG:SetAlpha(0) end
     if row.Name and row.Name.SetFontObject then row.Name:SetFontObject("GameFontNormal") end
     local solo = display.Solo
     if solo and solo.RolesText then
-        ns.SetPointOnce(solo.RolesText, "RIGHT", solo, "RIGHT", -78, 0)
+        ns.SetPointOnce(solo.RolesText, "RIGHT", solo, "RIGHT", GROUP_ROW_ROLES_LABEL_RIGHT, 0)
     end
     local all = display.Enumerate
     if all and all.Icon1 then
-        ns.SetPointOnce(all.Icon1, "RIGHT", all, "RIGHT", -16, 0)
+        ns.SetPointOnce(all.Icon1, "RIGHT", all, "RIGHT", GROUP_ROW_PARTY_ICONS_RIGHT, 0)
     end
 end
 
@@ -212,15 +374,15 @@ local function Fit()
     if not active or not parent then return end
     local width, height = Size()
     FitSize(parent, width, height)
-    if not dressed then
-        dressed = true
-        if _G["LFGBrowseFrame"] then ns.SafeCall(DressBrowse, _G["LFGBrowseFrame"], width) end
-        if _G["LFGListingFrame"] then ns.SafeCall(DressListing, _G["LFGListingFrame"], width) end
-        S.BuildFinderSideTabs(parent)
-    end
+    local first = not dressed
+    dressed = true
+    if _G["LFGBrowseFrame"] then ns.SafeCall(DressBrowse, _G["LFGBrowseFrame"], first) end
+    if _G["LFGListingFrame"] then ns.SafeCall(DressListing, _G["LFGListingFrame"], first) end
+    ns.SafeCall(DressParent, parent, first)
+    if first then S.BuildFinderSideTabs(parent, Origin()) end
     ns.FadeKeys(parent, CLIENT_TABS, 0, QUIET)
     S.SyncFinderSideTabs(parent)
-    FitCategories(width)
+    FitCategories()
     DressRows(_G["LFGBrowseFrame"])
 end
 
@@ -249,6 +411,10 @@ local function AttachFit()
     local parent = _G["LFGParentFrame"]
     if not parent then return end
     ns.Sched.Attach(parent, { name = "finder.fit", every = 0.1, pre = CategoriesOff, fn = FitShown })
+    -- A page shown by its tab is laid before it draws, not up to 0.1 s later (the flash of the client's layout).
+    for _, name in ipairs(PAGES) do
+        if _G[name] then ns.Sched.AfterShow(_G[name], "finder.pageFit", FitShown) end
+    end
     ns.Sched.OnVisible(parent, "finder.shutFit", FinderShown)
 end
 

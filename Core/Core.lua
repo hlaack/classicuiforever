@@ -392,6 +392,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         local big = ns.db.defaultBarSize == true
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
+        ns.BarSizeKey()
         ns.db.lastOutput = nil   -- stale key from old saves
         ns.LoadProfile()
     elseif event == "PLAYER_LOGIN" then

@@ -4,7 +4,7 @@ ns.DB_DEFAULTS = {
     dbVersion = 2,
     classicBar = true,
     oneBar = false,
-    defaultBarSize = true,
+    classicBarSize = false,
     oneBag = false,
     bagsAboveRow = false,
     bagWindowsFollow = false,
@@ -48,6 +48,7 @@ ns.DB_DEFAULTS = {
     hideExtraBars = true,
     unitFrames = true,
     castBars = true,
+    castBarShake = false,
     mirrorTimers = true,
     comboPoints = true,
     hideLastNames = false,
@@ -100,6 +101,8 @@ ns.DB_DEFAULTS = {
     unitFrameParty = true,
     questMapPane = true,
     worldMap = true,
+    mapNavBar = false,
+    hideMapQuestButton = false,
     lootWindow = true,
     gameMenu = true,
     lootRoll = false,
@@ -200,5 +203,5 @@ ns.RELOAD_KEYS = {
     -- Restore changes nothing; the menu keeps the old dialog art.
     gameMenu = { off = "The game menu keeps the old dialog look until the interface reloads." },
     -- Restore changes nothing; the window keeps the old dialog art.
-    settingsPanel = { off = "The settings window keeps the old dialog look until the interface reloads." },
+    settingsPanel = { off = "The settings window keeps Classic Era's art until the interface reloads." },
 }

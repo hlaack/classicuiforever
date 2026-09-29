@@ -233,18 +233,44 @@ function B.LayoutBags()
     if BagBarExpandToggle then BagBarExpandToggle:Hide() end
     if BagsBar then FadeTextures(BagsBar, 0, BAGS_BAR_ART) end
     B.BagDividers(0)
+    B.MainBarDividers(0)
 end
 
--- The client's dividers between its bag buttons (pooled frames on its bar) stood beside our row: faded, 1 gives them back.
+-- The client's dividers between a bar's buttons (pooled frames on it): faded, 1 gives them back.
 local DIVIDER_POOLS = { "HorizontalDividersPool", "VerticalDividersPool" }
-function B.BagDividers(alpha)
+local function Dividers(bar, alpha)
     for _, key in ipairs(DIVIDER_POOLS) do
-        local pool = BagsBar and BagsBar[key]
+        local pool = bar and bar[key]
         if pool and pool.EnumerateActive then
             for divider in pool:EnumerateActive() do ns.SetAlphaIf(divider, alpha) end
         end
     end
 end
+
+-- Beside our bag row.
+function B.BagDividers(alpha) Dividers(BagsBar, alpha) end
+
+-- Between the main bar's buttons: a spell drag shows every slot and the client lays them there, lifted over our art
+-- (Era has none). Faded every frame of a drag, the new ones included, and at each layout.
+function B.MainBarDividers(alpha) Dividers(MainActionBar, alpha) end
+
+local dragDividers = ns.Sched.Job({ name = "bar.dragDividers", every = 0, awake = false, fn = function()
+    if B.active then B.MainBarDividers(0) end
+end })
+local function DragDividersDone()
+    if B.active then B.MainBarDividers(0) end
+    dragDividers:Sleep()
+end
+ns.EventFrame({ "ACTIONBAR_SHOWGRID", "ACTIONBAR_HIDEGRID" }, function(_, event)
+    if not B.active then return end
+    B.MainBarDividers(0)
+    if event == "ACTIONBAR_SHOWGRID" then
+        dragDividers:Wake()
+    else
+        -- The client lays them once more as the grid goes.
+        ns.Sched.NextFrame("bar.dragDividers", DragDividersDone)
+    end
+end)
 
 local function BagsCheck(extra, rel, relPoint, x, y, label, onClick)
     local check = CreateFrame("CheckButton", nil, extra, "UICheckButtonTemplate")

@@ -468,14 +468,17 @@ function Sched.OnHover(host, fn, pad)
     pad = pad or 0
     child:SetPoint("TOPLEFT", host, "TOPLEFT", -pad, pad)
     child:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", pad, -pad)
+    -- Scripts first: setting a mouse script turns clicks back on, and the sensor then ate the unit frame's clicks.
+    child:SetScript("OnEnter", function() fn(true) end)
+    child:SetScript("OnLeave", function() fn(false) end)
     local ok = pcall(child.SetMouseClickEnabled, child, false) and pcall(child.SetMouseMotionEnabled, child, true)
         and pcall(child.SetPropagateMouseMotion, child, true)
     if not ok then
+        child:SetScript("OnEnter", nil)
+        child:SetScript("OnLeave", nil)
         child:EnableMouse(false)
         return false
     end
-    child:SetScript("OnEnter", function() fn(true) end)
-    child:SetScript("OnLeave", function() fn(false) end)
     return true
 end
 

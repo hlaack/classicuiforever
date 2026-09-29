@@ -231,9 +231,9 @@ local function IconScale(bar)
         if value and value > 0 then scale = value / 100 end
     end
     if not scale then scale = (bar and bar.GetScale and bar:GetScale()) or 1 end
-    -- 1.x size, or the game's (45 px buttons vs 36) with the toggle. The old free-form scale is ignored:
+    -- The game's size (45 px buttons), or 1.x's 36 with Classic-sized bars. The old free-form scale is ignored:
     -- a leftover test value multiplied with the toggle.
-    local own = (ns.db and ns.db.defaultBarSize == true) and (45 / 36) or 1
+    local own = (ns.db and ns.db.classicBarSize == true) and 1 or (45 / 36)
     if own <= 0 then own = 1 end
     if scale <= 0 then scale = 1 end
     return scale * own

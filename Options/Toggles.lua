@@ -19,7 +19,7 @@ ns.TOGGLES = {
     { "castAnim", "Hide cast animation", "Nothing plays over a button while its spell casts, as in 1.x. The cooldown swipe stays." },
 
     { "classicBar", "Classic bar", "The stone band with gryphons at the bottom: action buttons, page arrows, micro buttons, bags and the experience bar in their 1.x spots.", group = "Action bars" },
-    { "defaultBarSize", "Game-sized bar", "The classic bar at the size of the game's own bar (45 px buttons, not 1.x's 36).", parent = "classicBar" },
+    { "classicBarSize", "Classic-sized bars", "The classic bar at 1.x's size: 36 px buttons instead of the game's 45.", parent = "classicBar", search = "small size 36 45 game" },
     { "oneBar", "One bar", "The band ends after the twelve main slots. Bar 3, the micro menu and the bags stay where edit mode puts them.", parent = "classicBar" },
     { "reagentBagSlot", "Reagent bag: full slot", "The reagent bag in a full slot beside the bags, as on WoW Forever's own bar, with the key ring past it.", parent = "classicBar", radio = "reagentBag" },
     { "reagentBagRound", "Reagent bag: round button", "A small round reagent bag between the key ring and the last bag; the bag row keeps its 1.x length.", parent = "classicBar", radio = "reagentBag" },
@@ -46,6 +46,7 @@ ns.TOGGLES = {
     { "eliteFrameTarget", "Target", "On every target, not only elites; rares get the rare elite dragon.", parent = "eliteFrames" },
     { "eliteFrameFocus", "Focus", "On every focus, not only elites; rares get the rare elite dragon.", parent = "eliteFrames" },
     { "castBars", "Cast bars", "The 1.x cast bar border, spark and colors on player, pet, target, focus and boss bars." },
+    { "castBarShake", "Shake on interrupt", "The game's shake when a cast is interrupted. Off: the bar holds red, then fades, as in classic.", parent = "castBars" },
     { "comboPoints", "Combo points", "Five orbs down the target portrait's right side, as rogues and cat druids saw them in 1.x." },
     { "mirrorTimers", "Breath and fatigue bars", "The breath, fatigue and feign death timers in the old cast bar style." },
     { "hideBuffArrow", "Hide buff arrow", "The arrow that folds the buffs away shows only under the mouse." },
@@ -56,7 +57,7 @@ ns.TOGGLES = {
     { "hideLastNames", "Hide last names", "Turns off every surname setting, so only first names show. The game's own box stays in step." },
 
     { "gameMenu", "Game menu and dialogs", "The Escape menu, pop-up boxes, edit mode, quick keybind, chat settings, color picker and report box in the old dialog look.", group = "Dialogs" },
-    { "settingsPanel", "Settings window", "The game's settings window as the old options dialog." },
+    { "settingsPanel", "Settings window", "The game's settings window in Classic Era's art: its frame, tabs, category bars, check boxes, sliders and drop downs." },
     { "lootWindow", "Loot window", "The 1.x loot window: the loot icon in its ring, old name boxes per row and a pager at the foot. Off takes full effect after a reload.", search = "loot frame" },
     { "lootRoll", "Loot rolls", "Need and greed boxes as in 1.x: dice for need, coin for greed, a red X to pass." },
 
@@ -79,6 +80,8 @@ ns.TOGGLES = {
     { "questTracker", "Quest tracker", "Old stone headers and small collapse buttons on the objective tracker." },
     { "hideObjectiveTracker", "Hide objective tracker", "Hides the game's objective tracker, for a quest tracker from another addon. Its quest item buttons go with it. Changes wait for the end of a fight.", search = "quest watch objectives" },
     { "worldMap", "World map", "The old metal border, title strip and corner close button on the world map. Off takes full effect after a reload.", group = "Map" },
+    { "mapNavBar", "Map navigation bar", "The game's own map layout: its navigation bar row, filter and pin buttons and coordinates. Off: Classic Era's map.", parent = "worldMap" },
+    { "hideMapQuestButton", "Hide map quest button", "Hides the button at the map's bottom right that opens its quest list, for players who use the separate quest log.", search = "quest list toggle side panel expand" },
     { "questMapPane", "Map quest list", "The map's quest list in the quest log's style: dark list, plus and minus headers, 1.x colors, details on parchment." },
     { "mapFade", "Fade map while moving", "The map dims while you move. This is the game's own setting." },
     { "mapUnlocked", "Unlock map", "Drag the world map anywhere by its title bar, no edit mode needed. The lock at the map's top right switches this too.", search = "move map lock" },
