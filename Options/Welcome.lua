@@ -125,9 +125,18 @@ local function HookLinks()
     ns.HookGlobal("SetItemRef", OnItemRef)
 end
 
--- What's New: new features only (fixes are the changelog's, one button away), by version, newest first. A player gets
--- the chat line once per new version, and the box shows only the versions since the one they saw last.
+-- What's New: each version's changelog in short, most important first, similar fixes grouped. A player gets the chat
+-- line once per new version, and the box shows only the versions since the one they saw last.
 local WHATSNEW = {
+    { id = 9, version = "0.12.0",
+        { "Classic world map", "Classic Era's small map, with the map's quest list in its own pane beside it and rewards after the quest text. Map navigation bar under Map in the options brings back the game's map layout." },
+        { "New options", "Hide map quest button (Map), Classic-sized bars (Classic bar) and Shake on interrupt (Cast bars)." },
+        { "Classic look", "Right-click menus, drop down lists, the social window, group finder, Who list and guild roster follow Classic Era; the settings window takes today's Classic Era client look, and the Ignore List and dressing room the classic look." },
+        { "Edit mode", "The spellbook can be moved and sized in ClassicUI Forever Windows." },
+        { "Bars and tracker", "Bars 4 and 5 keep their place at the screen's edge, and the quest tracker no longer sits over them." },
+        { "Fixes", "Neutral NPCs show their level instead of a skull, and clicking a unit frame's bars targets again." },
+        { "Windows and tabs", "Vendor, mail, guild charter and tabard windows, and many other windows and tabs, line up with Classic Era; Escape closes the guild charter window." },
+    },
     { id = 8, version = "0.11.7",
         { "Gryphons over bars", "Tick Gryphons over bars under Classic bar in the options to draw the gryphons in front of bars 2 and 3." },
         { "Windows open on key press", "The spellbook, professions, talents, guild and quest log keys and Escape act on the press, as the game's own windows do." },
@@ -162,7 +171,9 @@ local WHATSNEW = {
 local LATEST = WHATSNEW[1].id
 local GOLD, GREY = "|cffffd100", "|cffa0a0a0"
 local CHANGELOG_URL = "https://github.com/wowaddonmaker/classicuiforever/blob/main/CHANGELOG.md"
-local NEWS_WIDTH, NEWS_BODY_MAX, NEWS_WHEEL = 480, 260, 28
+-- One size every time: the text scrolls in its box.
+local NEWS_WIDTH, NEWS_BODY_H, NEWS_WHEEL = 480, 280, 28
+local NEWS_BAR_ROOM = 24
 local NEWS_HEADER = { width = 320 }   -- the plate: "What's New in x.y.z" runs past the stock 256
 
 local function CopyChangelog() CopyLink(TITLE .. " changelog on GitHub", CHANGELOG_URL) end
@@ -186,27 +197,23 @@ local newsWindow
 local function BuildNews()
     local frame = O.DialogWindow("ForeverClassicUIWhatsNew", 120)
     ns.DialogHeader(frame, "What's New in " .. WHATSNEW[1].version, NEWS_HEADER)
-    -- The list in a clipped box that scrolls by wheel when it runs past NEWS_BODY_MAX.
+    -- The text in a fixed box, scrolled by the classic bar or the wheel.
+    local textW = NEWS_WIDTH - 48 - NEWS_BAR_ROOM
     local scroll = CreateFrame("ScrollFrame", nil, frame)
     scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -50)
-    scroll:SetWidth(NEWS_WIDTH - 48)
+    scroll:SetSize(textW, NEWS_BODY_H)
     scroll:EnableMouseWheel(true)
     local child = CreateFrame("Frame", nil, scroll)
-    child:SetWidth(NEWS_WIDTH - 48)
+    child:SetWidth(textW)
     scroll:SetScrollChild(child)
     local body = child:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     body:SetPoint("TOPLEFT", child, "TOPLEFT", 0, 0)
-    body:SetWidth(NEWS_WIDTH - 48)
+    body:SetWidth(textW)
     body:SetJustifyH("LEFT")
     body:SetJustifyV("TOP")
     body:SetSpacing(3)
-    scroll:SetScript("OnMouseWheel", function(self, delta)
-        local most = math.max(0, child:GetHeight() - self:GetHeight())
-        self:SetVerticalScroll(math.min(most, math.max(0, self:GetVerticalScroll() - delta * NEWS_WHEEL)))
-    end)
-    local note = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    note:SetPoint("TOP", scroll, "BOTTOM", 0, -10)
-    note:SetText("Bug fixes are in the full changelog.")
+    local bar = ns.ClassicScrollBar(frame, scroll, function(value) scroll:SetVerticalScroll(value or 0) end)
+    scroll:SetScript("OnMouseWheel", function(_, delta) bar:SetValue(bar:GetValue() - delta * NEWS_WHEEL) end)
     local changelog = ns.PanelButton(frame, "Full changelog", 120)
     changelog:SetScript("OnClick", CopyChangelog)
     changelog:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", -4, 20)
@@ -218,10 +225,10 @@ local function BuildNews()
         body:SetText(NewsText(seen))
         local height = math.ceil(body:GetStringHeight())
         child:SetHeight(height)
-        local shown = math.min(height, NEWS_BODY_MAX)
-        scroll:SetHeight(shown)
+        bar:SetValue(0)
+        bar:SetRange(height - NEWS_BODY_H, NEWS_WHEEL)
         scroll:SetVerticalScroll(0)
-        frame:SetSize(NEWS_WIDTH, 50 + shown + 10 + 14 + 16 + 22 + 20)
+        frame:SetSize(NEWS_WIDTH, 50 + NEWS_BODY_H + 16 + 22 + 20)
     end
     return frame
 end

@@ -2,6 +2,36 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.12.0] - 2026-09-29
+
+### Added
+- Classic Era's world map: the small map in Era's frame and size, the continent's name as its title, and the map's quest list in its own pane beside it. Map navigation bar under Map in the options brings back the game's own map layout.
+- Hide map quest button under Map in the options hides the map's quest list button, for players who use the separate quest log. Off by default.
+- Settings window under the options gives the game's settings window the look of today's Classic Era client.
+- Classic-sized bars under Classic bar in the options: 1.x's 36 px buttons instead of the game's 45. Off by default.
+- Shake on interrupt under Cast bars: the game's shake when a cast is interrupted. Off by default; the bar fills red at once and fades, as in classic.
+- The spellbook can be placed and sized in ClassicUI Forever Windows in edit mode.
+
+### Changed
+- Right-click menus on the Who list and guild roster, and drop down lists, use Classic Era's menus: gold name, Interact and Other Options sections, radio buttons in lists.
+- The social window is Classic Era's width; the Who list, guild roster and group finder follow Era's layout, borders, columns and buttons, and the group finder uses Era's art on both its pages.
+- The map's quest details: rewards come after the quest text and scroll with it, as in Era's quest log, and quest titles light gold on hover.
+- The vendor, mail, guild charter, tabard and charter signing windows: tabs and buttons sit on the window's frame as in Classic Era.
+- The Ignore List window, the dressing room and the minimap button's gryphon are drawn in the classic look; the character sheet opens where Classic Era opens it.
+- What's New shows the whole changelog of a version in a fixed-size box with a scroll bar.
+
+### Fixed
+- High-level neutral NPCs show their level; the skull is for hostile ones only.
+- Clicking a unit frame's health or power bar targets the unit again.
+- Works around a WoW Forever beta bug: with My Secondary Name off, the game left your name off the target and focus frames when you targeted yourself.
+- Hide objective tracker: the tracker comes back as soon as the option is unchecked.
+- The classic layout keeps the objective tracker clear of bars 4 and 5, and bars 4 and 5 stay at the screen's right edge after a UI scale change or with the addon off.
+- The map's picture fills its frame after switching the map layout, and quest details fit the map's quest pane.
+- The settings window no longer raises an error when its list scrolls, and its highlights have the right colour.
+- Escape closes the guild charter window while its name box has focus.
+- Search and number boxes in the spellbook and profession windows no longer show a bronze border outside the Bronze theme.
+- Many windows, tabs and buttons line up with Classic Era's.
+
 ## [0.11.7] - 2026-09-28
 
 ### Added

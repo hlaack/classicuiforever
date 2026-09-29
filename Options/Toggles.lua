@@ -57,7 +57,7 @@ ns.TOGGLES = {
     { "hideLastNames", "Hide last names", "Turns off every surname setting, so only first names show. The game's own box stays in step." },
 
     { "gameMenu", "Game menu and dialogs", "The Escape menu, pop-up boxes, edit mode, quick keybind, chat settings, color picker and report box in the old dialog look.", group = "Dialogs" },
-    { "settingsPanel", "Settings window", "The game's settings window in Classic Era's art: its frame, tabs, category bars, check boxes, sliders and drop downs." },
+    { "settingsPanel", "Settings window", "The game's settings window with the look of today's Classic Era client: its frame, tabs, category bars, check boxes, sliders and drop downs." },
     { "lootWindow", "Loot window", "The 1.x loot window: the loot icon in its ring, old name boxes per row and a pager at the foot. Off takes full effect after a reload.", search = "loot frame" },
     { "lootRoll", "Loot rolls", "Need and greed boxes as in 1.x: dice for need, coin for greed, a red X to pass." },
 
