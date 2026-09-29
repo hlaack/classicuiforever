@@ -2,6 +2,22 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.13.1] - 2026-09-29
+
+### Added
+- Hide chat buttons under Chat buttons takes every button off the chat's left, so the chat can sit at the screen's edge. The mouse wheel still scrolls; Shift with it jumps to the top or bottom. Off by default.
+- Chat scroll bar under Chat buttons keeps WoW Forever's scroll bar on the chat's right. Off by default, as in 1.x.
+- Quest levels under Quests is the game's Show Quest Levels setting: each quest's level on the map, in the tracker and in the quest log. It stays in step with the map's own filter.
+
+### Changed
+- The Dark theme reaches more of the interface: right-click menus, the rings of every addon's minimap button, the zoom buttons, the clock and the day and night icon.
+- With a theme on, action button icons are cropped under their frame, so no light edge shows around them.
+
+### Fixed
+- The quest tracker no longer shows a quest's level twice when the game's Show Quest Levels is on.
+- Right-clicking an enemy's frame in a dungeon with the Dark theme no longer raises errors or draws a broken menu border.
+- The target's right-click menu stays on screen.
+
 ## [0.13.0] - 2026-09-29
 
 ### Added

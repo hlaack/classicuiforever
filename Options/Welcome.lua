@@ -128,6 +128,12 @@ end
 -- What's New: each version's changelog in short, most important first, similar fixes grouped. A player gets the chat
 -- line once per new version, and the box shows only the versions since the one they saw last.
 local WHATSNEW = {
+    { id = 11, version = "0.13.1",
+        { "Chat", "Hide chat buttons lets the chat sit at the screen's edge, and Chat scroll bar keeps WoW Forever's scroll bar (Chat buttons)." },
+        { "Quest levels", "Quest levels (Quests) shows each quest's level on the map, in the tracker and in the quest log, in step with the map's own filter." },
+        { "Dark theme", "Right-click menus, addon minimap buttons, the zoom buttons, clock and day and night icon take the theme, and action icons show no light edge." },
+        { "Fixes", "No double quest level in the tracker, no errors from right-click menus in dungeons, and the target's menu stays on screen." },
+    },
     { id = 10, version = "0.13.0",
         { "Minimap", "Each minimap piece can show, show only on hover, or hide (Minimap in the options), and zoom in and out move around the ring on their own in ClassicUI Forever Windows." },
         { "Micro menu", "Classic Era's descriptions in the micro button tooltips, and Hide micro buttons takes single buttons off the menu (Classic bar)." },
