@@ -128,6 +128,14 @@ end
 -- What's New: each version's changelog in short, most important first, similar fixes grouped. A player gets the chat
 -- line once per new version, and the box shows only the versions since the one they saw last.
 local WHATSNEW = {
+    { id = 10, version = "0.13.0",
+        { "Minimap", "Each minimap piece can show, show only on hover, or hide (Minimap in the options), and zoom in and out move around the ring on their own in ClassicUI Forever Windows." },
+        { "Micro menu", "Classic Era's descriptions in the micro button tooltips, and Hide micro buttons takes single buttons off the menu (Classic bar)." },
+        { "Key ring", "Opens with no keys, in its own window, in Classic Era's art." },
+        { "New options", "Hide stance bar (Classic bar), Name text size (Nameplates) and Unit tooltip on bars (Unit frames)." },
+        { "Fixes", "Scroll arrows grey out with nothing to scroll, the quest log highlights as in Classic Era, guild Last Online sorts properly and the macro window opens beside the spellbook." },
+        { "Smaller fixes", "Talent arrows, the guild tab without a guild, page arrows over the map, the addon buttons bag and shorter layout prompts." },
+    },
     { id = 9, version = "0.12.0",
         { "Classic world map", "Classic Era's small map, with the map's quest list in its own pane beside it and rewards after the quest text. Map navigation bar under Map in the options brings back the game's map layout." },
         { "New options", "Hide map quest button (Map), Classic-sized bars (Classic bar) and Shake on interrupt (Cast bars)." },

@@ -2,6 +2,32 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.13.0] - 2026-09-29
+
+### Added
+- Every minimap piece can be shown, shown only while the mouse is over the minimap, or hidden: zone name, tracking, mail, zoom in, zoom out, clock, day and night, and the calendar. Pick it under Minimap in the options, or with Show in ClassicUI Forever Windows in edit mode. The options button and the addon buttons can show on hover too.
+- Zoom in and zoom out are their own pieces in ClassicUI Forever Windows, each dragged around the minimap's ring. The zone name, tracking, mail and clock can be moved and sized there as well.
+- Micro button descriptions under Classic bar: Classic Era's line under each micro button's name saying what it opens, and on the latency bar. On by default.
+- Hide micro buttons under Classic bar takes single buttons off the micro menu and closes the gap. The professions button is one of them, hidden by default as before.
+- Hide stance bar under Classic bar.
+- Name text size under Nameplates makes nameplate names bigger or smaller.
+- Unit tooltip on bars under Unit frames: hovering a health or power bar shows the unit's tooltip, as the portrait does. On by default.
+
+### Changed
+- The key ring opens with no keys and always in its own window, in Classic Era's key ring art.
+- The quest log highlights only the chosen quest, in its difficulty colour with white text; pointing at another quest turns its text white, as in Classic Era.
+- The addon buttons bag closes on a click anywhere else, and its button starts clear of the tracking icon.
+- Shorter layout prompts.
+
+### Fixed
+- Scroll arrows grey out when there is nothing to scroll, on the reputation, currency and friends lists and elsewhere.
+- Guild roster: Last Online sorts by how long a member has been away.
+- The guild tab stays greyed out without a guild after another social tab is picked.
+- The macro window opens beside the spellbook instead of closing it.
+- Talent arrows between talents on the same row point the right way.
+- The action bar page arrows no longer show over the world map.
+- The world map micro button shows its key in gold, as the others do.
+
 ## [0.12.0] - 2026-09-29
 
 ### Added
