@@ -77,7 +77,7 @@ function G.SortRoster()
         if key == "rank" then
             x = tonumber(e.rankIndex) or 0
         elseif key == "lastOnline" then
-            x = e.online and 0 or 1
+            x = e.online and -1 or G.HoursOffline(e)
         elseif key == "level" then
             x = tonumber(e.level) or 0
         else
@@ -121,6 +121,14 @@ function G.GuildTitle()
         lastTitle = guildName
     end
     return lastTitle
+end
+
+-- Hours since a member was last on, for the Last Online sort.
+function G.HoursOffline(entry)
+    if not GetGuildRosterLastOnline then return 0 end
+    local ok, years, months, days, hours = pcall(GetGuildRosterLastOnline, entry.index)
+    if not ok then return 0 end
+    return Safe(years, 0) * 8760 + Safe(months, 0) * 730 + Safe(days, 0) * 24 + Safe(hours, 0)
 end
 
 -- Last-seen text in 1.x wording.

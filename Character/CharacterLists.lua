@@ -278,6 +278,7 @@ local function DressArrow(button, kind)
     if button.Texture then Fade(button.Texture) end
     button:SetSize(16, 16)
     local tex = Own(ns.DressNew(button, "scroll" .. kind .. "ButtonUp", ARROW))
+    ns.ArrowStates(button, tex, kind)
     ns.EachState(button, ns.KEYS.STATES, FadeFace)
     ns.EachTexture(button, FadeUnless, tex)
 end

@@ -110,6 +110,13 @@ local function Popout()
     popout.empty:SetText("No addon buttons")
     popout:Hide()
     ns.CloseOnEscape(popout)
+    -- A press anywhere else closes it; one on the ring button is left to its toggle.
+    ns.RegisterEvents(popout, { "GLOBAL_MOUSE_DOWN" })
+    popout:SetScript("OnEvent", function(self)
+        if not self:IsShown() or self:IsMouseOver() then return end
+        if self.owner and self.owner:IsMouseOver() then return end
+        self:Hide()
+    end)
     -- While open, whatever an addon does to its button (level, size, fade, anchor back on the map) is undone.
     ns.Sched.Attach(popout, { name = "minimapBag", every = 0.25, fn = function() Layout() end })
     return popout
@@ -122,6 +129,7 @@ local function Toggle(ringButton)
     end
     Scan()
     Layout()
+    popout.owner = ringButton
     ns.SetPointOnce(popout, "TOPRIGHT", ringButton, "BOTTOMLEFT", 6, 6)
     popout:Show()
 end
@@ -129,7 +137,8 @@ end
 local ShowRing, HideRing = ns.RingButton({
     name = "ForeverClassicUIMinimapCollector",
     angleKey = "minimapCollectorAngle",
-    angle = 160,
+    angle = 132,   -- clear of the tracking spell (159) and the zone text
+    show = "AddonBag",
     face = function(icon)
         icon:SetTexture(BAG_ICON)
         ns.Dress(icon, nil, ns.RING_ICON_FACE)

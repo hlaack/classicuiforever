@@ -10,6 +10,7 @@ local STANCE_X, PET_X = 30, 36
 local SMALL_PITCH, SMALL_BUTTON = 33, 30    -- 30 px buttons on the pet and stance bars
 local SIDE_BAR_X, SIDE_BAR_Y, SIDE_BAR_GAP = -2, 98, 6   -- right bars hang from the bottom right corner
 local PAGE_X, PAGE_UP_Y, PAGE_DOWN_Y = 522, -22, -42
+local PAGE_OVER_BUTTONS = 2
 local Remember, BarSetting, BarVertical, BarRows = B.Remember, B.BarSetting, B.BarVertical, B.BarRows
 local IconScale, BandScale, BandNow, MatchScale = B.IconScale, B.BandScale, B.BandNow, B.MatchScale
 local CurrentPlan = B.CurrentPlan
@@ -46,6 +47,7 @@ local VISIBILITY = { InCombat = "[combat] show; hide", OutOfCombat = "[combat] h
 local function Driver(bar)
     if bar == PetActionBar then return "[petbattle][overridebar][vehicleui][possessbar] hide; [@pet,exists] show; hide" end
     if bar == PossessActionBar then return "[possessbar] show; hide" end
+    if bar == StanceBar and ns.db and ns.db.hideStanceBar then return "hide" end
     local main = bar == ns.GetMainBar()
     local on = main or bar.isShownExternal
     if on == nil then on = bar:IsShown() end
@@ -322,8 +324,9 @@ function B.LayoutPageArrows(bar)
     ns.SetPointOnce(pn, "CENTER", art, "TOPLEFT", pageX, midY)
     pn:SetSize(32, 76)
     pn:SetScale(BandNow())
-    -- Above the band, so its art never covers the number or arrows.
-    pn:SetFrameStrata("HIGH")
+    -- Over the band's buttons but in their layer: a window or the full map that covers the bars covers these too.
+    ns.SetStrataIf(pn, "MEDIUM")
+    ns.SetLevelIf(pn, B.ButtonLevel() + PAGE_OVER_BUTTONS)
     -- Hide Bar Scrolling: the client hides them for it.
     pn:SetShown(BarSetting(bar, "HideBarScrolling") ~= 1)
     B.PlacePageArrows(pn, 32, 32, 6, 7, art, "TOPLEFT", pageX, PAGE_UP_Y, PAGE_DOWN_Y, "GameFontNormalSmall",

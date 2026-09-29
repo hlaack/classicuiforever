@@ -21,7 +21,11 @@ local function SelectOurTab(on)
     if not tab then return end
     S.SelectFriendsTab(tab, on)
     local text = tab.GetFontString and tab:GetFontString()
-    if text and not tab.fcuiNoGuild then
+    -- The client's deselect enables the tab: one grayed for no guild stays so.
+    if tab.fcuiNoGuild then
+        tab:Disable()
+        if text then text:SetTextColor(0.5, 0.5, 0.5) end
+    elseif text then
         if on then text:SetTextColor(1, 1, 1) else text:SetTextColor(1, 0.82, 0) end
     end
 end
@@ -363,7 +367,8 @@ local function HookGuildOpeners()
         local title = SOCIAL_BUTTON or "Social"
         if type(MicroButtonTooltipText) == "function" then title = MicroButtonTooltipText(title, "TOGGLESOCIAL") end
         GameTooltip:SetText(title, 1, 1, 1)
-        if NEWBIE_TOOLTIP_SOCIAL then GameTooltip:AddLine(NEWBIE_TOOLTIP_SOCIAL, 1, 0.82, 0, true) end
+        local desc = ns.EraText("NEWBIE_TOOLTIP_SOCIAL")
+        if desc and ns.db.microTips then GameTooltip:AddLine(desc, 1, 0.82, 0, true) end
         GameTooltip:Show()
     end)
 end

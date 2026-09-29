@@ -190,6 +190,47 @@ local function Checkbox(parent, key, label, tooltip, radio)
     return box
 end
 
+-- A drop radio group ("Label: item" rows) as one row: label, then the old drop down box over its items.
+local DROP_W = 92
+local function DropRow(parent, group)
+    local rows, words, first = {}, {}, nil
+    for _, entry in ipairs(ns.TOGGLES) do
+        if entry.radio == group then
+            first = first or entry
+            local item = entry[2]:match(":%s*(.+)$") or entry[2]
+            rows[#rows + 1] = { key = entry[1], text = (item:gsub("^%l", string.upper)) }
+            words[#words + 1] = item .. " " .. (entry.search or "")
+        end
+    end
+    local label = first and first[2]:match("^(.-):") or group
+    local row = CreateFrame("Frame", nil, parent)
+    row:SetSize(24, 24)
+    local text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    text:SetPoint("LEFT", row, "LEFT", 4, 1)
+    text:SetJustifyH("LEFT")
+    text:SetWordWrap(false)
+    text:SetText(label)
+    row.text = text
+    local dropdown = CreateFrame("DropdownButton", nil, row, "WowStyle1DropdownTemplate")
+    dropdown:SetWidth(DROP_W)
+    dropdown:SetPoint("LEFT", text, "RIGHT", 4, -1)
+    ns.SkinDropdown(dropdown)
+    dropdown:SetupMenu(function(_, root)
+        for _, choice in ipairs(rows) do
+            root:CreateRadio(choice.text, function(key) return ns.db[key] == true end, function(key)
+                ns.db[key] = true
+                ns.ToggleChanged(key)
+            end, choice.key)
+        end
+    end)
+    row.dropdown = dropdown
+    function row:SetChecked() self.dropdown:GenerateMenu() end
+    function row:SetEnabled(on) self.dropdown:SetEnabled(on) end
+    Describe(row, group, label, first and first[3])
+    row.keyLow = row.keyLow .. " " .. table.concat(words, " "):lower()
+    return row
+end
+
 -- A group's title over its toggles, in the old gold.
 local function GroupHead(parent, title, width)
     local head = CreateFrame("Frame", nil, parent)
@@ -289,7 +330,7 @@ local function Build(canvas)
         end
     end
     -- heads[title]: the group's header row; a row's group is the last one named above it, and search finds it by that too.
-    local heads, group = {}, nil
+    local heads, group, dropped = {}, nil, {}
     local function Grouped(row)
         row.group = group
         if group then row.keyLow = row.keyLow .. " " .. group:lower() end
@@ -299,11 +340,19 @@ local function Build(canvas)
             group = entry.group
             heads[group] = heads[group] or GroupHead(child, group, LIST_W / COLUMNS - 8)
         end
-        local box = Checkbox(child, entry[1], entry[2], entry[3], entry.radio)
-        if entry.search then box.keyLow = box.keyLow .. " " .. entry.search:lower() end
-        Grouped(box)
-        Add(box, entry.parent)
-        box.text:SetWidth(LIST_W / COLUMNS - 30 - box.depth * INDENT)
+        if entry.drop and not dropped[entry.radio] then
+            dropped[entry.radio] = true
+            local row = DropRow(child, entry.radio)
+            Grouped(row)
+            Add(row, entry.parent)
+            row.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - row.depth * INDENT)
+        elseif not entry.drop then
+            local box = Checkbox(child, entry[1], entry[2], entry[3], entry.radio)
+            if entry.search then box.keyLow = box.keyLow .. " " .. entry.search:lower() end
+            Grouped(box)
+            Add(box, entry.parent)
+            box.text:SetWidth(LIST_W / COLUMNS - 30 - box.depth * INDENT)
+        end
         -- One bag width stepper; not a toggle, so the bulk buttons skip it.
         if entry[1] == "oneBag" then
             local columns = Stepper(child, "oneBagColumns", "Columns",
@@ -321,6 +370,15 @@ local function Build(canvas)
             size.keyLow = size.keyLow .. " keybind font hotkey"
             Grouped(size)
             Add(size, "buttons")
+        end
+        if entry[1] == "classColorPlates" then
+            local nameSize = Stepper(child, "plateNameSize", "Name text size",
+                "Points bigger or smaller than the game's own nameplate name. 0 keeps it as is.",
+                ns.PLATE_NAME_MIN or -6, ns.PLATE_NAME_MAX or 6, ns.SetPlateNameSize)
+            nameSize.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
+            nameSize.keyLow = nameSize.keyLow .. " font"
+            Grouped(nameSize)
+            Add(nameSize, "namePlates")
         end
     end
 
@@ -466,6 +524,7 @@ local function Build(canvas)
         -- The number rows too, through their setters so they apply live.
         if ns.SetKeyTextSize then ns.SetKeyTextSize(ns.DB_DEFAULTS.keyTextSize) end
         if ns.SetOneBagColumns then ns.SetOneBagColumns(ns.DB_DEFAULTS.oneBagColumns) end
+        if ns.SetPlateNameSize then ns.SetPlateNameSize(ns.DB_DEFAULTS.plateNameSize) end
         ns.ApplyAll()
         ns.AskReloadIfNeeded()
         frame:Refresh()

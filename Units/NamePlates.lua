@@ -165,6 +165,19 @@ local function CastLayout(unitFrame)
     LayCast(castContainer)
 end
 
+ns.PLATE_NAME_MIN, ns.PLATE_NAME_MAX = -6, 6
+
+-- The size the client shows plus the player's offset in points. The client's size is read off the name itself
+-- (it scales plate fonts on its own): any size other than the one we last set is the client's new one.
+local function NameSize(name, own)
+    local file, size, flags = name:GetFont()
+    if not size then return end
+    if not own.nameSet or math.abs(own.nameSet - size) > 0.05 then own.nameBase = size end
+    local want = math.max(6, own.nameBase + (tonumber(ns.db.plateNameSize) or 0))
+    if math.abs(size - want) > 0.05 then name:SetFont(file, want, flags) end
+    own.nameSet = want
+end
+
 -- Runs after the client has anchored the unit frame.
 local function Layout(unitFrame)
     local container, health, castContainer = Pieces(unitFrame)
@@ -206,6 +219,7 @@ local function Layout(unitFrame)
         name:SetJustifyH("CENTER")
         name:SetShadowColor(0, 0, 0, 1)
         name:SetShadowOffset(1, -1)
+        NameSize(name, own)
         local debuffs = ns.Path(unitFrame, "AurasFrame", "DebuffListFrame")
         if debuffs then
             ns.SetTwoPointsIf(debuffs, "LEFT", border, "LEFT", 0, 0, "BOTTOM", name, "TOP", 0, AURA_GAP)
@@ -250,6 +264,18 @@ local function EachPlate(fn, withForbidden)
     return seen
 end
 NP.EachPlate = EachPlate
+
+-- Name text size (options stepper); applies live.
+function ns.SetPlateNameSize(offset)
+    offset = math.max(ns.PLATE_NAME_MIN, math.min(ns.PLATE_NAME_MAX, math.floor(tonumber(offset) or 0)))
+    ns.db.plateNameSize = offset
+    if NP.active then
+        EachPlate(function(unitFrame)
+            if unitFrame.name and unitFrame.fcui then NameSize(unitFrame.name, unitFrame.fcui) end
+        end)
+    end
+    return offset
+end
 
 -- Plates re-lay after the client's handlers for what re-anchors them (added, faction, target, focus, casts, options, scale),
 -- in this frame's pass and the next: a plate registers its events after ours. Only player plates change colour with no

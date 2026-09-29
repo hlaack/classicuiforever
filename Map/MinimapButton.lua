@@ -109,7 +109,8 @@ local function Build(ring)
     return b
 end
 
--- spec: { name, angleKey, angle (default degrees), face(texture), onClick(button, mouse), tip }; returns show and hide.
+-- spec: { name, angleKey, angle (default degrees), show (its on hover id), face(texture), onClick(button, mouse), tip };
+-- returns show and hide.
 function ns.RingButton(spec)
     rings[#rings + 1] = spec
     local function Show()
@@ -118,12 +119,20 @@ function ns.RingButton(spec)
         spec.button = spec.button or Build(spec)
         Position(spec)
         spec.button:Show()
+        ns.MinimapShow(spec.button, spec.show)
         HookMap()
     end
     local function Hide()
         spec.active = false
-        if spec.button then spec.button:Hide() end
+        if spec.button then
+            ns.MinimapShow(spec.button, nil)
+            spec.button:Hide()
+        end
     end
+    -- Shown or on hover picked in the options.
+    ns.OnToggle(function(key)
+        if spec.active and (key == "show" .. spec.show or key == "hover" .. spec.show) then Show() end
+    end)
     return Show, Hide
 end
 
@@ -131,6 +140,7 @@ local ShowOptions, HideOptions = ns.RingButton({
     name = "ForeverClassicUIMinimapButton",
     angleKey = "minimapButtonAngle",
     angle = 200,
+    show = "OptionsButton",
     face = function(icon) ns.Dress(icon, "gryphonIcon", GRYPHON) end,
     onClick = function(_, mouse)
         if mouse == "RightButton" then

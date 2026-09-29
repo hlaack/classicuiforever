@@ -250,6 +250,27 @@ end
 -- The client's status text setting is a CVar; any change re-reads it.
 ns.EventFrame("CVAR_UPDATE", function() UF.HoverGate() end)
 
+-- The unit's tooltip over its bars, as over the portrait.
+local function BarTip(e, over)
+    local bar = e.bar
+    if not over then
+        if GameTooltip:IsOwned(bar) then GameTooltip:Hide() end
+        return
+    end
+    if not (ns.db and ns.db.barUnitTips) then return end
+    local unit = e.unit or bar.unit
+    local exists = unit and UnitExists(unit)
+    if IsSecret(exists) or not exists then return end
+    GameTooltip_SetDefaultAnchor(GameTooltip, bar)
+    if not GameTooltip:SetUnit(unit) then return end
+    -- The portrait's own lines after the unit (UnitFrame_UpdateTooltip).
+    if UNIT_POPUP_RIGHT_CLICK then
+        GameTooltip_AddBlankLineToTooltip(GameTooltip)
+        GameTooltip_AddInstructionLine(GameTooltip, UNIT_POPUP_RIGHT_CLICK)
+    end
+    GameTooltip:Show()
+end
+
 -- Both strings for one client bar, at its left/right text spots.
 -- owner: UF.frames key that must still be dressed (nil: pet).
 function UF.HoverBoth(clientBar, bar, holder, offsets, owner, unit, power)
@@ -264,6 +285,7 @@ function UF.HoverBoth(clientBar, bar, holder, offsets, owner, unit, power)
         -- The mouse entering the bar wakes the per-frame watch; no polling while it is elsewhere.
         local sensed = ns.Sched.OnHover(clientBar, function(over)
             if over and gateOpen and hoverJob then hoverJob:Wake() end
+            BarTip(e, over)
         end)
         if not sensed then unsensed = unsensed + 1 end
     end

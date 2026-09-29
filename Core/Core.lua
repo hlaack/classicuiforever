@@ -395,6 +395,14 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         ns.BarSizeKey()
         ns.db.lastOutput = nil   -- stale key from old saves
         ns.LoadProfile()
+        -- The old default sat on the tracking spell; a dragged angle is never exactly 160.
+        if ns.db.minimapCollectorAngle == 160 then ns.db.minimapCollectorAngle = 132 end
+        ns.MigrateMinimapShow(ns.db)
+        -- Hide professions button moved under Hide micro buttons: its parent turns on for it once.
+        if not ns.db.microHideMerged then
+            if ns.db.hideProfessionsButton then ns.db.hideMicroButtons = true end
+            ns.db.microHideMerged = true
+        end
     elseif event == "PLAYER_LOGIN" then
         ns.ready = true
         ns.ReadGameDamageNumbers()

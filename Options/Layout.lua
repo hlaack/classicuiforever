@@ -162,7 +162,7 @@ function ns.TurnOffCleanly()
 end
 
 ns.Popup("FCUI_TURN_OFF", {
-    text = TITLE .. "\n\nTurn the addon off for this character? Your earlier edit mode layout is made active again and the game settings the addon changed go back to what they were, so the default interface comes back as you left it. The interface reloads. You can turn the addon back on from the AddOns list at any time.",
+    text = TITLE .. "\n\nTurn the addon off for this character? Your earlier layout and game settings come back. The interface reloads.",
     button1 = "Turn off",
     button2 = CANCEL or "Cancel",
     OnAccept = function() ns.TurnOffCleanly() end,
@@ -230,7 +230,7 @@ local function ResetNow()
     local defaults = ns.DB_DEFAULTS
     ns.db.reagentBagSlot, ns.db.reagentBagRound, ns.db.reagentBagHover =
         defaults.reagentBagSlot, defaults.reagentBagRound, defaults.reagentBagHover
-    ns.db.hideProfessionsButton = defaults.hideProfessionsButton
+    ns.db.hideMicroButtons, ns.db.hideProfessionsButton = defaults.hideMicroButtons, defaults.hideProfessionsButton
     -- Gryphons back on the band (the pin step then resets their edit mode spots).
     ns.db.capMoved, ns.db.capHeldLeft, ns.db.capHeldRight = nil, false, false
     -- Windows placed or sized in the windows edit mode (the map included) back to their own; Movable anytime is kept.
@@ -275,7 +275,7 @@ end
 
 -- Layout button pressed while already on the classic layout.
 ns.Popup("FCUI_LAYOUT_RESET", {
-    text = TITLE .. "\n\nYou are on the " .. LAYOUT_NAME .. " layout already. Reset it to its defaults? Every bar, the micro menu, the bags, the key ring, latency bar, reagent bag and professions button, the player, target and focus frames and the windows (map included) go back to their classic places and settings, bar art shown. Your other layouts are not touched. The interface reloads to do it.",
+    text = TITLE .. "\n\nReset the " .. LAYOUT_NAME .. " layout to its defaults? Your other layouts are not touched. The interface reloads.",
     button1 = "Reset and reload",
     button2 = CANCEL or "Cancel",
     OnAccept = function() ns.ResetClassicLayout(true) end,
@@ -494,7 +494,7 @@ ns.Popup("FCUI_LAYOUT_PICK", {
 
 -- First login: set up the classic layout or keep the current one.
 ns.Popup("FCUI_FIRST_LOGIN", {
-    text = TITLE .. "\n\nSet up the classic layout now? This adds an edit mode layout named \"" .. LAYOUT_NAME .. "\" with everything in its 1.x place and switches to it. Your current layout and keybinds are untouched and stay in the edit mode list, where you can switch back at any time. The interface reloads to do it.",
+    text = TITLE .. "\n\nSet up the classic layout now? This adds an edit mode layout named \"" .. LAYOUT_NAME .. "\" and switches to it. Your current layout stays in the list. The interface reloads.",
     button1 = "Set up and reload",
     button2 = "Keep my layout",
     OnAccept = function() ns.CreateClassicLayout(true) end,

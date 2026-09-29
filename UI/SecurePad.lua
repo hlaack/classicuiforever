@@ -82,6 +82,7 @@ MapPad = function(button, strata, after, target, when, editMode)
             GameTooltip:SetText(text, 1, 1, 1)
             GameTooltip:Show()
         end
+        if ns.MicroTip then ns.MicroTip(button) end
     end)
     mapPad:SetScript("OnLeave", function()
         button:UnlockHighlight()

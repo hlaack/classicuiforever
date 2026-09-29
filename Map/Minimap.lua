@@ -22,8 +22,8 @@ local NORTH = { own = "north", layer = "OVERLAY", w = 16, h = 16, point = "CENTE
 local COMPASS = { coords = FULL, w = 256, h = 256, point = "CENTER", x = -2, layer = "OVERLAY" }
 local ZOOM_STATES = { coords = FULL, fill = true }
 local ZOOM = {
-    { field = "ZoomIn", up = "zoomInUp", down = "zoomInDown", disabled = "zoomInDisabled", x = 72, y = -25 },
-    { field = "ZoomOut", up = "zoomOutUp", down = "zoomOutDown", disabled = "zoomOutDisabled", x = 50, y = -43 },
+    { field = "ZoomIn", key = "minimapZoomIn", up = "zoomInUp", down = "zoomInDown", disabled = "zoomInDisabled" },
+    { field = "ZoomOut", key = "minimapZoomOut", up = "zoomOutUp", down = "zoomOutDown", disabled = "zoomOutDisabled" },
 }
 local GLASS_BG = { coords = FULL, w = 25, h = 25, point = "TOPLEFT", x = 2, y = -4, alpha = 0.6 }
 local GLASS_RING = { own = "border", layer = "BORDER", w = 52, h = 52, point = "TOPLEFT" }
@@ -35,6 +35,123 @@ local CLOCK_PLATE = { own = "bg", layer = "BORDER", alpha = 1, coords = { 0.0156
 local CALENDAR = { states = { "Normal", "Pushed", "Highlight" }, fill = true, add = true,
     coords = { Normal = { 0, 0.390625, 0, 0.78125 }, Pushed = { 0.5, 0.890625, 0, 0.78125 }, Highlight = FULL },
     layer = { Normal = "BACKGROUND", Pushed = "BACKGROUND" } }
+
+-------------------------------------------------------- pieces
+
+-- Pieces the player can move and size in ClassicUI Forever Windows (UI/WindowHandles.lua) or hide in the options:
+-- each in a named home the edit mode places by name; ns.LayPiece lays one at its default spot again.
+-- show: the piece's Shown / On hover / Hidden keys (show<id>, hover<id>, hide<id>); ring: its angle key on the ring.
+local PIECES = {
+    minimapZone = { home = "ForeverClassicUIMinimapZoneHome", show = "MinimapZone" },
+    minimapTracking = { home = "ForeverClassicUIMinimapTrackingHome", show = "MinimapTracking" },
+    minimapMail = { home = "ForeverClassicUIMinimapMailHome", show = "MinimapMail" },
+    minimapZoomIn = { home = "ForeverClassicUIMinimapZoomInHome", show = "MinimapZoomIn", ring = "zoomInAngle", angle = 322 },
+    minimapZoomOut = { home = "ForeverClassicUIMinimapZoomOutHome", show = "MinimapZoomOut", ring = "zoomOutAngle", angle = 302 },
+    minimapClock = { home = "ForeverClassicUIMinimapClockHome", show = "MinimapClock" },
+}
+MM.PIECE_KEYS = PIECES
+local SHOW_IDS = { "MinimapZone", "MinimapTracking", "MinimapMail", "MinimapZoomIn", "MinimapZoomOut", "MinimapClock",
+    "MinimapDiel", "MinimapCalendar" }
+local ZOOM_R = 79
+local homes = {}
+
+---------------------------------------------------------------- shown, on hover, hidden
+
+-- "hide", "hover" or nil (shown).
+function MM.ShowState(id)
+    local db = ns.db
+    if not id or not db then return nil end
+    if db["hide" .. id] then return "hide" end
+    if db["hover" .. id] then return "hover" end
+end
+
+-- Frames shown only while the mouse is over the minimap or over them.
+local hovering = {}
+local hoverJob
+
+local function HoverTick(job)
+    if not next(hovering) then job:Sleep() return end
+    local over = MinimapCluster and MinimapCluster:IsMouseOver()
+    if not over then
+        for frame in pairs(hovering) do
+            if frame:IsVisible() and frame:IsMouseOver() then over = true break end
+        end
+    end
+    -- Our ring button inside the addon bag stays lit there.
+    for frame in pairs(hovering) do
+        if not (ns.MinimapCollected and ns.MinimapCollected(frame)) then ns.SetAlphaIf(frame, over and 1 or 0) end
+    end
+end
+
+-- fade: a client frame, hidden by alpha so the client's own shows cannot bring it back.
+function ns.MinimapShow(frame, id, fade)
+    if not frame then return end
+    local state = MM.ShowState(id)
+    if fade then
+        if state == "hide" then ns.SetAlphaIf(frame, 0) end
+    else
+        ns.SetShownIf(frame, state ~= "hide")
+    end
+    hovering[frame] = state == "hover" or nil
+    if state == nil then ns.SetAlphaIf(frame, 1) end
+    if not next(hovering) or not MinimapCluster then return end
+    hoverJob = hoverJob or ns.Sched.Job({ name = "minimap.hover", every = 0.1, awake = false, fn = HoverTick })
+    hoverJob:Wake()
+    HoverTick(hoverJob)
+end
+
+-- Old saves: one hide key for both zoom buttons, the calendar on or off.
+function ns.MigrateMinimapShow(db)
+    if db.hideMinimapZoom ~= nil then
+        if db.hideMinimapZoom then db.hideMinimapZoomIn, db.hideMinimapZoomOut = true, true end
+        db.hideMinimapZoom = nil
+    end
+    if db.minimapCalendar ~= nil then
+        if db.minimapCalendar == false then db.hideMinimapCalendar = true end
+        db.minimapCalendar = nil
+    end
+    for _, list in ipairs({ db.windowPos, db.windowScale }) do
+        if type(list) == "table" then list.minimapZoom = nil end
+    end
+    for _, id in ipairs(SHOW_IDS) do
+        if db["hide" .. id] or db["hover" .. id] then db["show" .. id] = false end
+        if db["hide" .. id] then db["hover" .. id] = false end
+    end
+end
+
+---------------------------------------------------------------- homes
+
+local function Home(key, parent, level, w, h)
+    local home = homes[key]
+    if not home then
+        home = CreateFrame("Frame", PIECES[key].home, parent)
+        homes[key] = home
+        if ns.PlaceSavedWindows then ns.PlaceSavedWindows() end
+    end
+    home:SetSize(w, h)
+    ns.SetLevelIf(home, level)
+    return home
+end
+
+-- The home's size and level; its middle at the default spot unless placed in edit mode (offsets in its own scale).
+local function LayHome(key, parent, level, w, h, rel, relPoint, x, y)
+    local home = Home(key, parent, level, w, h)
+    if not (ns.WindowPlaced and ns.WindowPlaced(key)) then
+        local k = home:GetScale()
+        ns.SetPointOnce(home, "CENTER", rel, relPoint, x / k, y / k)
+    end
+    ns.MinimapShow(home, PIECES[key].show)
+    return home
+end
+
+-- A ring piece: its middle at its angle, dragged round the ring in edit mode.
+local function LayRingHome(key, parent, level, w, h)
+    local piece = PIECES[key]
+    local home = Home(key, parent, level, w, h)
+    ns.RingPoint(home, tonumber(ns.db[piece.ring]) or piece.angle, ZOOM_R, home:GetEffectiveScale() / Minimap:GetEffectiveScale())
+    ns.MinimapShow(home, piece.show)
+    return home
+end
 
 -------------------------------------------------------- classic tracking
 
@@ -229,27 +346,31 @@ local function Layout()
     if MinimapCompassTexture then MinimapCompassTexture:SetShown(rotate and true or false) end
     if cluster.fcuiNorth then cluster.fcuiNorth:SetShown(not rotate) end
 
-    -- Zone name centred on the zone bar, whatever the calendar's spot.
-    if MinimapZoneText then
-        MinimapZoneText:SetSize(MAP, 12)
-        MinimapZoneText:SetJustifyH("CENTER")
-        ns.SetPointOnce(MinimapZoneText, "CENTER", cluster, "TOP", ZONE_X, -12)
-    end
-    if cluster.ZoneTextButton then
-        cluster.ZoneTextButton:SetSize(MAP, 12)
-        ns.SetPointOnce(cluster.ZoneTextButton, "CENTER", cluster, "TOP", ZONE_X, -12)
-    end
-
     -- Buttons over the map's edge must stand above it to take clicks.
     local above = map:GetFrameLevel() + 5
 
-    -- Zoom on the lower right of the ring.
+    -- Zone name centred on the zone bar, whatever the calendar's spot.
+    local zone = LayHome("minimapZone", cluster, cluster:GetFrameLevel() + 2, MAP, 12, cluster, "TOP", ZONE_X, -12)
+    if cluster.ZoneTextButton then
+        cluster.ZoneTextButton:SetParent(zone)
+        cluster.ZoneTextButton:SetSize(MAP, 12)
+        ns.SetPointOnce(cluster.ZoneTextButton, "CENTER", zone, "CENTER", 0, 0)
+    end
+    if MinimapZoneText then
+        if MinimapZoneText:GetParent() ~= cluster.ZoneTextButton then MinimapZoneText:SetParent(zone) end
+        MinimapZoneText:SetSize(MAP, 12)
+        MinimapZoneText:SetJustifyH("CENTER")
+        ns.SetPointOnce(MinimapZoneText, "CENTER", zone, "CENTER", 0, 0)
+    end
+
+    -- Zoom in and out, each on the ring at its own angle.
     for i = 1, #ZOOM do
         local zoom = ZOOM[i]
         local button = map[zoom.field]
         if button then
-            button:SetParent(backdrop)
-            button:SetFrameLevel(above)
+            local zoomHome = LayRingHome(zoom.key, backdrop, above, 32, 32)
+            button:SetParent(zoomHome)
+            button:SetFrameLevel(above + 1)
             button:SetSize(32, 32)
             ns.DressStates(button, zoom.up, zoom.down, zoom.disabled, "zoomHighlight", ZOOM_STATES)
             -- Ours is already grey; the client's desaturate turned bronze silver.
@@ -257,7 +378,7 @@ local function Layout()
             if disabled and disabled.SetDesaturated then disabled:SetDesaturated(false) end
             button:GetHighlightTexture():SetBlendMode("ADD")
             button:SetHitRectInsets(4, 4, 2, 6)
-            ns.SetPointOnce(button, "CENTER", backdrop, "CENTER", zoom.x, zoom.y)
+            ns.SetPointOnce(button, "CENTER", zoomHome, "CENTER", 0, 0)
             button:Show()
         end
     end
@@ -266,11 +387,13 @@ local function Layout()
     TrackingFrame(backdrop, above)
     local tracking = cluster.Tracking
     if tracking then
-        tracking:SetParent(backdrop)
-        tracking:SetFrameLevel(above)
-        tracking:SetSize(32, 32)
         -- With the spell icon off the glass keeps its old spot.
-        ns.SetPointOnce(tracking, "TOPLEFT", backdrop, "TOPLEFT", 9, TrackingOn() and -64 or -45)
+        local glassHome = LayHome("minimapTracking", backdrop, above, 32, 32, backdrop, "TOPLEFT", 9 + 16,
+            (TrackingOn() and -64 or -45) - 16)
+        tracking:SetParent(glassHome)
+        tracking:SetFrameLevel(above + 1)
+        tracking:SetSize(32, 32)
+        ns.SetPointOnce(tracking, "TOPLEFT", glassHome, "TOPLEFT", 0, 0)
         ns.Dress(tracking.Background, "minimapBackground", GLASS_BG, tracking)
         ns.DressNew(tracking, "trackingBorder", GLASS_RING)
         local button = tracking.Button
@@ -291,13 +414,14 @@ local function Layout()
     local indicator = cluster.IndicatorFrame
     local mailY = MM.CalendarUnderDiel() and -70 or -37
     if indicator then
-        indicator:SetParent(cluster)
-        indicator:SetFrameLevel(above)
+        local mailHome = LayHome("minimapMail", cluster, above, 33, 33, map, "TOPRIGHT", 24 - 16.5, mailY - 16.5)
+        indicator:SetParent(mailHome)
+        indicator:SetFrameLevel(above + 1)
         indicator:SetSize(33, 33)
-        ns.SetPointOnce(indicator, "TOPRIGHT", map, "TOPRIGHT", 24, mailY)
+        ns.SetPointOnce(indicator, "TOPLEFT", mailHome, "TOPLEFT", 0, 0)
         if indicator.MailFrame then
             indicator.MailFrame:SetSize(33, 33)
-            ns.SetPointOnce(indicator.MailFrame, "TOPRIGHT", map, "TOPRIGHT", 24, mailY)
+            ns.SetPointOnce(indicator.MailFrame, "TOPLEFT", mailHome, "TOPLEFT", 0, 0)
             ns.DressNew(indicator.MailFrame, "trackingBorder", MAIL_RING)
             if MiniMapMailIcon then
                 MiniMapMailIcon:SetTexture("Interface\\Icons\\INV_Letter_15")
@@ -315,6 +439,7 @@ local function Layout()
     local diel = cluster.DielFrame
     if diel then
         ns.SetPointOnce(diel, "TOPRIGHT", map, "TOPRIGHT", 20, -2)
+        ns.MinimapShow(diel, "MinimapDiel", true)
     end
     if GameTimeFrame then
         MM.PlaceCalendar(cluster, map, above)
@@ -324,10 +449,11 @@ local function Layout()
     -- Clock at the map's bottom: the client's plate faded, our stone plate kept.
     if TimeManagerClockButton then
         local clock = TimeManagerClockButton
-        clock:SetParent(map)
-        clock:SetFrameLevel(above)
+        local clockHome = LayHome("minimapClock", map, above, 60, 28, map, "CENTER", 0, -75)
+        clock:SetParent(clockHome)
+        clock:SetFrameLevel(above + 1)
         clock:SetSize(60, 28)
-        ns.SetPointOnce(clock, "CENTER", map, "CENTER", 0, -75)
+        ns.SetPointOnce(clock, "CENTER", clockHome, "CENTER", 0, 0)
         ns.FadeTextures(clock, 0, nil, clock.fcui and clock.fcui.bg)
         ns.DressNew(clock, "clockBackground", CLOCK_PLATE, TimeManagerClockButton)
         if TimeManagerClockTicker then ns.SetPointOnce(TimeManagerClockTicker, "CENTER", TimeManagerClockButton, "CENTER", 3, 1) end
@@ -458,8 +584,17 @@ local function Restore()
     HideOwn(MinimapCluster)
     HideOwn(MinimapBackdrop)
     MM.HideCalendar()
+    for _, home in pairs(homes) do ns.MinimapShow(home, nil) end
+    if MinimapCluster and MinimapCluster.DielFrame then ns.MinimapShow(MinimapCluster.DielFrame, nil, true) end
     if MinimapCluster and MinimapCluster.BorderTop then ns.Unfade(MinimapCluster.BorderTop) end
     ns.needsReload = true
 end
 
 ns.RegisterModule("minimap", { apply = Apply, restore = Restore })
+
+-- A piece's Shown / On hover / Hidden picked: laid again at once.
+ns.OnToggle(function(key)
+    for _, id in ipairs(SHOW_IDS) do
+        if key == "show" .. id or key == "hover" .. id or key == "hide" .. id then LayoutIfActive() return end
+    end
+end)

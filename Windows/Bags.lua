@@ -35,6 +35,7 @@ local EMPTY = ns.EMPTY
 local QUICK_RING_64 = { set = "raw", tint = true, coords = { 0, 1, 0, 1 }, w = 64, h = 64, point = "CENTER", y = -1 }
 
 local active = false
+local KEYRING = Enum.BagIndex.Keyring
 local hooked = setmetatable({}, { __mode = "k" })
 
 local function Pieces(frame)
@@ -116,7 +117,7 @@ end
 local function DrawMiddle(frame, p, i, last, pixels, from)
     local piece = Middle(frame, i)
     piece:SetColumns(p.columns or COLUMNS)
-    piece:SetSheet("bagComponents")
+    piece:SetSheet(p.sheet)
     ns.SetPointOnce(piece, "TOP", last, "BOTTOM", 0, 0)
     piece:SetHeight(pixels)
     piece:SetTexCoord(from, pixels / SHEET_H + from)
@@ -142,7 +143,7 @@ end
 local function DrawBag(frame, rows, plusTwo)
     local p = Pieces(frame)
     local top, bottom = p.bagTop, p.bagBottom
-    top:SetSheet("bagComponents")
+    top:SetSheet(p.sheet)
     ns.SetPointOnce(top, "TOPRIGHT", frame, "TOPRIGHT", 0, 0)
     if plusTwo then
         top:SetTexCoord(0.189453125, 0.330078125)
@@ -171,7 +172,7 @@ local function DrawBag(frame, rows, plusTwo)
         remaining = remaining - n
     end
     HideMiddles(p, i)
-    DrawBottom(bottom, "bagComponents", BOTTOM_H, BOTTOM_TOP, BOTTOM_BOTTOM, last)
+    DrawBottom(bottom, p.sheet, BOTTOM_H, BOTTOM_TOP, BOTTOM_BOTTOM, last)
     return top:GetHeight() + middleHeight + BOTTOM_H
 end
 
@@ -272,10 +273,10 @@ local function Blank(frame, i)
     p.blanks = p.blanks or {}
     if not p.blanks[i] then
         local tex = frame:CreateTexture(nil, "BACKGROUND", nil, 0)
-        ns.SetTex(tex, "bagComponents")
         tex:SetTexCoord(BLANK_L, BLANK_R, BLANK_T, BLANK_B)
         p.blanks[i] = tex
     end
+    ns.SetTex(p.blanks[i], p.sheet)
     return p.blanks[i]
 end
 
@@ -354,6 +355,8 @@ local function Skin(frame)
         ns.Persist(string.format("bags: skin %s size %d rows %d backpack %s", tostring(frame:GetName()), size, rows, tostring(frame.IsBackpack and frame:IsBackpack())))
     end
     FadeArt(frame)
+    local keyring = frame.MatchesBagID and frame:MatchesBagID(KEYRING)
+    Pieces(frame).sheet = keyring and "bagComponentsKeyring" or "bagComponents"
     local height, extra
     local plusTwo = false
     local tokenRow = (combined or (frame.IsBackpack and frame:IsBackpack())) and TokenRow(frame)
@@ -381,6 +384,9 @@ local function Skin(frame)
         portrait:SetDrawLayer("BACKGROUND", -8)
         if combined or (frame.IsBackpack and frame:IsBackpack()) then
             ns.SetTex(portrait, "backpackIcon")
+            portrait:SetTexCoord(0, 1, 0, 1)
+        elseif keyring then
+            ns.SetTex(portrait, "keyringPortrait")
             portrait:SetTexCoord(0, 1, 0, 1)
         end
     end
@@ -477,8 +483,59 @@ local function ReadOneBag()
 end
 ns.RegisterModule("oneBag", { apply = ReadOneBag, restore = ReadOneBag })
 
+-- The ring in its own window, as 1.x: the client opens it only once showKeyring is on (its first login
+-- holding a key), and with one bag on it opens the combined bag instead.
+local function RingFrame()
+    for _, frame in ContainerFrameUtil_EnumerateContainerFrames() do
+        if frame:IsShown() and not frame:IsCombinedBagContainer() and frame:GetBagID() == KEYRING then return frame end
+    end
+end
+
+local function FreeFrame()
+    for _, frame in ContainerFrameUtil_EnumerateContainerFrames() do
+        if not frame:IsShown() and not frame:IsCombinedBagContainer() and frame:CanUseForBagID(KEYRING) then return frame end
+    end
+end
+
+local click = {}
+local function RingPreClick(_, button)
+    click.skip = not active or InCombatLockdown() or button ~= "LeftButton" or IsModifiedClick() or CursorHasItem()
+        or (KeybindFrames_InQuickKeybindMode and KeybindFrames_InQuickKeybindMode())
+        or (ContainerFrame_AllowedToOpenBags and not ContainerFrame_AllowedToOpenBags())
+    if click.skip then return end
+    local combined = ContainerFrameCombinedBags
+    click.bags = combined and combined:IsShown()
+    click.ring = RingFrame() ~= nil
+end
+
+local function RingClick()
+    if click.skip then return end
+    local combined = ContainerFrameSettingsManager and ContainerFrameSettingsManager:IsUsingCombinedBags(KEYRING)
+    if ns.GetCVarBool("showKeyring") and not combined then return end
+    -- Undo the client's combined bag toggle.
+    local bags = ContainerFrameCombinedBags
+    if bags and combined then
+        if bags:IsShown() and not click.bags then
+            bags:Hide()
+        elseif click.bags and not bags:IsShown() then
+            OpenBackpack()
+        end
+    end
+    local ring = RingFrame()
+    if click.ring then
+        if ring then ring:Hide() end
+        return
+    end
+    local frame = not ring and FreeFrame()
+    if frame then ContainerFrame_GenerateFrame(frame, math.max(GetKeyRingSize(), 4), KEYRING) end
+end
+
 local function Apply()
     active = true
+    if KeyRingButton and KEYRING and ns.Once(KeyRingButton, "emptyRing") then
+        KeyRingButton:HookScript("PreClick", RingPreClick)
+        KeyRingButton:HookScript("OnClick", RingClick)
+    end
     local frames = Frames()
     if ns.debugSink then ns.Persist("bags: apply, frames " .. #frames) end
     for _, frame in ipairs(frames) do

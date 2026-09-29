@@ -6,7 +6,7 @@ local _, ns = ...
 
 -- w, h: box before made; cut: a 384 x 512 old frame's bare edges; stripRight: strip inset; toggle: unlock option;
 -- quests: the map; section: heading; piece: laid by ns.LayPiece; ringKey: its angle, dragged round the minimap
--- while ringIf is on; fixedIf: no drag while that is on; choice: an options radio group as a dropdown.
+-- (only while ringIf is on, if given); fixedIf: no drag while that is on; choice: an options radio group as a dropdown.
 local WINDOWS = {
     { key = "character", label = "Character", name = "CharacterFrame", w = 354, h = 467, cut = { 30, 45 } },
     { key = "professions", label = "Professions", name = "ProfessionsFrame", w = 550, h = 525 },
@@ -19,6 +19,18 @@ local WINDOWS = {
         choiceLabel = "Mode" },
     { key = "spellBook", label = "Spellbook", name = "ForeverClassicUISpellBook", w = 384, h = 512, stripRight = 64,
         calm = true },
+    { key = "minimapZone", label = "Zone name", name = "ForeverClassicUIMinimapZoneHome", w = 140, h = 12,
+        section = "Minimap", piece = true, choice = "minimapZoneShow", choiceLabel = "Show" },
+    { key = "minimapTracking", label = "Tracking", name = "ForeverClassicUIMinimapTrackingHome", w = 32, h = 32,
+        section = "Minimap", piece = true, choice = "minimapTrackingShow", choiceLabel = "Show" },
+    { key = "minimapMail", label = "Mail", name = "ForeverClassicUIMinimapMailHome", w = 33, h = 33,
+        section = "Minimap", piece = true, choice = "minimapMailShow", choiceLabel = "Show" },
+    { key = "minimapZoomIn", label = "Zoom in", name = "ForeverClassicUIMinimapZoomInHome", w = 32, h = 32,
+        section = "Minimap", piece = true, ringKey = "zoomInAngle", choice = "minimapZoomInShow", choiceLabel = "Show" },
+    { key = "minimapZoomOut", label = "Zoom out", name = "ForeverClassicUIMinimapZoomOutHome", w = 32, h = 32,
+        section = "Minimap", piece = true, ringKey = "zoomOutAngle", choice = "minimapZoomOutShow", choiceLabel = "Show" },
+    { key = "minimapClock", label = "Clock", name = "ForeverClassicUIMinimapClockHome", w = 60, h = 28,
+        section = "Minimap", piece = true, choice = "minimapClockShow", choiceLabel = "Show" },
 }
 local SLOT_LEFT, SLOT_TOP = 0, 104
 local STRIP_H, STRIP_LEFT, STRIP_RIGHT = 24, 60, 30
@@ -124,7 +136,7 @@ end
 local PlaceAll
 
 -- A piece on the minimap ring drags round it: an angle, not a place.
-local function OnRing(entry) return entry.ringKey ~= nil and ns.db[entry.ringIf] == true end
+local function OnRing(entry) return entry.ringKey ~= nil and (entry.ringIf == nil or ns.db[entry.ringIf] == true) end
 local function Fixed(entry) return entry.fixedIf ~= nil and ns.db[entry.fixedIf] == true end
 
 local function Apply(entry)

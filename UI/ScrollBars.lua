@@ -113,6 +113,21 @@ function ns.ClassicKnob(bar)
     Place()
 end
 
+-- Our arrow over a client stepper follows its state: greyed with nothing to scroll that way.
+function ns.ArrowStates(button, tex, kind)
+    local base = "scroll" .. kind .. "Button"
+    local function State(_, down)
+        ns.SetTex(tex, base .. (not button:IsEnabled() and "Disabled" or down == true and "Down" or "Up"))
+    end
+    if ns.Once(button, "arrowStates") then
+        button:HookScript("OnEnable", State)
+        button:HookScript("OnDisable", State)
+        button:HookScript("OnMouseDown", function() if button:IsEnabled() then State(nil, true) end end)
+        button:HookScript("OnMouseUp", State)
+    end
+    State()
+end
+
 function ns.SkinMinimalScrollBar(bar)
     if not bar or bar.fcuiSkinned then return end
     bar.fcuiSkinned = true
@@ -128,7 +143,7 @@ function ns.SkinMinimalScrollBar(bar)
         if not button then return end
         if button.Texture then button.Texture:SetAlpha(0) end
         button:SetSize(16, 16)
-        ns.DressNew(button, "scroll" .. kind .. "ButtonUp", ARROW_OVER)
+        ns.ArrowStates(button, ns.DressNew(button, "scroll" .. kind .. "ButtonUp", ARROW_OVER), kind)
     end
     Arrow(bar.Back, "Up")
     Arrow(bar.Forward, "Down")

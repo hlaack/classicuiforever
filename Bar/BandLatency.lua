@@ -40,7 +40,9 @@ local function TipText()
     if type(label) == "string" and label:find("%", 1, true) then return label:format(home, world) end
     return ("Latency: %d ms (home), %d ms (world)"):format(home, world)
 end
-local TUBE_TIP = { text = TipText, r = 1, g = 1, b = 1 }
+-- Era's gold description under it.
+local function TipDesc() return ns.EraText("NEWBIE_TOOLTIP_LATENCY") end
+local TUBE_TIP = { text = TipText, r = 1, g = 1, b = 1, lines = { { TipDesc, 1, 0.82, 0, true } } }
 
 -- A tube on parent, under its band art; a bare frame over the window carries the tooltip (textures take no mouse).
 function B.MakeTube(parent)

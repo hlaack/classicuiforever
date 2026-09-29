@@ -15,6 +15,7 @@ Nameplate-Border
 QuickJoin-Atlas
 SpellBook-SkillLineTab
 UI-BackpackBackground
+UI-Bag-Components-KeyRing
 UI-Bag-Components
 UI-BankFrame-Floor
 UI-Button-KeyRing-Down

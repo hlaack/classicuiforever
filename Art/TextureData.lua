@@ -146,6 +146,8 @@ ns.TEX = {
     merchantLabelSlots = "!UI-Merchant-LabelSlots",
     -- Old bag sheets: the shared bag pieces and the backpack's own.
     bagComponents = "!UI-Bag-Components",
+    bagComponentsKeyring = "!UI-Bag-Components-KeyRing",
+    keyringPortrait = "=ContainerFrame\\KeyRing-Bag-Icon",
     backpackBg = "!UI-BackpackBackground",
     lootSkull = "TargetingFrame\\TargetDead",
     skillsBarBorder = "!UI-Character-Skills-BarBorder",

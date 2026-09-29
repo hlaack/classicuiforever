@@ -19,7 +19,7 @@ local squareState = "up"
 
 local function Spot()
     local db = ns.db
-    if not db or db.minimapCalendar == false then return nil end
+    if not db or MM.ShowState("MinimapCalendar") == "hide" then return nil end
     local diel = MinimapCluster and MinimapCluster.DielFrame
     if db.calendarBehind and diel then return "behind" end
     if db.calendarZone then return "zone" end
@@ -36,7 +36,7 @@ end
 
 -- Edit mode's reset and size steps: laid at the picked spot again.
 function ns.LayPiece(key)
-    if key == KEY and MM.Relayout then MM.Relayout() end
+    if (key == KEY or (MM.PIECE_KEYS and MM.PIECE_KEYS[key])) and MM.Relayout then MM.Relayout() end
 end
 
 -- Picking a spot (options or its edit mode dropdown) puts it there: a place dragged in edit mode goes.
@@ -135,7 +135,7 @@ function MM.PlaceCalendar(cluster, map, above)
     else
         PlaceHome(box, cluster, map, spot, diel)
     end
-    if not box:IsShown() then box:Show() end
+    ns.MinimapShow(box, "MinimapCalendar")
     -- In the home, so the edit mode size takes it too.
     button:SetParent(box)
     button:SetFrameLevel(above + 1)

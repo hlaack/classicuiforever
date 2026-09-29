@@ -27,9 +27,12 @@ local HANDLE_TIP = { anchor = "ANCHOR_TOP", text = "Micro Menu", r = 1, g = 1, b
 -- This client's micro buttons in its order, read once before any is reparented (retail 13, Forever 14).
 local microButtons
 
+-- The key in gold, as the client's micro buttons show theirs.
 local function MapButtonTip()
+    local name = WORLDMAP_BUTTON or "World Map"
+    if MicroButtonTooltipText then return MicroButtonTooltipText(name, "TOGGLEWORLDMAP") end
     local key = GetBindingKey("TOGGLEWORLDMAP")
-    return (WORLDMAP_BUTTON or "World Map") .. (key and (" (" .. key .. ")") or "")
+    return name .. (key and (" |cffffd100(" .. key .. ")|r") or "")
 end
 local MAP_TIP = { text = MapButtonTip, r = 1, g = 1, b = 1 }
 
@@ -106,13 +109,49 @@ local function MicroPlan(count, userScale, sizeCount)
 end
 B.MicroPlan = MicroPlan
 
--- Off the row: the shop always; professions with its option (1.x had none; its books are in the spellbook). Second value:
--- left off by the option.
+-- Buttons the player takes off one by one (Hide micro buttons); the row and its art close up.
+local MICRO_HIDE = {
+    CharacterMicroButton = "hideMicroCharacter", SpellbookMicroButton = "hideMicroSpellbook",
+    TalentMicroButton = "hideMicroTalents", ProfessionMicroButton = "hideProfessionsButton",
+    QuestLogMicroButton = "hideMicroQuestLog", ForeverClassicUIWorldMapMicroButton = "hideMicroWorldMap",
+    GuildMicroButton = "hideMicroGuild", LFDMicroButton = "hideMicroGroupFinder",
+    CollectionsMicroButton = "hideMicroCollections", MainMenuMicroButton = "hideMicroGameMenu",
+}
+
+-- Off the row: the shop always; the ones picked under Hide micro buttons. Second value: left off by the option.
 local function MicroSkipped(button)
     local name = button:GetName() or ""
     if MICRO_SKIP[name] then return true, false end
-    if name == "ProfessionMicroButton" and ns.db and ns.db.hideProfessionsButton == true then return true, true end
+    local key = MICRO_HIDE[name]
+    local db = ns.db
+    if key and db and db.hideMicroButtons == true and db[key] == true then return true, true end
     return false, false
+end
+
+-- 1.x's gold line under each button's name, from the client's own strings.
+local MICRO_TIPS = {
+    CharacterMicroButton = "NEWBIE_TOOLTIP_CHARACTER", SpellbookMicroButton = "NEWBIE_TOOLTIP_SPELLBOOK",
+    TalentMicroButton = "NEWBIE_TOOLTIP_TALENTS", QuestLogMicroButton = "NEWBIE_TOOLTIP_QUESTLOG",
+    ForeverClassicUIWorldMapMicroButton = "NEWBIE_TOOLTIP_WORLDMAP", GuildMicroButton = "NEWBIE_TOOLTIP_GUILDTAB",
+    LFDMicroButton = "NEWBIE_TOOLTIP_LFGPARENT", CollectionsMicroButton = "NEWBIE_TOOLTIP_MOUNTS_AND_PETS",
+    MainMenuMicroButton = "NEWBIE_TOOLTIP_MAINMENU", AchievementMicroButton = "NEWBIE_TOOLTIP_ACHIEVEMENT",
+    EJMicroButton = "NEWBIE_TOOLTIP_ENCOUNTER_JOURNAL", HousingMicroButton = "NEWBIE_TOOLTIP_HOUSING",
+}
+
+-- Also from the pads over the buttons that open our windows (their enter runs the button's own, not its hooks).
+local function MicroTip(button)
+    if not (ns.db and ns.db.microTips) or GameTooltip:GetOwner() ~= button then return end
+    local name = MICRO_TIPS[button:GetName() or ""]
+    if name == "NEWBIE_TOOLTIP_GUILDTAB" and not (IsInGuild and IsInGuild()) then name = "NEWBIE_TOOLTIP_LOOKINGFORGUILDTAB" end
+    local text = name and ns.EraText(name)
+    if not text then return end
+    GameTooltip:AddLine(text, 1, 0.82, 0, true)
+    GameTooltip:Show()
+end
+ns.MicroTip = MicroTip
+
+local function SeatShown(button)
+    ns.HookScriptOnce(button, "OnEnter", MicroTip)
 end
 
 -- Buttons on the row, and the count their size is fitted to.
@@ -417,6 +456,7 @@ function B.LayoutMicroButtons()
             button:SetPoint("BOTTOMLEFT", home, "BOTTOMLEFT", rowIn / scale, rowY / scale)
         end
         ns.SkinMicroButton(button)
+        SeatShown(button)
         prev = button
     end
     if not out and prev then FitRegion(prev, art) end

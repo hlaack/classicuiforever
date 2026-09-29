@@ -121,6 +121,7 @@ local function RowEnter(self)
     end
     if not info.isHeader then FillRow(self, info) end
     self.text:SetTextColor(1, 1, 1)
+    if not info.isHeader then self.tag:SetTextColor(1, 1, 1) end
     if info.isHeader then
         -- A header scrolled under the pointer drops the quest tooltip.
         HideTipIfOwned(self)
@@ -137,8 +138,14 @@ local function RowEnter(self)
     GameTooltip:Show()
 end
 
+-- The picked quest stays white, as in 1.x; the rest go back to their level colour.
 local function RowLeave(self)
-    if self.info then self.text:SetTextColor(LevelColor(self.info)) end
+    local info = self.info
+    if info and not (not info.isHeader and info.questID == selectedID) then
+        local r, g, b = LevelColor(info)
+        self.text:SetTextColor(r, g, b)
+        if not info.isHeader then self.tag:SetTextColor(r, g, b) end
+    end
     GameTooltip:Hide()
 end
 
@@ -195,6 +202,7 @@ function FillRow(row, info)
         row.highlight:SetTexture(ART.PLUS_GLOW)
         row.highlight:SetSize(16, 16)
         row.highlight:SetPoint("LEFT", row, "LEFT", 3, 0)
+        row.highlight:SetAlpha(1)
         row:UnlockHighlight()
         return
     end
@@ -215,12 +223,15 @@ function FillRow(row, info)
     row.check:SetShown(IsWatched(info.questID))
     ns.SetTex(row.highlight, "questLogHighlight")
     row.highlight:SetAllPoints(row)
+    -- 1.x: only the picked quest has a bar, in its level colour, and white text; a hover only whitens the text.
     if info.questID == selectedID then
         row.highlight:SetVertexColor(r, g, b)
+        row.highlight:SetAlpha(1)
+        row.text:SetTextColor(1, 1, 1)
         row.tag:SetTextColor(1, 1, 1)
         row:LockHighlight()
     else
-        row.highlight:SetVertexColor(1, 1, 1)
+        row.highlight:SetAlpha(0)
         row:UnlockHighlight()
     end
 end

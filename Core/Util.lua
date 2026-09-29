@@ -17,6 +17,25 @@ function ns.Safe(v, fallback)
     return v
 end
 
+-- Classic Era's wording where Forever rewrote a global string (Era 1.15.9 GlobalStrings); other languages keep the client's.
+local ERA_TEXT = {
+    NEWBIE_TOOLTIP_CHARACTER = "Information about your character, including equipment, statistics, skills, and reputation.",
+    NEWBIE_TOOLTIP_SPELLBOOK = "All of your spells and abilities. To move a spell or ability to your Action Bar, open the "
+        .. "Spellbook & Abilities window, left-click that spell or ability, and drag it down to your Action Bar.",
+    NEWBIE_TOOLTIP_QUESTLOG = "A list of all the active quests you currently have. You can have up to 20 active quests at one time.",
+    NEWBIE_TOOLTIP_LFGPARENT = "Find other players to group with to tackle challenging content.",
+    NEWBIE_TOOLTIP_MAINMENU = "Here you can modify your video, sound, and interface settings, or create custom hotkeys. "
+        .. "You can also choose to log out or exit the program altogether.",
+    NEWBIE_TOOLTIP_LATENCY = "The average time it takes to talk with the game server. A low latency will display as a green "
+        .. "bar, higher latencies will be yellow or even red. Consistently high latencies may indicate a problem with your "
+        .. "Internet connection.",
+}
+local english = GetLocale and (GetLocale() == "enUS" or GetLocale() == "enGB")
+function ns.EraText(key)
+    local text = english and ERA_TEXT[key] or _G[key]
+    if type(text) == "string" and text ~= "" then return text end
+end
+
 function ns.AnySecret(...)
     if not secretTest then return false end
     for i = 1, select("#", ...) do

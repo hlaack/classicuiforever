@@ -12,8 +12,8 @@ local LOOSE_PANELS = { "WorldMapFrame" }
 -- Never closed by us: the talents close clears the bars' show-empty-slots note, and the
 -- client never acts on a note we cleared.
 local LEAVE_OPEN = { PlayerSpellsFrame = true }
--- Client windows that stand beside ours instead of replacing them.
-local BESIDE = { CharacterFrame = true }
+-- Client windows that stand beside ours instead of replacing them (macros take spells from the book, as in Era).
+local BESIDE = { CharacterFrame = true, MacroFrame = true }
 -- How much of the character window the old sheet's art fills.
 local BESIDE_WIDTH = 352
 -- Pieces a client window hangs past its right edge.
