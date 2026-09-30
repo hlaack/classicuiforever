@@ -162,6 +162,12 @@ function ns.OldDialogHeader(header, host, on)
     ns.FadeKeys(header, HEADER_BG, on and 0 or 1)
 end
 
+-- StartMoving drops every anchor of a frame move watchers hang on: they let go for the drag.
+local function DragStart(self)
+    ns.Sched.LetGo(self, true)
+    self:StartMoving()
+end
+
 -- StopMovingOrSizing leaves a frame others hang on with no anchor: read where it was drawn first and pin it there.
 local function DragStop(self)
     local left, top = self:GetLeft(), self:GetTop()
@@ -169,6 +175,7 @@ local function DragStop(self)
     if self:GetNumPoints() == 0 and left and top then
         self:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
     end
+    ns.Sched.LetGo(self, false)
     local after = self.fcuiDragStop
     if after then after(self) end
 end
@@ -179,7 +186,7 @@ function ns.MakeDraggable(frame, onStop)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
     frame.fcuiDragStop = onStop
-    frame:SetScript("OnDragStart", frame.StartMoving)
+    frame:SetScript("OnDragStart", DragStart)
     frame:SetScript("OnDragStop", DragStop)
     frame:SetClampedToScreen(true)
 end

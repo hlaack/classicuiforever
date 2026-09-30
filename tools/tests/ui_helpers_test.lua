@@ -119,7 +119,7 @@ function Region:SetHitRectInsets(...) Log(self, "SetHitRectInsets", ...) end
 function Region:SetMovable(on) Log(self, "SetMovable", on) end
 function Region:RegisterForDrag(b) Log(self, "RegisterForDrag", b) end
 function Region:SetClampedToScreen(on) Log(self, "SetClampedToScreen", on) end
-function Region:StartMoving() end
+function Region:StartMoving() Log(self, "StartMoving") end
 -- _dropAnchors: the client leaving a frame others hang on with no anchor after a drag.
 function Region:StopMovingOrSizing()
     Log(self, "StopMovingOrSizing")
@@ -763,7 +763,9 @@ end)
 Test("MakeDraggable, DialogClose, SayNotInCombat", function()
     local f = CreateFrame("Frame")
     ns.MakeDraggable(f)
-    Check(f._scripts.OnDragStart == f.StartMoving and f._scripts.OnDragStop ~= nil, "drag scripts")
+    Check(f._scripts.OnDragStart ~= nil and f._scripts.OnDragStop ~= nil, "drag scripts")
+    f._scripts.OnDragStart(f)
+    Check(#Calls(f, "StartMoving") == 1, "start moves")
     Check(#Calls(f, "SetClampedToScreen") == 1 and f._mouse == true, "clamped, mouse")
     f._scripts.OnDragStop(f)
     Check(#Calls(f, "StopMovingOrSizing") == 1, "plain stop")

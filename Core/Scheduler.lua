@@ -449,13 +449,21 @@ function Sched.OnMove(frame, fn)
     MoveHelper("TOPLEFT", UIParent, "BOTTOMRIGHT", frame, fn)
 end
 
--- LetGo(frame, loose): the helpers hung on frame let go for a drag of ours (StartMoving left it with no anchor, unseen)
--- and pin again after it.
+local function Inside(region, frame)
+    while region do
+        if region == frame then return true end
+        region = region:GetParent()
+    end
+    return false
+end
+
+-- LetGo(frame, loose): the helpers hung on frame or anything in it (a pad's button) let go for a drag of ours
+-- (StartMoving left it with no anchor, unseen) and pin again after it.
 function Sched.LetGo(frame, loose)
     if helpersLoose then return end
     for i = 1, #moveHelpers do
         local entry = moveHelpers[i]
-        if entry[3] == frame or entry[5] == frame then
+        if Inside(entry[3], frame) or Inside(entry[5], frame) then
             if loose then entry[1]:ClearAllPoints() else PinHelper(entry) end
         end
     end
