@@ -2,6 +2,12 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.13.2] - 2026-09-30
+
+### Fixed
+- Dragging the talents window or the quest log by its background no longer makes it vanish. It used to disappear and would not open again with its key or micro button until a reload.
+- No more error spam in combat while the target or focus frame shows.
+
 ## [0.13.1] - 2026-09-29
 
 ### Added
