@@ -374,7 +374,8 @@ local function SelfNames()
     for _, spec in ipairs(SELF_FRAMES) do
         local text = ns.Path(_G[spec[1]], select(3, unpack(spec)))
         local me = text and text:IsVisible() and UnitIsUnit(spec[2], "player")
-        if me and not IsSecret(me) then
+        -- Secret first: a secret boolean may not even be tested.
+        if not IsSecret(me) and me then
             local shown = text:GetText()
             if IsSecret(shown) or shown ~= mine then text:SetText(mine) end
         end
