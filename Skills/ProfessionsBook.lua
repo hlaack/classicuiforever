@@ -18,18 +18,18 @@ local BIG = { rowX = 80, rowW = 437, ring = 72, ringX = 7, ringY = -12, textX = 
     spellX = 288, plates = true, rowY = { -62, -153, -282, -352, -422 } }
 local SMALL = { rowX = 17, rowW = 305, ring = 48, ringX = 4, ringY = -23, textX = 58, nameY = -11, rankW = 97,
     spellX = 159, barW = 64, plates = false, iconsX = 159, descX = 129, descSize = 9, rowY = { -37, -131, -230, -294, -358 } }
--- The small page's art: { texture top, bottom, drawn top, emblem moved } on the left page from its spine margin, 322 wide.
--- A secondary band's emblem (at x 150-186) moves EMBLEM_PULL left toward its name: that many plain columns come out
--- of the band at SPLIT_U.
-local SPLIT_U, EMBLEM_PULL = 140, 12
+-- The small page's art: { texture top, bottom, drawn top } on the left page from its spine margin, 322 wide.
+-- Every band drawn PULL further into the art, so the secondaries' emblems (at x 150-186) stand near their names; a cut
+-- inside a band showed a seam, so the whole band moves and its soft left rim goes under the window's metal.
+local PULL = 24
 local SMALL_ART_X, SMALL_ART_U, SMALL_ART_W = 8, 64, 322
 local SMALL_BANDS = {
     { 26, 38, 24 },    -- the page's top edge
     { 38, 132, 36 },   -- first primary band
     { 38, 132, 130 },  -- second primary, on the first's band
-    { 236, 300, 224, true }, -- Cooking
-    { 314, 378, 288, true }, -- Fishing
-    { 392, 456, 352, true }, -- First Aid
+    { 236, 300, 224 }, -- Cooking
+    { 314, 378, 288 }, -- Fishing
+    { 392, 456, 352 }, -- First Aid
     { 458, 466, 416 }, -- the page's foot
 }
 local PRIMARY_H, SECONDARY_H = 100, 52
@@ -407,12 +407,7 @@ function T.Build()
     end
     local artEnd = SMALL_ART_U + SMALL_ART_W
     for _, band in ipairs(SMALL_BANDS) do
-        if band[4] then
-            Piece(band, SMALL_ART_U, SPLIT_U, SMALL_ART_X)
-            Piece(band, SPLIT_U + EMBLEM_PULL, artEnd + EMBLEM_PULL, SMALL_ART_X + SPLIT_U - SMALL_ART_U)
-        else
-            Piece(band, SMALL_ART_U, artEnd, SMALL_ART_X)
-        end
+        Piece(band, SMALL_ART_U + PULL, artEnd + PULL, SMALL_ART_X)
     end
     for i = 1, 2 do rows[i] = NewRow(content, true, i) end
     for i = 1, 3 do rows[2 + i] = NewRow(content, false, 2 + i) end

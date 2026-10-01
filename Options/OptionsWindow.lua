@@ -8,11 +8,9 @@ local TITLE = O.TITLE
 local EMPTY = ns.EMPTY
 local WIDTH, ROW = 470, 24
 local LIST_ROWS, INDENT, COLUMNS = 10, 22, 2
-local P, C = ns.ART.PANEL_BUTTON, ns.ART.CHECK
+local C = ns.ART.CHECK
 local BTN = "Interface\\Buttons\\UI-"
-local PANEL_COORDS = ns.RED_COORDS
 -- Raw paths: no bronze swap.
-local PANEL_RAW = { set = "raw", coords = PANEL_COORDS, add = true }
 local OPTION_BOX = { set = "raw", checked = C .. "Check", disabledChecked = C .. "Check-Disabled", add = true }
 -- UI-RadioButton's cells: ring, gold dot, glow, grey dot; 16 across in the 24 row.
 local RADIO = BTN .. "RadioButton"
@@ -50,32 +48,6 @@ function O.DialogWindow(name, y, strata, opts)
     ns.MakeDraggable(frame)
     frame:Hide()
     return frame
-end
-
-function ns.PanelButton(parent, text, width)
-    local button = CreateFrame("Button", nil, parent)
-    button:SetSize(width or 96, 22)
-    local ok = button:SetNormalTexture(P .. "Up")
-    if ok == false then
-        -- Old sheet missing on this client: fall back to the modern button.
-        button:Hide()
-        button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-        button:SetSize(width or 96, 22)
-        button:SetText(text)
-        return button
-    end
-    -- Disabled is gray like the old buttons, not a red face.
-    ns.DressStates(button, nil, P .. "Down", P .. "Disabled", P .. "Highlight", PANEL_RAW)
-    local label = button:CreateFontString(nil, "OVERLAY")
-    label:SetFontObject(ns.FONT_GOLD or "GameFontNormal")
-    label:SetPoint("CENTER", 0, -1)
-    label:SetText(text)
-    button:SetFontString(label)
-    -- Normal font set too or the highlight font sticks after leave; old gold, not bronze.
-    button:SetNormalFontObject(ns.FONT_GOLD or "GameFontNormal")
-    button:SetDisabledFontObject("GameFontDisable")
-    button:SetHighlightFontObject("GameFontHighlight")
-    return button
 end
 
 -- Lowercased once for the search: the name side (label, keywords, its section's title) and the tooltip.
@@ -195,6 +167,39 @@ local function ColorRow(parent, key, label, tooltip)
             end,
         })
     end)
+    Describe(row, key, label, tooltip)
+    return row
+end
+
+-- A button for a mode that lasts while the options are open, not a saved setting; Done while on.
+-- check: { key, label, tooltip, set } for a saved box beside it.
+local function ButtonRow(parent, key, label, tooltip, press, isOn, check)
+    local row = CreateFrame("Frame", nil, parent)
+    row:SetSize(24, 24)
+    local button = ns.PanelButton(row, label, check and 130 or 150)
+    button:SetPoint("LEFT", row, "LEFT", 4, 0)
+    row.button, row.text = button, button:GetFontString()
+    local box
+    if check then
+        box = CreateFrame("CheckButton", nil, row)
+        box:SetSize(24, 24)
+        box:SetPoint("LEFT", button, "RIGHT", 4, 0)
+        ns.DressStates(box, C .. "Up", C .. "Down", nil, C .. "Highlight", OPTION_BOX)
+        box.label, box.tooltip = check[2], check[3]
+        ns.AttachTip(box, OPTION_TIP)
+        box:SetScript("OnClick", function(self) check[4](check[1], self:GetChecked() and true or false) end)
+    end
+    function row.SetChecked()
+        local on = isOn()
+        button:SetText(on and (DONE or "Done") or label)
+        button:SetButtonState(on and "PUSHED" or "NORMAL", on)
+        if box then box:SetChecked(ns.db[check[1]] ~= false) end
+    end
+    function row.SetEnabled(_, on)
+        button:SetEnabled(on)
+        if box then box:SetEnabled(on) end
+    end
+    button:SetScript("OnClick", function() press() row:SetChecked() end)
     Describe(row, key, label, tooltip)
     return row
 end
@@ -488,6 +493,12 @@ local function Build(canvas)
                 ns.METER_BACKGROUNDS, ns.SetMeterBackground, "talent tree damage meter", nil, ns.PreviewMeterBackground)
             ExtraStep("damageMeter", "meterHeader", L["OPTWIN_HEADER_HEIGHT"], L["OPTWIN_EXTRA_HEIGHT_OVER_THE_METER"],
                 ns.METER_HEADER_MIN or 0, ns.METER_HEADER_MAX or 16, ns.SetMeterHeader, "damage meter title")
+            local pan = ButtonRow(child, "meterPanArt", L["OPT_meterPanArt"], L["OPT_meterPanArt_TIP"],
+                function() ns.SetMeterPanning(not ns.MeterPanning()) end, ns.MeterPanning,
+                { "meterPanPreview", L["OPT_meterPanPreview"], L["OPT_meterPanPreview_TIP"], ns.SetMeterBackground })
+            pan.keyLow = pan.keyLow .. " drag align background art whole preview"
+            Grouped(pan)
+            Add(pan, "damageMeter")
         end
         if entry[1] == "thickHealthMana" and ns.ENEMY_HEALTH_COLORS then
             ExtraDrop("thickHealth", "thickEnemyColor", L["OPTWIN_ENEMY_HEALTH"], L["OPTWIN_THE_COLOUR_OF_AN_ENEMY"],
@@ -507,7 +518,7 @@ local function Build(canvas)
                     ns.SetSwingLook, "swing colour color")
             end
             ExtraStep("swingTimers", "swingBorder", L["OPTWIN_BORDER_THICKNESS"], L["OPTWIN_HOW_THICK_THE_SWING_BARS"],
-                ns.SWING_BORDER_MIN or -3, ns.SWING_BORDER_MAX or 3, ns.SetSwingBorder, "swing")
+                ns.SWING_BORDER_MIN or -1, ns.SWING_BORDER_MAX or 5, ns.SetSwingBorder, "swing")
         end
         if entry[1] == "classColorPlates" then
             ExtraStep("namePlates", "plateNameSize", L["OPTWIN_NAME_TEXT_SIZE"], L["OPTWIN_POINTS_BIGGER_OR_SMALLER_THAN"],
@@ -732,7 +743,8 @@ local function Build(canvas)
                 up = parentOf[up]
             end
             box:SetEnabled(on)
-            box.text:SetFontObject(on and "GameFontHighlight" or "GameFontDisable")
+            -- A button row's label keeps the button's own fonts.
+            if not box.button then box.text:SetFontObject(on and "GameFontHighlight" or "GameFontDisable") end
         end
         -- Same source as the reload prompt: a change still owed a reload.
         local owed = ns.ReloadOwed()
@@ -740,6 +752,7 @@ local function Build(canvas)
         if self.tab == 2 then self.profiles:Refresh() end
     end
     frame:SetScript("OnShow", frame.Refresh)
+    frame:HookScript("OnHide", function() if ns.SetMeterPanning then ns.SetMeterPanning(false) end end)
     -- After SetScript, which would wipe its OnShow hooks.
     if not canvas then ns.CloseOnEscape(frame) end
     return frame

@@ -69,8 +69,8 @@ local TAB_OVERLAP = 15
 local labelWidth = setmetatable({}, { __mode = "k" })
 -- Both sheets are 128 x 32; the faces take the shared spot and height (Windows/Tabs.lua).
 local TAB_COORDS = { { 0, 0.15625, 0, 1 }, { 0.15625, 0.84375, 0, 1 }, { 0.84375, 1, 0, 1 } }
-local CHAR_TAB_COVER = 4   -- picked tab: its art's top drawn this much higher, over the strip's line (+ up)
-local CHAR_TAB_ON = { own = "ct", layer = "BACKGROUND", key = "tabActive", cap = 20, height = 32, oy = ns.TAB_PICKED_Y,
+local CHAR_TAB_RISE = 4   -- picked tab: its whole art this much higher, its opening on the strip's line (+ up)
+local CHAR_TAB_ON = { own = "ct", layer = "BACKGROUND", key = "tabActive", cap = 20, height = 32, oy = ns.TAB_PICKED_Y + CHAR_TAB_RISE,
     coords = TAB_COORDS }
 local CHAR_TAB_OFF = { own = "ct", layer = "BACKGROUND", key = "tabInactive", cap = 20, height = 32, oy = ns.TAB_OFF_Y,
     coords = TAB_COORDS }
@@ -78,8 +78,7 @@ local function TabPieces(tab, selected)
     local spec = selected and CHAR_TAB_ON or CHAR_TAB_OFF
     tab.left, tab.middle, tab.right = ns.ThreeSlice(tab, nil, spec)
     for i, piece in ipairs({ tab.left, tab.middle, tab.right }) do
-        ns.LengthenTabPiece(piece, TAB_COORDS[i][1], TAB_COORDS[i][2])
-        ns.CoverTabPiece(piece, TAB_COORDS[i][1], TAB_COORDS[i][2], selected and CHAR_TAB_COVER or 0)
+        ns.LengthenTabPiece(piece, TAB_COORDS[i][1], TAB_COORDS[i][2], (selected and ns.TAB_PICKED_Y + CHAR_TAB_RISE or ns.TAB_OFF_Y))
     end
     ns.TabGlow(tab, "glow", spec, tab.left, tab.middle, ns.TabPieceFoot(tab.right))
 end

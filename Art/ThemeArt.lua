@@ -174,6 +174,7 @@ UI-SpellbookIcon-PrevPage-Down
 UI-SpellbookIcon-PrevPage-Up
 UI-SpellbookPanel-BotLeft
 UI-SpellbookPanel-BotRight
+UI-SpellbookPanel-Ring
 UI-SpellbookPanel-TopLeft
 UI-SpellbookPanel-TopRight
 UI-TalentFrame-BotLeft

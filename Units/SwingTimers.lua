@@ -17,8 +17,8 @@ ns.SWING_COLORS = {
 }
 local COLOR_BY_KEY = {}
 for _, color in ipairs(ns.SWING_COLORS) do COLOR_BY_KEY[color.key] = color.rgb end
--- Border thickness steps, a quarter of the 1.x border each.
-ns.SWING_BORDER_MIN, ns.SWING_BORDER_MAX = -3, 3
+-- Border thickness steps, a quarter of the 1.x border each; 0 is half, 2 the 1.x border.
+ns.SWING_BORDER_MIN, ns.SWING_BORDER_MAX = -1, 5
 local BORDER_STEP = 0.25
 local LABEL_X = 10
 -- The border's opening sits 2.5 rows above the bar's middle.
@@ -46,7 +46,7 @@ end
 
 local function Thickness()
     local step = tonumber(ns.db and ns.db.swingBorder) or 0
-    return 1 + BORDER_STEP * math.max(ns.SWING_BORDER_MIN, math.min(ns.SWING_BORDER_MAX, step))
+    return 0.5 + BORDER_STEP * math.max(ns.SWING_BORDER_MIN, math.min(ns.SWING_BORDER_MAX, step))
 end
 
 local active = false
@@ -66,13 +66,12 @@ local function Slices(bar, key, layer)
     return list
 end
 
--- The outline at edge (x out from the bar's ends, top over and foot under its top); ends l wide, top t and foot b
--- tall inside it, the middle piece the opening they leave.
-local function LaySlices(list, bar, edge, l, t, b)
+-- The opening inset from the bar's ends and depth under its top; ends l wide, top t and foot b tall round it.
+local function LaySlices(list, bar, inset, depth, l, t, b)
     local tl, top, tr, left, mid, right, bl, bottom, br = unpack(list)
     for i = 1, #list do list[i]:ClearAllPoints() end
-    mid:SetPoint("TOPLEFT", bar, "TOPLEFT", edge.x + l, edge.top - t)
-    mid:SetPoint("BOTTOMRIGHT", bar, "TOPRIGHT", -edge.x - l, edge.foot + b)
+    mid:SetPoint("TOPLEFT", bar, "TOPLEFT", inset, 0)
+    mid:SetPoint("BOTTOMRIGHT", bar, "TOPRIGHT", -inset, -depth)
     tl:SetPoint("BOTTOMRIGHT", mid, "TOPLEFT")
     tl:SetSize(l, t)
     top:SetPoint("BOTTOMLEFT", mid, "TOPLEFT")
@@ -115,7 +114,6 @@ local function Dress(entry)
         parts = {}
         parts.border = Slices(bar, "castBorder", "ARTWORK")
         -- The 1.x cast bar's dark backing, the bar's own size.
-        parts.edge = {}
         parts.back = bar:CreateTexture(nil, "BACKGROUND")
         parts.back:SetColorTexture(0, 0, 0, 0.5)
         parts.back:SetAllPoints(bar)
@@ -138,20 +136,13 @@ local function Dress(entry)
     local k = Thickness()
     -- One scale on every side (the bar's height), so the ends keep their shape and thickness steps match the rails.
     local sy = h / BAR_H
-    -- The outline stays where the 1.x border has it; thinner rails leave its opening wider, backed dark.
-    local l0, t0, b0 = CUT_LEFT * sy, CUT_TOP * sy, (64 - CUT_FOOT) * sy
-    local edge = parts.edge
-    edge.x, edge.top, edge.foot = IN_X * sy - l0, t0, -(IN_H * sy + b0)
-    local l, t, b = l0 * k, t0 * k, b0 * k
-    LaySlices(parts.border, bar, edge, l, t, b)
-    LaySlices(parts.flash, bar, edge, l, t, b)
-    parts.back:ClearAllPoints()
-    if k < 1 then
-        parts.back:SetAllPoints(parts.border[5])
-    else
-        parts.back:SetAllPoints(bar)
-    end
-    local up = OPENING_UP * sy
+    -- Scaled round the bar's own edges: the rails hug the bar, thinner or thicker.
+    local sk = sy * k
+    local inset, depth = IN_X * sk, (BAR_H - (BAR_H - IN_H) * k) * sy
+    local l, t, b = CUT_LEFT * sk, CUT_TOP * sk, (64 - CUT_FOOT) * sk
+    LaySlices(parts.border, bar, inset, depth, l, t, b)
+    LaySlices(parts.flash, bar, inset, depth, l, t, b)
+    local up = OPENING_UP * sk
     if bar.TypeLabel then ns.SetPointOnce(bar.TypeLabel, "LEFT", bar, "LEFT", LABEL_X, up) end
     if bar.TimeLabel then ns.SetPointOnce(bar.TimeLabel, "RIGHT", bar, "RIGHT", -LABEL_X, up) end
     ShowSlices(parts.border, true)

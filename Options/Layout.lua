@@ -90,7 +90,6 @@ function ns.KeepBarSize(big)
         if type(shot) == "table" and shot.defaultBarSize == nil and shot.classicBarSize == nil then shot.classicBarSize = true end
     end
     db.barSizeOffer = not big or nil
-    db.dbVersion = 2
 end
 
 -- Game-sized bar (on by default) became Classic-sized bars (off by default): a box unticked before is ticked now,
@@ -117,6 +116,57 @@ ns.Popup("FCUI_BAR_SIZE_OFFER", {
         ns.TogglesChanged({ "classicBarSize" })
     end,
 })
+
+-- 0.14.0 defaults closer to 1.x: an install from before keeps its look, written into the account and every profile
+-- (profiles keep only what differs from the defaults), and is offered the new one once. Runs before the defaults fill.
+local CLASSIC_LOOK = { "hideMicroGroupFinder", "hideMicroCollections", "hideMicroLegacy", "eraBagSize" }
+function ns.KeepOldLook()
+    local db = ns.db
+    for _, k in ipairs(CLASSIC_LOOK) do
+        if db[k] == nil then db[k] = false end
+        for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+            if type(shot) == "table" and shot[k] == nil then shot[k] = false end
+        end
+    end
+    db.classicLookOffer = true
+    db.dbVersion = 3
+end
+
+-- The text's homes for the hidden buttons: the minimap eye, and the spellbook's Collections tab (none with our
+-- spellbook off, so Collections stays). t: the account's full values or a profile's differences.
+local function TakeClassicLook(t, full)
+    for _, k in ipairs(CLASSIC_LOOK) do
+        local keep = k == "hideMicroCollections" and t.spellBook == false
+        if full then
+            if not keep then t[k] = ns.DB_DEFAULTS[k] end
+        elseif t[k] == false and not keep then
+            t[k] = nil
+        end
+    end
+    t.lfgMinimapButton = full or nil
+end
+
+-- The kept look was the old defaults' false everywhere; accepted, every profile follows the new defaults.
+-- Written, then reloaded, so the bar and bags build once in the new look.
+ns.Popup("FCUI_CLASSIC_LOOK_OFFER", {
+    text = string.format(L["OPTWIN_CLASSIC_LOOK_OFFER"], TITLE),
+    button1 = L["OPTWIN_USE_CLASSIC_LOOK"],
+    button2 = L["OPTWIN_KEEP_MINE"],
+    OnAccept = function()
+        local db = ns.db
+        for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+            if type(shot) == "table" then TakeClassicLook(shot, false) end
+        end
+        TakeClassicLook(db, true)
+        ns.ReloadForLayout()
+    end,
+})
+
+function ns.OfferClassicLook()
+    if not ns.db or not ns.db.classicLookOffer then return end
+    ns.db.classicLookOffer = nil
+    if StaticPopup_Show then StaticPopup_Show("FCUI_CLASSIC_LOOK_OFFER") end
+end
 
 -- Once, at the first world entry after the upgrade.
 function ns.OfferBarSize()

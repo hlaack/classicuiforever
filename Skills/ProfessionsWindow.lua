@@ -142,9 +142,11 @@ local function SyncTabs()
         local close = frame.CloseButton
         local level = math.min(10000, (close and close:GetFrameLevel() or (frame:GetFrameLevel() + 600)) + 1)
         ns.SetLevelIf(tabToggle, level)
-        -- A little up and right on the small book.
+        -- Smaller, up and right on the small book.
         local big = T.Big()
-        ns.SetPointOnce(tabToggle, "TOPRIGHT", frame, "TOPRIGHT", big and -15 or -10, big and -28 or -24)
+        local size = big and 24 or 17
+        if tabToggle:GetWidth() ~= size then tabToggle:SetSize(size, size) end
+        ns.SetPointOnce(tabToggle, "TOPRIGHT", frame, "TOPRIGHT", big and -15 or -7, big and -28 or -22)
     end
     if tabToggle and tabToggle.open ~= open then
         tabToggle.open = open
@@ -547,6 +549,7 @@ local function WatchTick(self, elapsed)
     end
     TabToggle()
     SizeButton(active and page:IsVisible())
+    T.SmallFrame(active and page:IsVisible() and not T.Big())
     T.SyncBookPads()
     SyncTabs()
     T.BookTabs()

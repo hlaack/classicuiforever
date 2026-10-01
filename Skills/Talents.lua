@@ -280,7 +280,7 @@ end
 -- disabled the picked tab).
 local function FootFace(tab, spec, face)
     local left, middle, right = ns.ThreeSlice(tab, nil, spec)
-    for i, piece in ipairs({ left, middle, right }) do ns.LengthenTabPiece(piece, FOOT_COORDS[i][1], FOOT_COORDS[i][2]) end
+    for i, piece in ipairs({ left, middle, right }) do ns.LengthenTabPiece(piece, FOOT_COORDS[i][1], FOOT_COORDS[i][2], spec.oy) end
     return { left, middle, right, face and ns.TabGlow(tab, face, spec, left, middle, ns.TabPieceFoot(right)) or nil }
 end
 

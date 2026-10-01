@@ -139,6 +139,7 @@ Character\EquipmentPane.lua
 Spells\SpellBook.lua
 Skills\SkillShell.lua
 Skills\ProfessionsBook.lua
+Skills\ProfessionsBookFrame.lua
 Skills\ProfessionsFootTabs.lua
 Skills\ProfessionsWindow.lua
 Skills\TradeSkill.lua

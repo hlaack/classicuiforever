@@ -27,12 +27,13 @@ local IsSecret = ns.IsSecret
 -- Art specs, built once.
 local ADD_HL = { add = true }
 local SKILL_TAB = { checked = "checked", add = { Highlight = true, Checked = true }, states = { "Highlight", "Checked" } }
-local SB_QUARTERS = {
+local SB_QUARTERS = {   -- shared: the small professions book wears the same frame (Skills/ProfessionsBookFrame.lua)
     { key = "sbTopLeft", layer = "BACKGROUND", w = 256, h = 256, point = "TOPLEFT" },
     { key = "sbTopRight", layer = "BACKGROUND", w = 128, h = 256, point = "TOPRIGHT" },
     { key = "sbBotLeft", layer = "BACKGROUND", w = 256, h = 256, point = "BOTTOMLEFT" },
     { key = "sbBotRight", layer = "BACKGROUND", w = 128, h = 256, point = "BOTTOMRIGHT" },
 }
+ns.SPELLBOOK_QUARTERS = SB_QUARTERS
 local CHECK = ns.ART.CHECK
 local RANKS_BOX = { set = "raw", checked = CHECK .. "Check", add = true, hit = { 0, -110, 0, 0 } }
 

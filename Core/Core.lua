@@ -390,12 +390,15 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         ForeverClassicUIDB = ForeverClassicUIDB or {}
         ns.db = ForeverClassicUIDB
         -- Saved before this version (dbVersion 1): read before the defaults fill the gaps.
-        local upgraded = next(ns.db) ~= nil and (ns.db.dbVersion or 1) < 2
+        local saved = next(ns.db) ~= nil and (ns.db.dbVersion or 1)
+        local upgraded = saved and saved < 2
         local big = ns.db.defaultBarSize == true
+        if saved and saved < 3 then ns.KeepOldLook() end
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
         ns.BarSizeKey()
-        ns.db.lastOutput = nil   -- stale key from old saves
+        ns.db.lastOutput = nil   -- stale keys from old saves
+        ns.db.meterPanArt = nil
         ns.LoadProfile()
         -- The old default sat on the tracking spell; a dragged angle is never exactly 160.
         if ns.db.minimapCollectorAngle == 160 then ns.db.minimapCollectorAngle = 132 end
@@ -423,6 +426,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
                 if ns.SelectClassicLayoutIfPending then ns.SelectClassicLayoutIfPending() end
                 ns.FirstRun()
                 if ns.OfferBarSize then ns.OfferBarSize() end
+                if ns.OfferClassicLook then ns.OfferClassicLook() end
             end)
         end
     end

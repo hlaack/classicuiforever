@@ -249,6 +249,7 @@ ns.TEX.microCharacterDisabled = ns.TEX.microCharacterUp
 -- 1.x spellbook: parchment quarters, school tab plate, page arrows, bottom tabs, empty slot.
 for key, file in pairs({
     sbTopLeft = "Spellbook\\UI-SpellbookPanel-TopLeft",
+    sbRing = "!UI-SpellbookPanel-Ring",   -- its portrait ring alone (dev/tools/spellbook_ring.py)
     sbTopRight = "Spellbook\\UI-SpellbookPanel-TopRight",
     sbBotLeft = "Spellbook\\UI-SpellbookPanel-BotLeft",
     sbBotRight = "Spellbook\\UI-SpellbookPanel-BotRight",

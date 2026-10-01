@@ -41,15 +41,20 @@ local function PlaceBookPads()
     if not (k and k > 0) then return end
     local hit, spec = ns.BOOK_TAB_HIT, Spec()
     for i, pad in pairs(bookPads) do
-        local tab = bookTabs[i]
-        local r = tab:GetEffectiveScale() / k
-        local w, h = tab:GetWidth(), tab:GetHeight()
-        -- The drawn tab only; the sheet's blank margin reached over the window's buttons.
-        ns.SetPointOnce(pad, "BOTTOMLEFT", frame, "TOPLEFT", ((firstX or spec.x) + spec.slot[i] * spec.step - w / 2 + spec.hit) * r,
-            (TabY() - h / 2 + hit.bottom) * r - T.BookH())
-        pad:SetSize((w - 2 * spec.hit) * r, (h - hit.top - hit.bottom) * r)
-        pad:SetFrameLevel(tab:GetFrameLevel() + 5)
-        pad:SetShown(PadShown(i))
+        local tab, slot = bookTabs[i], spec.slot[i]
+        -- The wide row has no Collections tab
+        if not slot then
+            pad:Hide()
+        else
+            local r = tab:GetEffectiveScale() / k
+            local w, h = tab:GetWidth(), tab:GetHeight()
+            -- The drawn tab only; the sheet's blank margin reached over the window's buttons.
+            ns.SetPointOnce(pad, "BOTTOMLEFT", frame, "TOPLEFT", ((firstX or spec.x) + slot * spec.step - w / 2 + spec.hit) * r,
+                (TabY() - h / 2 + hit.bottom) * r - T.BookH())
+            pad:SetSize((w - 2 * spec.hit) * r, (h - hit.top - hit.bottom) * r)
+            pad:SetFrameLevel(tab:GetFrameLevel() + 5)
+            pad:SetShown(PadShown(i))
+        end
     end
 end
 
@@ -163,6 +168,12 @@ function T.BookTabs()
             ns.SetPointOnce(tab, "LEFT", bookTabs[order[n - 1]], "RIGHT", spec.overlap, 0)
         end
         if ns.DressBookTab then ns.DressBookTab(tab, narrow) end
+    end
+    -- As the spellbook's foot: unpicked tabs under the window's border, the picked one (disabled) over it.
+    local slice = frame.NineSlice
+    if slice then
+        local level = slice:GetFrameLevel()
+        for _, tab in ipairs(bookTabs) do ns.SetLevelIf(tab, tab:IsEnabled() and math.max(1, level - 1) or level + 1) end
     end
     local pet = on and ns.SpellBookPetTitle and ns.SpellBookPetTitle() or nil
     if pet and narrow then pet = PET or "Pet" end

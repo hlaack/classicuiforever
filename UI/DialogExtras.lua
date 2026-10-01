@@ -15,7 +15,8 @@ local function Panel(spec)
     local panel = panels[spec]
     if panel then return panel end
     local B = ns.band
-    panel = CreateFrame("Frame", nil, Dialog())
+    -- On UIParent, never the dialog: the dialog sizes itself to its children, and one pinned to its width grew it without end.
+    panel = CreateFrame("Frame", nil, UIParent)
     panel:SetFrameStrata("DIALOG")
     panel:SetFrameLevel(200)
     B.PanelBorder(panel)
@@ -54,8 +55,10 @@ local function Watch()
     local dialog = Dialog()
     if watching or not dialog then return end
     watching = true
-    ns.Sched.Attach(dialog, { name = "dialogExtras.follow", every = 0.1, fn = Follow })
-    dialog:HookScript("OnHide", Follow)
+    -- Watchers on the dialog's border, out of its layout: a child of the dialog itself stretched it to the screen.
+    local host = dialog.Border or dialog
+    ns.Sched.Attach(host, { name = "dialogExtras.follow", every = 0.1, fn = Follow })
+    ns.Sched.OnVisible(host, "dialogExtras.shown", function(shown) if not shown then Follow() end end)
 end
 
 -- A labelled stepper slider row: init() -> value, low, high, steps; onChange(value). Returns its fill function.

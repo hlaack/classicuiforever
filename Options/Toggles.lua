@@ -180,7 +180,6 @@ ns.TOGGLES = {
 
     { "gameDamageNumbers", L["OPT_gameDamageNumbers"], L["OPT_gameDamageNumbers_TIP"], group = L["GROUP_OTHER"] },
     { "damageMeter", L["OPT_damageMeter"], L["OPT_damageMeter_TIP"], search = "dps meter recount details" },
-    { "meterPanArt", L["OPT_meterPanArt"], L["OPT_meterPanArt_TIP"], parent = "damageMeter", search = "drag align background art" },
     { "welcomeNote", L["OPT_welcomeNote"], L["OPT_welcomeNote_TIP"] },
     { "addonMessages", L["OPT_addonMessages"], L["OPT_addonMessages_TIP"], search = "chat login lines quiet" },
 }

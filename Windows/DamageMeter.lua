@@ -39,15 +39,20 @@ local TREE_BLANK_RIGHT = 20
 -- The painted art's size: panned (option) only as far as it still covers the whole body, so no gap opens.
 local ART_W, ART_H = 300, 331
 local MOVE_ICON = "Interface\\CURSOR\\UI-Cursor-Move"
+local GHOST_ALPHA = 0.85
 local previewName   -- a background hovered in the options' drop down, shown until the menu shuts
+local panning = false   -- Move background art pressed in the options; ends as they close
 local TREE_PIECES = {
     { key = "TopRight", w = 64, h = 256 }, { key = "TopLeft", w = 256, h = 256 },
     { key = "BottomRight", w = 64, h = 75, v1 = 75 / 128 }, { key = "BottomLeft", w = 256, h = 75, v1 = 75 / 128 },
 }
+-- The game's class names; the trees as the 1.x talent tabs read (WIN_TREE_ keys, by file).
 ns.METER_BACKGROUNDS = { { key = "marble", label = L["WIN_MARBLE"] } }
+local classes = LOCALIZED_CLASS_NAMES_MALE
 for _, tree in ipairs(TREES) do
-    local class, spec = tree:match("^(%u%l+)(.+)$")
-    ns.METER_BACKGROUNDS[#ns.METER_BACKGROUNDS + 1] = { key = tree, label = class .. ": " .. spec:gsub("(%l)(%u)", "%1 %2") }
+    local class = tree:match("^%u%l+")
+    local label = string.format(L["WIN_TREE_LABEL"], classes and classes[class:upper()] or class, L["WIN_TREE_" .. tree])
+    ns.METER_BACKGROUNDS[#ns.METER_BACKGROUNDS + 1] = { key = tree, label = label }
 end
 local FALLBACK_MAX = 5
 -- 1.x art for its buttons: the old minus and plus for minimize; the chat's square arrow button for the type list,
@@ -197,11 +202,24 @@ local function Boxes(window)
     tree[2]:SetPoint("TOPRIGHT", tree[1], "TOPLEFT")
     tree[3]:SetPoint("TOPRIGHT", tree[1], "BOTTOMRIGHT")
     tree[4]:SetPoint("TOPRIGHT", tree[3], "TOPLEFT")
+    -- Full art while panning: the whole tree faded, unclipped, under the meter's own art and metal.
+    local ghost = CreateFrame("Frame", nil, body)
+    ghost:SetFrameStrata("BACKGROUND")
+    ghost:SetAlpha(GHOST_ALPHA)
+    ghost:Hide()
+    local faded = {}
+    for i, piece in ipairs(TREE_PIECES) do
+        local tex = ghost:CreateTexture(nil, "BACKGROUND")
+        tex:SetTexCoord(0, 1, 0, piece.v1 or 1)
+        tex:SetAllPoints(tree[i])
+        faded[i] = tex
+    end
     -- The stone that shows: from the metal's inner edge to the divider bar's top (its 8 px bar mid-sheet).
     local mid = CreateFrame("Frame", nil, box)
     mid:SetPoint("TOPLEFT", stone, "TOPLEFT")
     mid:SetPoint("BOTTOMRIGHT", window, "TOPRIGHT", 0, DIVIDER_Y + BAR_H / 4)
-    pair = { pan = pan, mid = mid, box = box, bar = { barRun, barEnd }, body = body, floor = floor, canvas = canvas, tree = tree }
+    pair = { pan = pan, mid = mid, box = box, bar = { barRun, barEnd }, body = body, floor = floor, canvas = canvas, tree = tree,
+        ghost = ghost, faded = faded }
     boxes[window] = pair
     return pair
 end
@@ -217,9 +235,11 @@ local function Fold(window, pair)
     if open then
         box:SetPoint("BOTTOMRIGHT", window, "BOTTOMRIGHT", OUT, -OUT)
     else
-        -- Minimized, the divider is the foot: the box's own edge tucked under the bar, so the stone ends where it does open.
-        box:SetPoint("BOTTOMRIGHT", window, "TOPRIGHT", OUT, DIVIDER_Y - BAR_H / 4)
+        -- Minimized, the box's own bottom edge as its foot, its inner line where the divider's top is: the stone the same.
+        box:SetPoint("BOTTOMRIGHT", window, "TOPRIGHT", OUT, DIVIDER_Y + BAR_H / 4 - INSET)
     end
+    pair.bar[1]:SetShown(open)
+    pair.bar[2]:SetShown(open)
 end
 
 local function TreeName()
@@ -228,9 +248,9 @@ local function TreeName()
 end
 
 -- A tree's pan, kept inside what leaves no gap: right 0 to the art's spare width, up 0 to its spare height.
-local function Clamp(pair, x, y)
-    local w, h = pair.canvas:GetWidth() or 0, pair.canvas:GetHeight() or 0
-    return math.max(0, math.min(math.max(0, ART_W - w), x)), math.max(0, math.min(math.max(0, ART_H - h), y))
+local function Clamp(pair, x, y, w, h)
+    local k = pair.artScale
+    return math.max(0, math.min(math.max(0, ART_W * k - w), x)), math.max(0, math.min(math.max(0, ART_H * k - h), y))
 end
 
 local function SavedPan(name)
@@ -239,10 +259,17 @@ local function SavedPan(name)
     return pan and tonumber(pan.x) or 0, pan and tonumber(pan.y) or 0
 end
 
+-- Grown past the painted size, the art scales up to cover the body and is cropped again.
 local function PlaceTree(pair, x, y)
-    x, y = Clamp(pair, x, y)
+    local w, h = pair.canvas:GetWidth() or 0, pair.canvas:GetHeight() or 0
+    local k = math.max(1, w / ART_W, h / ART_H)
+    if pair.artScale ~= k then
+        pair.artScale = k
+        for i, piece in ipairs(TREE_PIECES) do pair.tree[i]:SetSize(piece.w * k, piece.h * k) end
+    end
+    x, y = Clamp(pair, x, y, w, h)
     pair.panX, pair.panY = x, y
-    ns.SetPointOnce(pair.tree[1], "TOPRIGHT", pair.canvas, "TOPRIGHT", TREE_BLANK_RIGHT + x, y)
+    ns.SetPointOnce(pair.tree[1], "TOPRIGHT", pair.canvas, "TOPRIGHT", TREE_BLANK_RIGHT * k + x, y)
 end
 
 -- The picked (or hovered) tree's files at its saved pan, or none for the marble.
@@ -251,12 +278,17 @@ local function PaintTree(pair)
     if pair.treeName ~= name then
         pair.treeName = name
         for i, piece in ipairs(TREE_PIECES) do
-            if name then pair.tree[i]:SetTexture(TALENT_ART .. name .. "-" .. piece.key) end
+            if name then
+                pair.tree[i]:SetTexture(TALENT_ART .. name .. "-" .. piece.key)
+                pair.faded[i]:SetTexture(TALENT_ART .. name .. "-" .. piece.key)
+            end
         end
         pair.canvas:SetShown(name ~= nil)
     end
     if name then PlaceTree(pair, SavedPan(name)) end
-    ns.SetShownIf(pair.pan, name ~= nil and not previewName and ns.db.meterPanArt == true)
+    -- Full art while moving, and on a background hovered in the options.
+    ns.SetShownIf(pair.pan, name ~= nil and not previewName and panning)
+    ns.SetShownIf(pair.ghost, name ~= nil and (panning or previewName ~= nil) and ns.db.meterPanPreview ~= false)
 end
 
 -- Dragging the pan pad moves the art with the cursor; let go, and the pan is kept for that tree.
@@ -271,19 +303,67 @@ local panJob = ns.Sched.Job({ name = "damageMeter.pan", every = 0, awake = false
     local x, y = Cursor()
     PlaceTree(drag.pair, drag.x + x - drag.cx, drag.y + y - drag.cy)
 end })
+local function SavePan(pair)
+    local name = TreeName()
+    if not name then return end
+    ns.db.meterArtPan = ns.db.meterArtPan or {}
+    ns.db.meterArtPan[name] = { x = pair.panX or 0, y = pair.panY or 0 }
+end
+
+-- Clicked art is picked: the edit mode's selected border on the meter, and the arrows nudge it (Shift: 10 px).
+-- Arrows are bound out of combat only, and freed as a fight starts (they turn the character).
+local picked
+local keys = CreateFrame("Frame")
+local NUDGE = { UP = { 0, 1 }, DOWN = { 0, -1 }, LEFT = { -1, 0 }, RIGHT = { 1, 0 } }
+for key, step in pairs(NUDGE) do
+    local button = CreateFrame("Button", "ForeverClassicUIMeterNudge" .. key, UIParent)
+    button:RegisterForClicks("AnyUp")
+    button:SetScript("OnClick", function(_, mouse)
+        if not picked then return end
+        local by = mouse == "RightButton" and 10 or 1
+        PlaceTree(picked, (picked.panX or 0) + step[1] * by, (picked.panY or 0) + step[2] * by)
+        SavePan(picked)
+    end)
+    step.name = button:GetName()
+end
+local function Unpick()
+    if not picked then return end
+    if picked.sel then picked.sel:Hide() end
+    picked = nil
+    keys:UnregisterEvent("PLAYER_REGEN_DISABLED")
+    if not InCombatLockdown() then ClearOverrideBindings(keys) end
+end
+keys:SetScript("OnEvent", Unpick)
+local function Pick(pair)
+    if picked == pair or InCombatLockdown() then return end
+    Unpick()
+    picked = pair
+    if not pair.sel then
+        pair.sel = ns.band.SelectionHandle(pair.body)
+        pair.sel:EnableMouse(false)
+        pair.sel:SetFrameStrata("HIGH")
+        pair.sel.Dress("editmode-actionbar-selected")
+    end
+    pair.sel:Show()
+    for key, step in pairs(NUDGE) do
+        SetOverrideBindingClick(keys, true, key, ns.KeyProxy(step.name), "LeftButton")
+        SetOverrideBindingClick(keys, true, "SHIFT-" .. key, ns.KeyProxy(step.name), "RightButton")
+    end
+    keys:RegisterEvent("PLAYER_REGEN_DISABLED")
+end
+
 local function PanStart(pair)
+    Pick(pair)
     local cx, cy = Cursor()
     drag = { pair = pair, x = pair.panX or 0, y = pair.panY or 0, cx = cx, cy = cy }
     panJob:Wake()
 end
 local function PanStop()
     if not drag then return end
-    local pair, name = drag.pair, TreeName()
+    local pair = drag.pair
     drag = nil
     panJob:Sleep()
-    if not name then return end
-    ns.db.meterArtPan = ns.db.meterArtPan or {}
-    ns.db.meterArtPan[name] = { x = pair.panX or 0, y = pair.panY or 0 }
+    SavePan(pair)
 end
 
 -- The detail window a row opens: the meter's marble in the metal border, the old scroll bar and close button.
@@ -310,13 +390,16 @@ local function Dress(window)
     pair.body:Show()
     Fold(window, pair)
     if window.Header then ns.SetAlphaIf(window.Header, 0) end
-    -- The meter's own back goes; its opacity setting fades our marble instead.
+    -- The meter's own back goes; its background opacity fades our marble and tree art instead (the metal keeps
+    -- the window's). The full art preview never stronger than the art inside.
     local back = window.MinimizeContainer and window.MinimizeContainer.Background
     if back then
         if back:GetTexture() then back:SetTexture(nil) end
         local alpha = back:GetAlpha()
         if type(alpha) == "number" and not ns.IsSecret(alpha) then
             pair.floor:SetAlpha(alpha)
+            pair.canvas:SetAlpha(alpha)
+            pair.ghost:SetAlpha(math.min(GHOST_ALPHA, alpha))
         end
     end
     if not pair.panHooked then
@@ -324,6 +407,10 @@ local function Dress(window)
         pair.pan:SetScript("OnMouseDown", function() PanStart(pair) end)
         pair.pan:SetScript("OnMouseUp", PanStop)
         pair.pan:SetScript("OnHide", PanStop)
+        -- Refit while the window is dragged larger, not only at the mouse's release.
+        pair.canvas:SetScript("OnSizeChanged", function()
+            if pair.treeName then PlaceTree(pair, pair.panX or 0, pair.panY or 0) end
+        end)
     end
     PaintTree(pair)
     DressMinimize(window)
@@ -360,6 +447,7 @@ end
 local function Restore()
     if not active then return end
     active = false
+    Unpick()
     for source, box in pairs(sources) do
         box:Hide()
         if source.Background then ns.SetAlphaIf(source.Background, 1) end
@@ -394,6 +482,15 @@ end
 function ns.PreviewMeterBackground(key)
     if previewName == key then return end
     previewName = key
+    DressAll()
+end
+
+function ns.MeterPanning() return panning end
+function ns.SetMeterPanning(on)
+    on = on and true or false
+    if panning == on then return end
+    panning = on
+    if not on then Unpick() end
     DressAll()
 end
 

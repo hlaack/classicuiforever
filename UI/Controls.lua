@@ -29,6 +29,34 @@ function ns.RedButtonArt(button, how)
     return true
 end
 
+-- Our own red button (options, welcome, status); raw paths: no bronze swap.
+local PANEL_RAW = { set = "raw", coords = ns.RED_COORDS, add = true }
+function ns.PanelButton(parent, text, width)
+    local button = CreateFrame("Button", nil, parent)
+    button:SetSize(width or 96, 22)
+    local ok = button:SetNormalTexture(PANEL_BUTTON .. "Up")
+    if ok == false then
+        -- Old sheet missing on this client: fall back to the modern button.
+        button:Hide()
+        button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+        button:SetSize(width or 96, 22)
+        button:SetText(text)
+        return button
+    end
+    -- Disabled is gray like the old buttons, not a red face.
+    DressStates(button, nil, PANEL_BUTTON .. "Down", PANEL_BUTTON .. "Disabled", PANEL_BUTTON .. "Highlight", PANEL_RAW)
+    local label = button:CreateFontString(nil, "OVERLAY")
+    label:SetFontObject(ns.FONT_GOLD or "GameFontNormal")
+    label:SetPoint("CENTER", 0, -1)
+    label:SetText(text)
+    button:SetFontString(label)
+    -- Normal font set too or the highlight font sticks after leave; old gold, not bronze.
+    button:SetNormalFontObject(ns.FONT_GOLD or "GameFontNormal")
+    button:SetDisabledFontObject("GameFontDisable")
+    button:SetHighlightFontObject("GameFontHighlight")
+    return button
+end
+
 -- Takes a modern three-slice or panel button.
 function ns.SkinRedButton(button)
     if not button or not Once(button, "red") then return end
