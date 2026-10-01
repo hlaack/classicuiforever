@@ -1405,13 +1405,16 @@ LOCALE_ARGS = re.compile(r"%[sd]")
 def locale_hits():
     """Each language file against enUS: keys missing or extra, and placeholders that differ."""
     hits = []
-    base_path = os.path.join(LOCALE_DIR, "enUS.lua")
-    if not os.path.isfile(base_path):
+    if not os.path.isfile(os.path.join(LOCALE_DIR, "enUS.lua")):
         return hits
-    with open(base_path, encoding="utf-8") as fh:
-        base = dict(LOCALE_ROW.findall(fh.read()))
+    # English may span enUS.lua and its siblings (enUS_WhatsNew.lua): every one is the base.
+    base = {}
     for name in sorted(os.listdir(LOCALE_DIR)):
-        if not name.endswith(".lua") or name == "enUS.lua":
+        if name.startswith("enUS") and name.endswith(".lua"):
+            with open(os.path.join(LOCALE_DIR, name), encoding="utf-8") as fh:
+                base.update(LOCALE_ROW.findall(fh.read()))
+    for name in sorted(os.listdir(LOCALE_DIR)):
+        if not name.endswith(".lua") or name.startswith("enUS"):
             continue
         path = LOCALE_DIR + "/" + name
         with open(os.path.join(LOCALE_DIR, name), encoding="utf-8") as fh:

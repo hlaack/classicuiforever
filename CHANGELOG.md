@@ -2,6 +2,61 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.14.0] - 2026-09-30
+
+### Added
+- Swing timers: the game's swing timers in the 1.x cast bar's look, with a colour per hand picked from the old bar colours and a flash as each swing lands. Border thickness is set in the options or under the swing timer in edit mode. On by default.
+- Thick health bars under Unit frames: a taller health bar on the player, target and focus frames, over the name or over the mana, for the frames you pick. Off by default.
+- Class colored name box and Name size under Unit frames. Classic bar text font shows the health and power numbers in Classic Era's font, on by default.
+- Damage meter: the game's damage meter windows in the 1.x tooltip rim, with classic buttons, minimize and drop-downs, a Header height setting, and a marble or talent tree background you can move with Move background art.
+- Personal resource display: the game's personal resource display in 1.x bars and the old nameplate border. Bar gap sets the space between health and power, in the options or under its edit mode dialog.
+- A lock and a reset button beside each window's close button, shown while the mouse is on the title bar. Unlocked, a window is dragged by its title; reset sends it home. Always show window locks keeps them shown.
+- ClassicUI Forever Windows places and sizes the social window, the group finder (in the social window's place), the classic professions book (in the spellbook's place), and the quest and gossip windows (one place and size for both).
+- The gryphons can be dragged and sized in the game's edit mode, or hidden. With Snap to Elements on they snap to the bars and back to their spot on the bar; Save and Revert All settle them with the rest.
+- The minimap's options button, addon buttons bag and group finder eye can be moved round the ring, sized or hidden in ClassicUI Forever Windows.
+- The classic professions book opens in the spellbook's frame at its size. Full size book under Professions book opens the two-page book instead.
+- FAQ and Support tabs in the options window. The FAQ has its own search.
+- Custom colour under Custom theme paints the metal in a colour you pick.
+- German, French, Spanish and Italian translations.
+- Classic-sized bag slots under Classic bar: bag slots at Classic Era's size on Era's own bag art. On by default.
+- Band holds bars 2 and 3 under Hide micro buttons widens the micro menu's art so bars 2 and 3 never hang past the band's end. Off by default.
+- Hide micro buttons can hide every button, Achievements, Legacy and Help included, with Keep button size, Keep the menu's width and Spread the rest evenly.
+- The Help micro button is back at the end of the micro menu, as in 1.x, and opens support.
+- Group finder on the minimap: with the group finder micro button hidden, Classic's eye button on the minimap opens it, always shown or only on hover.
+- Minimap coordinates, shown, on hover or hidden, and Hide minimap border, Hide minimap header and Hide button borders under Minimap. The day and night icon and the coordinates move in ClassicUI Forever Windows.
+- Hide chat buttons can hide each chat button on its own: Friends, Channels, Chat menu, Scroll arrows and Jump to bottom.
+
+### Changed
+- New installs start with the classic look's defaults: fewer micro buttons and Classic Era's bag slots. Existing installs keep their settings and are offered the new defaults once.
+- Windows open on Classic Era's spots and make room for each other. A window placed in edit mode gives way to one the game opens beside it.
+- The quest log and talents move only in edit mode or once unlocked with their lock.
+- The classic layout puts the damage meter under the party frames and the chat above the stance and pet bars, for new classic layouts and Reset classic layout.
+- The micro menu is sized to the buttons it shows.
+- The loot window pages show only the items left on the last page, and the mouse wheel turns pages.
+- Pet and party frame numbers are smaller and stay inside their bars.
+- Nameplate borders are all metal in every theme. The Dark theme darkens the minimap ring, buff rims, nameplate borders and aura rings.
+- The options search understands plurals, joined words and other names for a setting, and the option groups split evenly between the columns.
+
+### Fixed
+- Action bars no longer jump to the top of the screen after one is dragged in edit mode or snapped to a gryphon. A bar or XP bar snapped to another band bar stays put in fights.
+- Moving action bar 1 with the arrow keys in edit mode moves the whole classic bar. Before, it snapped back and its buttons stayed behind.
+- Clicking a gryphon, the micro menu, the latency bar or the key ring in edit mode lets go of the piece picked before, so the arrow keys no longer move that piece.
+- The XP bar no longer shows twice after logging in during a fight.
+- Fixed a game client crash that restyling some windows could set off.
+- The extra action button and the swing timers no longer rise with a micro menu or bags moved off the bar.
+- The micro menu no longer jumps when dragged off the bar.
+- The latency bar keeps its frame next to the page number when the micro menu is moved off the bar.
+- The loot window no longer repeats items on its last page, shows no dark band over its rows, and leaves looted rows empty.
+- The swing timers show no dark seam at the ends of their fill.
+- The World Map and Help micro button descriptions show once, and the Quest Log's names the game's own quest limit instead of 20.
+- Reset classic layout always puts the gryphons and placed windows back, and Reset in ClassicUI Forever Windows puts the world map back.
+- Resetting a window during a fight moves it once the fight ends instead of leaving its parts behind.
+- The group finder no longer flashes or narrows as it opens. Its rows use Classic Era's fonts, and long names stop before the roles.
+- Edit mode dialogs no longer stretch to fill the screen.
+- Chat buttons come back on screen when another addon moves the chat, and the chat scroll bar keeps its arrows.
+- The spellbook's spell names follow the book when it is dragged or placed, and the spellbook, talents and quest log take the mouse only where they are drawn.
+- Small alignment fixes in the tabs, the window title buttons, the professions book, the damage meter and the latency bar.
+
 ## [0.13.2] - 2026-09-30
 
 ### Fixed
