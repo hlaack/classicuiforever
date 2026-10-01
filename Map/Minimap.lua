@@ -86,6 +86,12 @@ local function ButtonBordersApply()
     for tex in pairs(buttonBorders) do ns.SetAlphaIf(tex, ns.db.hideButtonBorders and 0 or 1) end
 end
 
+-- The game's coordinates line and the map container it hangs in (Blizzard_Minimap Minimap.xml).
+local function PlayerCoords()
+    local box = MinimapCluster and MinimapCluster.MinimapContainer
+    return box and box.PlayerCoords, box
+end
+
 local function DrainDielRing(region)
     if region.GetAtlas and region:GetAtlas() == DIEL_RING then
         ns.DrainBronze(region)
@@ -493,7 +499,7 @@ local function Layout()
         if ns.Once(diel, "themeRing") then ns.EachRegion(diel, DrainDielRing) end
     end
     -- The game's coordinates under the map, in a home edit mode moves.
-    local coords = backdrop.PlayerCoords
+    local coords = PlayerCoords()
     if coords then
         local coordsHome = LayHome("minimapCoords", backdrop, above, 90, 10, map, "BOTTOM", 0, -23)
         if coords:GetParent() ~= coordsHome then coords:SetParent(coordsHome) end
@@ -650,9 +656,9 @@ local function Restore()
         diel:SetParent(MinimapCluster)
         ns.SetPointOnce(diel, "CENTER", MinimapCluster, "CENTER", 63, 72)
     end
-    local coords = MinimapBackdrop and MinimapBackdrop.PlayerCoords
+    local coords, box = PlayerCoords()
     if coords and Minimap then
-        coords:SetParent(MinimapBackdrop)
+        coords:SetParent(box)
         ns.SetPointOnce(coords, "BOTTOM", Minimap, "BOTTOM", 0, -18)
     end
     if MinimapCluster and MinimapCluster.BorderTop then ns.Unfade(MinimapCluster.BorderTop) end
