@@ -707,7 +707,7 @@ local function Build(canvas)
 
     local reload = ns.PanelButton(frame, L["OPTWIN_RELOAD_UI"], 130)
     reload:SetPoint("TOPLEFT", layout, "BOTTOMLEFT", 0, -4)
-    reload:SetScript("OnClick", function() ns.ReloadForLayout() end)
+    reload:SetScript("OnClick", function() StaticPopup_Show("FCUI_RELOAD_CONFIRM") end)
 
     -- Foot right: feedback buttons, GitHub first (preferred), CurseForge under it.
     local curse, github = O.FeedbackButtons(frame, 130)

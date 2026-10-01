@@ -550,6 +550,8 @@ L["CORE_AND_N_MORE_THAT_A"] = "And %d more that a reload finishes."
 -- Core/Defaults.lua
 L["CORE_QUEST_LEVELS_SHOW_EVERYWHERE_ONCE"] = "Quest levels show everywhere once the interface reloads."
 L["CORE_QUEST_LEVELS_LEAVE_THE_MAP"] = "Quest levels leave the map and tracker once the interface reloads."
+L["CORE_RELOAD_WAITS_FOR_FIGHT"] = "The reload waits until this fight ends. Your change is saved."
+L["CORE_RELOAD_AFTER_FIGHT"] = "%s\n\nThe fight is over. Reload now to finish your change?"
 L["CORE_NUMBERS_DROP_SEPARATORS_ONCE"] = "Numbers on the bars drop their thousands separators once the interface reloads."
 L["CORE_NUMBERS_TAKE_SEPARATORS_ONCE"] = "Numbers on the bars get their thousands separators back once the interface reloads."
 L["CORE_THE_ACTION_BARS_ARE_FIXED"] = "The action bars are fixed in the classic bar's places as the interface reloads; until then a fight can move them."
@@ -587,6 +589,7 @@ L["CORE_DEFAULT_KEEPS_ITS_NAME"] = "Default keeps its name."
 
 -- Options/Layout.lua
 L["OPTWIN_RELOAD_NOW"] = "Reload now"
+L["OPTWIN_RELOAD_CONFIRM"] = "%s\n\nReload the interface now?"
 L["OPTWIN_GAME_SIZE"] = "Game size"
 L["OPTWIN_KEEP_MINE"] = "Keep mine"
 L["OPTWIN_CLASSIC_LOOK_OFFER"] = "%s\n\nNew installs now start closer to 1.x, with fewer micro menu buttons and Classic-sized bag slots. The group finder opens from the eye on the minimap, and collections from a tab at the foot of the spellbook.\n\nSwitch to that look? Your other settings stay as they are, and the interface reloads."

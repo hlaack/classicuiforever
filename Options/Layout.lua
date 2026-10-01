@@ -50,11 +50,23 @@ function ns.AskSizeReset(job, what)
     if StaticPopup_Show then StaticPopup_Show("FCUI_SIZE_RESET", what, nil, job) end
 end
 
--- Every addon reload: pre-pin jobs, band pins (unpins with the band off), post-pin jobs,
--- all in the press, in that order. In combat only the reload runs; jobs wait.
+-- The game refuses an addon's reload in a fight: the change stays saved and the reload is offered as the fight ends.
+ns.ReloadPopup("FCUI_RELOAD_AFTER_FIGHT", string.format(L["CORE_RELOAD_AFTER_FIGHT"], TITLE))
+-- The options button asks here: a press from our own button that saved the layout first had its next call refused.
+ns.ReloadPopup("FCUI_RELOAD_CONFIRM", string.format(L["OPTWIN_RELOAD_CONFIRM"], TITLE))
+local function OfferReloadAfterFight()
+    if StaticPopup_Show then StaticPopup_Show("FCUI_RELOAD_AFTER_FIGHT") end
+end
+
+-- Every addon reload: pre-pin jobs, band pins (unpins with the band off), post-pin jobs, all in the press, in that order.
 function ns.ReloadForLayout()
     if not (C_UI and C_UI.Reload) then return end
-    if ns.db and not InCombatLockdown() then
+    if InCombatLockdown() then
+        ns.Print(L["CORE_RELOAD_WAITS_FOR_FIGHT"])
+        ns.WhenCalm("reloadAfterFight", OfferReloadAfterFight)
+        return
+    end
+    if ns.db then
         ns.sessionEnding = true
         pcall(ns.RunLayoutJobsBeforePin)
         if ns.db.classicBar ~= false then
