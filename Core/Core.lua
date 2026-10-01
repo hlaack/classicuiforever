@@ -165,6 +165,7 @@ function ns.ApplyAll()
         end
         return
     end
+    ns.WriteHeldCVars()
     for _, mod in ipairs(ns.modules) do
         if ModuleOn(mod.key) then
             ns.SafeCall(mod.apply)
@@ -332,9 +333,9 @@ end
 
 local function KeyEffects(key)
     if key == "gameDamageNumbers" then ns.WriteGameDamageNumbers() end
-    if key == "oneBag" then ns.SetCVar("combinedBags", ns.db.oneBag == true and "1" or "0") end
-    if key == "questLevels" then ns.SetCVar("showQuestLevel", ns.db.questLevels == true and "1" or "0") end
-    if key == "plainNumbers" then ns.SetCVar("breakUpLargeNumbers", ns.db.plainNumbers == true and "0" or "1") end
+    if key == "oneBag" then ns.SetCVarOrHold("combinedBags", ns.db.oneBag == true and "1" or "0") end
+    if key == "questLevels" then ns.SetCVarOrHold("showQuestLevel", ns.db.questLevels == true and "1" or "0") end
+    if key == "plainNumbers" then ns.SetCVarOrHold("breakUpLargeNumbers", ns.db.plainNumbers == true and "0" or "1") end
 end
 
 -- Keys changed at once (a toggle, a profile switch): their own effects, one pass, the watchers, the save.
