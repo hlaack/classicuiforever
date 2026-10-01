@@ -7,7 +7,7 @@ local _, ns = ...
 local DEFAULT = "Default"
 local NAME_MAX = 32
 local EXTRA = { "themeColor", "barScale", "microScale", "oneBagColumns", "keyTextSize", "plateNameSize",
-    "swingColorMain", "swingColorOff", "swingColorRanged", "swingBorder" }
+    "swingColorMain", "swingColorOff", "swingColorRanged", "swingBorder", "meterBackground", "prdGap", "meterHeader", "unitNameSize", "thickEnemyColor" }
 -- The game's own setting mirrored, not ours to keep per profile.
 local SKIP = { gameDamageNumbers = true }
 ns.PROFILE_DEFAULT = DEFAULT

@@ -22,10 +22,15 @@ local BORDER_STEP = 0.25
 local LABEL_X = 10
 -- The border's opening sits 2.5 rows above the bar's middle.
 local OPENING_UP = 2.5
--- The player cast bar's border (256 x 64) round its 195 x 13 bar: 30.5 past each end, 28 over the top, 23 under,
--- scaled with the swing bar's own size (edit mode).
-local BAR_W, BAR_H = 195, 13
-local OUT_X, OUT_TOP, OUT_BOTTOM = 30.5, 28, 23
+-- The player cast bar's border (256 x 64) round its 195 x 13 bar, 30.5 past each end, scaled with the swing bar's
+-- height (edit mode). Cut in nine so thickness moves only the outer parts.
+local BAR_H, OUT_X = 13, 30.5
+-- Cut round the opening (rows 28-37, columns 38-217) so every rail is in an outer piece: the 1.x border covers the
+-- bar's foot and 7.5 of each end.
+local CUT_LEFT, CUT_RIGHT, CUT_TOP, CUT_FOOT = 38, 217, 28, 37
+local COLS = { 0, CUT_LEFT / 256, CUT_RIGHT / 256, 1 }
+local ROWS = { 0, CUT_TOP / 64, CUT_FOOT / 64, 1 }
+local IN_X, IN_H = CUT_LEFT - OUT_X, CUT_FOOT - CUT_TOP
 local FLASH_TIME = 0.3
 local RESET_DROP = 0.5   -- a fall of this much of the bar is a new swing
 local FRAMES = {
@@ -46,12 +51,58 @@ end
 local active = false
 local own = setmetatable({}, { __mode = "k" })   -- status bar -> our border and flash
 
+-- Nine pieces of a border sheet, row by row from the top left.
+local function Slices(bar, key, layer)
+    local list = {}
+    for row = 1, 3 do
+        for col = 1, 3 do
+            local tex = bar:CreateTexture(nil, layer, nil, 2)
+            ns.SetTex(tex, key)
+            tex:SetTexCoord(COLS[col], COLS[col + 1], ROWS[row], ROWS[row + 1])
+            list[#list + 1] = tex
+        end
+    end
+    return list
+end
+
+-- The outline at edge (x out from the bar's ends, top over and foot under its top); ends l wide, top t and foot b
+-- tall inside it, the middle piece the opening they leave.
+local function LaySlices(list, bar, edge, l, t, b)
+    local tl, top, tr, left, mid, right, bl, bottom, br = unpack(list)
+    for i = 1, #list do list[i]:ClearAllPoints() end
+    mid:SetPoint("TOPLEFT", bar, "TOPLEFT", edge.x + l, edge.top - t)
+    mid:SetPoint("BOTTOMRIGHT", bar, "TOPRIGHT", -edge.x - l, edge.foot + b)
+    tl:SetPoint("BOTTOMRIGHT", mid, "TOPLEFT")
+    tl:SetSize(l, t)
+    top:SetPoint("BOTTOMLEFT", mid, "TOPLEFT")
+    top:SetPoint("BOTTOMRIGHT", mid, "TOPRIGHT")
+    top:SetHeight(t)
+    tr:SetPoint("BOTTOMLEFT", mid, "TOPRIGHT")
+    tr:SetSize(l, t)
+    left:SetPoint("TOPRIGHT", mid, "TOPLEFT")
+    left:SetPoint("BOTTOMRIGHT", mid, "BOTTOMLEFT")
+    left:SetWidth(l)
+    right:SetPoint("TOPLEFT", mid, "TOPRIGHT")
+    right:SetPoint("BOTTOMLEFT", mid, "BOTTOMRIGHT")
+    right:SetWidth(l)
+    bl:SetPoint("TOPRIGHT", mid, "BOTTOMLEFT")
+    bl:SetSize(l, b)
+    bottom:SetPoint("TOPLEFT", mid, "BOTTOMLEFT")
+    bottom:SetPoint("TOPRIGHT", mid, "BOTTOMRIGHT")
+    bottom:SetHeight(b)
+    br:SetPoint("TOPLEFT", mid, "BOTTOMRIGHT")
+    br:SetSize(l, b)
+end
+
+local function ShowSlices(list, shown)
+    for i = 1, #list do list[i]:SetShown(shown) end
+end
+
 local function Dress(entry)
     local timer = _G[entry.name]
     local bar = timer and timer.StatusBar
     if not bar then return end
-    -- The 1.x cast bar's dark backing, seen where a thick border opens past the fill.
-    if timer.Background then timer.Background:SetColorTexture(0, 0, 0, 0.5) end
+    if timer.Background then timer.Background:SetTexture(nil) end
     if timer.Border then timer.Border:SetTexture(nil) end
     if bar.Pip then bar.Pip:SetAlpha(0) end
     if bar.TypeLabelShadow then bar.TypeLabelShadow:SetAlpha(0) end
@@ -61,34 +112,50 @@ local function Dress(entry)
     local parts = own[bar]
     if not parts then
         parts = {}
-        parts.border = bar:CreateTexture(nil, "ARTWORK", nil, 2)
-        ns.SetTex(parts.border, "castBorder")
-        parts.flash = bar:CreateTexture(nil, "OVERLAY", nil, 2)
-        ns.SetTex(parts.flash, "castFlash")
-        parts.flash:SetBlendMode("ADD")
-        parts.flash:SetAlpha(0)
+        parts.border = Slices(bar, "castBorder", "ARTWORK")
+        -- The 1.x cast bar's dark backing, the bar's own size.
+        parts.edge = {}
+        parts.back = bar:CreateTexture(nil, "BACKGROUND")
+        parts.back:SetColorTexture(0, 0, 0, 0.5)
+        parts.back:SetAllPoints(bar)
+        parts.flash = Slices(bar, "castFlash", "OVERLAY")
         local anim = bar:CreateAnimationGroup()
-        local fade = anim:CreateAnimation("Alpha")
-        fade:SetTarget(parts.flash)
-        fade:SetFromAlpha(1)
-        fade:SetToAlpha(0)
-        fade:SetDuration(FLASH_TIME)
+        for _, tex in ipairs(parts.flash) do
+            tex:SetBlendMode("ADD")
+            tex:SetAlpha(0)
+            local fade = anim:CreateAnimation("Alpha")
+            fade:SetTarget(tex)
+            fade:SetFromAlpha(1)
+            fade:SetToAlpha(0)
+            fade:SetDuration(FLASH_TIME)
+        end
         anim:SetToFinalAlpha(true)
         parts.anim = anim
         own[bar] = parts
     end
-    local w, h = bar:GetWidth() or 0, bar:GetHeight() or 0
+    local h = bar:GetHeight() or 0
     local k = Thickness()
-    local sx, sy = w / BAR_W * k, h / BAR_H * k
-    parts.border:ClearAllPoints()
-    parts.border:SetPoint("TOPLEFT", bar, "TOPLEFT", -OUT_X * sx, OUT_TOP * sy)
-    parts.border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", OUT_X * sx, -OUT_BOTTOM * sy)
+    -- One scale on every side (the bar's height), so the ends keep their shape and thickness steps match the rails.
+    local sy = h / BAR_H
+    -- The outline stays where the 1.x border has it; thinner rails leave its opening wider, backed dark.
+    local l0, t0, b0 = CUT_LEFT * sy, CUT_TOP * sy, (64 - CUT_FOOT) * sy
+    local edge = parts.edge
+    edge.x, edge.top, edge.foot = IN_X * sy - l0, t0, -(IN_H * sy + b0)
+    local l, t, b = l0 * k, t0 * k, b0 * k
+    LaySlices(parts.border, bar, edge, l, t, b)
+    LaySlices(parts.flash, bar, edge, l, t, b)
+    parts.back:ClearAllPoints()
+    if k < 1 then
+        parts.back:SetAllPoints(parts.border[5])
+    else
+        parts.back:SetAllPoints(bar)
+    end
     local up = OPENING_UP * sy
     if bar.TypeLabel then ns.SetPointOnce(bar.TypeLabel, "LEFT", bar, "LEFT", LABEL_X, up) end
     if bar.TimeLabel then ns.SetPointOnce(bar.TimeLabel, "RIGHT", bar, "RIGHT", -LABEL_X, up) end
-    parts.flash:SetAllPoints(parts.border)
-    parts.border:Show()
-    parts.flash:Show()
+    ShowSlices(parts.border, true)
+    ShowSlices(parts.flash, true)
+    parts.back:Show()
 end
 
 local function Undress(entry)
@@ -105,8 +172,9 @@ local function Undress(entry)
     bar:SetStatusBarColor(1, 1, 1)
     local parts = own[bar]
     if parts then
-        parts.border:Hide()
-        parts.flash:Hide()
+        ShowSlices(parts.border, false)
+        ShowSlices(parts.flash, false)
+        parts.back:Hide()
     end
 end
 
@@ -162,5 +230,18 @@ end
 function ns.SetSwingBorder(step)
     ns.SetSwingLook("swingBorder", step)
 end
+
+-- The border thickness under the client's swing timer dialog too; the same setting as the options.
+local HANDS = { SwingTimerMainHandFrame = true, SwingTimerOffHandFrame = true, SwingTimerRangedFrame = true }
+local function BorderValues()
+    local low, high = ns.SWING_BORDER_MIN, ns.SWING_BORDER_MAX
+    return tonumber(ns.db and ns.db.swingBorder) or 0, low, high, high - low
+end
+ns.DialogExtra({
+    title = "ClassicUI Forever",
+    match = function(system) return active and HANDS[system:GetName() or ""] == true end,
+    build = function(panel) panel.border = ns.DialogExtraSlider(panel, "Border thickness", BorderValues, ns.SetSwingBorder) end,
+    fill = function(panel) panel.border() end,
+})
 
 ns.RegisterModule("swingTimers", { apply = Apply, restore = Restore })

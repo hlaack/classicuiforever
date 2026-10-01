@@ -89,6 +89,13 @@ ns.TEX = {
     questMapButton = "=QuestFrame\\UI-QuestMap_Button",
     -- Minimap button face: the end cap's gryphon on a black disc.
     gryphonIcon = "!Gryphon-Icon",
+    lfgEye = "LFGFrame\\LFG-Eye",
+    -- Thick health sheets (dev/tools/thick_frames.py).
+    targetingFrameThickMana = "!UI-TargetingFrame-ThickMana", targetingFrameThickName = "!UI-TargetingFrame-ThickName",
+    targetingEliteThickMana = "!UI-TargetingFrame-Elite-ThickMana", targetingEliteThickName = "!UI-TargetingFrame-Elite-ThickName",
+    targetingRareThickMana = "!UI-TargetingFrame-Rare-ThickMana", targetingRareThickName = "!UI-TargetingFrame-Rare-ThickName",
+    targetingRareEliteThickMana = "!UI-TargetingFrame-Rare-Elite-ThickMana",
+    targetingRareEliteThickName = "!UI-TargetingFrame-Rare-Elite-ThickName",
     questLogBook = "QuestFrame\\UI-QuestLog-BookIcon",
     questLogEmptyTopLeft = "!UI-QuestLog-Empty-TopLeft",
     questLogEmptyTopRight = "!UI-QuestLog-Empty-TopRight",
@@ -252,6 +259,9 @@ for key, file in pairs({
     sbTab1Selected = "Spellbook\\UI-SpellBook-Tab1-Selected",
     sbTab3Selected = "Spellbook\\UI-SpellBook-Tab3-Selected",
     sbTabHighlight = "Spellbook\\UI-SpellbookPanel-Tab-Highlight",
+    -- Narrow foot tabs (dev/tools/narrow_tabs.py), while the Collections tab joins them.
+    sbTabUnselectedNarrow = "!UI-SpellBook-Tab-Unselected-Narrow", sbTab1SelectedNarrow = "!UI-SpellBook-Tab1-Selected-Narrow",
+    sbTab3SelectedNarrow = "!UI-SpellBook-Tab3-Selected-Narrow", sbTabHighlightNarrow = "!UI-SpellbookPanel-Tab-Highlight-Narrow",
     sbPrevUp = "Buttons\\UI-SpellbookIcon-PrevPage-Up",
     sbPrevDown = "Buttons\\UI-SpellbookIcon-PrevPage-Down",
     sbPrevDisabled = "Buttons\\UI-SpellbookIcon-PrevPage-Disabled",
@@ -327,6 +337,9 @@ ns.BronzeCopy = BronzeCopy
 local METAL = {
     endCap = true,
     targetingFrame = true, targetingElite = true, targetingRare = true, targetingRareElite = true,
+    targetingFrameThickMana = true, targetingFrameThickName = true, targetingEliteThickMana = true,
+    targetingEliteThickName = true, targetingRareThickMana = true, targetingRareThickName = true,
+    targetingRareEliteThickMana = true, targetingRareEliteThickName = true,
     targetingMinus = true, targetOfTarget = true, smallTargetingFrame = true, partyFrame = true,
     castBorder = true, castBorderSmall = true, castSmallShield = true,
     minimapBorder = true, trackingBorder = true, clockBackground = true,

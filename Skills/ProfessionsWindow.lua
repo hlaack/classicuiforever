@@ -181,8 +181,14 @@ local bookTabs
 -- too (a pad on UIParent is placed out of combat only). Anchored to the window, never the tabs: the window turns
 -- protected by them, and every write on it here already waits for a fight's end; the tabs stay free.
 local bookPads
--- The first tab's centre on the window and the step between tabs (128 wide, 20 overlapped).
-local TAB_X, TAB_Y, TAB_STEP = 70, -7, 108
+-- The first tab's centre on the window and the step between tabs: wide 1.x tabs, or narrow ones with the Collections
+-- tab third and the pet last (as the spellbook's foot).
+local TAB_Y = -7
+local WIDE = { x = 70, step = 108, overlap = -20, hit = 14, slot = { 0, 1, 2 } }
+local NARROW = { x = 57, step = 80, overlap = -48, hit = 27, slot = { 0, 1, 3, 2 } }
+local function Spec()
+    return ns.CollectionsMicroHidden and ns.CollectionsMicroHidden() and NARROW or WIDE
+end
 
 -- Shown with its tab inside the window, never by the window: placed while it was shut, a pad went hidden for the fight.
 local function PadShown(i)
@@ -197,15 +203,15 @@ local function PlaceBookPads()
     if not bookPads or not frame or InCombatLockdown() then return end
     local k = frame:GetEffectiveScale()
     if not (k and k > 0) then return end
-    local hit = ns.BOOK_TAB_HIT
+    local hit, spec = ns.BOOK_TAB_HIT, Spec()
     for i, pad in pairs(bookPads) do
         local tab = bookTabs[i]
         local r = tab:GetEffectiveScale() / k
         local w, h = tab:GetWidth(), tab:GetHeight()
         -- The drawn tab only; the sheet's blank margin reached over the window's buttons.
-        ns.SetPointOnce(pad, "BOTTOMLEFT", frame, "TOPLEFT", (TAB_X + (i - 1) * TAB_STEP - w / 2 + hit.left) * r,
+        ns.SetPointOnce(pad, "BOTTOMLEFT", frame, "TOPLEFT", (spec.x + spec.slot[i] * spec.step - w / 2 + spec.hit) * r,
             (TAB_Y - h / 2 + hit.bottom) * r - BOOK_H)
-        pad:SetSize((w - hit.left - hit.right) * r, (h - hit.top - hit.bottom) * r)
+        pad:SetSize((w - 2 * spec.hit) * r, (h - hit.top - hit.bottom) * r)
         pad:SetFrameLevel(tab:GetFrameLevel() + 5)
         pad:SetShown(PadShown(i))
     end
@@ -229,15 +235,18 @@ local function BookTabs()
     if not bookTabs then
         if not on then return end
         bookTabs = {}
-        for i = 1, 3 do bookTabs[i] = ns.NewBookTab(page, i, bookTabs[i - 1]) end
-        -- Tucked under the bottom border like the old foot tabs; at -13 they floated clear of it.
-        ns.SetPointOnce(bookTabs[1], "CENTER", frame, "BOTTOMLEFT", TAB_X, TAB_Y)
+        for i = 1, 4 do bookTabs[i] = ns.NewBookTab(page, i, bookTabs[i - 1]) end
         bookTabs[1]:SetText(SPELLBOOK or "Spellbook")
+        bookTabs[4]:SetText("Collections")
         bookTabs[2]:SetText(TRADE_SKILLS or "Professions")
         bookTabs[2]:SetEnabled(false)
         for i, tab in ipairs(bookTabs) do
             tab:SetScript("OnClick", function()
                 if i == 2 then return end
+                if i == 4 then
+                    if _G.CollectionsMicroButton then _G.CollectionsMicroButton:Click() end
+                    return
+                end
                 if InCombatLockdown() then ns.SayNotInCombat() return end
                 PlaySound(SOUNDKIT.IG_ABILITY_PAGE_TURN)
                 HideUIPanel(frame)
@@ -277,13 +286,49 @@ local function BookTabs()
                 pad:Hide()
                 bookPads[i] = pad
             end
+            -- Collections: the hidden micro button's own click, in a fight too.
+            local coll = _G.CollectionsMicroButton
+            if coll then
+                local tab = bookTabs[4]
+                local pad = CreateFrame("Button", nil, frame, "SecureActionButtonTemplate")
+                pad:SetFrameStrata("HIGH")
+                pad:RegisterForClicks("AnyUp", "AnyDown")
+                pad:SetAttribute("useOnKeyDown", false)
+                pad:SetAttribute("type", "click")
+                pad:SetAttribute("clickbutton", coll)
+                pad:SetScript("OnMouseDown", function() tab:SetButtonState("PUSHED") end)
+                pad:SetScript("OnMouseUp", function() tab:SetButtonState("NORMAL") end)
+                pad:SetScript("OnEnter", function() tab:LockHighlight() end)
+                pad:SetScript("OnLeave", function() tab:UnlockHighlight() end)
+                pad:SetScript("OnHide", function()
+                    tab:UnlockHighlight()
+                    tab:SetButtonState("NORMAL")
+                end)
+                pad:Hide()
+                bookPads[4] = pad
+            end
         end
     end
+    -- Tucked under the bottom border like the old foot tabs; at -13 they floated clear of it.
+    local spec = Spec()
+    local narrow = spec == NARROW
+    local order = narrow and { 1, 2, 4, 3 } or { 1, 2, 3 }
+    for n, i in ipairs(order) do
+        local tab = bookTabs[i]
+        if n == 1 then
+            ns.SetPointOnce(tab, "CENTER", frame, "BOTTOMLEFT", spec.x, TAB_Y)
+        else
+            ns.SetPointOnce(tab, "LEFT", bookTabs[order[n - 1]], "RIGHT", spec.overlap, 0)
+        end
+        if ns.DressBookTab then ns.DressBookTab(tab, narrow) end
+    end
     local pet = on and ns.SpellBookPetTitle and ns.SpellBookPetTitle() or nil
+    if pet and narrow then pet = PET or "Pet" end
     if pet and bookTabs[3]:GetText() ~= pet then bookTabs[3]:SetText(pet) end
     SetShownIf(bookTabs[1], on)
     SetShownIf(bookTabs[2], on)
     SetShownIf(bookTabs[3], on and pet ~= nil)
+    SetShownIf(bookTabs[4], on and narrow)
     PlaceBookPads()
 end
 

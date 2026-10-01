@@ -63,9 +63,9 @@ function ns.ChatIconButton(button, name, set, fixed)
     ns.DressStates(button, FacePath(prefix, "Normal", copy), FacePath(prefix, "Pushed", copy),
         FacePath(prefix, "Disabled", copy), HILIGHT, swap and FACE_SWAP or FACE_SET)
     if not swap then
-        ns.PaintCopy(button:GetNormalTexture(), copy)
-        ns.PaintCopy(button:GetPushedTexture(), copy)
-        ns.PaintCopy(button:GetDisabledTexture(), copy)
+        ns.PaintCopy(button:GetNormalTexture(), copy and FacePath(prefix, "Normal", true) or nil)
+        ns.PaintCopy(button:GetPushedTexture(), copy and FacePath(prefix, "Pushed", true) or nil)
+        ns.PaintCopy(button:GetDisabledTexture(), copy and FacePath(prefix, "Disabled", true) or nil)
     end
 end
 
@@ -83,6 +83,7 @@ local held = {}             -- client frame we reparented or raised -> parent, s
 local faces = {}            -- client button we dressed -> its own atlases
 local hidden = {}           -- client textures we hid
 local was = {}              -- client region -> its points and size before ours
+local buttonsOff = {}       -- client button -> faded by Hide chat buttons
 local channelWas            -- the voice button's own flash atlas while dressed
 local alertsAt, primaryTop  -- the slot the friends button stands on; ChatFrame1's top button
 local primaryChat
@@ -190,6 +191,37 @@ local function DressStepper(stepper, slot, name)
         own.texture = stepper.Texture
         stepper.Texture:SetAlpha(0)
     end
+end
+
+-- With the scroll bar kept, a stepper back on the bar in the old small arrow; the column keeps only its bottom button.
+local function StepperToBar(stepper)
+    if not stepper then return end
+    local saved, info, own = was[stepper], held[stepper], faces[stepper]
+    if buttonsOff[stepper] then
+        buttonsOff[stepper] = nil
+        stepper:SetAlpha(1)
+        stepper:EnableMouse(true)
+    end
+    if own then
+        Unface(stepper, own)
+        faces[stepper] = nil
+    end
+    if saved then
+        RestorePoints(stepper, saved)
+        was[stepper] = nil
+    end
+    if info then
+        stepper:SetParent(info.parent)
+        stepper:SetFrameStrata(info.strata)
+        stepper:SetFrameLevel(info.level)
+        held[stepper] = nil
+    end
+end
+
+-- The bar skin's small arrow on a stepper, shown only on the bar.
+local function BarArrow(stepper, shown)
+    local arrow = stepper and stepper.fcui and stepper.fcui.arrow
+    if arrow then ns.SetShownIf(arrow, shown) end
 end
 
 -- Stays the chat's child (its click scrolls the parent); the client's
@@ -339,12 +371,22 @@ local function DressChat(chat)
     FitRight(chat)
     if OwnColumn(chat) then return end
     local col = columns[chat] or MakeColumn(chat)
-    col.up:Show()
-    col.down:Show()
-    col.bottom:Show()
     local bar = chat.ScrollBar
-    if bar then
-        if KeepBar() then BarBack(chat) else SetAside(bar.Track) end
+    local keep = bar and KeepBar()
+    col.up:SetShown(not keep)
+    col.down:SetShown(not keep)
+    col.bottom:Show()
+    if keep then
+        BarBack(chat)
+        StepperToBar(bar.Back)
+        StepperToBar(bar.Forward)
+        ns.SkinMinimalScrollBar(bar)
+        BarArrow(bar.Back, true)
+        BarArrow(bar.Forward, true)
+    elseif bar then
+        SetAside(bar.Track)
+        BarArrow(bar.Back, false)
+        BarArrow(bar.Forward, false)
         DressStepper(bar.Back, col.up, "ScrollUp")
         DressStepper(bar.Forward, col.down, "ScrollDown")
     end
@@ -480,7 +522,6 @@ end
 local HIDE_NAMES = { "ChatFrameMenuButton", "ChatFrameChannelButton", "ChatFrameToggleVoiceDeafenButton",
     "ChatFrameToggleVoiceMuteButton", "QuickJoinToastButton" }
 local OWN_BUTTONS = { "upButton", "downButton", "bottomButton", "minimizeButton" }
-local buttonsOff = {}   -- client button -> faded by this option
 local holdJob
 
 local function EachChatButton(fn)
@@ -491,8 +532,9 @@ local function EachChatButton(fn)
     for i = 1, #list do
         local chat = _G[list[i]]
         if chat then
+            -- On a kept scroll bar the arrows are the bar's, not the column's.
             local bar = chat.ScrollBar
-            if bar then
+            if bar and not KeepBar() then
                 if bar.Back then fn(bar.Back) end
                 if bar.Forward then fn(bar.Forward) end
             end
@@ -525,21 +567,53 @@ end
 -- Edit mode's box keeps 32 px left of the chat for the buttons (EditModeChatFrameSystemTemplate) and holds that box on
 -- screen: with the buttons gone it starts at the chat's own edge, so the chat can sit flush.
 local SELECTION_LEFT, SELECTION_TOP, SELECTION_FLUSH = -32, 60, -4
-local selectionLeft
+-- Another addon can zero the clamp edges (Prat), so the clamp alone may leave the buttons off screen: the chat slides
+-- right by what they lack.
+local function Reclamp(chat)
+    pcall(chat.SetClampedToScreen, chat, true)
+    if InCombatLockdown() then return end
+    local left = chat:GetLeft()
+    if not left or ns.IsSecret(left) then return end
+    local short = -SELECTION_LEFT - left
+    if short <= 0.5 then return end
+    local n = chat:GetNumPoints()
+    local points = {}
+    for i = 1, n do points[i] = { chat:GetPoint(i) } end
+    chat:ClearAllPoints()
+    for i = 1, n do
+        local p = points[i]
+        chat:SetPoint(p[1], p[2], p[3], (p[4] or 0) + short, p[5] or 0)
+    end
+end
+
+-- Read from the box itself: the client re-lays it on its own passes.
+local function SelectionLeft(selection, chat)
+    for i = 1, selection:GetNumPoints() do
+        local point, rel, _, x = selection:GetPoint(i)
+        if point == "TOPLEFT" and rel == chat then return x end
+    end
+end
+
 local function SelectionEdge(flush)
     local chat = _G.ChatFrame1
     local selection = chat and chat.Selection
     if not selection or InCombatLockdown() then return end
     local want = flush and SELECTION_FLUSH or SELECTION_LEFT
-    if selectionLeft == want then return end
-    selectionLeft = want
+    if SelectionLeft(selection, chat) == want then return end
     selection:SetPoint("TOPLEFT", chat, "TOPLEFT", want, SELECTION_TOP)
     if chat.UpdateClampOffsets then pcall(chat.UpdateClampOffsets, chat) end
     -- Back from flush: the client clamps the chat again, now counting the buttons' room, so they come back on screen.
+    -- Clamp on again a frame later: off and on in one frame can be skipped.
     if not flush then
         pcall(chat.SetClampedToScreen, chat, false)
-        pcall(chat.SetClampedToScreen, chat, true)
+        ns.Sched.NextFrame("chat.reclamp", function() Reclamp(chat) end)
     end
+end
+
+local function Flushed()
+    local chat = _G.ChatFrame1
+    local selection = chat and chat.Selection
+    return selection ~= nil and SelectionLeft(selection, chat) == SELECTION_FLUSH
 end
 
 local function HoldButtons()
@@ -548,7 +622,7 @@ local function HoldButtons()
         SelectionEdge(true)
         return
     end
-    if selectionLeft == SELECTION_FLUSH then SelectionEdge(false) end
+    if Flushed() then SelectionEdge(false) end
     for button in pairs(buttonsOff) do
         button:SetAlpha(1)
         button:EnableMouse(true)

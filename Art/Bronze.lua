@@ -22,7 +22,6 @@ local drained = setmetatable({}, weak)   -- client bronze drained when off -> {r
 local bordered = setmetatable({}, weak)  -- backdrop -> base colour and backdrop pair
 local swapped = setmetatable({}, weak)   -- texture -> TEX key, or a file path (it holds a separator)
 local swapArgs = setmetatable({}, weak)  -- file-swapped texture -> its extra SetTexture args, when it had any
-local coloured = setmetatable({}, weak)  -- texture on a custom colour copy -> true
 B.tinted, B.silvered, B.swapped, B.swapArgs = tinted, silvered, swapped, swapArgs
 
 function ns.BronzeOn()
@@ -220,29 +219,6 @@ function ns.TintSlice(slice)
     if slice then ns.EachRegion(slice, SliceTint, slice.Center) end
 end
 
--- A texture on a theme copy takes the custom colour; off it, or on another theme, it is drawn as is.
-function ns.PaintCopy(texture, onCopy)
-    if not (texture and texture.SetVertexColor) then return end
-    local theme = Theme()
-    if onCopy and theme and theme.colorCopies then
-        coloured[texture] = true
-        texture:SetVertexColor(theme.tint[1], theme.tint[2], theme.tint[3])
-    elseif coloured[texture] then
-        coloured[texture] = nil
-        texture:SetVertexColor(1, 1, 1)
-    end
-end
-
--- The picked custom colour: saved, then every piece repainted.
-function ns.SetThemeColor(r, g, b)
-    ns.db.themeColor = string.format("%02x%02x%02x", math.floor(r * 255 + 0.5), math.floor(g * 255 + 0.5),
-        math.floor(b * 255 + 0.5))
-    ThemeName()
-    ns.RepaintBronze()
-    for texture in pairs(coloured) do ns.PaintCopy(texture, true) end
-    if ns.QueueApply then ns.QueueApply() end
-end
-
 -- Repaint every remembered piece for the current theme.
 function ns.RepaintBronze()
     for texture in pairs(tinted) do PaintTint(texture) end
@@ -256,10 +232,12 @@ function ns.RepaintBronze()
             local args = swapArgs[texture]
             local want = ns.BronzeOn() and ns.BronzeCopy(what) or what
             if args then SetWithFallback(texture, want, what, unpack(args)) else SetWithFallback(texture, want, what) end
-            ns.PaintCopy(texture, want ~= what)
+            local copy = want ~= what and want or nil
+            if args then ns.PaintCopy(texture, copy, unpack(args)) else ns.PaintCopy(texture, copy) end
         else
-            SetWithFallback(texture, ns.TexPath(what))
-            ns.PaintCopy(texture, ns.BronzeOn() and select(3, ns.TexPaths(what)) and true)
+            local primary, fallback = ns.TexPath(what)
+            SetWithFallback(texture, primary, fallback)
+            ns.PaintCopy(texture, ns.BronzeOn() and select(3, ns.TexPaths(what)) and primary or nil)
         end
     end
 end

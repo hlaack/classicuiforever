@@ -1,6 +1,6 @@
 local _, ns = ...
 
--- Made by dev/tools/bronze_variants.py: the art with a copy in every theme folder (media/bronze/, media/dark/, media/custom/),
+-- Made by dev/tools/bronze_variants.py: the art with a copy in every theme folder under media/,
 -- one file name per line, read case-blind in TextureData.lua. Do not edit by hand; run the tool again.
 ns.THEME_ART = [[
 Button-Backpack-Up
@@ -160,8 +160,11 @@ UI-ScrollBar-ScrollUpButton-Up
 UI-SliderBar-Border
 UI-SliderBar-Button-Horizontal
 UI-Slot-Background
+UI-SpellBook-Tab-Unselected-Narrow
 UI-SpellBook-Tab-Unselected
+UI-SpellBook-Tab1-Selected-Narrow
 UI-SpellBook-Tab1-Selected
+UI-SpellBook-Tab3-Selected-Narrow
 UI-SpellBook-Tab3-Selected
 UI-SpellbookIcon-NextPage-Disabled
 UI-SpellbookIcon-NextPage-Down

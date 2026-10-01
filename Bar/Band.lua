@@ -15,8 +15,8 @@ B.PET_ROW_Y = 104                -- stance, pet and possess bars, over bars 2 an
 B.PAGE_ROOM = 38
 -- One-bar mode: the micro group on the screen's floor, the bags over it.
 B.CORNER_X = -6
--- The shop lives in the Escape menu; its button never fit the 1.x row.
-B.MICRO_SKIP = { StoreMicroButton = true }
+-- The shop lives in the Escape menu; its button never fit the 1.x row. Help is ours (BandMicro), last as in 1.x.
+B.MICRO_SKIP = { StoreMicroButton = true, HelpMicroButton = true }
 -- Gap before the latency and key ring section's first post (the 1.x button art has its own margin).
 B.MICRO_END_GAP = 1
 -- Micro region head (holds the page arrows), its max width.

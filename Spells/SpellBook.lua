@@ -602,6 +602,11 @@ local function CreateSkillTab(parent, i, prev)
 end
 
 local function BookTab_OnClick(self)
+    -- The pad usually takes it (secure, in a fight too); the client's button, hidden, still opens its window.
+    if self.collections then
+        if _G.CollectionsMicroButton then _G.CollectionsMicroButton:Click() end
+        return
+    end
     -- Opens the professions window, as 1.x's professions page did.
     if self.professions then
         if ns.OpenProfessionsBook and ns.OpenProfessionsBook() then
@@ -620,6 +625,15 @@ end
 local BOOK_TAB_HIT = { left = 14, right = 14, top = 14, bottom = 20 }
 ns.BOOK_TAB_HIT = BOOK_TAB_HIT
 
+-- A foot tab's art and hit area, wide (1.x) or narrow (the Collections tab with it); shared with the professions page.
+local NARROW_HIT = 27
+function ns.DressBookTab(tab, narrow)
+    local side = narrow and NARROW_HIT or BOOK_TAB_HIT.left
+    tab:SetHitRectInsets(side, side, BOOK_TAB_HIT.top, BOOK_TAB_HIT.bottom)
+    local sfx = narrow and "Narrow" or ""
+    ns.DressStates(tab, "sbTabUnselected" .. sfx, nil, tab.picked .. sfx, "sbTabHighlight" .. sfx, ADD_HL)
+end
+
 local function CreateBookTab(parent, i, prev)
     local tab = CreateFrame("Button", nil, parent)
     tab:SetSize(128, 64)
@@ -636,7 +650,8 @@ local function CreateBookTab(parent, i, prev)
     -- Gold unpicked, white picked (disabled); without the normal font a tab picked once stayed white.
     tab:SetNormalFontObject(GameFontNormalSmall)
     tab:SetDisabledFontObject(GameFontHighlightSmall)
-    ns.DressStates(tab, "sbTabUnselected", nil, i == 3 and "sbTab3Selected" or "sbTab1Selected", "sbTabHighlight", ADD_HL)
+    tab.picked = i >= 3 and "sbTab3Selected" or "sbTab1Selected"
+    ns.DressStates(tab, "sbTabUnselected", nil, tab.picked, "sbTabHighlight", ADD_HL)
     tab:SetScript("OnClick", BookTab_OnClick)
     tab:Hide()
     return tab
@@ -928,6 +943,15 @@ local function CreateBook()
             pad:SetAttribute("type", "macro")
             pad:SetAttribute("macrotext", "/click ForeverClassicUISpellBookLayerOff\n/click ProfessionMicroButton")
             if ns.ProfessionsSizeWrap then ns.ProfessionsSizeWrap(pad) end
+            f.FootPads.prof = pad
+        end
+        local collTab = f.BookTabs and f.BookTabs[4]
+        if collTab then
+            local pad = LayerPad(collTab, 100, 30, "BOTTOMLEFT", 187, 64, function() end)
+            pad:SetAttribute("type", "macro")
+            pad:SetAttribute("macrotext", "/click ForeverClassicUISpellBookLayerOff\n/click CollectionsMicroButton")
+            pad:Hide()
+            f.FootPads.coll = pad
         end
     end
     f.LinkLayer = LinkLayer
@@ -987,8 +1011,8 @@ local function CreateBook()
         end
     end)
 
-    f.BookTabs = {}
-    for i = 1, 3 do
+    f.BookTabs, f.FootPads = {}, {}
+    for i = 1, 4 do
         f.BookTabs[i] = CreateBookTab(f, i, f.BookTabs[i - 1])
     end
     LinkLayer()
@@ -1181,6 +1205,7 @@ local function CreateBook()
         c.petPad = NewPad(c.frame, f.BookTabs[3], 100, 30)
         c.petPad:SetPoint("CENTER", c.frame, "BOTTOMLEFT", 295, 64)
         containers[index] = c
+        if f.LayContainer and not InCombatLockdown() then f.LayContainer(c) end
         return c
     end
 
@@ -1440,7 +1465,56 @@ local function CreateBook()
         end
     end
 
+    -- Foot tab spots: wide 1.x tabs, or narrow ones with Collections third and the pet last (a pet summoned in a
+    -- fight adds a tab at the end and moves no pad).
+    local WIDE = { first = 79, step = 108, drawn = 100, overlap = -20, hit = 14 }
+    local NARROW = { first = 66, step = 80, drawn = 74, overlap = -48, hit = 27 }
+    local TAB_Y, PAD_Y = 61, 64
+    local laidNarrow
+
+    local function LayTabs(narrow)
+        if laidNarrow == narrow or InCombatLockdown() then return end
+        laidNarrow = narrow
+        local spec = narrow and NARROW or WIDE
+        local tab1, profTab, petTab, collTab = f.BookTabs[1], f.BookTabs[2], f.BookTabs[3], f.BookTabs[4]
+        local order = narrow and { tab1, profTab, collTab, petTab } or { tab1, profTab, petTab }
+        for i, tab in ipairs(order) do
+            tab:ClearAllPoints()
+            if i == 1 then
+                tab:SetPoint("CENTER", f, "BOTTOMLEFT", spec.first, TAB_Y)
+            else
+                tab:SetPoint("LEFT", order[i - 1], "RIGHT", spec.overlap, 0)
+            end
+            ns.DressBookTab(tab, narrow)
+        end
+        for _, c in pairs(containers) do f.LayContainer(c) end
+        local foot = f.FootPads
+        if foot.prof then
+            foot.prof:SetWidth(spec.drawn)
+            foot.prof:SetPoint("CENTER", foot.prof:GetParent(), "BOTTOMLEFT", spec.first + spec.step, PAD_Y)
+        end
+        if foot.coll then
+            foot.coll:SetWidth(spec.drawn)
+            foot.coll:SetPoint("CENTER", foot.coll:GetParent(), "BOTTOMLEFT", spec.first + 2 * spec.step, PAD_Y)
+            foot.coll:SetShown(narrow)
+        end
+        collTab:SetShown(narrow)
+    end
+
+    -- A container's spellbook and pet pads on the foot's current spots (out of combat).
+    function f.LayContainer(c)
+        local narrow = laidNarrow == true
+        local spec = narrow and NARROW or WIDE
+        c.bookPad:SetWidth(spec.drawn)
+        c.bookPad:SetPoint("CENTER", c.frame, "BOTTOMLEFT", spec.first, PAD_Y)
+        c.petPad:SetWidth(spec.drawn)
+        c.petPad:SetPoint("CENTER", c.frame, "BOTTOMLEFT", spec.first + (narrow and 3 or 2) * spec.step, PAD_Y)
+    end
+
     function f:UpdateBookTabs()
+        local narrow = ns.CollectionsMicroHidden and ns.CollectionsMicroHidden() or false
+        LayTabs(narrow)
+        narrow = laidNarrow
         local petCount, token = PetSpellCount()
         -- Spellbook, Professions, then the optional pet tab, so the fixed two keep
         -- their places, as at the professions window's foot.
@@ -1455,12 +1529,16 @@ local function CreateBook()
         if petCount > 0 then
             petTitle = (token and _G["PET_TYPE_" .. token]) or PET
             tab2.bank = BANK_PET
-            tab2:SetText(petTitle)
+            tab2:SetText(narrow and PET or petTitle)
             tab2:Show()
         else
             tab2:Hide()
             if state.bank == BANK_PET then state.bank = BANK_PLAYER end
         end
+        local collTab = self.BookTabs[4]
+        collTab.collections = true
+        collTab:SetText("Collections")
+        collTab:SetShown(narrow == true)
         tab1:SetEnabled(state.bank ~= BANK_PLAYER)
         tab2:SetEnabled(state.bank ~= BANK_PET)
         self.Title:SetText(state.bank == BANK_PET and petTitle or SPELLBOOK)
@@ -1898,3 +1976,8 @@ ns.RegisterModule("spellBookSearch", {
         end
     end,
 })
+
+-- The Collections tab comes and goes with its micro button.
+ns.OnToggle(function(key)
+    if (key == "hideMicroCollections" or key == "hideMicroButtons") and book and book.Refresh then book:Refresh() end
+end)

@@ -130,7 +130,30 @@ function ns.ClassRGB(classFile)
 end
 
 -- In a dungeon UnitIsPlayer and UnitClass are secret: such a unit stays green.
+-- Enemy health on a thick bar (option): 1.x bar colours, green by default.
+ns.ENEMY_HEALTH_COLORS = {
+    { key = "green", label = "Health green", rgb = { 0, 1, 0 } },
+    { key = "red", label = "Failed red", rgb = { 1, 0, 0 } },
+    { key = "cast", label = "Cast gold", rgb = { 1, 0.7, 0 } },
+    { key = "darkGold", label = "Dark gold", rgb = { 0.85, 0.55, 0 } },
+    { key = "focus", label = "Focus orange", rgb = { 1, 0.5, 0.25 } },
+    { key = "energy", label = "Energy yellow", rgb = { 1, 1, 0 } },
+    { key = "mana", label = "Mana blue", rgb = { 0, 0, 1 } },
+}
+local ENEMY_RGB = {}
+for _, color in ipairs(ns.ENEMY_HEALTH_COLORS) do ENEMY_RGB[color.key] = color.rgb end
+
+local function EnemyColor(unit)
+    local pick = ns.db and ENEMY_RGB[ns.db.thickEnemyColor]
+    if not pick or ns.db.thickEnemyColor == "green" or not (ns.UF and ns.UF.Thick(unit)) then return nil end
+    local hostile = UnitCanAttack("player", unit)
+    if IsSecret(hostile) or not hostile then return nil end
+    return pick
+end
+
 function ns.HealthColor(unit)
+    local enemy = unit and EnemyColor(unit)
+    if enemy then return enemy[1], enemy[2], enemy[3] end
     if ns.db and ns.db.classColorHealth and unit and UnitIsPlayer then
         local isPlayer = UnitIsPlayer(unit)
         if not IsSecret(isPlayer) and isPlayer then

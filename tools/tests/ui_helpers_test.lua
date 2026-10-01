@@ -192,6 +192,7 @@ Load("Art/ThemeArt.lua")
 Load("Art/TextureData.lua")
 Load("Art/Textures.lua")
 Load("Art/Bronze.lua")
+Load("Art/ThemeLayers.lua")
 -- The helpers load before Skin.lua, so nothing of Skin's may be needed at load.
 Load("UI/Dress.lua")
 Load("UI/Dialogs.lua")

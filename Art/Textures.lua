@@ -78,7 +78,7 @@ function ns.SetTex(texture, key, ...)
         -- Texture reused for non-metal art: clear the tint.
         ns.UntintBronze(texture)
     end
-    ns.PaintCopy(texture, swapped[texture] ~= nil and ns.BronzeOn())
+    ns.PaintCopy(texture, swapped[texture] ~= nil and ns.BronzeOn() and primary or nil)
     return ok ~= false
 end
 
@@ -90,13 +90,16 @@ function ns.SetFile(texture, path, ...)
     B.swapArgs[texture] = (copy and select("#", ...) > 0) and { ... } or nil
     local onCopy = copy and ns.ThemeLook() == "themed"
     local ok = SetWithFallback(texture, onCopy and copy or path, copy and path, ...)
-    ns.PaintCopy(texture, onCopy)
+    ns.PaintCopy(texture, onCopy and copy or nil, ...)
     return ok ~= false
 end
 
 -- Out of the theme's file swap, before the texture takes other art again.
 function ns.UnswapBronze(texture)
-    if texture then B.swapped[texture], B.swapArgs[texture] = nil, nil end
+    if texture then
+        B.swapped[texture], B.swapArgs[texture] = nil, nil
+        ns.PaintCopy(texture, nil)
+    end
 end
 
 -- Same, for a button state texture.

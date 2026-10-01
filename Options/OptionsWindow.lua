@@ -292,6 +292,31 @@ local function DropRow(parent, group)
     return row
 end
 
+local function FlipToggle(key)
+    ns.db[key] = ns.db[key] ~= true
+    ns.ToggleChanged(key)
+end
+
+-- Several toggles picked in one drop down, as checks (entries with checks = group).
+local function DropCheckRow(parent, group)
+    local rows, words, first = {}, {}, nil
+    for _, entry in ipairs(ns.TOGGLES) do
+        if entry.checks == group then
+            first = first or entry
+            local item = entry[2]:match(":%s*(.+)$") or entry[2]
+            rows[#rows + 1] = { key = entry[1], text = item }
+            words[#words + 1] = item .. " " .. (entry.search or "")
+        end
+    end
+    local label = first and first[2]:match("^(.-):") or group
+    local row = DropShell(parent, label, function(root)
+        for _, choice in ipairs(rows) do root:CreateCheckbox(choice.text, ToggleOn, FlipToggle, choice.key) end
+    end)
+    Describe(row, group, label, first and first[3])
+    row.keyLow = row.keyLow .. " " .. table.concat(words, " "):lower()
+    return row
+end
+
 -- A setting holding one of a list's keys (choices: { key, label }); apply(key, pick) saves and shows it.
 local function ValueDropRow(parent, key, label, tooltip, choices, apply)
     local row = DropShell(parent, label, function(root)
@@ -413,9 +438,10 @@ local function Build(canvas)
             group = entry.group
             heads[group] = heads[group] or GroupHead(child, group, LIST_W / COLUMNS - 8)
         end
-        if entry.drop and not dropped[entry.radio] then
-            dropped[entry.radio] = true
-            local row = DropRow(child, entry.radio)
+        local dropGroup = entry.checks or entry.radio
+        if entry.drop and not dropped[dropGroup] then
+            dropped[dropGroup] = true
+            local row = entry.checks and DropCheckRow(child, dropGroup) or DropRow(child, dropGroup)
             Grouped(row)
             Add(row, entry.parent)
             row.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - row.depth * INDENT)
@@ -451,6 +477,47 @@ local function Build(canvas)
             color.keyLow = color.keyLow .. " rgb hex color theme"
             Grouped(color)
             Add(color, "themeCustom")
+        end
+        if entry[1] == "damageMeter" and ns.METER_BACKGROUNDS then
+            local back = ValueDropRow(child, "meterBackground", "Background",
+                "The meter's back: the marble, or a class's old talent tree art.", ns.METER_BACKGROUNDS, ns.SetMeterBackground)
+            back.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - INDENT)
+            back.keyLow = back.keyLow .. " talent tree damage meter"
+            Grouped(back)
+            Add(back, "damageMeter")
+            local header = Stepper(child, "meterHeader", "Header height",
+                "Extra height over the meter's header, in pixels.",
+                ns.METER_HEADER_MIN or 0, ns.METER_HEADER_MAX or 16, ns.SetMeterHeader)
+            header.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
+            header.keyLow = header.keyLow .. " damage meter title"
+            Grouped(header)
+            Add(header, "damageMeter")
+        end
+        if entry[1] == "thickHealthMana" and ns.ENEMY_HEALTH_COLORS then
+            local color = ValueDropRow(child, "thickEnemyColor", "Enemy health",
+                "The colour of an enemy's thick health bar.", ns.ENEMY_HEALTH_COLORS, ns.SetEnemyHealthColor)
+            color.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - 2 * INDENT)
+            color.keyLow = color.keyLow .. " colour color hostile red"
+            Grouped(color)
+            Add(color, "thickHealth")
+        end
+        if entry[1] == "unitFrames" and ns.SetUnitNameSize then
+            local size = Stepper(child, "unitNameSize", "Name size",
+                "Text size of the player, target and focus names.",
+                ns.UNIT_NAME_MIN or 8, ns.UNIT_NAME_MAX or 16, ns.SetUnitNameSize)
+            size.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
+            size.keyLow = size.keyLow .. " font unit frame name text"
+            Grouped(size)
+            Add(size, "unitFrames")
+        end
+        if entry[1] == "resourceDisplay" and ns.SetPrdGap then
+            local gap = Stepper(child, "prdGap", "Bar gap",
+                "Space between the health and power bars. 0 joins them under one shared border.",
+                ns.PRD_GAP_MIN or 0, ns.PRD_GAP_MAX or 20, ns.SetPrdGap)
+            gap.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
+            gap.keyLow = gap.keyLow .. " personal resource padding spacing"
+            Grouped(gap)
+            Add(gap, "resourceDisplay")
         end
         if entry[1] == "swingTimers" and ns.SWING_COLORS then
             for _, hand in ipairs(SWING_HANDS) do

@@ -42,6 +42,15 @@ local function OnBandRow(bar)
     return bar ~= nil and bar:IsShown() and not SystemMoved(bar) and BarVertical(bar) ~= true and BarRows(bar) == 1
 end
 
+-- Bars 2 and 3 side by side on the band: bar 2's width and the pair's, in band px; nil unless both stand on it.
+local function PairWidths()
+    local lower, upper, bar = MultiBarBottomLeft, MultiBarBottomRight, ns.GetMainBar()
+    if OneBar() or not bar or not (OnBandRow(lower) and OnBandRow(upper)) then return nil end
+    local band = BandScale(bar)
+    local lowerW = RowSlots(lower) * BUTTON_PITCH * IconScale(lower) / band
+    return lowerW, lowerW + (RowSlots(upper) * BUTTON_PITCH - SLOT_SPACE) * IconScale(upper) / band
+end
+
 -- The band follows Action Bar 1 instead of centring only after a player drag in edit mode with the band on
 -- (ns.db.barDragged, cleared by the bar's reset); edit mode's flag alone shifted the band, since old layouts
 -- or any anchor change leave the bar flagged with a stale anchor.
@@ -109,6 +118,14 @@ local function ReadShape()
     if dragPreview.bags ~= nil then shape.bags = dragPreview.bags end
     if dragPreview.bagsFirst ~= nil then bagsFirst = dragPreview.bagsFirst end
     shape.plan = BandPlan(OnBandMicro(), OnBandBags(), bagsFirst, shape.region)
+    -- Band holds bars 2 and 3 (option): the micro region widens to hold them, as Era's full micro sheet does.
+    shape.microGrow = 0
+    local _, pairW = PairWidths()
+    local short = ns.db and ns.db.bandHoldsBars == true and pairW and (pairW + 2 * ROW_X - shape.plan.width) or 0
+    if short > 0 and shape.plan.microStart then
+        shape.microGrow = math.ceil(short)
+        shape.plan = BandPlan(OnBandMicro(), OnBandBags(), bagsFirst, shape.region + shape.microGrow)
+    end
 end
 B.ReadShape = ReadShape
 
@@ -155,14 +172,13 @@ local function Layout()
     -- real sizes. Band size comes from the setting like the rows', so equal compares equal.
     local band = BandScale(bar)
     local lowerY = UPPER_ROW_Y + barLift
-    local lowerRatio, upperRatio = IconScale(lower) / band, IconScale(upper) / band
+    local lowerRatio = IconScale(lower) / band
     -- Bars 2 and 3 side by side as one run of slots at the slots' own spacing, centred on the band (at the 1.x spots
     -- the right of a band widened by the latency bar, key ring and reagent bag stood bare); either alone keeps its
     -- 1.x spot. On the half band bar 3 goes over bar 2, the pet row moving up.
     local lowerX, upperX = ROW_X, CurrentPlan().base + HALF_ROW_X
-    if not OneBar() and OnBandRow(lower) and OnBandRow(upper) then
-        local lowerW = RowSlots(lower) * BUTTON_PITCH * lowerRatio
-        local pairW = lowerW + (RowSlots(upper) * BUTTON_PITCH - SLOT_SPACE) * upperRatio
+    local lowerW, pairW = PairWidths()
+    if pairW then
         lowerX = math.max(ROW_X, (ArtWidth() - pairW) / 2)
         upperX = lowerX + lowerW
     end

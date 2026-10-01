@@ -85,7 +85,7 @@ local function BronzeClient(texture, off)
             texture:SetTexture(nil)
             texture:SetTexCoord(0, 1, 0, 1)
             if was.atlas then texture:SetAtlas(was.atlas) else texture:SetTexture(was.file) end
-            ns.PaintCopy(texture, false)
+            ns.PaintCopy(texture, nil)
         end
         return
     end
@@ -110,7 +110,7 @@ local function BronzeClient(texture, off)
             if texture.SetHorizTile then texture:SetHorizTile(across and true or false) end
             if texture.SetVertTile then texture:SetVertTile(down and true or false) end
             Remember(texture, was, atlas, nil)
-            ns.PaintCopy(texture, true)
+            ns.PaintCopy(texture, copy, across and "REPEAT" or "CLAMP", down and "REPEAT" or "CLAMP")
         else
             texture:SetAtlas(atlas)
         end
@@ -121,7 +121,7 @@ local function BronzeClient(texture, off)
     if copy then
         if texture:SetTexture(copy) ~= false then
             Remember(texture, was, nil, file)
-            ns.PaintCopy(texture, true)
+            ns.PaintCopy(texture, copy)
         else
             texture:SetTexture(file)
         end

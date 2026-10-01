@@ -40,6 +40,29 @@ local function ToggleMap()
     if ToggleWorldMap then ToggleWorldMap() end
 end
 
+-- 1.x's Help button, last in the row: Forever keeps its own hidden (the store button's update hides it), so ours
+-- presses it through a secure pad and support opens as from the game menu.
+local function HelpButtonTip()
+    local name = _G.HELP_BUTTON or "Customer Support"
+    return MicroButtonTooltipText and MicroButtonTooltipText(name, "TOGGLEHELP") or name
+end
+local HELP_TIP = { text = HelpButtonTip, r = 1, g = 1, b = 1 }
+
+local function HelpMicroButton()
+    if ns.HelpMicroButton then return ns.HelpMicroButton end
+    local client = _G.HelpMicroButton
+    if not client then return nil end
+    local button = CreateFrame("Button", "ForeverClassicUIHelpMicroButton", B.art or UIParent)
+    button:SetSize(MICRO_W, MICRO_H)
+    button:SetNormalTexture((ns.TexPath("microHelpUp")))
+    button:SetPushedTexture((ns.TexPath("microHelpDown")))
+    button:SetHighlightTexture((ns.TexPath("microHighlight")))
+    ns.AttachTip(button, HELP_TIP)
+    ns.HelpMicroButton = button
+    ns.MapPad(button, nil, nil, client)
+    return button
+end
+
 -- 1.x had a world map button in the row; ours goes beside the quest button. Its click goes through a secure pad (UI/SecurePad.lua).
 local function WorldMapMicroButton()
     if ns.WorldMapMicroButton then return ns.WorldMapMicroButton end
@@ -84,6 +107,8 @@ local function MicroButtonList()
         end
         table.insert(found, at, map)
     end
+    local help = HelpMicroButton()
+    if help then found[#found + 1] = help end
     microButtons = found
     return found
 end
@@ -114,12 +139,19 @@ local MICRO_HIDE = {
     CharacterMicroButton = "hideMicroCharacter", SpellbookMicroButton = "hideMicroSpellbook",
     TalentMicroButton = "hideMicroTalents", ProfessionMicroButton = "hideProfessionsButton",
     QuestLogMicroButton = "hideMicroQuestLog", ForeverClassicUIWorldMapMicroButton = "hideMicroWorldMap",
+    ForeverClassicUIHelpMicroButton = "hideMicroHelp",
     GuildMicroButton = "hideMicroGuild", LFDMicroButton = "hideMicroGroupFinder",
     CollectionsMicroButton = "hideMicroCollections", MainMenuMicroButton = "hideMicroGameMenu",
     PlayerSpellsMicroButton = "hideMicroTalents", AchievementMicroButton = "hideMicroAchievements",
-    LegacyMicroButton = "hideMicroLegacy", EJMicroButton = "hideMicroJournal", HousingMicroButton = "hideMicroHousing",
+    LegacyMicroButton = "hideMicroLegacy",
     HelpMicroButton = "hideMicroHelp",
 }
+
+-- The collections button hidden by our option: the spellbook's foot gives it a tab instead.
+function ns.CollectionsMicroHidden()
+    local db = ns.db
+    return B.active and db ~= nil and db.hideMicroButtons == true and db.hideMicroCollections == true
+end
 
 -- Off the row: the shop always; the ones picked under Hide micro buttons. Second value: left off by the option.
 local function MicroSkipped(button)
@@ -155,6 +187,7 @@ local MICRO_TIPS = {
     CharacterMicroButton = "NEWBIE_TOOLTIP_CHARACTER", SpellbookMicroButton = "NEWBIE_TOOLTIP_SPELLBOOK",
     TalentMicroButton = "NEWBIE_TOOLTIP_TALENTS", QuestLogMicroButton = "NEWBIE_TOOLTIP_QUESTLOG",
     ForeverClassicUIWorldMapMicroButton = "NEWBIE_TOOLTIP_WORLDMAP", GuildMicroButton = "NEWBIE_TOOLTIP_GUILDTAB",
+    ForeverClassicUIHelpMicroButton = "NEWBIE_TOOLTIP_HELP",
     LFDMicroButton = "NEWBIE_TOOLTIP_LFGPARENT", CollectionsMicroButton = "NEWBIE_TOOLTIP_MOUNTS_AND_PETS",
     MainMenuMicroButton = "NEWBIE_TOOLTIP_MAINMENU", AchievementMicroButton = "NEWBIE_TOOLTIP_ACHIEVEMENT",
     EJMicroButton = "NEWBIE_TOOLTIP_ENCOUNTER_JOURNAL", HousingMicroButton = "NEWBIE_TOOLTIP_HOUSING",
@@ -367,7 +400,8 @@ local function FitRegion(last, art)
     local right, left = last:GetRight(), art:GetLeft()
     if ns.AnySecret(right, left) or not right or not left then return end
     local rowEnd = right * last:GetEffectiveScale() / art:GetEffectiveScale() - left
-    local trim = (shape.microTrim or 0) + plan.microEnd - MICRO_END_GAP - rowEnd
+    -- Room added under bars 2 and 3 (ReadShape) is wanted, not slack.
+    local trim = (shape.microTrim or 0) + plan.microEnd - (shape.microGrow or 0) - MICRO_END_GAP - rowEnd
     trim = math.floor(math.max(0, math.min(TRIM_MAX, trim)) + 0.5)
     if trim ~= (shape.microTrim or 0) then
         shape.microTrim = trim

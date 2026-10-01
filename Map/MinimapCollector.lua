@@ -138,7 +138,7 @@ end
 local ShowRing, HideRing = ns.RingButton({
     name = "ForeverClassicUIMinimapCollector",
     angleKey = "minimapCollectorAngle",
-    angle = 132,   -- clear of the tracking spell (159) and the zone text
+    angle = 110,   -- clear of the group finder eye (137), the tracking spell (159) and the zone text
     show = "AddonBag",
     face = function(icon)
         icon:SetTexture(BAG_ICON)
