@@ -39,7 +39,7 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "HELDCVAR", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
@@ -47,7 +47,7 @@ LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
               "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX",
-              "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD")
+              "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "HELDCVAR")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -182,6 +182,8 @@ FIX = {
     "ONCEFLAG": "use ns.Once(frame, key), ns.Sched.Attach, or a file-local weak table; never our state as a field "
                 "on a client frame",
     "GAMEMENU": "use ns.CloseWithGameMenu(frame|getter, closer) (UI/Escape.lua): one hook per call, same moment",
+    "HELDCVAR": "use ns.SetCVarOrHold(name, value) (Core/Settings.lua): a pick made in a fight is written as it ends; "
+                "ns.SetCVar refuses in combat and the after-fight pass read the old value back (2026-10-01)",
     "OWNRELOAD": "show a game popup whose OnAccept calls ns.ReloadForLayout (ns.ReloadPopup, UI/Dialogs.lua): a press "
                  "started on our own button that saved the layout first had the game refuse its reload (2026-10-01)",
     "CVARREG": "keep our settings in ForeverClassicUIDB only: saved variables persist on Forever since beta 70009, and an "
@@ -391,6 +393,7 @@ MESSAGES = {
     "ONCEFLAG": "our state as a field on a frame",
     "GAMEMENU": "GameMenuFrame hooked outside ns.CloseWithGameMenu",
     "OWNRELOAD": "the game's reload from our own button's click (or called directly outside ns.ReloadForLayout)",
+    "HELDCVAR": "ns.SetCVar in code a toggle runs at once, in a fight too (KeyEffects, an ns.OnToggle handler)",
     "CVARREG": "an addon-registered cvar (a settings copy outside saved variables)",
     "LAYOUTFIELD": "a field client layout code reads, written from our code (its layout pass then runs in our name)",
     "PADART": "a secure pad on UIParent with art or text of its own (a ghost bar where it outlives its window)",
@@ -1186,6 +1189,7 @@ def pattern_hits(path, lx, funcs):
     found |= mouse_order_hits(lx)
     found |= self_box_hits(lx)
     found |= cvar_login_hits(lx, funcs)
+    found |= held_cvar_hits(lx, funcs)
     if not allowed("THROTTLEFRAME", path):
         found |= throttle_frame_hits(lx)
     for rule, per_file in ALLOWED_BODIES.items():
@@ -1193,6 +1197,18 @@ def pattern_hits(path, lx, funcs):
             inside = body_lines(funcs, per_file[path])
             found = {h for h in found if h[0] != rule or h[1] not in inside}
     return [(rule, no, MESSAGES[rule]) for rule, no in sorted(found, key=lambda h: (h[1], h[0]))]
+
+
+HELDCVAR_RX = re.compile(r"\bns\s*\.\s*SetCVar\s*\(")
+
+
+def held_cvar_hits(lx, funcs):
+    """ns.SetCVar inside the toggle effects or a function opened on an ns.OnToggle line."""
+    lines = set()
+    for start, end, name, _ in funcs:
+        if name == "KeyEffects" or "ns.OnToggle(" in lx.blank[start - 1]:
+            lines.update(range(start, end + 1))
+    return {("HELDCVAR", no) for no in lines if HELDCVAR_RX.search(lx.blank[no - 1])}
 
 
 def function_name(line, col):
