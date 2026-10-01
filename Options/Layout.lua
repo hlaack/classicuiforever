@@ -322,6 +322,8 @@ local function ResetNow()
     ns.db.reagentBagSlot, ns.db.reagentBagRound, ns.db.reagentBagHover =
         defaults.reagentBagSlot, defaults.reagentBagRound, defaults.reagentBagHover
     ns.db.hideMicroButtons, ns.db.hideProfessionsButton = defaults.hideMicroButtons, defaults.hideProfessionsButton
+    -- The classic look's micro buttons and bag slots too (Legacy, group finder and collections off, Era's bag slots).
+    TakeClassicLook(ns.db, true)
     -- Windows and gryphons placed or sized in the windows edit mode (the map included) back to their own; Movable
     -- anytime is kept.
     ns.db.windowPos, ns.db.windowScale = nil, nil
@@ -366,7 +368,7 @@ end
 
 -- Layout button pressed while already on the classic layout.
 ns.Popup("FCUI_LAYOUT_RESET", {
-    text = TITLE .. "\n\nReset the " .. LAYOUT_NAME .. " layout to its defaults? Your other layouts are not touched. The interface reloads.",
+    text = string.format(L["OPTWIN_RESET_CLASSIC_UI"], TITLE),
     button1 = L["OPTWIN_RESET_AND_RELOAD"],
     button2 = CANCEL or "Cancel",
     OnAccept = function() ns.ResetClassicLayout(true) end,
