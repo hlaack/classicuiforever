@@ -14,6 +14,8 @@ MailItemBorder
 Nameplate-Border
 PetHappinessFaces
 QuickJoin-Atlas
+RedButtonCaps
+RedButtonCenter
 SpellBook-SkillLineTab
 UI-BackpackBackground
 UI-Bag-Components-KeyRing

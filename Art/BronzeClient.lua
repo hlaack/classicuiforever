@@ -44,6 +44,15 @@ local FILES = {
     -- Trade window's empty "will not be traded" slot.
     [137072] = "UI-TradeFrame-EnchantIcon.tga",
 }
+-- Atlases on a sheet too big to copy whole, packed into small copies: lower-case atlas -> copy, crop, tiled across.
+-- The game menu's red buttons: per state row, the right cap then the left; the middle alone, full width to tile.
+local PACKED = {}
+for row, state in ipairs({ "", "-pressed", "-disabled" }) do
+    local top, bottom = (row - 1) / 4, row / 4
+    PACKED["128-redbutton-right" .. state] = { "RedButtonCaps.tga", 0, 292 / 512, top, bottom }
+    PACKED["128-redbutton-left" .. state] = { "RedButtonCaps.tga", 296 / 512, 410 / 512, top, bottom }
+    PACKED["_128-redbutton-center" .. state] = { "RedButtonCenter.tga", 0, 1, top, bottom, true }
+end
 local clientWas = setmetatable({}, { __mode = "k" })
 B.clientWas = clientWas
 local IsSecret = ns.IsSecret
@@ -74,6 +83,21 @@ local function Remember(texture, was, atlas, file)
     clientWas[texture] = was
 end
 
+local function SwapPacked(texture, was, atlas, packed)
+    local copy = BronzeCopy(packed[1])
+    local across = packed[6] == true
+    local wrap = across and "REPEAT" or "CLAMP"
+    if copy and texture:SetTexture(copy, wrap, "CLAMP") ~= false then
+        texture:SetTexCoord(packed[2], packed[3], packed[4], packed[5])
+        if texture.SetHorizTile then texture:SetHorizTile(across) end
+        Remember(texture, was, atlas, nil)
+        ns.UntintGameArt(texture)
+        ns.PaintCopy(texture, copy, wrap, "CLAMP")
+    else
+        texture:SetAtlas(atlas)
+    end
+end
+
 local function BronzeClient(texture, off)
     if not texture or not texture.GetAtlas then return end
     -- Our own pieces: the theme already handles them.
@@ -93,6 +117,11 @@ local function BronzeClient(texture, off)
     -- Still on our copy: the client has not reset it.
     if was and texture:GetTexture() == was.copyID then return end
     local atlas = texture:GetAtlas()
+    local packed = atlas and not IsSecret(atlas) and atlas:find("128%-[Rr]ed[Bb]utton") and PACKED[atlas:lower()]
+    if packed then
+        SwapPacked(texture, was, atlas, packed)
+        return
+    end
     if atlas and C_Texture and C_Texture.GetAtlasInfo then
         -- A secret atlas is never a key: asked each time, as before.
         local secret = IsSecret(atlas)
