@@ -137,6 +137,7 @@ ns.TOGGLES = {
     { "groupFinder", L["OPT_groupFinder"], L["OPT_groupFinder_TIP"] },
 
     { "bags", L["OPT_bags"], L["OPT_bags_TIP"], group = L["GROUP_BAGS"] },
+    { "plainQuestItems", L["OPT_plainQuestItems"], L["OPT_plainQuestItems_TIP"], parent = "bags", search = "quest border glow" },
     { "oneBag", L["OPT_oneBag"], L["OPT_oneBag_TIP"] },
     { "bagsBesideBars", L["OPT_bagsBesideBars"], L["OPT_bagsBesideBars_TIP"] },
 

@@ -91,6 +91,7 @@ ns.DB_DEFAULTS = {
     eliteFrameTarget = true,
     eliteFrameFocus = true,
     hideThreatGlow = false,
+    plainQuestItems = false,
     hideStatusMain = false,
     hideStatusSecond = false,
     hoverBothNumbers = true,
