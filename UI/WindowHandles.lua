@@ -5,20 +5,20 @@ local L = ns.L
 -- anytime, Size and resets. Places (db.windowPos, UIParent units) and sizes (db.windowScale) are put back the frame after
 -- anyone moves the window, never inside the client's pass.
 
--- w, h: box before made; cut: a 384 x 512 old frame's bare edges; stripRight: strip inset; toggle: unlock option;
+-- w, h: box before made; cut: a 384 x 512 old frame's bare edges; stripRight, stripH: strip inset, height; toggle: unlock option;
 -- quests: the map; section: heading; piece: laid by ns.LayPiece; ringKey: its angle, dragged round the minimap
--- (only while ringIf is on, if given); fixedIf: no drag while that is on; choice: an options radio group as a dropdown.
+-- (only while ringIf is on, if given); fixedIf: no drag while that is on; choice: radio group dropdown; client: a game window.
 local WINDOWS = {
-    { key = "character", label = L["UI_CHARACTER"], name = "CharacterFrame", w = 354, h = 467, cut = { 30, 45 } },
-    { key = "professions", label = L["UI_PROFESSIONS"], name = "ProfessionsFrame", w = 550, h = 525 },
+    { key = "character", label = L["UI_CHARACTER"], name = "CharacterFrame", w = 354, h = 467, cut = { 30, 45 }, client = true },
+    { key = "professions", label = L["UI_PROFESSIONS"], name = "ProfessionsFrame", w = 550, h = 525, client = true },
     { key = "talents", label = L["UI_TALENTS"], name = "ClassicUIForeverTalents", w = 354, h = 467, cut = { 30, 45 } },
     { key = "questLog", label = L["UI_QUEST_LOG"], name = "ForeverClassicUIQuestLog", w = 349, h = 437, cut = { 35, 75 } },
-    { key = "map", label = L["UI_WORLD_MAP"], name = "WorldMapFrame", w = 1035, h = 534, stripRight = 90, toggle = "mapUnlocked",
+    { key = "map", label = L["UI_WORLD_MAP"], name = "WorldMapFrame", w = 1035, h = 534, stripH = 24, toggle = "mapUnlocked",
         quests = true },
     { key = "calendar", label = L["UI_CALENDAR"], name = "ForeverClassicUICalendarHome", w = 28, h = 28, section = L["UI_MINIMAP"],
         piece = true, ringKey = "calendarAngle", ringIf = "calendarRing", fixedIf = "calendarBehind", choice = "calendarSpot",
         choiceLabel = "Mode" },
-    { key = "spellBook", label = L["UI_SPELLBOOK"], name = "ForeverClassicUISpellBook", w = 384, h = 512, stripRight = 64,
+    { key = "spellBook", label = L["UI_SPELLBOOK"], name = "ForeverClassicUISpellBook", w = 384, h = 512,
         calm = true },
     { key = "minimapZone", label = L["UI_ZONE_NAME"], name = "ForeverClassicUIMinimapZoneHome", w = 140, h = 12,
         section = "Minimap", piece = true, choice = "minimapZoneShow", choiceLabel = "Show" },
@@ -36,9 +36,11 @@ local WINDOWS = {
         section = "Minimap", piece = true, choice = "minimapDielShow", choiceLabel = "Show" },
     { key = "minimapCoords", label = L["UI_COORDINATES"], name = "ForeverClassicUIMinimapCoordsHome", w = 90, h = 10,
         section = "Minimap", piece = true, choice = "minimapCoordsShow", choiceLabel = "Show" },
+    { key = "social", label = L["UI_SOCIAL"], name = "FriendsFrame", w = 338, h = 424, client = true },
 }
 local SLOT_LEFT, SLOT_TOP = 0, 104
-local STRIP_H, STRIP_LEFT, STRIP_RIGHT = 24, 60, 30
+-- The whole painted title bar, clear of the portrait on the left and the lock and close on the right.
+local STRIP_H, STRIP_LEFT, STRIP_RIGHT = 40, 60, 90
 local Plain = ns.Safe
 
 local weak = { __mode = "k" }
@@ -98,6 +100,8 @@ local function Set(key, value)
 end
 -- A saved size by window key, for a secure re-apply (the client fits a panel to 1 as it shows it).
 function ns.WindowScale(key) return Scales()[key] end
+-- Mid drag by its title bar: the window placing passes leave it to the mouse.
+function ns.WindowMoving(frame) return moving[frame] == true end
 function ns.WindowPlaced(key) return Places()[key] ~= nil end
 
 local function IsFree(entry)
@@ -167,6 +171,11 @@ local function Apply(entry)
     local k = Ratio(frame)
     if not k then return end
     local x, y = OnScreen(entry, frame, k, pos[1], pos[2])
+    -- The game stands its windows side by side: a place that would cover another open one waits till it closes.
+    if entry.client then
+        local w, h = DrawnSize(entry, frame)
+        if w and ns.WindowCovers(frame, x, y, w * k, h * k) then return end
+    end
     x, y = x / k, y / k
     if not ns.IsAt(frame, "TOPLEFT", UIParent, "BOTTOMLEFT", x, y) then
         ns.SetPointOnce(frame, "TOPLEFT", UIParent, "BOTTOMLEFT", x, y)
@@ -182,6 +191,14 @@ local function SaveFrom(entry, frame)
     Places()[entry.key] = { x, y }
 end
 
+-- StartMoving calls no SetPoint: a window's followers (the spellbook's casting layer) are told each frame mid drag.
+local function FollowDragged()
+    for frame in pairs(moving) do
+        if frame.OnClassicPlaced then frame:OnClassicPlaced() end
+    end
+end
+local dragJob = ns.Sched.Job({ name = "windows.dragFollow", every = 0, awake = false, fn = FollowDragged })
+
 local function StripDragStart(self)
     local frame = self:GetParent()
     local entry = entryOf[frame]
@@ -193,6 +210,7 @@ local function StripDragStart(self)
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
     frame:StartMoving()
+    dragJob:Wake()
 end
 
 -- StopMovingOrSizing drops the anchors of a frame others hang on: read where it was drawn first, then set it there.
@@ -204,6 +222,7 @@ local function StripDragStop(self)
     frame:StopMovingOrSizing()
     if frame.SetUserPlaced then pcall(frame.SetUserPlaced, frame, false) end
     moving[frame] = nil
+    if not next(moving) then dragJob:Sleep() end
     frame:SetClampedToScreen(clampWas[frame] == true)
     Apply(entry)
     ns.Sched.LetGo(frame, false)
@@ -221,7 +240,7 @@ local function Strip(entry)
     if not strip then
         strip = CreateFrame("Frame", nil, frame)
         strip:SetPoint("TOPLEFT", frame, "TOPLEFT", STRIP_LEFT, 0)
-        strip:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", -(entry.stripRight or STRIP_RIGHT), -STRIP_H)
+        strip:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", -(entry.stripRight or STRIP_RIGHT), -(entry.stripH or STRIP_H))
         strip:EnableMouse(true)
         strip:RegisterForDrag("LeftButton")
         strip:SetScript("OnDragStart", StripDragStart)
@@ -242,12 +261,13 @@ local function Watch(entry)
     ns.Sched.OnMove(frame, ns.Sched.AfterShow(frame, "windowPlace", Put))
 end
 
-local MapLock
+local MAP_ENTRY = WINDOWS[5]
+
 PlaceAll = function()
     if not ns.db then return end
-    if MapLock then MapLock() end
     for _, entry in ipairs(WINDOWS) do
         local frame = _G[entry.name]
+        if ns.MakeWindowLock then ns.MakeWindowLock(entry) end
         if Places()[entry.key] or Scales()[entry.key] or IsFree(entry) or (frame and scaled[frame]) then
             Watch(entry)
             Apply(entry)
@@ -255,55 +275,10 @@ PlaceAll = function()
         -- Also off again: a strip made earlier goes.
         if frame and (IsFree(entry) or strips[frame]) then Strip(entry) end
     end
-end
--- The map's lock, beside its maximize and close buttons: the same switch as its option and its edit mode box.
-local LOCK = "Interface\\Buttons\\LockButton-"
-local MAP_ENTRY = WINDOWS[5]
-local LOCK_TIP = { text = L["UI_MAP_LOCK"], r = 1, g = 1, b = 1, lines = { { function()
-    return ns.db.mapUnlocked and L["UI_UNLOCKED_DRAG_THE_MAP_BY"]
-        or L["UI_LOCKED_CLICK_TO_DRAG_THE"]
-end, nil, nil, nil, true } } }
-local lock
-local function SyncLock()
-    if not lock then return end
-    local state = ns.db.mapUnlocked and "Unlocked-" or "Locked-"
-    lock:SetNormalTexture(LOCK .. state .. "Up")
-    lock:SetPushedTexture(LOCK .. state .. "Down")
-    -- Under the mouse, its tooltip says the new state at once.
-    if GameTooltip:IsOwned(lock) then lock:GetScript("OnEnter")(lock) end
+    if ns.SyncWindowLocks then ns.SyncWindowLocks() end
 end
 
-MapLock = function()
-    local map = WorldMapFrame
-    if lock or not map then return end
-    local border = map.BorderFrame or map
-    local beside = border.MaximizeMinimizeFrame or border.CloseButton
-    lock = CreateFrame("Button", nil, border)
-    lock:SetSize(28, 28)
-    lock:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
-    if beside then
-        lock:SetPoint("RIGHT", beside, "LEFT", 2, 0)
-    else
-        lock:SetPoint("TOPRIGHT", map, "TOPRIGHT", -56, -2)
-    end
-    lock:SetScript("OnClick", function()
-        Set("mapUnlocked", not ns.db.mapUnlocked)
-        ns.ToggleChanged("mapUnlocked")
-    end)
-    ns.AttachTip(lock, LOCK_TIP)
-    SyncLock()
-    -- Maximized, the map is the client's full screen and nothing of ours moves it: no lock then.
-    local function LockShown() ns.SetShownIf(lock, not (map.IsMaximized and map:IsMaximized())) end
-    ns.Sched.OnMove(map, function() ns.Sched.NextFrame("windows.mapLock", LockShown) end)
-    ns.Sched.AfterShow(map, "windows.mapLock", LockShown)
-    LockShown()
-end
-
-ns.OnToggle(function(key)
-    if key ~= MAP_ENTRY.toggle then return end
-    PlaceAll()
-    SyncLock()
-end)
+ns.OnToggle(function(key) if key == MAP_ENTRY.toggle then PlaceAll() end end)
 
 -- Our windows are made on first open; client ones as their addon loads.
 ns.PlaceSavedWindows = PlaceAll
@@ -316,13 +291,24 @@ local handles = {}
 -- The map's placeholder: with its quest log pane (as it opens) or the map alone; one place and size for both.
 local mapOnly = false
 
--- Back where the client or our slots put it: ours go back on the slots now, the client's on their next opening.
+-- A game window open alone goes to the game's own left spot now (the Era pass takes it on); beside another it waits
+-- for its next opening, when the game lays it.
+local function GameSpot(frame)
+    if not frame:IsShown() or (InCombatLockdown() and ns.WindowLocked(frame)) then return end
+    local w, h = Plain(frame:GetWidth()), Plain(frame:GetHeight())
+    local k = Ratio(frame)
+    if not (w and h and k) or ns.WindowCovers(frame, 16 * k, UIParent:GetHeight() - 116 * k, w * k, h * k) then return end
+    pcall(frame.SetPoint, frame, "TOPLEFT", UIParent, "TOPLEFT", 16, -116)
+end
+
+-- Back where the client or our slots put it: ours on the slots, the game's at its own spot or on their next opening.
 local function Return(entry)
     local frame = _G[entry.name]
     if entry.piece then
         if ns.LayPiece then ns.LayPiece(entry.key) end
     elseif frame then
         ns.ReturnClassicWindow(frame)
+        if entry.client then GameSpot(frame) end
     end
 end
 
@@ -699,7 +685,8 @@ end
 -- Shared with UI/WindowsEditMode.lua, the mode window around these placeholders.
 ns.windowEdit = {
     WINDOWS = WINDOWS, Return = Return, Clean = Clean, ValidFlag = ValidFlag, Places = Places, Scales = Scales, Freed = Freed,
-    Ratio = Ratio, PlaceAll = PlaceAll, LayHandle = LayHandle, Refresh = Refresh,
+    Ratio = Ratio, PlaceAll = PlaceAll, LayHandle = LayHandle, Refresh = Refresh, IsFree = IsFree, Full = Full, Reset = Reset,
+    STRIP_LEFT = STRIP_LEFT,
     ShowHandle = ShowHandle, Set = Set, DialogKeys = DialogKeys,
     HideDialog = function() if dialog then dialog:Hide() end end,
 }

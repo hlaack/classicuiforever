@@ -703,6 +703,8 @@ local function CreateBook()
     f:SetFrameStrata("MEDIUM")
     f:SetToplevel(true)
     f:EnableMouse(true)
+    -- Only the painted book takes the mouse: under its foot tabs and past its border the world does.
+    f:SetHitRectInsets(0, 34, 0, 79)
     f:EnableMouseWheel(true)
     f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, -104)
     f:Hide()
@@ -832,6 +834,8 @@ local function CreateBook()
     f.OnClassicPlaced = function() FollowBook() end
     ns.HookMethod(f, "SetPoint", FollowBook)
     ns.HookMethod(f, "SetScale", FollowBook)
+    -- An edit mode place was set as the book registered, before the layer existed.
+    FollowBook()
     -- The layer cannot move in combat: while up, the book keeps its slot and new
     -- windows lay out around it.
     f.LayerUp = function()

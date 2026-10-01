@@ -27,6 +27,14 @@ local BAR_FILE = "Interface\\ClassTrainerFrame\\UI-ClassTrainer-HorizontalBar"
 local BAR_H, BAR_END_W = 16, 76
 local MARBLE_TILE, MARBLE = { coords = { 0, 1, 0, 1 } }, 1.35
 local CLIENT_BACK = "damagemeters-background"
+-- The list's scroll bar pieces (+ right, + up; the bar's own scale, 0.8 by default).
+local METER_SCROLL_UP_ARROW_X = 1
+local METER_SCROLL_UP_ARROW_Y = 0
+local METER_SCROLL_DOWN_ARROW_X = 1
+local METER_SCROLL_DOWN_ARROW_Y = -12
+local METER_SCROLL_KNOB_X = 1
+local METER_SCROLL_KNOB_TOP_TRAVEL = 6
+local METER_SCROLL_KNOB_BOTTOM_TRAVEL = 18
 -- Body backgrounds: the marble, or a 1.x talent tree drawn at its own size from its top right corner, cropped.
 local TALENT_ART = "Interface\\TalentFrame\\"
 local TREES = { "DruidBalance", "DruidFeralCombat", "DruidRestoration", "HunterBeastMastery", "HunterMarksmanship",
@@ -142,6 +150,8 @@ local function DressButtons(window)
     Face(session, BLANK, nil, session and session.Background)
     if session and session.Arrow then ns.SetAlphaIf(session.Arrow, 0) end
     if kind and kind.Arrow then Face(kind, ARROW, nil, kind.Arrow, OffsetTo(minimize, kind)) end
+    -- The fight timer takes the header's left in combat: the title stays one line, shortened, never two.
+    if kind and kind.TypeName and kind.TypeName.SetWordWrap then kind.TypeName:SetWordWrap(false) end
 end
 
 local function BarPiece(box, u1, v0, v1)
@@ -366,6 +376,24 @@ local function PanStop()
     SavePan(pair)
 end
 
+-- The list's scroll bar in the old knob and arrows, as the detail window's; its own pieces' places.
+local function PlaceArrowArt(button, x, y)
+    local art = button and button.fcui and button.fcui.arrow
+    if not art then return end
+    art:ClearAllPoints()
+    art:SetPoint("TOPLEFT", button, "TOPLEFT", x, y)
+    art:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", x, y)
+end
+
+local function DressListScroll(bar)
+    if not bar then return end
+    ns.SkinMinimalScrollBar(bar)
+    PlaceArrowArt(bar.Back, METER_SCROLL_UP_ARROW_X, METER_SCROLL_UP_ARROW_Y)
+    PlaceArrowArt(bar.Forward, METER_SCROLL_DOWN_ARROW_X, METER_SCROLL_DOWN_ARROW_Y)
+    ns.KnobOffset(bar, METER_SCROLL_KNOB_X)
+    ns.KnobReach(bar, METER_SCROLL_KNOB_TOP_TRAVEL, METER_SCROLL_KNOB_BOTTOM_TRAVEL)
+end
+
 -- The detail window a row opens: the meter's marble in the metal border, the old scroll bar and close button.
 local function DressSource(window)
     local source = window.MinimizeContainer and window.MinimizeContainer.SourceWindow
@@ -413,6 +441,7 @@ local function Dress(window)
         end)
     end
     PaintTree(pair)
+    if window.MinimizeContainer then DressListScroll(window.MinimizeContainer.ScrollBar) end
     DressMinimize(window)
     DressButtons(window)
     DressSource(window)

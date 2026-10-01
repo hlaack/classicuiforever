@@ -723,7 +723,6 @@ local function Apply()
     if not hooked then
         hooked = true
         ns.HookMethod(CharacterFrame, "UpdateSize", Layout)
-        ns.HookMethod(CharacterFrame, "UpdateTabBounds", Layout)
         -- The client resizes the pane on its own (e.g. opening in combat); re-lay then and
         -- after combat, when the panel system re-places it.
         if PaperDollFrame then PaperDollFrame:HookScript("OnSizeChanged", LayoutIfActive) end

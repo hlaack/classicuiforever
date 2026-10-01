@@ -625,9 +625,6 @@ local function Apply()
         if MinimapCluster.IndicatorFrame then
             ns.HookMethod(MinimapCluster.IndicatorFrame, "Layout", LayoutIfActive)
         end
-        if QueueStatusButton then
-            ns.HookMethod(QueueStatusButton, "UpdatePosition", LayoutIfActive)
-        end
         if AddonCompartmentFrame then
             ns.HookMethod(AddonCompartmentFrame, "UpdateDisplay", HideCompartment)
         end

@@ -417,8 +417,9 @@ local function Build()
     frame:SetSize(WINDOW_W, WINDOW_H)
     frame:SetFrameStrata("MEDIUM")
     frame:SetToplevel(true)
-    -- Movable like the quest log; the window placer leaves a moved window where it was put.
-    ns.MakeDraggable(frame)
+    frame:EnableMouse(true)
+    -- Era's margins: past the art the world takes the mouse.
+    frame:SetHitRectInsets(0, 30, 0, 45)
     frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, -104)
     frame:Hide()
     ns.CloseWithGameMenu(frame)
@@ -440,6 +441,7 @@ local function Build()
     close:SetPoint("CENTER", frame, "TOPRIGHT", -46, -24)
     ns.SkinCloseButton(close, true)
     close:SetScript("OnClick", function() frame:Hide() end)
+    frame.close = close
     -- A secure pad over it: a fight's Escape binding (UI/Escape.lua) is let go in the same click.
     if ns.EscDisarmOnClick then ns.EscDisarmOnClick(ns.MapPad(close, "DIALOG", function() frame:Hide() end, "")) end
 

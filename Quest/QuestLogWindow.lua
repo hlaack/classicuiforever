@@ -489,6 +489,7 @@ function Layout()
     for _, tex in ipairs(frame.singleArt) do tex:SetShown(not dual) end
     for _, tex in ipairs(frame.dualArt) do tex:SetShown(dual) end
     frame:SetSize(dual and DUAL.WIDTH or WIDTH, dual and DUAL.HEIGHT or HEIGHT)
+    frame:SetHitRectInsets(0, dual and 0 or 35, 0, dual and 0 or 75)
     local listW = dual and DUAL.LIST_W or LIST_W
     frame.listArea:ClearAllPoints()
     if dual then
@@ -607,10 +608,15 @@ local function ValidPos(pos)
         and type(pos[3]) == "number" and type(pos[4]) == "number"
 end
 
-local function SavePos(self)
-    local point, _, relPoint, x, y = self:GetPoint(1)
-    local pos = { point, relPoint, x, y }
-    if ValidPos(pos) then ns.db.questLogPos = pos end
+-- A place from the old whole-window drag becomes its edit mode place (top left, UIParent units), once.
+local function TakeOldPlace()
+    local pos = ns.db.questLogPos
+    ns.db.questLogPos = nil
+    if not ValidPos(pos) or pos[1] ~= "TOPLEFT" then return end
+    local top = pos[2] == "BOTTOMLEFT" and pos[4] or pos[2] == "TOPLEFT" and UIParent:GetHeight() + pos[4]
+    if not top then return end
+    local places = ns.DbTable("windowPos")
+    if not places.questLog then places.questLog = { pos[3], top } end
 end
 
 -- Coalesces a burst of party log changes into one refill next frame.
@@ -656,19 +662,14 @@ local function Build()
     frame:SetSize(WIDTH, HEIGHT)
     frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, -104)
     frame:SetToplevel(true)
+    frame:EnableMouse(true)
     frame:SetFrameStrata("HIGH")
-    ns.MakeDraggable(frame, SavePos)
+    TakeOldPlace()
     -- OnShow order matters: RegisterClassicWindow, CloseOnEscape, then ours.
     ns.RegisterClassicWindow(frame)
     -- Escape closes the log before clearing the target.
     ns.CloseOnEscape(frame, CloseLog)
     frame:Hide()
-    local pos = ns.db.questLogPos
-    if ValidPos(pos) then
-        ns.SetPointOnce(frame, pos[1], UIParent, pos[2], pos[3], pos[4])
-    else
-        ns.db.questLogPos = nil
-    end
 
     frame.singleArt = ns.DressPieces(frame, SINGLE_ART, nil, true)
     frame.dualArt = ns.DressPieces(frame, DUAL_ART, nil, true)
