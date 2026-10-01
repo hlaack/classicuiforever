@@ -21,6 +21,7 @@ local timers = {}
 C_Timer = { After = function(s, fn) timers[#timers + 1] = { s, fn } end }
 function geterrorhandler() return function(msg) error(msg, 0) end end
 function InCombatLockdown() return false end
+function wipe(t) for k in pairs(t) do t[k] = nil end return t end
 BackdropTemplateMixin = {}
 StaticPopupDialogs = {}
 ERR_NOT_IN_COMBAT = "You can't do that while in combat"
@@ -131,6 +132,16 @@ function Region:GetTop() return self._top end
 function Region:SetStatusBarTexture(path) Log(self, "SetStatusBarTexture", path) end
 function Region:RegisterEvent(e) Log(self, "RegisterEvent", e) end
 function Region:RegisterUnitEvent(e) Log(self, "RegisterUnitEvent", e) end
+function Region:IsVisible() return self._shown end
+function Region:GetTexCoord() local c = self._coords or { 0, 1, 0, 1 } return c[1], c[2], c[3], c[4] end
+function Region:GetBlendMode() return self._blend or "BLEND" end
+function Region:GetHorizTile() return false end
+function Region:GetVertTile() return false end
+function Region:GetName() return self._name end
+function Region:SetColorTexture(...) Log(self, "SetColorTexture", ...) self._color = { ... } end
+function Region:CreateMaskTexture() return NewRegion("MaskTexture", self) end
+function Region:AddMaskTexture(mask) Log(self, "AddMaskTexture", mask) self._mask = mask end
+function Region:RemoveMaskTexture(mask) Log(self, "RemoveMaskTexture", mask) self._mask = nil end
 
 -- Button state textures, made on first set as the client does.
 for _, state in ipairs({ "Normal", "Pushed", "Disabled", "Highlight", "Checked", "DisabledChecked" }) do
@@ -178,6 +189,7 @@ UIErrorsFrame = { AddMessage = function(_, ...) errorLines[#errorLines + 1] = ta
 
 local ns = { db = { bronzeTheme = false } }
 function ns.RegisterModule() end
+function ns.OnToggle() end
 
 local function Load(path)
     local chunk, err = loadfile(ROOT .. "/" .. path)
@@ -195,6 +207,7 @@ Load("Art/ThemeArt.lua")
 Load("Art/TextureData.lua")
 Load("Art/Textures.lua")
 Load("Art/Bronze.lua")
+Load("Art/ThemeFlat.lua")
 Load("Art/ThemeLayers.lua")
 -- The helpers load before Skin.lua, so nothing of Skin's may be needed at load.
 Load("UI/Dress.lua")
@@ -335,6 +348,27 @@ Test("Themes: dark tint, a copy folder per theme, the look rule", function()
     ns.db.bronzeTheme = false
     Check(ns.ThemeLook(true) == "classic" and ns.ThemeName() == nil, "off")
     Check(ns.BronzeCopy(BORDER) ~= nil, "off still answers whether a copy exists")
+end)
+
+Test("Flat colour: a part in one colour cut to its own art, its row off brings the art back", function()
+    ns.db.bronzeTheme, ns.db.themeDark, ns.db.themeFlat, ns.db.flatGryphons = true, true, true, true
+    local frame = CreateFrame("Frame")
+    local tex = frame:CreateTexture()
+    tex:SetTexture("Interface/Test/Gryphon")
+    ns.FlatTag(tex, "flatGryphons")
+    ns.BronzeTint(tex)
+    local layer
+    for _, region in ipairs(frame._regions) do
+        if region._mask then layer = region end
+    end
+    Check(layer ~= nil and layer._shown == true, "flat layer shown")
+    Check(layer and layer._mask._tex == "Interface/Test/Gryphon", "cut to the piece's own art")
+    Check(layer and Near(layer._vertex[1], 0.38) and layer._color[1] == 1, "one colour: the theme's")
+    ns.db.flatGryphons = false
+    ns.RepaintBronze()
+    Check(layer and layer._shown == false, "row off: no flat layer")
+    ns.db.themeFlat, ns.db.flatGryphons, ns.db.themeDark, ns.db.bronzeTheme = nil, nil, false, false
+    ns.UntintBronze(tex)
 end)
 
 Test("Dress fill, keep, second point, file and raw", function()

@@ -285,7 +285,9 @@ local THEMES = {
 }
 B.THEMES = THEMES
 -- Toggles that change the theme.
-B.THEME_KEYS = { bronzeTheme = true, themeBronze = true, themeDark = true, themeCustom = true }
+B.THEME_KEYS = { bronzeTheme = true, themeBronze = true, themeDark = true, themeCustom = true, themeFlat = true,
+    flatGryphons = true, flatBars = true, flatButtons = true, flatUnitFrames = true, flatMinimap = true,
+    flatNameplates = true, flatCharacter = true, flatSpellbook = true, flatWindows = true }
 
 -- "rrggbb" to 0-1 channels, or nil.
 function ns.HexColor(hex)

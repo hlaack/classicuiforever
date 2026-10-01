@@ -32,6 +32,7 @@ Art\ThemeArt.lua
 Art\TextureData.lua
 Art\Textures.lua
 Art\Bronze.lua
+Art\ThemeFlat.lua
 Art\ThemeLayers.lua
 Art\BronzeClient.lua
 Art\GameArt.lua

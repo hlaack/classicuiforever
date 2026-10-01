@@ -55,11 +55,14 @@ local function Paint(texture, theme, share, silver)
         share = type(share) == "number" and share or 1
         texture:SetDesaturated(true)
         local max = math.max
-        texture:SetVertexColor(max(0, 1 + (tint[1] - 1) * share), max(0, 1 + (tint[2] - 1) * share),
-            max(0, 1 + (tint[3] - 1) * share))
+        local r, g, b = max(0, 1 + (tint[1] - 1) * share), max(0, 1 + (tint[2] - 1) * share),
+            max(0, 1 + (tint[3] - 1) * share)
+        texture:SetVertexColor(r, g, b)
+        ns.PaintFlat(texture, r, g, b)
     else
         texture:SetDesaturated(silver == true)
         texture:SetVertexColor(1, 1, 1)
+        ns.PaintFlat(texture)
     end
 end
 
@@ -88,6 +91,7 @@ end
 function ns.UntintGameArt(texture)
     if not texture or gameArt[texture] == nil then return end
     gameArt[texture] = nil
+    ns.PaintFlat(texture)
     if OnCopy(texture) then return end
     texture:SetDesaturated(false)
     texture:SetVertexColor(1, 1, 1)
@@ -108,6 +112,7 @@ function ns.UntintBronze(texture)
     if not texture then return end
     tinted[texture] = nil
     silvered[texture] = nil
+    ns.PaintFlat(texture)
     if not texture.SetDesaturated then return end
     texture:SetDesaturated(false)
     texture:SetVertexColor(1, 1, 1)
@@ -192,6 +197,7 @@ local function PaintDrain(region, tint)
     if theme and theme.client then
         region:SetDesaturated(false)
         if region.SetVertexColor then region:SetVertexColor(1, 1, 1) end
+        ns.PaintFlat(region)
         return
     end
     region:SetDesaturated(true)
@@ -201,6 +207,9 @@ local function PaintDrain(region, tint)
     if theme then
         local t = theme.tint
         r, g, b = r * t[1], g * t[2], b * t[3]
+        ns.PaintFlat(region, r, g, b)
+    else
+        ns.PaintFlat(region)
     end
     region:SetVertexColor(r, g, b)
 end
@@ -216,6 +225,7 @@ end
 function ns.UndrainBronze(region)
     if not region or not region.SetDesaturated then return end
     drained[region] = nil
+    ns.PaintFlat(region)
     region:SetDesaturated(false)
     if region.SetVertexColor then region:SetVertexColor(1, 1, 1) end
 end
@@ -252,14 +262,19 @@ function ns.TintSlice(slice)
     if slice then ns.EachRegion(slice, SliceTint, slice.Center) end
 end
 
--- Repaint every remembered piece for the current theme.
-function ns.RepaintBronze()
+-- The tinted, game and drained pieces with their flat layers: textures only, so a flat row answers in a fight.
+function ns.RepaintTints()
     for texture in pairs(tinted) do PaintTint(texture) end
     for texture in pairs(gameArt) do PaintGame(texture) end
-    for region in pairs(kept) do PaintKeep(region) end
     for region, tint in pairs(drained) do
         if region.SetDesaturated then PaintDrain(region, tint or nil) end
     end
+end
+
+-- Repaint every remembered piece for the current theme.
+function ns.RepaintBronze()
+    ns.RepaintTints()
+    for region in pairs(kept) do PaintKeep(region) end
     for frame in pairs(bordered) do ns.BronzeBackdrop(frame) end
     for texture, what in pairs(swapped) do
         if what:find("[\\/]") then

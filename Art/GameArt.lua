@@ -63,7 +63,10 @@ local function Match(region)
     if not (region.IsObjectType and region:IsObjectType("Texture")) then return end
     local atlas = region:GetAtlas()
     if atlas then
-        if IsMetal(atlas) then want[region] = true end
+        if IsMetal(atlas) then
+            want[region] = true
+            if atlas:find("ryphon") or atlas:find("yvern") then ns.FlatTag(region, "flatGryphons") end
+        end
     else
         local file = region:GetTexture()
         if type(file) == "number" and METAL_FILES[file] then want[region] = true end
