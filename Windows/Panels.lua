@@ -30,7 +30,7 @@ local MAIL_TAB_STEP = -8
 local WINDOWS = {
     -- Its own row under Map (toggle): the pass skips it while that is off.
     { "WorldMapFrame", child = "BorderFrame", toggle = "worldMap", portrait = false, backing = false, lift = P.MAP_LIFT,
-        after = A.WorldMapFrame },
+        left = P.MAP_LEFT, after = A.WorldMapFrame },
     { "MerchantFrame", lift = 5, tabLift = MERCHANT_TAB_LIFT, after = A.MerchantFrame },
     -- Half lift: the send row sits near the bottom edge.
     { "MailFrame", lift = 5, tabLift = MAIL_TAB_LIFT, after = function()

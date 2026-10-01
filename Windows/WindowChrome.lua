@@ -12,6 +12,7 @@ local P = {
     windowOpts = setmetatable({}, { __mode = "k" }),   -- window -> SkinWindow opts, for Reborder's backing
     BOTTOM_LIFT = 10,
     MAP_LIFT = 5,   -- full lift cut the map's coordinate line, none left a gap
+    MAP_LEFT = -10, -- map's left corners (+ right): the line meets Forever's picture and title row, 2 in
 }
 ns.panels = P
 
@@ -66,7 +67,7 @@ local function Lines(slice)
 end
 
 -- Dresses the border; returns Lines() for it, or nil without a NineSlice.
-local function NineSlice(frame, style, lift, keepLeft)
+local function NineSlice(frame, style, lift, keepLeft, left)
     local slice = frame.NineSlice
     if not slice then return end
     local corners = CORNERS[style] or CORNERS.portrait
@@ -74,10 +75,10 @@ local function NineSlice(frame, style, lift, keepLeft)
         local tex = slice[key]
         if tex then
             ns.Dress(tex, METAL, CORNER_SIZE, nil, nil, nil, nil, nil, coords)
-            -- Plain corner on a portrait layout: 8px out, not the portrait's 13; bottom left too, or the line jogs.
+            -- Plain corner on a portrait layout: 8px out (or the window's left), not the portrait's 13; bottom left too.
             if style == "plain" and not keepLeft and (key == "TopLeftCorner" or key == "BottomLeftCorner") then
                 local point, rel, relPoint, x, y = tex:GetPoint(1)
-                if point and x and x < -8 then tex:SetPoint(point, rel, relPoint, -8, y) end
+                if point and x and (left or x < -8) then tex:SetPoint(point, rel, relPoint, left or -8, y) end
             end
             -- Client hangs bottom corners 3px low and the old metal's line sits at the
             -- foot of a taller piece: lift them to the content (the bottom edge follows).
@@ -236,7 +237,7 @@ function P.ShadeFloor(frame)
 end
 
 -- Border, ring, title strip, close button, tabs. opts (read only): portrait,
--- backing, lift, tabLift, backingRight, backingBottom, topTabs, scrollBars, after.
+-- backing, lift, left, tabLift, backingRight, backingBottom, topTabs, scrollBars, after.
 function ns.SkinWindow(frame, opts)
     if not frame or not P.active then return end
     opts = opts or {}
@@ -246,7 +247,7 @@ function ns.SkinWindow(frame, opts)
         return
     end
     -- A border over its content (the map) passes a smaller lift.
-    local lines = NineSlice(frame, opts.portrait == false and "plain" or "portrait", opts.lift)
+    local lines = NineSlice(frame, opts.portrait == false and "plain" or "portrait", opts.lift, nil, opts.left)
     if not lines then return end
     P.windowOpts[frame] = opts
     frame.fcui = frame.fcui or {}
