@@ -12,6 +12,8 @@ local LOOT_W, LOOT_H, LOOT_ROW = 170, 240, 41
 local LOOT_TOP, LOOT_ARROWS = 71, 40
 local PAGER_ICONS = { "ScrollUp", "ScrollDown" }   -- the old chat buttons (Windows/Chat.lua)
 local LOOT_EVENTS = { "LOOT_SLOT_CLEARED", "LOOT_SLOT_CHANGED", "LOOT_OPENED" }
+-- Loot at the mouse: the cursor 31 in and 27 down on the first icon (26, -75), as Era puts it; Era's lowest window top.
+local CURSOR_X, CURSOR_Y, CURSOR_LOWEST_TOP = 26 + 31, 75 + 27, 350
 local LOOT_HUSHED = { "NameFrame", "BorderFrame", "HighlightNameFrame", "PushedNameFrame", "QualityStripe", "QualityText" }
 local FULL = { 0, 1, 0, 1 }
 local NAME_BOX = { own = "nameBox", layer = "BACKGROUND", sublevel = 1, coords = FULL, w = 130, h = 62, point = "LEFT", show = true }
@@ -134,6 +136,15 @@ local function UpdateLootPages(frame, visit)
     EnableIf(pager.down, page < last)
 end
 
+-- The client's spot at the mouse fits its own rows; ours put the skull ring under the cursor.
+local function AtCursor(frame)
+    local gamepad = InputUtil and InputUtil.IsGamepadUIEnabled and InputUtil.IsGamepadUIEnabled()
+    if not (ns.GetCVarBool("lootUnderMouse") or gamepad) or GetNumLootItems() == 0 then return end
+    local scale = frame:GetEffectiveScale()
+    local x, y = GetCursorPosition()
+    ns.SetPointOnce(frame, "TOPLEFT", nil, "BOTTOMLEFT", x / scale - CURSOR_X, math.max(y / scale + CURSOR_Y, CURSOR_LOWEST_TOP))
+end
+
 -- Overflow pages with two arrows at the foot, as in 1.x.
 local function LootPager(frame)
     if frame.fcuiPager then UpdateLootPages(frame) return end
@@ -179,7 +190,10 @@ local function LootPager(frame)
     look:SetScript("OnShow", function() job:Kick() end)
     -- After the client's own show pass, ahead of the first draw: a hook ran inside it, and an error of ours there cut
     -- the client's loot open short.
-    ns.Sched.AfterShow(frame, "loot.pages", function() UpdateLootPages(frame) end)
+    ns.Sched.AfterShow(frame, "loot.pages", function()
+        UpdateLootPages(frame)
+        AtCursor(frame)
+    end)
     -- Slot change: look next frame, after the client redraws the row.
     local slots = CreateFrame("Frame", nil, pager)
     ns.RegisterEvents(slots, LOOT_EVENTS)
