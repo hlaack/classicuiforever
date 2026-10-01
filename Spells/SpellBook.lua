@@ -9,6 +9,10 @@ local L = ns.L
 local SPELLS_PER_PAGE = 12
 local MAX_SKILL_TABS = 8
 local BOOK_W, BOOK_H = 384, 512
+-- The X: its centre from the book's top right.
+local SPELLBOOK_CLOSE_X = -44
+local SPELLBOOK_CLOSE_Y = -25
+local SPELLBOOK_CLOSE_SIZE = 32
 local BUTTON_SIZE, COLUMN_X, ROW_GAP = 37, 157, 14
 local FIRST_X, FIRST_Y = 34, -85
 
@@ -751,9 +755,10 @@ local function CreateBook()
     f.NextPage = CreatePageButton(f, "sbNext", 1, 314)
 
     f.Close = CreateFrame("Button", nil, f)
-    f.Close:SetSize(32, 32)
-    f.Close:SetPoint("CENTER", f, "TOPRIGHT", -44, -25)
+    -- Sized after the skin, which sets the stock 32.
     ns.SkinCloseButton(f.Close, true)
+    f.Close:SetSize(SPELLBOOK_CLOSE_SIZE, SPELLBOOK_CLOSE_SIZE)
+    f.Close:SetPoint("CENTER", f, "TOPRIGHT", SPELLBOOK_CLOSE_X, SPELLBOOK_CLOSE_Y)
     f.Close:SetScript("OnClick", function() ns.HidePanel(f) end)
 
     -- Search over the right page, across every tab; the X clears it.

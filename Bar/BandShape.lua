@@ -17,6 +17,7 @@ local ALONE_DARK = 1
 local MICRO_SECOND_LEAD = 8
 -- Dropped this close (screen px at UI scale) to a band spot: snaps back there.
 local SNAP_PX = 48
+B.SNAP_PX = SNAP_PX
 
 -- One-bar mode: the band ends after the twelve main slots, right gryphon beside them; micro menu and bags stay off.
 local function OneBar() return ns.db and ns.db.oneBar == true end

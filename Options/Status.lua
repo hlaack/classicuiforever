@@ -61,6 +61,23 @@ local function ChangedSettings()
     return changed
 end
 
+-- The active edit mode layout: name, kind, and the band's bars it holds at the game's default spot (re-stacked in fights).
+local function LayoutLine()
+    local info = ns.ActiveLayoutInfo()
+    if not info then return "Edit mode layout: unreadable", nil end
+    local kind = "?"
+    for name, value in pairs(Enum.EditModeLayoutType or {}) do
+        if value == info.layoutType then kind = name:lower() end
+    end
+    if ns.ClassicLayoutActive() then kind = kind .. ", ours" end
+    local head = string.format("Edit mode layout: %s (%s)", tostring(info.layoutName), kind)
+    if not (ns.band and ns.band.active) then return head .. ", classic bar off", nil end
+    local names = {}
+    for _, bar in ipairs(ns.BandBarsToUnpinned()) do names[#names + 1] = bar:GetName() end
+    table.sort(names)
+    return head, names
+end
+
 local function Wrapped(label, items, none)
     if #items == 0 then return { label .. none } end
     local lines, line = {}, label
@@ -91,6 +108,11 @@ local function StatusText()
     Add(string.format("Character: %s %s, %s%s", tostring(class), tostring(UnitLevel("player")), zone,
         InCombatLockdown() and ", in combat" or ""))
     Add("Profile: " .. ns.ProfileName())
+    local layout, unpinned = LayoutLine()
+    Add(layout)
+    if unpinned then
+        for _, line in ipairs(Wrapped("Band bars at the game's default spot: ", unpinned, "none")) do Add(line) end
+    end
     for _, line in ipairs(Wrapped("Settings changed: ", ChangedSettings(), "none, all as shipped")) do Add(line) end
     local others = OtherAddons()
     for _, line in ipairs(Wrapped("Other addons on (" .. #others .. "): ", others, "none")) do Add(line) end

@@ -130,7 +130,8 @@ function ns.EventFrame(events, onEvent, unit1, unit2)
 end
 
 -- fn(child, a1..a4) per child or region without building a table; returns the count.
--- Forbidden frames (the bank has one) are never asked. Protected forms pcall; on error, visit none.
+-- Forbidden frames (the bank has one) are never asked. Protected forms pcall the whole walk, never the getter:
+-- a pcall returning 22 or more values aborts the beta client (Lua's api check, lapi.c 577).
 local function Visit(fn, a1, a2, a3, a4, ...)
     local n = select("#", ...)
     for i = 1, n do
@@ -139,10 +140,8 @@ local function Visit(fn, a1, a2, a3, a4, ...)
     return n
 end
 
-local function VisitChecked(fn, a1, a2, a3, a4, ok, ...)
-    if not ok then return 0 end
-    return Visit(fn, a1, a2, a3, a4, ...)
-end
+local function VisitChildren(frame, fn, a1, a2, a3, a4) return Visit(fn, a1, a2, a3, a4, frame:GetChildren()) end
+local function VisitRegions(frame, fn, a1, a2, a3, a4) return Visit(fn, a1, a2, a3, a4, frame:GetRegions()) end
 
 -- Whether frame has method and may be asked (not forbidden).
 local function Askable(frame, method)
@@ -164,10 +163,12 @@ end
 
 function ns.EachChildProtected(frame, fn, a1, a2, a3, a4)
     if not Askable(frame, "GetChildren") then return 0 end
-    return VisitChecked(fn, a1, a2, a3, a4, pcall(frame.GetChildren, frame))
+    local ok, n = pcall(VisitChildren, frame, fn, a1, a2, a3, a4)
+    return ok and n or 0
 end
 
 function ns.EachRegionProtected(frame, fn, a1, a2, a3, a4)
     if not Askable(frame, "GetRegions") then return 0 end
-    return VisitChecked(fn, a1, a2, a3, a4, pcall(frame.GetRegions, frame))
+    local ok, n = pcall(VisitRegions, frame, fn, a1, a2, a3, a4)
+    return ok and n or 0
 end

@@ -31,3 +31,25 @@ function ns.ActiveLayoutInfo()
     if not (mgr and mgr.GetActiveLayoutInfo) then return nil end
     return mgr:GetActiveLayoutInfo()
 end
+
+-- A change of ours in edit mode lights its Save and Revert All (the widget's own Enable: no client field); each button is
+-- hooked once per tag, onClick(revert) running after the client's own click.
+local FOOT = { "SaveChangesButton", "RevertAllChangesButton" }
+function ns.LightEditFoot(tag, onClick)
+    local mgr = EditModeManagerFrame
+    if not mgr then return end
+    for _, key in ipairs(FOOT) do
+        local button = mgr[key]
+        if button then
+            if not button:IsEnabled() then
+                local raw = getmetatable(button)
+                raw = raw and raw.__index
+                if type(raw) == "table" and raw.Enable then raw.Enable(button) else button:Enable() end
+            end
+            if ns.Once(button, tag) then
+                local revert = key == "RevertAllChangesButton"
+                button:HookScript("OnClick", function() onClick(revert) end)
+            end
+        end
+    end
+end

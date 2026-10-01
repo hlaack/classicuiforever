@@ -38,21 +38,29 @@ local function Radius()
     return (map and map:GetWidth() or 140) / 2 + 5
 end
 
--- Only we move these buttons, so an unchanged angle and radius means no move.
--- Not while collected into the addon button bag (another parent).
+-- Only we move these buttons, so an unchanged angle, radius and size means no move.
+-- Not while collected into the addon button bag (another parent). Offsets count in the button's own size (edit mode's).
 local function Position(ring)
     local button = ring.button
     if not button or not Minimap or button:GetParent() ~= Minimap then return end
     local degrees = ns.db and ns.db[ring.angleKey] or ring.angle
     local r = Radius()
-    if degrees == ring.placedAngle and r == ring.placedRadius then return end
-    ring.placedAngle, ring.placedRadius = degrees, r
-    ns.RingPoint(button, degrees, r)
+    local k = button:GetEffectiveScale() / Minimap:GetEffectiveScale()
+    if degrees == ring.placedAngle and r == ring.placedRadius and k == ring.placedScale then return end
+    ring.placedAngle, ring.placedRadius, ring.placedScale = degrees, r, k
+    ns.RingPoint(button, degrees, r, k)
 end
 
 local function PositionAll()
     for i = 1, #rings do
         if rings[i].active then Position(rings[i]) end
+    end
+end
+
+-- Edit mode's drag, reset and size steps, by its entry key (ns.LayPiece).
+function ns.PlaceRingButton(key)
+    for i = 1, #rings do
+        if rings[i].key == key and rings[i].active then Position(rings[i]) end
     end
 end
 
@@ -110,14 +118,18 @@ local function Build(ring)
     return b
 end
 
--- spec: { name, angleKey, angle (default degrees), show (its on hover id), face(texture), onClick(button, mouse), tip };
--- returns show and hide.
+-- spec: { name, key (its edit mode entry), angleKey, angle (default degrees), show (its on hover id), face(texture),
+-- onClick(button, mouse), tip }; returns show and hide.
 function ns.RingButton(spec)
     rings[#rings + 1] = spec
     local function Show()
         spec.active = true
         if not Minimap then return end
-        spec.button = spec.button or Build(spec)
+        if not spec.button then
+            spec.button = Build(spec)
+            -- Its edit mode size, now that the named frame exists.
+            if ns.PlaceSavedWindows then ns.PlaceSavedWindows() end
+        end
         Position(spec)
         spec.button:Show()
         ns.MinimapShow(spec.button, spec.show)
@@ -139,6 +151,7 @@ end
 
 local ShowOptions, HideOptions = ns.RingButton({
     name = "ForeverClassicUIMinimapButton",
+    key = "minimapOptionsButton",
     angleKey = "minimapButtonAngle",
     angle = 200,
     show = "OptionsButton",

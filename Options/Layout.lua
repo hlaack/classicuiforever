@@ -282,9 +282,8 @@ local function ResetNow()
     ns.db.reagentBagSlot, ns.db.reagentBagRound, ns.db.reagentBagHover =
         defaults.reagentBagSlot, defaults.reagentBagRound, defaults.reagentBagHover
     ns.db.hideMicroButtons, ns.db.hideProfessionsButton = defaults.hideMicroButtons, defaults.hideProfessionsButton
-    -- Gryphons back on the band (the pin step then resets their edit mode spots).
-    ns.db.capMoved, ns.db.capHeldLeft, ns.db.capHeldRight = nil, false, false
-    -- Windows placed or sized in the windows edit mode (the map included) back to their own; Movable anytime is kept.
+    -- Windows and gryphons placed or sized in the windows edit mode (the map included) back to their own; Movable
+    -- anytime is kept.
     ns.db.windowPos, ns.db.windowScale = nil, nil
     ns.db.barDragged, ns.db.barOffsetX, ns.db.barOffsetY = false, nil, nil
     local names = { "MainActionBar", "MainMenuBar", "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight",
@@ -350,11 +349,20 @@ local function ReadIconCounts()
     return counts
 end
 
+-- The chat's foot over the band's pet and stance row at either bar size (the game's 145 sat on the form bar); the damage
+-- meter under four party frames (their foot at -391), from the corner where it covered the player frame.
+local CHAT_X, CHAT_GAP, CHAT_Y = 35, 6, 145
+local METER_X, METER_Y = 22, -399
+local function ChatY()
+    local top = ns.band and ns.band.PetRowTop and ns.band.PetRowTop()
+    return top and math.floor(top + CHAT_GAP + 0.5) or CHAT_Y
+end
+
 -- Writes the classic setup into layout data: unit frame spots, icon counts, band pins.
 -- A fresh layout also lifts chat and pins every bar; an existing one pins only bars
 -- still at default or pinned by us before.
 local function DressLayoutData(layout, counts, pins, fresh)
-    local CHAT_X, CHAT_Y = 35, 145
+    local chatY = ChatY()
     local pinned = ns.db.barPins and ns.db.barPins[LAYOUT_NAME] or {}
     local record = {}
     for _, system in ipairs(layout.systems or {}) do
@@ -362,16 +370,22 @@ local function DressLayoutData(layout, counts, pins, fresh)
             FitTracker(system)
             PlaceTracker(system)
         end
-        -- Chat above the bars and pet row as in 1.x; the preset's 50px overlaps bars 2 and 3.
+        -- Chat above the bars and pet row as in 1.x.
         if fresh and system.system == Enum.EditModeSystem.ChatFrame and type(system.anchorInfo) == "table" then
             local info = system.anchorInfo
-            if info.point == "BOTTOMLEFT" and (info.offsetY or 0) < CHAT_Y then
+            if info.point == "BOTTOMLEFT" and (info.offsetY or 0) < chatY then
                 info.relativeTo = "UIParent"
                 info.relativePoint = "BOTTOMLEFT"
                 info.offsetX = CHAT_X
-                info.offsetY = CHAT_Y
+                info.offsetY = chatY
                 system.isInDefaultPosition = false
             end
+        end
+        if fresh and system.system == Enum.EditModeSystem.DamageMeter and type(system.anchorInfo) == "table" then
+            local info = system.anchorInfo
+            info.point, info.relativeTo, info.relativePoint = "TOPLEFT", "UIParent", "TOPLEFT"
+            info.offsetX, info.offsetY = METER_X, METER_Y
+            system.isInDefaultPosition = false
         end
         -- Player top left, target beside it; Forever's presets put both in the bottom corners.
         if system.system == Enum.EditModeSystem.UnitFrame and type(system.anchorInfo) == "table" and Enum.EditModeUnitFrameSystemIndices then
@@ -576,28 +590,31 @@ function ns.SelectClassicLayoutIfPending()
     StaticPopup_Show("FCUI_LAYOUT_PICK")
 end
 
--- Player top left, target beside, focus under it (1.x had none), written as edit mode
--- records a drag. Reset job only, so a frame moved on purpose stays.
+-- Player top left, target beside, focus under it (1.x had none), the meter under the party frames, the chat over the
+-- band, written as edit mode records a drag. Reset job only, so a frame moved on purpose stays.
 -- Target y is -4 here, -2 in the layout data; both kept on purpose.
-local FRAME_SPOTS = { { "PlayerFrame", 4, -4 }, { "TargetFrame", 250, -4 }, { "FocusFrame", 250, -165 } }
+local function FrameSpots()
+    return { { "PlayerFrame", "TOPLEFT", 4, -4 }, { "TargetFrame", "TOPLEFT", 250, -4 }, { "FocusFrame", "TOPLEFT", 250, -165 },
+        { "DamageMeter", "TOPLEFT", METER_X, METER_Y }, { "ChatFrame1", "BOTTOMLEFT", CHAT_X, ChatY() } }
+end
 function ns.ApplyClassicFrameSpots()
     if not ns.sessionEnding then return false end
     if InCombatLockdown() or not ns.ClassicLayoutActive() then return false end
     local mgr = EditModeManagerFrame
     if not mgr or not mgr.UpdateSystemAnchorInfo or not mgr.SaveLayouts then return false end
     local changed = false
-    for _, spot in ipairs(FRAME_SPOTS) do
-        local frame = _G[spot[1]]
+    for _, spot in ipairs(FrameSpots()) do
+        local frame, corner = _G[spot[1]], spot[2]
         if frame and frame.system then
             -- Spots are screen units; offsets are in frame scale (the focus frame is smaller).
             local scale = frame:GetScale()
             if not scale or scale <= 0 then scale = 1 end
-            local wantX, wantY = spot[2] / scale, spot[3] / scale
+            local wantX, wantY = spot[3] / scale, spot[4] / scale
             local point, rel, relPoint, x, y = frame:GetPoint(1)
-            local there = point == "TOPLEFT" and rel == UIParent and relPoint == "TOPLEFT"
+            local there = point == corner and rel == UIParent and relPoint == corner
                 and math.abs((x or 0) - wantX) < 0.5 and math.abs((y or 0) - wantY) < 0.5
             if not there then
-                ns.SetPointOnce(frame, "TOPLEFT", UIParent, "TOPLEFT", wantX, wantY)
+                ns.SetPointOnce(frame, corner, UIParent, corner, wantX, wantY)
                 if mgr:UpdateSystemAnchorInfo(frame) then changed = true end
             end
         end

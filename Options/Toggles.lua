@@ -10,6 +10,7 @@ O.TITLE = "ClassicUI Forever"
 -- radio groups rows where exactly one is on (drop: one drop down row); search adds words the search finds.
 -- Order drives the options list, /fcui help and the reload prompt (Core ToggleTree); Status reads it. Kids follow their parent.
 local SHOW_TIP = L["OPT_TIP_SHOW_HOVER_HIDE"]
+local GRYPHON_TIP = L["OPT_TIP_GRYPHON"]
 ns.TOGGLES = {
     { "bronzeTheme", L["OPT_bronzeTheme"], L["OPT_bronzeTheme_TIP"], group = L["GROUP_LOOK"], search = "custom skin color dark mode" },
     { "themeBronze", L["OPT_themeBronze"], L["OPT_themeBronze_TIP"], parent = "bronzeTheme", radio = "theme" },
@@ -57,6 +58,10 @@ ns.TOGGLES = {
     { "hideBagsArt", L["OPT_hideBagsArt"], L["OPT_hideBagsArt_TIP"], parent = "classicBar" },
     { "hideMicroArt", L["OPT_hideMicroArt"], L["OPT_hideMicroArt_TIP"], parent = "classicBar" },
     { "gryphonsOverBars", L["OPT_gryphonsOverBars"], L["OPT_gryphonsOverBars_TIP"], parent = "classicBar" },
+    { "showGryphonLeft", L["OPT_showGryphonLeft"], GRYPHON_TIP, parent = "classicBar", radio = "gryphonLeftShow", drop = true },
+    { "hideGryphonLeft", L["OPT_hideGryphonLeft"], GRYPHON_TIP, parent = "classicBar", radio = "gryphonLeftShow", drop = true },
+    { "showGryphonRight", L["OPT_showGryphonRight"], GRYPHON_TIP, parent = "classicBar", radio = "gryphonRightShow", drop = true },
+    { "hideGryphonRight", L["OPT_hideGryphonRight"], GRYPHON_TIP, parent = "classicBar", radio = "gryphonRightShow", drop = true },
     { "bagsAboveRow", L["OPT_bagsAboveRow"], L["OPT_bagsAboveRow_TIP"], parent = "classicBar" },
     { "hideExtraBars", L["OPT_hideExtraBars"], L["OPT_hideExtraBars_TIP"] },
 

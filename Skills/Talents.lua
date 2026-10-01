@@ -26,6 +26,10 @@ local VIEW_X, VIEW_Y, VIEW_W, VIEW_H = 22, -77, 296, 332
 local BUTTON, START_X, START_Y, PITCH = 37, 35, 20, 63
 local ART = "Interface\\TalentFrame\\"
 local BRANCHES, ARROWS = ART .. "UI-TalentBranches", ART .. "UI-TalentArrows"
+-- The X: its centre from the window's top right.
+local TALENTS_CLOSE_X = -46
+local TALENTS_CLOSE_Y = -24
+local TALENTS_CLOSE_SIZE = 32
 
 -- The old backgrounds, by class and by the tree's place in the row.
 local BACKGROUNDS = {
@@ -437,9 +441,10 @@ local function Build()
     frame.title = title
 
     local close = CreateFrame("Button", nil, frame)
-    close:SetSize(32, 32)
-    close:SetPoint("CENTER", frame, "TOPRIGHT", -46, -24)
+    -- Sized after the skin, which sets the stock 32.
     ns.SkinCloseButton(close, true)
+    close:SetSize(TALENTS_CLOSE_SIZE, TALENTS_CLOSE_SIZE)
+    close:SetPoint("CENTER", frame, "TOPRIGHT", TALENTS_CLOSE_X, TALENTS_CLOSE_Y)
     close:SetScript("OnClick", function() frame:Hide() end)
     frame.close = close
     -- A secure pad over it: a fight's Escape binding (UI/Escape.lua) is let go in the same click.

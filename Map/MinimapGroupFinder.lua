@@ -15,6 +15,7 @@ end
 local padded = false
 local ShowRing, HideRing = ns.RingButton({
     name = "ForeverClassicUIGroupFinderButton",
+    key = "minimapGroupFinder",
     angleKey = "lfgButtonAngle",
     angle = 137,   -- Era's LFG eye spot (backdrop top left +25, -28)
     show = "GroupFinderButton",

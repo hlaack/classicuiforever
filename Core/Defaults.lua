@@ -33,8 +33,6 @@ ns.DB_DEFAULTS = {
     -- Band snaps are our own record (a snap writes nothing to the layout), plus the snapped bag scale.
     bagsHeld = false,
     bagsSnapScale = 0,
-    capHeldLeft = false,
-    capHeldRight = false,
     barScale = 1,
     buttons = true,
     squareIcons = true,
@@ -113,6 +111,9 @@ ns.DB_DEFAULTS = {
     hideBagsArt = false,
     hideMicroArt = false,
     gryphonsOverBars = false,
+    showGryphonLeft = true, hideGryphonLeft = false, showGryphonRight = true, hideGryphonRight = false,
+    -- The game's own Hidden on a gryphon (its edit mode dialog, before ours) read into the choice once.
+    gryphonHiddenCarried = false,
     mapUnlocked = false,
     minimapCollectorAngle = 132,
     minimapButtonAngle = 200,

@@ -127,6 +127,25 @@ function ns.SearchClear(box)
     return clear
 end
 
+-- A search box in the old input look: hint text while empty, the X to clear; callers show those two by the text.
+function ns.SearchBox(parent, width, hintText)
+    local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+    box:SetSize(width, 20)
+    box:SetAutoFocus(false)
+    box:SetFontObject("ChatFontNormal")
+    box:SetMaxLetters(40)
+    -- The client's input edges are bronze; silver off the theme, as every other box.
+    ns.DrainInput(box)
+    local hint = box:CreateFontString(nil, "ARTWORK", "GameFontDisable")
+    hint:SetPoint("LEFT", box, "LEFT", 2, 0)
+    hint:SetText(hintText)
+    box.hint = hint
+    box.clear = ns.SearchClear(box)
+    box:SetScript("OnEscapePressed", function(self) self:SetText("") self:ClearFocus() end)
+    box:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+    return box
+end
+
 -- Shared by settings drop downs and our own list openers.
 local DD_SLICE = { own = "dd", layer = "BACKGROUND", sublevel = 0, set = "file", key = DROPDOWN,
     coords = { { 0, 0.1953125, 0, 1 }, { 0.1953125, 0.8046875, 0, 1 }, { 0.8046875, 1, 0, 1 } }, cap = 25, show = true }

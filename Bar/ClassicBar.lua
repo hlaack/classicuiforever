@@ -16,7 +16,7 @@ local BandScale, BandNow, StatusPair = B.BandScale, B.BandNow, B.StatusPair
 local OneBar, MicroOut, MicroUserScale, BandPlan = B.OneBar, B.MicroOut, B.MicroUserScale, B.BandPlan
 local OnBandMicro, OnBandBags, ArtWidth, HomeSpot, DropPlace = B.OnBandMicro, B.OnBandBags, B.ArtWidth, B.HomeSpot, B.DropPlace
 local CurrentPlan = B.CurrentPlan
-local BuildArt, PaintArt, ApplyArtShape, CapFrame = B.BuildArt, B.PaintArt, B.ApplyArtShape, B.CapFrame
+local BuildArt, PaintArt, ApplyArtShape = B.BuildArt, B.PaintArt, B.ApplyArtShape
 local LayoutButtons, LayoutOnOwnBar, BandRow, LayoutPetRow = B.LayoutButtons, B.LayoutOnOwnBar, B.BandRow, B.LayoutPetRow
 local LayoutSideBars, LayoutExtraBars, LayoutPageArrows = B.LayoutSideBars, B.LayoutExtraBars, B.LayoutPageArrows
 local RestoreSelections, PlacePageArrows = B.RestoreSelections, B.PlacePageArrows
@@ -24,7 +24,6 @@ local Remember, BaseSetters = B.Remember, ns.BaseSetters
 local LayoutBags, MicroButtonList, MicroPlan, LayoutMicroButtons = B.LayoutBags, B.MicroButtonList, B.MicroPlan, B.LayoutMicroButtons
 local HasVisibleBar, LayoutStatusBars, SetDividers, RecolorExpBars = B.HasVisibleBar, B.LayoutStatusBars, B.SetDividers, B.RecolorExpBars
 local SystemMoved, Snapshot, StartWatch, SetLane = B.SystemMoved, B.Snapshot, B.StartWatch, B.SetLane
-local FadeTextures = ns.FadeTextures
 
 -- Whether the bags were off the bar at the last pass; nil before the first.
 local bagsWereOut
@@ -156,7 +155,7 @@ local function Layout()
     art:Show()
     PaintArt()
     ApplyArtShape(bar)
-    -- The client's end caps stay up as edit mode handles, their art faded.
+    -- The client's bar art under ours: its border and dividers.
     if bar.BorderArt then bar.BorderArt:SetAlpha(0) end
     if bar.HorizontalDividersPool then bar.HorizontalDividersPool:ReleaseAll() end
     if bar.VerticalDividersPool then bar.VerticalDividersPool:ReleaseAll() end
@@ -228,6 +227,7 @@ local function Apply()
     B.applying = true
     ns.bandPasses = (ns.bandPasses or 0) + 1
     local ok, err = pcall(Layout)
+    if ok then ok, err = pcall(B.UnhookPieces) end
     B.applying = false
     Snapshot()
     if not ok then geterrorhandler()(err) end
@@ -301,9 +301,8 @@ local function ClientArtBack(bar)
     if ns.WorldMapMicroButton then ns.WorldMapMicroButton:Hide() end
     if bar then
         if bar.BorderArt then bar.BorderArt:SetAlpha(1) end
+        B.UnstashCaps(bar)
         for _, key in ipairs(CAP_KEYS) do
-            local cap = CapFrame(bar, key)
-            if cap then FadeTextures(cap, 1) end
             local client = B.ClientCapTexture(bar, key)
             if client then client:SetAlpha(1) end
         end
@@ -381,6 +380,7 @@ local function Restore()
     B.bottomWant = nil
     SetLane(false)
     RestoreSelections()
+    B.RehookPieces()
     local art = B.art
     if art then
         art:Hide()

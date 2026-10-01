@@ -39,6 +39,7 @@ UI\Tooltips.lua
 UI\Colors.lua
 UI\FriendsWindow.lua
 UI\Windows.lua
+UI\WindowList.lua
 UI\WindowHandles.lua
 UI\WindowsEditMode.lua
 UI\WindowLocks.lua
@@ -66,6 +67,7 @@ Bar\BandStatus.lua
 Bar\BandCast.lua
 Bar\BandBottom.lua
 Bar\BandPins.lua
+Bar\BandHangers.lua
 Bar\BandWatch.lua
 Bar\BandSentinel.lua
 Bar\ClassicBar.lua
@@ -154,6 +156,7 @@ Options\Options.lua
 Options\OptionsSearch.lua
 Options\OptionsWindow.lua
 Options\Profiles.lua
+Options\HelpPanes.lua
 Options\GameMenu.lua
 Options\SettingsPanel.lua
 Options\Welcome.lua

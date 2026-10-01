@@ -43,7 +43,7 @@ end
 
 local function CopyCurseForge() CopyLink(TITLE .. " on CurseForge", CURSEFORGE_URL) end
 local function CopyGitHub() CopyLink(TITLE .. " issues on GitHub", GITHUB_URL) end
-O.CopyCurseForge, O.CopyGitHub = CopyCurseForge, CopyGitHub
+O.CopyCurseForge, O.CopyGitHub, O.CopyLink = CopyCurseForge, CopyGitHub, CopyLink
 
 -- CurseForge and GitHub buttons; the caller anchors them.
 function O.FeedbackButtons(parent, width)

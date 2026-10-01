@@ -6,8 +6,9 @@ local B = ns.band
 -- tinted by the worse of home and world latency at the old 300 and 600 ms marks, read every 10 s while one shows.
 -- One on the band's section, one on the latency bar moved off the band (BandSection.lua).
 local LOW, HIGH, EVERY = 300, 600, 10
--- The window: 7 wide, open from 2 to 39 up the band.
+-- The window: 7 wide, open from 2 to 39 up the band, a half-clear row above.
 local TUBE_W, TUBE_H, TUBE_Y = 7, 37, 2
+local EDGE = 0.3    -- the tube's edge shade, for the tint under it
 
 local tubes = {}
 local job, bandTube
@@ -28,7 +29,10 @@ local function Paint(self)
         local tube = tubes[i]
         if tube:IsVisible() then
             seen = true
-            if worst then tube:SetVertexColor(r, g, 0) end
+            if worst then
+                tube:SetVertexColor(r, g, 0)
+                tube.under:SetVertexColor(r * EDGE, g * EDGE, 0)
+            end
         end
     end
     if not seen then self:Sleep() end
@@ -47,12 +51,20 @@ local TUBE_TIP = { text = TipText, r = 1, g = 1, b = 1, lines = { { TipDesc, 1, 
 
 -- A tube on parent, under its band art; a bare frame over the window carries the tooltip (textures take no mouse).
 function B.MakeTube(parent)
-    local tube = parent:CreateTexture(nil, "BACKGROUND", nil, -8)
+    local tube = parent:CreateTexture(nil, "BACKGROUND", nil, -7)
     ns.SetTex(tube, "latencyBar")
     -- From the tube art's second row: its first is nearly clear and left a gap under the window's frame.
     tube:SetTexCoord(0, 7 / 8, 1 / 64, 38 / 64)
     tube:SetVertexColor(0, 1, 0)
     tube:SetSize(TUBE_W, TUBE_H)
+    -- The art's clear column and row blend into the tube's right and top edges when scaled: tint under them, reaching
+    -- the frame's solid pixels past the window's edges.
+    local under = parent:CreateTexture(nil, "BACKGROUND", nil, -8)
+    under:SetColorTexture(1, 1, 1)
+    under:SetVertexColor(0, EDGE, 0)
+    under:SetPoint("TOPLEFT", tube, "TOPLEFT", -1, 2)
+    under:SetPoint("BOTTOMRIGHT", tube, "BOTTOMRIGHT", 1, -1)
+    tube.under = under
     local hover = CreateFrame("Frame", nil, parent)
     hover:SetPoint("TOPLEFT", tube, "TOPLEFT", -3, 2)
     hover:SetPoint("BOTTOMRIGHT", tube, "BOTTOMRIGHT", 3, -2)
@@ -68,6 +80,7 @@ end
 function B.PlaceTube(tube, parent, x)
     if not x then
         tube:Hide()
+        tube.under:Hide()
         tube.hover:Hide()
         return
     end
@@ -75,6 +88,7 @@ function B.PlaceTube(tube, parent, x)
         ns.SetPointOnce(tube, "BOTTOMLEFT", parent, "BOTTOMLEFT", x, TUBE_Y)
     end
     tube:Show()
+    tube.under:Show()
     tube.hover:Show()
     if not job:IsAwake() then
         job:Wake()

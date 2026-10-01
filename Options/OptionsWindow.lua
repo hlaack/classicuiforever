@@ -344,21 +344,40 @@ local function GroupHead(parent, title, width)
     return head
 end
 
--- Tabs under the window, toggles and profiles: the one list scroll frame shows either tab's rows.
-local TAB_NAMES = { "Toggles", "Profiles" }
+-- Tabs under the window: toggles, then panes (profiles, FAQ, support); the one list scroll frame shows the tab's rows.
+local TAB_NAMES = { "OPTWIN_TAB_TOGGLES", "OPTWIN_TAB_PROFILES", "OPTWIN_TAB_FAQ", "OPTWIN_TAB_SUPPORT" }
+-- The tab row under the window's foot: the art's top rows are clear, so they tuck behind our border, not under it.
+local SETTINGS_TABS_X = 11
+local SETTINGS_TABS_Y = 5
+local SETTINGS_TABS_GAP = -16
+-- The reading tabs (profiles, FAQ, support) have no foot: their list runs down to this far over the window's bottom.
+local LIST_BOTTOM_MARGIN = 20
 local function AddTabs(frame, list, child, togglesOnly, listRows)
-    local function SetRange(height) frame.listBar:SetRange(math.max(0, height - listRows * ROW), ROW) end
-    local profiles = O.ProfilesPane(frame, frame.search, list, SetRange, OPTION_TIP)
+    local function SetRange(height) frame.listBar:SetRange(math.max(0, height - list:GetHeight()), ROW) end
+    local function FitList(toggles)
+        local height = listRows * ROW
+        local top, bottom = list:GetTop(), frame:GetBottom()
+        if not toggles and top and bottom then height = math.max(height, top - bottom - LIST_BOTTOM_MARGIN) end
+        list:SetHeight(height)
+    end
+    local panes = {
+        [2] = O.ProfilesPane(frame, frame.search, list, SetRange, OPTION_TIP),
+        [3] = O.FaqPane(frame, frame.search, list, SetRange),
+        [4] = O.SupportPane(frame, frame.search, list, SetRange),
+    }
     local tabs = {}
     local function Show(which)
         frame.tab = which
         local toggles = which == 1
         for _, widget in ipairs(togglesOnly) do widget:SetShown(toggles) end
-        profiles:SetShown(not toggles)
-        profiles.child:SetShown(not toggles)
-        list:SetScrollChild(toggles and child or profiles.child)
+        FitList(toggles)
+        for i, pane in pairs(panes) do
+            pane:SetShown(i == which)
+            pane.child:SetShown(i == which)
+        end
+        list:SetScrollChild(toggles and child or panes[which].child)
         frame.listBar:SetValue(0)
-        if toggles then frame:PlaceBoxes(frame.search:GetText()) else profiles:Refresh() end
+        if toggles then frame:PlaceBoxes(frame.search:GetText()) else panes[which]:Refresh() end
         for i, tab in ipairs(tabs) do
             if i == which then PanelTemplates_SelectTab(tab) else PanelTemplates_DeselectTab(tab) end
         end
@@ -368,17 +387,17 @@ local function AddTabs(frame, list, child, togglesOnly, listRows)
     holder:SetAllPoints(frame)
     for i, name in ipairs(TAB_NAMES) do
         local tab = CreateFrame("Button", nil, holder, "PanelTabButtonTemplate")
-        tab:SetText(name)
+        tab:SetText(L[name])
         if i == 1 then
-            tab:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 11, 2)
+            tab:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", SETTINGS_TABS_X, SETTINGS_TABS_Y)
         else
-            tab:SetPoint("LEFT", tabs[i - 1], "RIGHT", -16, 0)
+            tab:SetPoint("LEFT", tabs[i - 1], "RIGHT", SETTINGS_TABS_GAP, 0)
         end
         ns.SkinBottomTab(tab)
         tab:SetScript("OnClick", function() Show(i) end)
         tabs[i] = tab
     end
-    frame.profiles = profiles
+    frame.panes = panes
     Show(1)
 end
 
@@ -412,6 +431,8 @@ local function Build(canvas)
     list:EnableMouseWheel(true)
     list:SetScript("OnMouseWheel", function(_, delta) frame.listBar:SetValue(frame.listBar:GetValue() - delta * ROW) end)
     frame.listBar = ns.ClassicScrollBar(frame, list, function(value) list:SetVerticalScroll(value) end)
+    -- No arrows with nothing to scroll (a short profile list).
+    frame.listBar.hideWhenIdle = true
     frame.list, frame.listChild = list, child
 
     -- boxes in list order; kids[key]: the rows under that key, in order; parentOf and depthOf by key (rows nest).
@@ -528,22 +549,9 @@ local function Build(canvas)
 
     -- Word starts in name, keywords or section title first, tooltip only when nothing matched those; whole sections show,
     -- their matches lit and the rest dimmed; empty shows all.
-    local search = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
-    search:SetSize(width - 60, 20)
+    local search = ns.SearchBox(frame, width - 60, L["OPTWIN_SEARCH_TOGGLES"])
     search:SetPoint("TOP", frame, "TOP", 4, canvas and -16 or -50)
-    search:SetAutoFocus(false)
-    search:SetFontObject("ChatFontNormal")
-    search:SetMaxLetters(40)
-    -- The client's input edges are bronze; silver off the theme, as every other box.
-    ns.DrainInput(search)
-    local hint = search:CreateFontString(nil, "ARTWORK", "GameFontDisable")
-    hint:SetPoint("LEFT", search, "LEFT", 2, 0)
-    hint:SetText(L["OPTWIN_SEARCH_TOGGLES"])
-    search.hint = hint
     frame.search = search
-    -- The X clears it; shown only while there is text.
-    local clear = ns.SearchClear(search)
-    search.clear = clear
 
     function frame:PlaceBoxes(text)
         text = (text or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
@@ -640,8 +648,6 @@ local function Build(canvas)
         self.search.clear:SetShown(text ~= "")
     end
     search:SetScript("OnTextChanged", function(self) frame:PlaceBoxes(self:GetText()) end)
-    search:SetScript("OnEscapePressed", function(self) self:SetText("") self:ClearFocus() end)
-    search:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
     frame:PlaceBoxes("")
 
     local note = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -681,7 +687,9 @@ local function Build(canvas)
     defaults.tooltip = L["OPTWIN_PUTS_EVERY_CHECKBOX_AND_NUMBER"]
     defaults.label = L["OPTWIN_RESET_TOGGLES"]
     ns.AttachTip(defaults, OPTION_TIP)
-    AddTabs(frame, list, child, { search, none, defaults, child }, listRows)
+    -- The foot joins this list once built: the other tabs are reading, not settings.
+    local togglesOnly = { search, none, defaults, child }
+    AddTabs(frame, list, child, togglesOnly, listRows)
 
     -- Foot left: layout button over Reload UI; on the classic layout it offers a reset.
     local layout = ns.PanelButton(frame, L["OPTWIN_CLASSIC_LAYOUT"], 130)
@@ -728,6 +736,9 @@ local function Build(canvas)
     local feedback = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     feedback:SetPoint("BOTTOM", github, "TOP", 0, 18)
     feedback:SetText(L["OPTWIN_BUG_REPORTS_FEEDBACK"])
+    for _, piece in ipairs({ note, layout, reload, curse, github, preferred, preferredHover, status, feedback }) do
+        togglesOnly[#togglesOnly + 1] = piece
+    end
 
     if not canvas then frame:SetSize(WIDTH, 110 + LIST_ROWS * ROW + 108) end
 
@@ -749,7 +760,8 @@ local function Build(canvas)
         -- Same source as the reload prompt: a change still owed a reload.
         local owed = ns.ReloadOwed()
         self.note:SetText(owed and L["OPTWIN_RELOAD_THE_INTERFACE_TO_FINISH"] or "")
-        if self.tab == 2 then self.profiles:Refresh() end
+        local pane = self.panes and self.panes[self.tab]
+        if pane then pane:Refresh() end
     end
     frame:SetScript("OnShow", frame.Refresh)
     frame:HookScript("OnHide", function() if ns.SetMeterPanning then ns.SetMeterPanning(false) end end)

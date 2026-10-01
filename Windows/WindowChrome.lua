@@ -106,14 +106,19 @@ function P.PortraitRing(tex)
     ns.Dress(tex, METAL, CORNER_SIZE, nil, nil, nil, nil, nil, CORNERS.portrait.TopLeftCorner)
 end
 
-local CLOSE = { size = { 32, 32 }, coords = FULL, fill = true, add = true }
+-- Every game window's X (social, professions, bank, mail...): its top right from the corner art's, and its size.
+local GAME_WINDOW_CLOSE_X = 0.6
+local GAME_WINDOW_CLOSE_Y = -11
+local GAME_WINDOW_CLOSE_SIZE = 32
+P.CLOSE_SIZE = GAME_WINDOW_CLOSE_SIZE
+local CLOSE = { size = { GAME_WINDOW_CLOSE_SIZE, GAME_WINDOW_CLOSE_SIZE }, coords = FULL, fill = true, add = true }
 
 -- The X's socket is part of the top right corner art: anchor to it, whatever its offset.
 function P.PlaceInSocket(button, host)
     local corner = host and host.NineSlice and host.NineSlice.TopRightCorner
     button:ClearAllPoints()
     if corner then
-        button:SetPoint("TOPRIGHT", corner, "TOPRIGHT", 0.6, -11)
+        button:SetPoint("TOPRIGHT", corner, "TOPRIGHT", GAME_WINDOW_CLOSE_X, GAME_WINDOW_CLOSE_Y)
     else
         button:SetPoint("TOPRIGHT", host, "TOPRIGHT", 4.6, 5)
     end

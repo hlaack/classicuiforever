@@ -538,21 +538,22 @@ local function Rows(frame)
     return top * k, bottom * k
 end
 
--- Whether frame at a place (top left and drawn size, UIParent units) would cover another open window.
-function ns.WindowCovers(frame, left, top, width, height)
+-- Whether frame at a place (top left and drawn size, UIParent units) would cover another open window; except shares
+-- its place (the spellbook for the classic professions book), so is never in the way.
+function ns.WindowCovers(frame, left, top, width, height, except)
     local right, bottom = left + width, top - height
     local function Covers(l, r, t, b) return l and t and l < right and r > left and t > bottom and b < top end
     local names, frames = ClientWindows()
     for i = 1, #names do
         local panel = WindowAt(names, frames, i)
-        if panel and panel ~= frame and panel:IsShown() then
+        if panel and panel ~= frame and panel ~= except and panel:IsShown() then
             local l, r = BlockSpan(names[i], panel)
             local t, b = Rows(panel)
             if Covers(l, r, t, b) then return true end
         end
     end
     for other in pairs(classicWindows) do
-        if other ~= frame and Seen(other) then
+        if other ~= frame and other ~= except and Seen(other) then
             local l, r = Span(other)
             local t, b = Rows(other)
             if Covers(l, r, t, b) then return true end
@@ -580,7 +581,7 @@ local function SheetPastHeld()
     end
 end
 
--- The client stands its windows at 16, -116; Era's art stands at 0, -104. Only the client's own anchor moves: a y we set
+-- The client stands the sheet at 16, -116; Era's old 384 x 512 frames at 0, -104. Only the client's own anchor moves: a y we set
 -- stays (gap and held passes keep y), and an edit mode place (anchored off the foot) is never touched; one that gave way
 -- to another window is on the client's anchor, so it takes Era's height with the rest.
 local SHEET_ERA_X, SHEET_ERA_Y = -16, 12
@@ -611,11 +612,6 @@ end
 -- Parented to the character window so it runs only while that is up.
 if CharacterFrame then
     ns.Sched.OnFrame(CreateFrame("Frame", nil, CharacterFrame), { name = "windows.sheetGap", every = 0, fn = SheetPass })
-end
--- The social window on Era's spot too (the client stands it with the sheet's new-style windows).
-if FriendsFrame then
-    ns.Sched.OnFrame(CreateFrame("Frame", nil, FriendsFrame), { name = "windows.socialSpot", every = 0,
-        fn = function() AtEraSpot(FriendsFrame) end })
 end
 
 function ns.RegisterClassicWindow(frame, shares, editKey)

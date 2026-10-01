@@ -39,14 +39,15 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "LOCALE", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
-              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "LOCALE")
+              "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX",
+              "FADEDPIECE", "PCALLMANY", "LOCALE")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -104,6 +105,10 @@ ALLOWED_SITES = {
         "Skills/ProfessionsWindow.lua:watch": "plan 4.2: the professions watch",
         # Secure buttons (guildBind, SpellBook's bind button) are Button frames, which the rule never matches.
     },
+    # By frame: Era's panel table shifts it -16, +12 (an old 384 x 512 frame whose art has a margin).
+    "ERASPOT": {
+        "UI/Windows.lua:CharacterFrame": "Era's character sheet, like its trainer and trade skill frames",
+    },
 }
 # Wrapper bodies where a raw CVar call is the point: only these, only in these files.
 CVAR_WRAPPERS = ("ns.SetCVar", "ns.WriteCVar", "ns.GetCVar", "ns.GetCVarBool", "ns.GetCVarDefault")
@@ -120,6 +125,7 @@ DEV_NAMES = frozenset((
     "DressLootRoll", "ToggleSpellBook", "CombatNumbersInfo", "ClassicBarActive", "hookFns", "MODULE_ORDER", "modules",
     "BronzeOn", "DrainBronze", "UndrainBronze", "band", "Sched", "DB_DEFAULTS", "OpenGuildRoster", "sheet",
     "ClassBandState", "PadOf", "TrainerState", "ActiveLayoutInfo", "LayoutWritable", "BandPinsWanted",
+    "WindowLockButtons",
 ))
 # Shared API kept without a reader yet (plan section 5); never reported by DEADNS.
 KEPT_API = frozenset((
@@ -135,10 +141,18 @@ FIX = {
               "it to every language file in Locales/; the game's own strings (_G globals like SPELLBOOK) need no entry",
     "KEYUP": "bind the key to ns.KeyProxy(name) (Core/Util.lua): it acts on press, as the game's own windows do, and "
              "clicks the button; a snippet's SetBindingClick names that proxy (name .. \"Key\")",
+    "FADEDPIECE": "hide the client's cap in a hidden frame of ours (StashCap in Bar/BandArt.lua): edit mode snaps other "
+                  "pieces only to what is visible, and a snap to an unnamed cap is saved at the screen's top",
+    "PCALLMANY": "pcall a function of ours that walks them and returns one value (ns.EachChildProtected, "
+                 "ns.EachRegionProtected in Core/Util.lua), never the getter itself",
+    "SELFBOX": "anchor an edit mode Selection to its own frame (offsets for a wider box): the client sets the frame's "
+               "clamp and snap offsets from the gap between them, so a box hung elsewhere shoves the frame off its anchor",
     "MOUSEORDER": "set OnEnter/OnLeave/OnMouse* first, then SetMouseClickEnabled(false) (the hover sensor over the "
                   "unit frame bars ate every targeting click, 2026-09-28)",
     "CHECKLABEL": "make the label on the check itself (check:CreateFontString), so it hides with it; a dialog that "
                   "hides a row must not leave its label behind for the next row to land on (skill cuif-edit-mode-items)",
+    "ERASPOT": "leave a new-style window (social, professions) on the game's 16, -116, Era's spot for it too; list an "
+               "old 384 x 512 frame in ALLOWED_SITES only if Era's UIPanelWindows gives it xoffset -16, yoffset 12",
     "DRAGPOINT": "read the frame's place (GetLeft/GetTop/GetBottom) before StopMovingOrSizing, which can leave a frame "
                  "others hang on with no anchor; ns.MakeDraggable (UI/Dialogs.lua) already does",
     "CVAR": "our settings through ns.SetCVar and only on a player action; the player's own value or a hand-back "
@@ -236,6 +250,7 @@ HOOK_RX = re.compile(r"\bhooksecurefunc\b")
 # Plain matches per line, on code with strings blanked.
 LINE_PATTERNS = {
     "HOOK": HOOK_RX,
+    "ERASPOT": re.compile(r"(?<!function )\bAtEraSpot\s*\(\s*([A-Za-z_][\w.]*)"),
     "SETTLE": re.compile(r"\b(?:S|social)\s*\.\s*Settle\s*\("),
     "THEME": re.compile(r"\bns\s*\.\s*(?:BronzeOn|bronze)\b|\bdb\s*\.\s*bronzeTheme\b|\b(?:DrainBronze|LMR)\b.*\b0\.85\b"
                         r"|\bEachKey\s*\(.*\bKEYS\s*\.\s*LMR\b"),
@@ -259,6 +274,10 @@ LINE_PATTERNS = {
         r"\s*:\s*(?:SetPoint|ClearAllPoints|SetScale|SetAllPoints)\s*\("),
     # No `not` between the halves: `f.IsForbidden and not f:IsForbidden()` is a positive test that needs the method.
     "FORBIDDEN": re.compile(r"\b([A-Za-z_][\w.]*)\s*\.\s*IsForbidden\s+and\s+\1\s*:\s*IsForbidden\s*\("),
+    # Lua's api check in the beta client: pcall pushes its true past a frame of 22+ results (lapi.c 577).
+    "FADEDPIECE": re.compile(r"\b(?:FadeTextures|SetAlpha|SetAlphaIf|OverlayOnBand)\s*\(\s*[\w.]*(?:\bcap|EndCap)\b"
+                             r"|(?:\bcap|EndCap)\w*\s*:\s*SetAlpha\s*\(\s*0\b"),
+    "PCALLMANY": re.compile(r"\bpcall\s*\(\s*[\w.:\[\]\"]+\s*[.:]\s*(?:GetChildren|GetRegions|GetAnimations)\b"),
 }
 # SYSBASE in Bar/: bar, frame and piece there are the band's edit mode systems.
 SYSBASE_BAND = re.compile(r"(?<![\w.])(?:bar|frame|piece)\s*:\s*(?:SetPoint|ClearAllPoints|SetScale|SetAllPoints)\s*\(")
@@ -332,6 +351,10 @@ MESSAGES = {
     "KEYUP": "a key bound straight to a release-acting button (it opens on release; the game's windows on press)",
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "MOUSEORDER": "a mouse script set after the frame's clicks were switched off (setting it turns clicks back on)",
+    "SELFBOX": "an edit mode Selection anchored to another frame than its own (the bars launched to the screen top)",
+    "FADEDPIECE": "a client end cap faded or laid on the band as a handle (bars snapped to it, saved at the screen top)",
+    "PCALLMANY": "a pcall straight around GetChildren/GetRegions/GetAnimations: 22 or more results abort the beta client",
+    "ERASPOT": "Era's old-frame shift on a window Era leaves on 16, -116 (the social window flush on the screen edge)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",
     "CVARREAD": "raw CVar read outside the ns.GetCVar / ns.GetCVarBool wrappers",
@@ -1022,6 +1045,30 @@ CLICKS_OFF = re.compile(r"(?:\b(\w+):SetMouseClickEnabled\(\s*false|pcall\(\s*(\
 MOUSE_SCRIPT = re.compile(r"\b(\w+):(?:SetScript|HookScript)\(\s*\"(?:OnEnter|OnLeave|OnMouseDown|OnMouseUp|OnMouseWheel)\"\s*,(?!\s*nil\b)")
 
 
+# A local holding a frame's Selection, and a SetPoint/SetAllPoints on one.
+SELECTION_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=\s*(?:[\w.]+\s+and\s+)?([\w.]+)\.Selection\b")
+SELECTION_ANCHOR = re.compile(r"([\w.]+)\s*:\s*(SetPoint|SetAllPoints)\s*\(([^)]*)")
+
+
+def self_box_hits(lx):
+    """A client Selection (frame.Selection, or a local holding one) anchored to anything but its own frame."""
+    found = set()
+    owner = {}
+    for no, line in enumerate(lx.keep, 1):
+        for m in SELECTION_LOCAL.finditer(line):
+            owner[m.group(1)] = m.group(2)
+        for m in SELECTION_ANCHOR.finditer(line):
+            target = m.group(1)
+            frame = target[:-len(".Selection")] if target.endswith(".Selection") else owner.get(target)
+            if not frame:
+                continue
+            args = [a.strip() for a in m.group(3).split(",")]
+            rel = args[0] if m.group(2) == "SetAllPoints" else (args[1] if len(args) > 1 else "")
+            if rel != frame:
+                found.add(("SELFBOX", no))
+    return found
+
+
 def mouse_order_hits(lx):
     """A mouse script set on a frame after its clicks were switched off, in the same file."""
     found = set()
@@ -1096,6 +1143,7 @@ def pattern_hits(path, lx, funcs):
     found |= drag_point_hits(lx, funcs)
     found |= check_label_hits(lx)
     found |= mouse_order_hits(lx)
+    found |= self_box_hits(lx)
     found |= cvar_login_hits(lx, funcs)
     if not allowed("THROTTLEFRAME", path):
         found |= throttle_frame_hits(lx)
