@@ -64,7 +64,8 @@ local function TintRing(region)
     local file = region:GetTexture()
     if file == TRACKING_RING or (type(file) == "string" and file:lower():find("minimap%-trackingborder")) then
         if ns.Once(region, "themeRing") then ns.BronzeTint(region, RING_SHARE) end
-        ns.MinimapButtonBorder(region)
+        -- Hide button borders is our minimap's: the game's map keeps its rings.
+        if MM.active then ns.MinimapButtonBorder(region) end
     end
 end
 function ns.ThemeAddonRing(button)
@@ -74,6 +75,22 @@ function ns.ThemeAddonRing(button)
 end
 local function RingOfChild(child)
     if child.IsObjectType and child:IsObjectType("Button") then ns.ThemeAddonRing(child) end
+end
+
+-- Our minimap off: other addons' rings on the game's map take the theme too, a LibDBIcon button made later as it comes.
+local ringListener
+local function ThemeRingsOnGameMap()
+    local ldbi = LibStub and LibStub.GetLibrary and LibStub:GetLibrary("LibDBIcon-1.0", true)
+    if ldbi and ldbi.GetButtonList then
+        for _, name in ipairs(ldbi:GetButtonList()) do
+            ns.ThemeAddonRing(ldbi.GetMinimapButton and ldbi:GetMinimapButton(name))
+        end
+        if not ringListener and ldbi.RegisterCallback then
+            ringListener = {}
+            ldbi.RegisterCallback(ringListener, "LibDBIcon_IconCreated", function(_, button) ns.ThemeAddonRing(button) end)
+        end
+    end
+    if Minimap then ns.EachChild(Minimap, RingOfChild) end
 end
 -- Hide button borders: every ring round a minimap button (ours, the client's, other addons'), kept here to apply at once.
 local buttonBorders = setmetatable({}, { __mode = "k" })
@@ -662,6 +679,7 @@ local function Restore()
         ns.SetPointOnce(coords, "BOTTOM", Minimap, "BOTTOM", 0, -18)
     end
     if MinimapCluster and MinimapCluster.BorderTop then ns.Unfade(MinimapCluster.BorderTop) end
+    ThemeRingsOnGameMap()
     ns.needsReload = true
 end
 
