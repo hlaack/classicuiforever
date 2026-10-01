@@ -64,6 +64,7 @@ ns.TOGGLES = {
     { "unitFrameFocus", "Focus", "The focus frame in the old art.", parent = "unitFrames" },
     { "unitFramePet", "Pet", "The pet frame in the old art.", parent = "unitFrames" },
     { "unitFrameParty", "Party", "The party frames in the old art.", parent = "unitFrames" },
+    { "classColorNames", "Class colored name box", "Players' name boxes on the player, target and focus frames take their class color.", parent = "unitFrames", search = "header background" },
     { "classColorHealth", "Class colored health", "Players' health bars take their class color instead of green.", parent = "unitFrames" },
     { "classicStatusFont", "Classic bar text font", "Health and power numbers in Classic Era's font: Arial Narrow 14, outlined.", parent = "unitFrames", search = "numbers text size arial" },
     { "barUnitTips", "Unit tooltip on bars", "Hovering a unit frame's health or power bar shows the unit's tooltip, as the portrait does.", parent = "unitFrames" },
@@ -106,6 +107,7 @@ ns.TOGGLES = {
     { "talents", "Talent window", "The old talent window: one tree at a time, tree tabs along the foot, rank plates and arrows. Click to stage a point, Learn to commit." },
 
     { "professionsBook", "Professions book", "The professions overview as the old two-page book, each profession with its emblem, rank bar and spells.", group = "Professions" },
+    { "profBookBig", "Full size book", "The professions book at its full two-page size instead of the spellbook's. The button beside its close button switches it too.", parent = "professionsBook", search = "big large popout" },
     { "tradeSkill", "Profession windows", "A profession's window as the old trade skill window: recipes by difficulty color above, the chosen recipe and its reagents below." },
     { "tradeSkillSearch", "Recipe search", "A search box on a profession's window that lists only the matching recipes.", parent = "tradeSkill" },
     { "trainer", "Trainer window", "A trainer's window as the old one: services in green, red and gray, what they need and cost, and Train." },

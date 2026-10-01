@@ -80,6 +80,8 @@ ns.DB_DEFAULTS = {
     eraBagSize = false,
     thickHealth = false, thickHealthName = true, thickHealthMana = false,
     thickHealthPlayer = true, thickHealthTarget = true, thickHealthFocus = true, thickEnemyColor = "green",
+    classColorNames = false,
+    profBookBig = false,
     reagentBagSlot = false,
     reagentBagRound = false,
     reagentBagHover = true,

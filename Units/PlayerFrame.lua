@@ -112,6 +112,12 @@ end
 
 local function KeepClassBand()
     if not UF.active or not nameBg or not On("player") then return end
+    local cr, cg, cb = ns.NameBoxColor("player")
+    if cr then
+        SetShownIf(nameBg, true)
+        SetVertexColorIf(nameBg, cr, cg, cb, 1)
+        return
+    end
     if not classBand then
         local main = ns.Path(PlayerFrame, "PlayerFrameContent", "PlayerFrameContentMain")
         local count = main and main:GetNumRegions()

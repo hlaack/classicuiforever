@@ -165,6 +165,16 @@ function ns.HealthColor(unit)
     return 0, 1, 0
 end
 
+-- A player's class colour for the name box (option), or nil: NPCs and hidden units keep the client's.
+function ns.NameBoxColor(unit)
+    if not (ns.db and ns.db.classColorNames == true and unit) then return nil end
+    local isPlayer = UnitIsPlayer(unit)
+    if IsSecret(isPlayer) or not isPlayer then return nil end
+    local _, class = UnitClass(unit)
+    if IsSecret(class) then return nil end
+    return ns.ClassRGB(class)
+end
+
 function ns.SetHealth(bar, unit)
     FillBar(bar, UnitHealth(unit), UnitHealthMax(unit))
     ns.SetBarColorIf(bar, ns.HealthColor(unit))

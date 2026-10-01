@@ -155,6 +155,9 @@ local function Dress(entry)
     if bar.TimeLabel then ns.SetPointOnce(bar.TimeLabel, "RIGHT", bar, "RIGHT", -LABEL_X, up) end
     ShowSlices(parts.border, true)
     ShowSlices(parts.flash, true)
+    -- The middle slice is only the rails' soft inner fade: stretched round a thinner border's wider opening it swelled.
+    parts.border[5]:SetShown(k >= 1)
+    parts.flash[5]:SetShown(k >= 1)
     parts.back:Show()
 end
 

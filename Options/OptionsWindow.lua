@@ -86,21 +86,6 @@ local function Describe(row, key, label, tooltip)
     ns.AttachTip(row, OPTION_TIP)
 end
 
--- Every query word starts a word of text: "ring" finds rings, never hovering.
-local function WordsIn(text, words)
-    for i = 1, #words do
-        if not text:find("%f[%w]" .. words[i]) then return false end
-    end
-    return true
-end
-
--- 2: the name side has every word; 1: only with the tooltip; 0: no.
-local function MatchLevel(box, words)
-    if WordsIn(box.keyLow, words) then return 2 end
-    if WordsIn(box.keyLow .. " " .. box.tipLow, words) then return 1 end
-    return 0
-end
-
 -- A soft gold bar behind a matching row's label; the rest of its section is dimmed.
 local MATCH_DIM = 0.4
 local matchBar = setmetatable({}, { __mode = "k" })
@@ -433,6 +418,21 @@ local function Build(canvas)
         row.group = group
         if group then row.keyLow = row.keyLow .. " " .. group:lower() end
     end
+    -- A stepper or a value drop down row under parent's toggle; words add to what search finds.
+    local function ExtraStep(parent, key, label, tip, low, high, apply, words)
+        local row = Stepper(child, key, label, tip, low, high, apply)
+        row.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
+        if words then row.keyLow = row.keyLow .. " " .. words end
+        Grouped(row)
+        Add(row, parent)
+    end
+    local function ExtraDrop(parent, key, label, tip, choices, apply, words, depth)
+        local row = ValueDropRow(child, key, label, tip, choices, apply)
+        row.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - (depth or 1) * INDENT)
+        row.keyLow = row.keyLow .. " " .. words
+        Grouped(row)
+        Add(row, parent)
+    end
     for _, entry in ipairs(ns.TOGGLES) do
         if entry.group then
             group = entry.group
@@ -452,23 +452,14 @@ local function Build(canvas)
             Add(box, entry.parent)
             box.text:SetWidth(LIST_W / COLUMNS - 30 - box.depth * INDENT)
         end
-        -- One bag width stepper; not a toggle, so the bulk buttons skip it.
+        -- Settings under their toggle; not toggles, so the bulk buttons skip them.
         if entry[1] == "oneBag" then
-            local columns = Stepper(child, "oneBagColumns", "Columns",
-                "How many slots across the one bag window is. The old bags were four across.",
+            ExtraStep("oneBag", "oneBagColumns", "Columns", "How many slots across the one bag window is. The old bags were four across.",
                 ns.ONE_BAG_COLUMNS_MIN or 4, ns.ONE_BAG_COLUMNS_MAX or 16, ns.SetOneBagColumns)
-            columns.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
-            Grouped(columns)
-            Add(columns, "oneBag")
         end
         if entry[1] == "hideKeyText" then
-            local size = Stepper(child, "keyTextSize", "Key text size",
-                "How big the key names on the action buttons are. 12 is Classic Era's size.",
-                ns.KEY_TEXT_MIN or 8, ns.KEY_TEXT_MAX or 20, ns.SetKeyTextSize)
-            size.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
-            size.keyLow = size.keyLow .. " keybind font hotkey"
-            Grouped(size)
-            Add(size, "buttons")
+            ExtraStep("buttons", "keyTextSize", "Key text size", "How big the key names on the action buttons are. 12 is Classic Era's size.",
+                ns.KEY_TEXT_MIN or 8, ns.KEY_TEXT_MAX or 20, ns.SetKeyTextSize, "keybind font hotkey")
         end
         if entry[1] == "themeCustom" then
             local color = ColorRow(child, "themeColor", "Colour",
@@ -479,71 +470,34 @@ local function Build(canvas)
             Add(color, "themeCustom")
         end
         if entry[1] == "damageMeter" and ns.METER_BACKGROUNDS then
-            local back = ValueDropRow(child, "meterBackground", "Background",
-                "The meter's back: the marble, or a class's old talent tree art.", ns.METER_BACKGROUNDS, ns.SetMeterBackground)
-            back.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - INDENT)
-            back.keyLow = back.keyLow .. " talent tree damage meter"
-            Grouped(back)
-            Add(back, "damageMeter")
-            local header = Stepper(child, "meterHeader", "Header height",
-                "Extra height over the meter's header, in pixels.",
-                ns.METER_HEADER_MIN or 0, ns.METER_HEADER_MAX or 16, ns.SetMeterHeader)
-            header.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
-            header.keyLow = header.keyLow .. " damage meter title"
-            Grouped(header)
-            Add(header, "damageMeter")
+            ExtraDrop("damageMeter", "meterBackground", "Background", "The meter's back: the marble, or a class's old talent tree art.",
+                ns.METER_BACKGROUNDS, ns.SetMeterBackground, "talent tree damage meter")
+            ExtraStep("damageMeter", "meterHeader", "Header height", "Extra height over the meter's header, in pixels.",
+                ns.METER_HEADER_MIN or 0, ns.METER_HEADER_MAX or 16, ns.SetMeterHeader, "damage meter title")
         end
         if entry[1] == "thickHealthMana" and ns.ENEMY_HEALTH_COLORS then
-            local color = ValueDropRow(child, "thickEnemyColor", "Enemy health",
-                "The colour of an enemy's thick health bar.", ns.ENEMY_HEALTH_COLORS, ns.SetEnemyHealthColor)
-            color.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - 2 * INDENT)
-            color.keyLow = color.keyLow .. " colour color hostile red"
-            Grouped(color)
-            Add(color, "thickHealth")
+            ExtraDrop("thickHealth", "thickEnemyColor", "Enemy health", "The colour of an enemy's thick health bar.",
+                ns.ENEMY_HEALTH_COLORS, ns.SetEnemyHealthColor, "colour color hostile red", 2)
         end
         if entry[1] == "unitFrames" and ns.SetUnitNameSize then
-            local size = Stepper(child, "unitNameSize", "Name size",
-                "Text size of the player, target and focus names.",
-                ns.UNIT_NAME_MIN or 8, ns.UNIT_NAME_MAX or 16, ns.SetUnitNameSize)
-            size.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
-            size.keyLow = size.keyLow .. " font unit frame name text"
-            Grouped(size)
-            Add(size, "unitFrames")
+            ExtraStep("unitFrames", "unitNameSize", "Name size", "Text size of the player, target and focus names.",
+                ns.UNIT_NAME_MIN or 8, ns.UNIT_NAME_MAX or 16, ns.SetUnitNameSize, "font unit frame name text")
         end
         if entry[1] == "resourceDisplay" and ns.SetPrdGap then
-            local gap = Stepper(child, "prdGap", "Bar gap",
-                "Space between the health and power bars. 0 joins them under one shared border.",
-                ns.PRD_GAP_MIN or 0, ns.PRD_GAP_MAX or 20, ns.SetPrdGap)
-            gap.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
-            gap.keyLow = gap.keyLow .. " personal resource padding spacing"
-            Grouped(gap)
-            Add(gap, "resourceDisplay")
+            ExtraStep("resourceDisplay", "prdGap", "Bar gap", "Space between the health and power bars. 0 joins them under one shared border.",
+                ns.PRD_GAP_MIN or 0, ns.PRD_GAP_MAX or 20, ns.SetPrdGap, "personal resource padding spacing")
         end
         if entry[1] == "swingTimers" and ns.SWING_COLORS then
             for _, hand in ipairs(SWING_HANDS) do
-                local row = ValueDropRow(child, hand[1], hand[2], "The swing bar's colour, from the 1.x bars.",
-                    ns.SWING_COLORS, ns.SetSwingLook)
-                row.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - INDENT)
-                row.keyLow = row.keyLow .. " swing colour color"
-                Grouped(row)
-                Add(row, "swingTimers")
+                ExtraDrop("swingTimers", hand[1], hand[2], "The swing bar's colour, from the 1.x bars.", ns.SWING_COLORS,
+                    ns.SetSwingLook, "swing colour color")
             end
-            local border = Stepper(child, "swingBorder", "Border thickness",
-                "How thick the swing bars' border is. 0 is the 1.x cast bar's own.",
-                ns.SWING_BORDER_MIN or -3, ns.SWING_BORDER_MAX or 3, ns.SetSwingBorder)
-            border.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
-            border.keyLow = border.keyLow .. " swing"
-            Grouped(border)
-            Add(border, "swingTimers")
+            ExtraStep("swingTimers", "swingBorder", "Border thickness", "How thick the swing bars' border is. 0 is the 1.x cast bar's own.",
+                ns.SWING_BORDER_MIN or -3, ns.SWING_BORDER_MAX or 3, ns.SetSwingBorder, "swing")
         end
         if entry[1] == "classColorPlates" then
-            local nameSize = Stepper(child, "plateNameSize", "Name text size",
-                "Points bigger or smaller than the game's own nameplate name. 0 keeps it as is.",
-                ns.PLATE_NAME_MIN or -6, ns.PLATE_NAME_MAX or 6, ns.SetPlateNameSize)
-            nameSize.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
-            nameSize.keyLow = nameSize.keyLow .. " font"
-            Grouped(nameSize)
-            Add(nameSize, "namePlates")
+            ExtraStep("namePlates", "plateNameSize", "Name text size", "Points bigger or smaller than the game's own nameplate name. 0 keeps it as is.",
+                ns.PLATE_NAME_MIN or -6, ns.PLATE_NAME_MAX or 6, ns.SetPlateNameSize, "font")
         end
     end
 
@@ -573,7 +527,7 @@ local function Build(canvas)
         -- The best level any row reaches decides which rows count as matches.
         local level, best = {}, 0
         for _, box in ipairs(boxes) do
-            level[box] = #words > 0 and MatchLevel(box, words) or 0
+            level[box] = #words > 0 and ns.OptionMatchLevel(box, words) or 0
             if level[box] > best then best = level[box] end
         end
         -- A section shows whole or not at all: any match brings its top row and every line under it.
@@ -624,8 +578,13 @@ local function Build(canvas)
         for title, head in pairs(heads) do
             if not byTitle[title] then head:Hide() end
         end
-        -- Column-major: column 1 takes whole groups until the next would pass half.
-        local half = math.max(1, math.ceil(count / COLUMNS))
+        -- Column-major, whole groups in order: split where the taller column is shortest.
+        local split, shortest, before = #blocks, math.huge, 0
+        for i = 0, #blocks do
+            if i > 0 then before = before + blocks[i].rows end
+            local taller = math.max(before, count - before)
+            if taller < shortest then split, shortest = i, taller end
+        end
         local colW = LIST_W / COLUMNS
         local column, row, per = 0, 0, 0
         local function Put(row_, box, x)
@@ -636,8 +595,8 @@ local function Build(canvas)
                 ShowMatch(box, text ~= "" and matched[box] == true)
             end
         end
-        for _, block in ipairs(blocks) do
-            if column < COLUMNS - 1 and row > 0 and row + block.rows > half then
+        for i, block in ipairs(blocks) do
+            if column < COLUMNS - 1 and i == split + 1 and row > 0 then
                 column, row = column + 1, 0
             end
             if block.head then

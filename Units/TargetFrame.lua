@@ -94,6 +94,8 @@ local function ApplyClassification(frame)
     if entry.bg and minus then entry.bg:SetSize(BAR_W, 12) end
     if main and main.ReputationColor then SetShownIf(main.ReputationColor, not minus and style ~= "name") end
     if main then UF.NameFont(main.Name) end
+    local r, g, b = ns.NameBoxColor(entry.unit)
+    if r and main and main.ReputationColor then ns.SetVertexColorIf(main.ReputationColor, r, g, b, 1) end
     -- CastBars reads this to drop the spell bar.
     frame.haveElite = (classification == "elite" or classification == "worldboss" or classification == "rare" or classification == "rareelite") or nil
 end

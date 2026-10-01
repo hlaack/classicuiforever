@@ -202,10 +202,9 @@ local function Fold(window, pair)
     if open then
         box:SetPoint("BOTTOMRIGHT", window, "BOTTOMRIGHT", OUT, -OUT)
     else
-        box:SetPoint("BOTTOMRIGHT", window, "TOPRIGHT", OUT, DIVIDER_Y - INSET)
+        -- Minimized, the divider is the foot: the box's own edge tucked under the bar, so the stone ends where it does open.
+        box:SetPoint("BOTTOMRIGHT", window, "TOPRIGHT", OUT, DIVIDER_Y - BAR_H / 4)
     end
-    pair.bar[1]:SetShown(open)
-    pair.bar[2]:SetShown(open)
 end
 
 -- The picked tree's files, or none for the marble.

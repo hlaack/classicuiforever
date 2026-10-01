@@ -7,11 +7,17 @@ local T = ns.prof
 local Page = T.Page
 local Build, PlaceCards, FillRows = T.Build, T.PlaceCards, T.FillRows
 local ShowOurs, TightenSpells = T.ShowOurs, T.TightenSpells
-local SetShownIf = ns.SetShownIf
 local EMPTY = ns.EMPTY
 
 local active = false
-local BOOK_W, BOOK_H = 550, 525
+-- Full book or the spellbook's drawn border (339 x 425, option or popout), its corner on that border: the spellbook's
+-- art starts at (12, -118) and the manager stands a left panel at (16, -116).
+local BIG_W, BIG_H, SMALL_W, SMALL_H = 550, 525, 339, 425
+local BOOK_X, BOOK_Y, SMALL_TELL_W = -4, -2, 380
+local function BookW() return T.Big() and BIG_W or SMALL_W end
+local function BookH() return T.Big() and BIG_H or SMALL_H end
+T.BookH = BookH
+local SizeButton
 local sizeWas
 
 local RAW = { set = "raw" }
@@ -40,15 +46,19 @@ end
 -- The client registers the window 35 in from the left for its own side tabs; ours stand at the usual left edge.
 local function TellManager(frame, width, height)
     if not sizeWas.attrs then
-        sizeWas.attrs = { PanelAttr(frame, "width"), PanelAttr(frame, "height"), PanelAttr(frame, "xoffset") }
+        sizeWas.attrs = { PanelAttr(frame, "width"), PanelAttr(frame, "height"), PanelAttr(frame, "xoffset"),
+            PanelAttr(frame, "yoffset") }
     end
-    local wantWidth, wantHeight = width or sizeWas.attrs[1], height or sizeWas.attrs[2]
-    local wantX = width and 0 or sizeWas.attrs[3]
+    local small, book = width == SMALL_W, width == SMALL_W or width == BIG_W
+    local wantWidth, wantHeight = small and SMALL_TELL_W or width or sizeWas.attrs[1], height or sizeWas.attrs[2]
+    local wantX = book and BOOK_X or width and 0 or sizeWas.attrs[3]
+    local wantY = book and BOOK_Y or width and 0 or sizeWas.attrs[4]
     if PanelAttr(frame, "width") == wantWidth and PanelAttr(frame, "height") == wantHeight
-        and PanelAttr(frame, "xoffset") == wantX then return end
+        and PanelAttr(frame, "xoffset") == wantX and PanelAttr(frame, "yoffset") == wantY then return end
     SetPanelAttr(frame, "width", wantWidth)
     SetPanelAttr(frame, "height", wantHeight)
     SetPanelAttr(frame, "xoffset", wantX)
+    SetPanelAttr(frame, "yoffset", wantY)
     if frame:IsShown() and UpdateUIPanelPositions then pcall(UpdateUIPanelPositions, frame) end
 end
 
@@ -132,6 +142,9 @@ local function SyncTabs()
         local close = frame.CloseButton
         local level = math.min(10000, (close and close:GetFrameLevel() or (frame:GetFrameLevel() + 600)) + 1)
         ns.SetLevelIf(tabToggle, level)
+        -- A little up and right on the small book.
+        local big = T.Big()
+        ns.SetPointOnce(tabToggle, "TOPRIGHT", frame, "TOPRIGHT", big and -15 or -10, big and -28 or -24)
     end
     if tabToggle and tabToggle.open ~= open then
         tabToggle.open = open
@@ -155,6 +168,31 @@ local function TabToggle()
     ns.AttachTip(tabToggle, TOGGLE_TIP)
 end
 
+-- The popout beside the close button: the full book or the small one; the same switch as the option.
+local sizeButton
+local function PickSize(big)
+    if not ns.db or (ns.db.profBookBig == true) == big then return end
+    ns.db.profBookBig = big
+    ns.ToggleChanged("profBookBig")
+end
+
+SizeButton = function(shown)
+    local frame = ProfessionsFrame
+    if not frame then return end
+    if not sizeButton then
+        local ok, button = pcall(CreateFrame, "Frame", nil, frame, "MaximizeMinimizeButtonFrameTemplate")
+        if not ok or not button then return end
+        sizeButton = button
+        button:SetOnMaximizedCallback(function() PickSize(true) end)
+        button:SetOnMinimizedCallback(function() PickSize(false) end)
+        if ns.panels and ns.panels.MaxMinBeside then ns.panels.MaxMinBeside(button, frame.CloseButton, 8) end
+    end
+    local close = frame.CloseButton
+    if close then ns.SetLevelIf(sizeButton, close:GetFrameLevel() + 1) end
+    if T.Big() then sizeButton:SetMinimizedLook() else sizeButton:SetMaximizedLook() end
+    ns.SetShownIf(sizeButton, shown and true or false)
+end
+
 -- Turn back to the book piece by piece: calling the window's own code would taint it.
 local function BackToBook()
     local frame, page = ProfessionsFrame, Page()
@@ -171,165 +209,6 @@ local function BackToBook()
     local overview = frame.ProfessionsOverviewTab
     if overview and overview.SelectedTexture then overview.SelectedTexture:Show() end
     return true
-end
-
--- The spellbook's foot tabs in the same spot, so the two windows turn into each
--- other like the old book's pages. On the book page (a crafting page has none);
--- both windows are the client's to show in combat, so no turn there.
-local bookTabs
--- Secure pads over the Spellbook and pet tabs, under the client's window so they show and hide with it, in a fight
--- too (a pad on UIParent is placed out of combat only). Anchored to the window, never the tabs: the window turns
--- protected by them, and every write on it here already waits for a fight's end; the tabs stay free.
-local bookPads
--- The first tab's centre on the window and the step between tabs: wide 1.x tabs, or narrow ones with the Collections
--- tab third and the pet last (as the spellbook's foot).
-local TAB_Y = -7
-local WIDE = { x = 70, step = 108, overlap = -20, hit = 14, slot = { 0, 1, 2 } }
-local NARROW = { x = 57, step = 80, overlap = -48, hit = 27, slot = { 0, 1, 3, 2 } }
-local function Spec()
-    return ns.CollectionsMicroHidden and ns.CollectionsMicroHidden() and NARROW or WIDE
-end
-
--- Shown with its tab inside the window, never by the window: placed while it was shut, a pad went hidden for the fight.
-local function PadShown(i)
-    local page = Page()
-    return bookTabs[i]:IsShown() and page ~= nil and page:IsShown()
-end
-
--- From the tabs' fixed layout, so a shut window places them too. From the window's top: the tabs hang from the shape's
--- foot, a book's height down, and in a fight the shape stands past the window's foot.
-local function PlaceBookPads()
-    local frame = ProfessionsFrame
-    if not bookPads or not frame or InCombatLockdown() then return end
-    local k = frame:GetEffectiveScale()
-    if not (k and k > 0) then return end
-    local hit, spec = ns.BOOK_TAB_HIT, Spec()
-    for i, pad in pairs(bookPads) do
-        local tab = bookTabs[i]
-        local r = tab:GetEffectiveScale() / k
-        local w, h = tab:GetWidth(), tab:GetHeight()
-        -- The drawn tab only; the sheet's blank margin reached over the window's buttons.
-        ns.SetPointOnce(pad, "BOTTOMLEFT", frame, "TOPLEFT", (spec.x + spec.slot[i] * spec.step - w / 2 + spec.hit) * r,
-            (TAB_Y - h / 2 + hit.bottom) * r - BOOK_H)
-        pad:SetSize((w - 2 * spec.hit) * r, (h - hit.top - hit.bottom) * r)
-        pad:SetFrameLevel(tab:GetFrameLevel() + 5)
-        pad:SetShown(PadShown(i))
-    end
-end
-
--- A crafting page hides the tabs' page under them; the pads, on the window, must follow, out of combat.
-local function SyncBookPads()
-    if not bookPads or InCombatLockdown() then return end
-    for i, pad in pairs(bookPads) do
-        if bookTabs[i] and pad:IsShown() ~= PadShown(i) then
-            PlaceBookPads()
-            return
-        end
-    end
-end
-
-local function BookTabs()
-    local frame, page = ProfessionsFrame, Page()
-    if not frame or not page or not ns.NewBookTab then return end
-    local on = ns.SpellBookActive and ns.SpellBookActive() and true or false
-    if not bookTabs then
-        if not on then return end
-        bookTabs = {}
-        for i = 1, 4 do bookTabs[i] = ns.NewBookTab(page, i, bookTabs[i - 1]) end
-        bookTabs[1]:SetText(SPELLBOOK or "Spellbook")
-        bookTabs[4]:SetText("Collections")
-        bookTabs[2]:SetText(TRADE_SKILLS or "Professions")
-        bookTabs[2]:SetEnabled(false)
-        for i, tab in ipairs(bookTabs) do
-            tab:SetScript("OnClick", function()
-                if i == 2 then return end
-                if i == 4 then
-                    if _G.CollectionsMicroButton then _G.CollectionsMicroButton:Click() end
-                    return
-                end
-                if InCombatLockdown() then ns.SayNotInCombat() return end
-                PlaySound(SOUNDKIT.IG_ABILITY_PAGE_TURN)
-                HideUIPanel(frame)
-                ns.ShowSpellBookBank(i == 3)
-            end)
-        end
-        -- Each pad turns the book to its tab (SpellBook's wrap), then presses the spellbook key (its macro closes this
-        -- window first): the book opens on that tab in a fight too.
-        -- HIGH: the toplevel window raises itself over a same-strata pad on every click.
-        local key = ns.SpellBookBindButton and ns.SpellBookBindButton()
-        if key then
-            bookPads = {}
-            for _, i in ipairs({ 1, 3 }) do
-                local tab = bookTabs[i]
-                local pad = CreateFrame("Button", nil, frame, "SecureActionButtonTemplate")
-                pad:SetFrameStrata("HIGH")
-                pad:RegisterForClicks("AnyUp", "AnyDown")
-                pad:SetAttribute("useOnKeyDown", false)
-                pad:SetAttribute("type", "click")
-                pad:SetAttribute("clickbutton", key)
-                if ns.SpellBookTurnPad then ns.SpellBookTurnPad(pad, i == 3) end
-                pad:SetScript("PostClick", function(_, _, down)
-                    if down or not ns.SpellBookTurnTo(i == 3) then return end
-                    PlaySound(SOUNDKIT.IG_ABILITY_PAGE_TURN)
-                    ns.HidePanel(frame)
-                end)
-                -- No art: the tab under it shows the press and glow.
-                pad:SetScript("OnMouseDown", function() if tab:IsEnabled() then tab:SetButtonState("PUSHED") end end)
-                pad:SetScript("OnMouseUp", function() if tab:IsEnabled() then tab:SetButtonState("NORMAL") end end)
-                pad:SetScript("OnEnter", function() tab:LockHighlight() end)
-                pad:SetScript("OnLeave", function() tab:UnlockHighlight() end)
-                -- Shut under the cursor by its own click: no OnLeave comes, so the glow goes here.
-                pad:SetScript("OnHide", function()
-                    tab:UnlockHighlight()
-                    if tab:IsEnabled() then tab:SetButtonState("NORMAL") end
-                end)
-                pad:Hide()
-                bookPads[i] = pad
-            end
-            -- Collections: the hidden micro button's own click, in a fight too.
-            local coll = _G.CollectionsMicroButton
-            if coll then
-                local tab = bookTabs[4]
-                local pad = CreateFrame("Button", nil, frame, "SecureActionButtonTemplate")
-                pad:SetFrameStrata("HIGH")
-                pad:RegisterForClicks("AnyUp", "AnyDown")
-                pad:SetAttribute("useOnKeyDown", false)
-                pad:SetAttribute("type", "click")
-                pad:SetAttribute("clickbutton", coll)
-                pad:SetScript("OnMouseDown", function() tab:SetButtonState("PUSHED") end)
-                pad:SetScript("OnMouseUp", function() tab:SetButtonState("NORMAL") end)
-                pad:SetScript("OnEnter", function() tab:LockHighlight() end)
-                pad:SetScript("OnLeave", function() tab:UnlockHighlight() end)
-                pad:SetScript("OnHide", function()
-                    tab:UnlockHighlight()
-                    tab:SetButtonState("NORMAL")
-                end)
-                pad:Hide()
-                bookPads[4] = pad
-            end
-        end
-    end
-    -- Tucked under the bottom border like the old foot tabs; at -13 they floated clear of it.
-    local spec = Spec()
-    local narrow = spec == NARROW
-    local order = narrow and { 1, 2, 4, 3 } or { 1, 2, 3 }
-    for n, i in ipairs(order) do
-        local tab = bookTabs[i]
-        if n == 1 then
-            ns.SetPointOnce(tab, "CENTER", frame, "BOTTOMLEFT", spec.x, TAB_Y)
-        else
-            ns.SetPointOnce(tab, "LEFT", bookTabs[order[n - 1]], "RIGHT", spec.overlap, 0)
-        end
-        if ns.DressBookTab then ns.DressBookTab(tab, narrow) end
-    end
-    local pet = on and ns.SpellBookPetTitle and ns.SpellBookPetTitle() or nil
-    if pet and narrow then pet = PET or "Pet" end
-    if pet and bookTabs[3]:GetText() ~= pet then bookTabs[3]:SetText(pet) end
-    SetShownIf(bookTabs[1], on)
-    SetShownIf(bookTabs[2], on)
-    SetShownIf(bookTabs[3], on and pet ~= nil)
-    SetShownIf(bookTabs[4], on and narrow)
-    PlaceBookPads()
 end
 
 -- In a fight the window can't be resized (secure spell buttons), and one written on then can't close till it ends. So a shut
@@ -412,8 +291,8 @@ local function Home(frame)
     Rehome(frame.TitleContainer, frame)
     Rehome(frame.ProfessionsOverviewTab, frame)
     Rehome(tabToggle, frame)
-    Rehome(bookTabs and bookTabs[1], frame)
-    PlaceBookPads()
+    Rehome(T.FirstBookTab(), frame)
+    T.PlaceBookPads()
     RefreshSize()
 end
 
@@ -441,7 +320,7 @@ local function Grow(on)
     shape.grown = on
     ns.SetPointOnce(shape, "TOPLEFT", frame, "TOPLEFT", 0, 0)
     if on then
-        shape:SetSize(BOOK_W, BOOK_H)
+        shape:SetSize(BookW(), BookH())
     else
         shape:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
     end
@@ -458,9 +337,9 @@ local function SizeShut(watcher, tradeOn)
         -- The manager keeps the book's size: in a fight others stand past a grown book,
         -- and a book's extra width off a trade skill till it ends (a gap, never a cover).
         local width, height = ns.TradeSkillWindowSize()
-        FitWindow(width, height, BOOK_W, BOOK_H)
+        FitWindow(width, height, BookW(), BookH())
     elseif watcher.bookWhenShut then
-        if active then FitWindow(BOOK_W, BOOK_H) end
+        if active then FitWindow(BookW(), BookH()) end
     elseif tradeOn then
         FitWindow(ns.TradeSkillWindowSize())
     end
@@ -522,7 +401,7 @@ function ns.OpenProfessionsBook()
     if active then
         QuietTabs()
         -- Book size before it shows: a shut window waits at trade skill size.
-        FitWindow(BOOK_W, BOOK_H)
+        FitWindow(BookW(), BookH())
     end
     BackToBook()
     if not frame:IsShown() then ns.ShowPanel(frame) end
@@ -667,9 +546,10 @@ local function WatchTick(self, elapsed)
         FillTabIcons()
     end
     TabToggle()
-    SyncBookPads()
+    SizeButton(active and page:IsVisible())
+    T.SyncBookPads()
     SyncTabs()
-    BookTabs()
+    T.BookTabs()
     -- Size by face: book, trade skill, or the client's own when neither module is on.
     local bookUp = active and page:IsVisible() and true or false
     local crafting = frame.CraftingPage
@@ -679,8 +559,8 @@ local function WatchTick(self, elapsed)
     Home(frame)
     if bookUp then
         -- Refused in a fight: grown past the window instead.
-        FitWindow(BOOK_W, BOOK_H)
-        Grow(Smaller(frame, BOOK_W, BOOK_H))
+        FitWindow(BookW(), BookH())
+        Grow(Smaller(frame, BookW(), BookH()))
     else
         Grow(false)
         if craftUp then
@@ -795,3 +675,14 @@ local function Restore()
 end
 
 ns.RegisterModule("professionsBook", { apply = Apply, restore = Restore })
+
+-- The page size switched (option or popout): rows now, cards and window on the watch's next pass (out of combat).
+ns.OnToggle(function(key)
+    if key ~= "profBookBig" then return end
+    if T.Lay then T.Lay() end
+    if watch then
+        watch.dirty = true
+        SetPending(true)
+        watch:Show()
+    end
+end)

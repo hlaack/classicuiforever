@@ -625,6 +625,16 @@ end
 local BOOK_TAB_HIT = { left = 14, right = 14, top = 14, bottom = 20 }
 ns.BOOK_TAB_HIT = BOOK_TAB_HIT
 
+-- The first foot tab's centre: as given, or the row centred between left and right when its right margin comes out
+-- under its left (n tabs, drawn wide, step apart).
+function ns.BalancedTabX(first, drawn, step, n, left, right)
+    local total = drawn + (n - 1) * step
+    local leftGap = first - drawn / 2 - left
+    local rightGap = right - (first + (n - 1) * step + drawn / 2)
+    if rightGap < leftGap then return left + (right - left - total) / 2 + drawn / 2 end
+    return first
+end
+
 -- A foot tab's art and hit area, wide (1.x) or narrow (the Collections tab with it); shared with the professions page.
 local NARROW_HIT = 27
 function ns.DressBookTab(tab, narrow)
@@ -645,7 +655,8 @@ local function CreateBookTab(parent, i, prev)
     end
     tab.Text = tab:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     tab.Text:SetHeight(13)
-    tab.Text:SetPoint("CENTER", tab, "CENTER", 0, 3)
+    -- The face's body sits a pixel right of the sheet's middle (a soft shadow on its left).
+    tab.Text:SetPoint("CENTER", tab, "CENTER", 2, 3)
     tab:SetFontString(tab.Text)
     -- Gold unpicked, white picked (disabled); without the normal font a tab picked once stayed white.
     tab:SetNormalFontObject(GameFontNormalSmall)
@@ -1470,18 +1481,23 @@ local function CreateBook()
     local WIDE = { first = 79, step = 108, drawn = 100, overlap = -20, hit = 14 }
     local NARROW = { first = 66, step = 80, drawn = 74, overlap = -48, hit = 27 }
     local TAB_Y, PAD_Y = 61, 64
-    local laidNarrow
+    -- The book's drawn border (its art runs x 12-350).
+    local ART_LEFT, ART_RIGHT = 12, 350
+    local laidNarrow, laidKey, laidFirst
 
-    local function LayTabs(narrow)
-        if laidNarrow == narrow or InCombatLockdown() then return end
-        laidNarrow = narrow
+    local function LayTabs(narrow, pet)
+        local key = tostring(narrow) .. tostring(pet)
+        if laidKey == key or InCombatLockdown() then return end
+        laidKey, laidNarrow = key, narrow
         local spec = narrow and NARROW or WIDE
+        local count = (narrow and 3 or 2) + (pet and 1 or 0)
+        laidFirst = ns.BalancedTabX(spec.first, spec.drawn, spec.step, count, ART_LEFT, ART_RIGHT)
         local tab1, profTab, petTab, collTab = f.BookTabs[1], f.BookTabs[2], f.BookTabs[3], f.BookTabs[4]
         local order = narrow and { tab1, profTab, collTab, petTab } or { tab1, profTab, petTab }
         for i, tab in ipairs(order) do
             tab:ClearAllPoints()
             if i == 1 then
-                tab:SetPoint("CENTER", f, "BOTTOMLEFT", spec.first, TAB_Y)
+                tab:SetPoint("CENTER", f, "BOTTOMLEFT", laidFirst, TAB_Y)
             else
                 tab:SetPoint("LEFT", order[i - 1], "RIGHT", spec.overlap, 0)
             end
@@ -1491,11 +1507,11 @@ local function CreateBook()
         local foot = f.FootPads
         if foot.prof then
             foot.prof:SetWidth(spec.drawn)
-            foot.prof:SetPoint("CENTER", foot.prof:GetParent(), "BOTTOMLEFT", spec.first + spec.step, PAD_Y)
+            foot.prof:SetPoint("CENTER", foot.prof:GetParent(), "BOTTOMLEFT", laidFirst + spec.step, PAD_Y)
         end
         if foot.coll then
             foot.coll:SetWidth(spec.drawn)
-            foot.coll:SetPoint("CENTER", foot.coll:GetParent(), "BOTTOMLEFT", spec.first + 2 * spec.step, PAD_Y)
+            foot.coll:SetPoint("CENTER", foot.coll:GetParent(), "BOTTOMLEFT", laidFirst + 2 * spec.step, PAD_Y)
             foot.coll:SetShown(narrow)
         end
         collTab:SetShown(narrow)
@@ -1505,17 +1521,18 @@ local function CreateBook()
     function f.LayContainer(c)
         local narrow = laidNarrow == true
         local spec = narrow and NARROW or WIDE
+        local first = laidFirst or spec.first
         c.bookPad:SetWidth(spec.drawn)
-        c.bookPad:SetPoint("CENTER", c.frame, "BOTTOMLEFT", spec.first, PAD_Y)
+        c.bookPad:SetPoint("CENTER", c.frame, "BOTTOMLEFT", first, PAD_Y)
         c.petPad:SetWidth(spec.drawn)
-        c.petPad:SetPoint("CENTER", c.frame, "BOTTOMLEFT", spec.first + (narrow and 3 or 2) * spec.step, PAD_Y)
+        c.petPad:SetPoint("CENTER", c.frame, "BOTTOMLEFT", first + (narrow and 3 or 2) * spec.step, PAD_Y)
     end
 
     function f:UpdateBookTabs()
         local narrow = ns.CollectionsMicroHidden and ns.CollectionsMicroHidden() or false
-        LayTabs(narrow)
-        narrow = laidNarrow
         local petCount, token = PetSpellCount()
+        LayTabs(narrow, petCount > 0)
+        narrow = laidNarrow
         -- Spellbook, Professions, then the optional pet tab, so the fixed two keep
         -- their places, as at the professions window's foot.
         local tab1, profTab, tab2 = self.BookTabs[1], self.BookTabs[2], self.BookTabs[3]

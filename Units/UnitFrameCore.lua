@@ -193,12 +193,25 @@ function UF.LayBars(frame, style)
     lay.health:SetHeight(height)
     local powerShown = style ~= "mana"
     ns.SetShownIf(lay.power, powerShown)
+    -- Its faded client bar over the health bar there: the mouse goes through to health.
+    if lay.clientPower and lay.clientPower:IsMouseEnabled() ~= powerShown then
+        pcall(lay.clientPower.EnableMouse, lay.clientPower, powerShown)
+    end
+    if lay.clientPower and UF.HoverSensing then UF.HoverSensing(lay.clientPower, powerShown) end
     for _, fs in ipairs(lay.powerTexts or {}) do ns.SetAlphaIf(fs, powerShown and 1 or 0) end
     if lay.bg then
         local y = math.max(lay.bgY, top)
         lay.bg:SetSize(UF.BAR_W, lay.bgH + y - lay.bgY)
         ns.SetPointOnce(lay.bg, "TOPLEFT", lay.host, "TOPLEFT", lay.x, y)
     end
+end
+
+-- A client power bar hidden under a thick health bar ("mana" style): no hover numbers, its text kept hidden.
+function UF.PowerHidden(clientBar)
+    for _, lay in pairs(lays) do
+        if lay.clientPower == clientBar then return lay.style == "mana" end
+    end
+    return false
 end
 
 -- The power bar's texts (client strings and our hover pair), hidden with it in the "mana" style.
@@ -242,7 +255,7 @@ function UF.BuildBars(frame, container, contextual, x, bgH, bgY, unit, clientHea
     if clientHealth then UF.Cover(clientHealth, health) end
     if clientMana then UF.Cover(clientMana, power) end
     lays[frame] = { host = host, health = health, power = power, bg = bg, x = x, bgY = bgY, bgH = bgH,
-        powerTexts = lays[frame] and lays[frame].powerTexts, style = nil, kind = unit }
+        powerTexts = lays[frame] and lays[frame].powerTexts, style = nil, kind = unit, clientPower = clientMana }
     UF.LayBars(frame, UF.Thick(unit))
     return host, health, power, bg
 end

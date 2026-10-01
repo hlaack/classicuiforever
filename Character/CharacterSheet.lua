@@ -193,6 +193,19 @@ local function FitTabs(shown)
     end
 end
 
+-- A row whose right margin to the art's edge is under its left one stands centred on the art.
+local function CenterTabs(shown, strip)
+    local n = #shown
+    if n == 0 then return end
+    local total = -TAB_OVERLAP * (n - 1)
+    for _, tab in ipairs(shown) do total = total + tab:GetWidth() end
+    local left = TAB_FIRST_X - T.ART_LEFT_EDGE
+    local right = T.ART_RIGHT_EDGE - (TAB_FIRST_X + total)
+    local x = TAB_FIRST_X
+    if right < left then x = T.ART_LEFT_EDGE + (T.ART_RIGHT_EDGE - T.ART_LEFT_EDGE - total) / 2 end
+    ns.SetPointOnce(shown[1], "BOTTOMLEFT", strip, "BOTTOMLEFT", x, 46)
+end
+
 -- Our glow on hover; its tooltip hidden only while the sheet is on, or the retail tabs lose their names.
 local function HookCatcher(tab, catcher)
     if not (tab and catcher and catcher.HookScript) then return end
@@ -380,6 +393,7 @@ local function LayTabs(frame, pet)
             end
         end
         FitTabs(shown)
+        CenterTabs(shown, strip)
         CatchTabs()
     else
         for i = 1, 6 do

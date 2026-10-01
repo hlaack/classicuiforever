@@ -133,6 +133,7 @@ Character\EquipmentPane.lua
 Spells\SpellBook.lua
 Skills\SkillShell.lua
 Skills\ProfessionsBook.lua
+Skills\ProfessionsFootTabs.lua
 Skills\ProfessionsWindow.lua
 Skills\TradeSkill.lua
 Skills\Trainer.lua
@@ -142,6 +143,7 @@ Options\Toggles.lua
 Options\Layout.lua
 Options\Diagnostics.lua
 Options\Options.lua
+Options\OptionsSearch.lua
 Options\OptionsWindow.lua
 Options\Profiles.lua
 Options\GameMenu.lua
