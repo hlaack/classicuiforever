@@ -148,10 +148,10 @@ local MICRO_HIDE = {
     HelpMicroButton = "hideMicroHelp",
 }
 
--- The collections button hidden by our option: the spellbook's foot gives it a tab instead.
+-- The collections button hidden by our option, on either bar: the spellbook's foot gives it a tab instead.
 function ns.CollectionsMicroHidden()
     local db = ns.db
-    return B.active and db ~= nil and db.hideMicroButtons == true and db.hideMicroCollections == true
+    return db ~= nil and db.hideMicroButtons == true and db.hideMicroCollections == true
 end
 
 -- Off the row: the shop always; the ones picked under Hide micro buttons. Second value: left off by the option.

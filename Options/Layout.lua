@@ -145,6 +145,19 @@ function ns.KeepOldLook()
     db.dbVersion = 4
 end
 
+-- Hide micro buttons reaches the game's own bar: an install with the classic bar off keeps every button there, in the
+-- account and every profile. Runs before the active profile is read.
+function ns.KeepGameMicroButtons(saved)
+    local db = ns.db
+    if db.gameMicroSplit then return end
+    db.gameMicroSplit = true
+    if not saved then return end
+    if db.classicBar == false then db.hideMicroButtons = false end
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" and shot.classicBar == false then shot.hideMicroButtons = false end
+    end
+end
+
 -- 0.14.0's What's New list: a player it was announced to, coming from an older one, met its bar changes unasked (the Help
 -- button, micro buttons grown to fill): told at each login until they choose (ns.AnnounceBarsLook).
 local LIST_0140 = 12

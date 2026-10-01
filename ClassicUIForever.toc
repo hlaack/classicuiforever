@@ -66,6 +66,7 @@ Bar\BandBags.lua
 Bar\BandLatency.lua
 Bar\BandSection.lua
 Bar\BandMicro.lua
+Bar\GameMicro.lua
 Bar\BandStatusHide.lua
 Bar\BandStatus.lua
 Bar\BandCast.lua

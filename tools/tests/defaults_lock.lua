@@ -90,6 +90,7 @@ return {
     hideMicroKeepWidth = false,
     hideMicroLegacy = true,
     hideMicroQuestLog = false,
+    hideMicroShop = false,
     hideMicroSpellbook = false,
     hideMicroSpread = false,
     hideMicroTalents = false,

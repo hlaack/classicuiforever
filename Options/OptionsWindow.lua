@@ -437,6 +437,7 @@ local function Build(canvas)
             row.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - row.depth * INDENT)
         elseif not entry.drop then
             local box = Checkbox(child, entry[1], entry[2], entry[3], entry.radio)
+            box.needs = entry.needs
             if entry.search then box.keyLow = box.keyLow .. " " .. entry.search:lower() end
             Grouped(box)
             Add(box, entry.parent)
@@ -703,7 +704,7 @@ local function Build(canvas)
         for _, box in ipairs(self.boxes) do
             box:SetChecked(ns.db[box.key] ~= false)
             -- Disabled and grayed under any parent that is off.
-            local on, up = true, box.parent
+            local on, up = not (box.needs and ns.db[box.needs] == false), box.parent
             while up do
                 if ns.db[up] == false then on = false break end
                 up = parentOf[up]

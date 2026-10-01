@@ -6,6 +6,7 @@ return {
     hideThreatGlow = "same for everyone: opt-in, off by default",
     plainQuestItems = "same for everyone: opt-in, off by default",
     plainNumbers = "same for everyone: mirrors the game's own setting, which only the player changes",
+    hideMicroShop = "same for everyone: opt-in, off by default; the classic bar never shows the shop",
     themeFlat = "same for everyone: opt-in, off by default",
     flatGryphons = "same for everyone: a part of Flat colour, which is off by default",
     flatBars = "same for everyone: a part of Flat colour, which is off by default",

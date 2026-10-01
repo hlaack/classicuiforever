@@ -23,6 +23,7 @@ ns.DB_DEFAULTS = {
     hideMicroGroupFinder = true,
     hideMicroCollections = true,
     hideMicroGameMenu = false,
+    hideMicroShop = false,
     oneBag = false,
     bagsAboveRow = false,
     bagWindowsFollow = false,
@@ -206,7 +207,7 @@ ns.DB_DEFAULTS = {
 -- Module walk order by id, applied at login before any init so .toc moves never reorder modules.
 -- Matches the registration order.
 ns.MODULE_ORDER = {
-    "bronzeTheme", "classicBar", "buttons", "castAnim", "pageArrows", "unitFrames", "hideBuffArrow",
+    "bronzeTheme", "hideMicroButtons", "classicBar", "buttons", "castAnim", "pageArrows", "unitFrames", "hideBuffArrow",
     "castBars", "swingTimers", "resourceDisplay", "classicStatusFont", "plainNumbers", "mirrorTimers", "comboPoints", "minimap", "minimapButton", "lfgMinimapButton", "minimapCollector", "namePlates", "classColorPlates",
     "fullPlates", "questTracker", "hideObjectiveTracker", "questLog", "questLogDual", "questLevels", "questMapPane", "panels", "worldMap", "lootWindow", "classicChat", "lootRoll",
     "guildRoster", "whoList", "groupFinder", "hideLastNames", "mapFade", "oneBag", "bags", "characterSheet", "statPanes",

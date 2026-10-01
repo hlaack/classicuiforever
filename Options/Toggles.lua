@@ -6,7 +6,7 @@ local O = {}
 ns.options = O
 O.TITLE = "ClassicUI Forever"
 
--- key, label, tooltip; parent makes it an indented sub-toggle, grayed while the parent is off; group starts a headed section;
+-- key, label, tooltip; parent: an indented sub-toggle, grayed while it (or needs) is off; group starts a headed section;
 -- radio groups rows where exactly one is on (drop: one drop down row); search adds words the search finds.
 -- Order drives the options list, /fcui help and the reload prompt (Core ToggleTree); Status reads it. Kids follow their parent.
 local SHOW_TIP = L["OPT_TIP_SHOW_HOVER_HIDE"]
@@ -35,11 +35,11 @@ ns.TOGGLES = {
 
     { "classicBar", L["OPT_classicBar"], L["OPT_classicBar_TIP"], group = L["GROUP_ACTION_BARS"] },
     { "microTips", L["OPT_microTips"], L["OPT_microTips_TIP"], parent = "classicBar", search = "tooltip" },
-    { "hideMicroButtons", L["OPT_hideMicroButtons"], L["OPT_hideMicroButtons_TIP"], parent = "classicBar", search = "micro menu buttons character spellbook talents professions quest guild group finder collections achievements legacy journal housing help" },
-    { "hideMicroKeepSize", L["OPT_hideMicroKeepSize"], L["OPT_hideMicroKeepSize_TIP"], parent = "hideMicroButtons" },
-    { "hideMicroKeepWidth", L["OPT_hideMicroKeepWidth"], L["OPT_hideMicroKeepWidth_TIP"], parent = "hideMicroButtons", search = "gap background" },
+    { "hideMicroButtons", L["OPT_hideMicroButtons"], L["OPT_hideMicroButtons_TIP"], search = "micro menu buttons character spellbook talents professions quest guild group finder collections achievements legacy journal housing help" },
+    { "hideMicroKeepSize", L["OPT_hideMicroKeepSize"], L["OPT_hideMicroKeepSize_TIP"], parent = "hideMicroButtons", needs = "classicBar" },
+    { "hideMicroKeepWidth", L["OPT_hideMicroKeepWidth"], L["OPT_hideMicroKeepWidth_TIP"], parent = "hideMicroButtons", needs = "classicBar", search = "gap background" },
     { "hideMicroSpread", L["OPT_hideMicroSpread"], L["OPT_hideMicroSpread_TIP"], parent = "hideMicroKeepWidth", search = "gap spacing" },
-    { "bandHoldsBars", L["OPT_bandHoldsBars"], L["OPT_bandHoldsBars_TIP"], parent = "hideMicroButtons", search = "gap width bar 3" },
+    { "bandHoldsBars", L["OPT_bandHoldsBars"], L["OPT_bandHoldsBars_TIP"], parent = "hideMicroButtons", needs = "classicBar", search = "gap width bar 3" },
     { "hideMicroCharacter", L["OPT_hideMicroCharacter"], L["OPT_hideMicroCharacter_TIP"], parent = "hideMicroButtons" },
     { "hideMicroSpellbook", L["OPT_hideMicroSpellbook"], L["OPT_hideMicroSpellbook_TIP"], parent = "hideMicroButtons" },
     { "hideMicroTalents", L["OPT_hideMicroTalents"], L["OPT_hideMicroTalents_TIP"], parent = "hideMicroButtons" },
@@ -56,6 +56,7 @@ ns.TOGGLES = {
     { "hoverGroupFinderButton", L["OPT_hoverGroupFinderButton"], L["OPT_hoverGroupFinderButton_TIP"], parent = "lfgMinimapButton", radio = "groupFinderButtonShow", drop = true },
     { "hideMicroHelp", L["OPT_hideMicroHelp"], L["OPT_hideMicroHelp_TIP"], parent = "hideMicroButtons" },
     { "hideMicroGameMenu", L["OPT_hideMicroGameMenu"], L["OPT_hideMicroGameMenu_TIP"], parent = "hideMicroButtons" },
+    { "hideMicroShop", L["OPT_hideMicroShop"], L["OPT_hideMicroShop_TIP"], parent = "hideMicroButtons" },
     { "hideStanceBar", L["OPT_hideStanceBar"], L["OPT_hideStanceBar_TIP"], parent = "classicBar", search = "forms auras shapeshift" },
     { "classicBarSize", L["OPT_classicBarSize"], L["OPT_classicBarSize_TIP"], parent = "classicBar", search = "small size 36 45 game" },
     { "oneBar", L["OPT_oneBar"], L["OPT_oneBar_TIP"], parent = "classicBar" },
