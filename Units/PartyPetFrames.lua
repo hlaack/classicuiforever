@@ -16,9 +16,11 @@ local PARTY_ART_LAYERED = { coords = FULL, w = 128, h = 64, point = "TOPLEFT", y
 local PARTY_FLASH = { coords = FULL, w = 128, h = 64, point = "TOPLEFT", x = -3, y = -6 }
 local PARTY_FLASH_LAYERED = { coords = FULL, w = 128, h = 64, point = "TOPLEFT", x = -3, y = -6, layer = "BACKGROUND", sublevel = 0 }
 local PARTY_LEADER = { coords = FULL, w = 16, h = 16, point = "TOPLEFT", y = -8 }
-local SMALL_TEXTS = { { "CENTER", 0, 0 }, { "LEFT", 3, 0 }, { "RIGHT", -3, 0 } }
+-- Pet and party bars are 7 to 10 tall: their numbers in the small bar font (Units/StatusFont.lua).
+local SMALL_FONT = "ForeverClassicUISmallBarText"
+local SMALL_TEXTS = { { "CENTER", 0, 0 }, { "LEFT", 3, 0 }, { "RIGHT", -3, 0 }, font = SMALL_FONT }
 -- Power slot starts 4 left of health (portrait curve): its text sits 4 further in to align the columns.
-local PARTY_POWER_TEXTS = { { "CENTER", 2, 0 }, { "LEFT", 7, 0 }, { "RIGHT", -3, 0 } }
+local PARTY_POWER_TEXTS = { { "CENTER", 2, 0 }, { "LEFT", 7, 0 }, { "RIGHT", -3, 0 }, font = SMALL_FONT }
 local PARTY_CLIENT_BARS = { "HealthBarContainer", "ManaBar" }
 -- Pet bars: from the frame's top left, under its border (the rims cap their ends, as on the player frame).
 local PET_HEALTH_X = 47

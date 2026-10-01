@@ -41,8 +41,15 @@ for _, entry in ipairs(WINDOWS) do byKey[entry.key] = entry end
 
 -- The entry whose place and unlock this one shares, and this one's corner from it.
 local function Leader(entry)
-    if entry.follows and ns.db and ns.db[entry.followIf] then return byKey[entry.follows], entry.followX, entry.followY end
+    if entry.follows and (entry.followIf == nil or (ns.db and ns.db[entry.followIf])) then
+        return byKey[entry.follows], entry.followX, entry.followY
+    end
     return entry, 0, 0
+end
+
+-- The key its size is saved under: the leader's when it follows that too.
+local function SizeKey(entry)
+    return entry.followSize and Leader(entry).key or entry.key
 end
 
 -- Its top left in UIParent units, or nil.
@@ -89,7 +96,7 @@ local function Set(key, value)
     rawset(ns.db, key, value)
 end
 -- A saved size by window key, for a secure re-apply (the client fits a panel to 1 as it shows it).
-function ns.WindowScale(key) return Scales()[key] end
+function ns.WindowScale(key) return Scales()[byKey[key] and SizeKey(byKey[key]) or key] end
 -- Mid drag by its title bar: the window placing passes leave it to the mouse.
 function ns.WindowMoving(frame) return moving[frame] == true end
 function ns.WindowPlaced(key)
@@ -147,7 +154,7 @@ local function Apply(entry)
     local frame = _G[entry.name]
     if not frame or moving[frame] then return end
     local left, top = PlaceOf(entry)
-    local scale = Scales()[entry.key]
+    local scale = Scales()[SizeKey(entry)]
     if Full(entry, frame) then left, scale = nil, nil end
     if not (left or scale or scaled[frame]) then return end
     -- calm: its casting layer moves out of combat only.
@@ -265,7 +272,7 @@ PlaceAll = function()
     for _, entry in ipairs(WINDOWS) do
         local frame = _G[entry.name]
         if ns.MakeWindowLock then ns.MakeWindowLock(entry) end
-        if PlaceOf(entry) or Scales()[entry.key] or IsFree(entry) or (frame and scaled[frame]) then
+        if PlaceOf(entry) or Scales()[SizeKey(entry)] or IsFree(entry) or (frame and scaled[frame]) then
             Watch(entry)
             Apply(entry)
         end
@@ -362,7 +369,7 @@ end
 local function HandleRect(entry)
     local frame, left, top = _G[entry.name], PlaceOf(entry)
     local full = Full(entry, frame)
-    local k = (frame and not full and Ratio(frame)) or Scales()[entry.key] or 1
+    local k = (frame and not full and Ratio(frame)) or Scales()[SizeKey(entry)] or 1
     local w, h = PreviewSize(entry, frame)
     w, h = w * k, h * k
     if left and not OnRing(entry) then return left, top, w, h end
@@ -403,7 +410,7 @@ local MAP_ROWS = 2
 
 local function Refresh()
     if not (dialog and selected and dialog:IsShown()) then return end
-    local key, views = selected.key, selected.quests == true
+    local views = selected.quests == true
     dialog.title:SetText(selected.label)
     dialog:SetHeight(views and DIALOG_H + VIEW_H * MAP_ROWS or DIALOG_H)
     dialog.views:SetShown(views)
@@ -434,7 +441,7 @@ local function Refresh()
         ns.SetPointOnce(dialog.sizeLabel, "TOPLEFT", views and dialog.fade or dialog.check, "BOTTOMLEFT", 0, -4)
     end
     dialog.reset:SetEnabled(PlaceOf(selected) ~= nil or (OnRing(selected) and ns.db[selected.ringKey] ~= nil))
-    dialog.resize:SetEnabled(Scales()[key] ~= nil and not Fixed(selected))
+    dialog.resize:SetEnabled(Scales()[SizeKey(selected)] ~= nil and not Fixed(selected))
     if dialog.InitSlider then dialog.InitSlider() end
 end
 
@@ -482,7 +489,7 @@ end
 
 local function Percent(value) return string.format("%d%%", value) end
 local function SizeValues()
-    local scale = selected and Scales()[selected.key] or 1
+    local scale = selected and Scales()[SizeKey(selected)] or 1
     return math.floor(scale * 100 + 0.5), 50, 150, 20
 end
 
@@ -490,12 +497,14 @@ end
 local function OnSize(value)
     if not selected then return end
     local scale = math.max(0.5, math.min(1.5, value / 100))
-    Scales()[selected.key] = math.abs(scale - 1) > 0.001 and scale or nil
+    Scales()[SizeKey(selected)] = math.abs(scale - 1) > 0.001 and scale or nil
     PlaceAll()
     -- A piece at its own spot keeps that spot's middle as it grows.
     if selected.piece and ns.LayPiece then ns.LayPiece(selected.key) end
-    LayHandle(selected)
-    if dialog then dialog.resize:SetEnabled(Scales()[selected.key] ~= nil) end
+    for _, other in ipairs(WINDOWS) do
+        if SizeKey(other) == SizeKey(selected) then LayHandle(other) end
+    end
+    if dialog then dialog.resize:SetEnabled(Scales()[SizeKey(selected)] ~= nil) end
 end
 
 -- The map's placeholder width.
@@ -598,6 +607,7 @@ end
 local DIALOG_GAP = 8
 
 local function Select(entry)
+    ns.EditMode.TakePick()
     selected = entry
     local d = Dialog()
     local handle = handles[entry.key]

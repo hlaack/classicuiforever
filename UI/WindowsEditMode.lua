@@ -131,6 +131,12 @@ local function RevertAll() if saved then Restore(saved, true) end end
 -- All settle them too. Left without either, a change is kept (as the micro menu's).
 local gameSaved
 
+-- A classic layout reset settles both snapshots: else the mode left open put the old places back at logout.
+function ns.SettleWindowEdits()
+    if saved then saved = Snapshot() end
+    if gameSaved then gameSaved = Snapshot() end
+end
+
 -- Only with the classic bar on: its gryphons exist then.
 local function GameBoxes(on)
     on = on and ns.ClassicBarActive and ns.ClassicBarActive()

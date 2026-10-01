@@ -166,6 +166,7 @@ local function MouseUp(handle, button)
     end
     -- The release ending a drag is not a click.
     if el.moving or el.dragged then return end
+    ns.EditMode.TakePick()
     local d = Dialog()
     d.el = el
     handle.Dress("editmode-actionbar-selected")
@@ -254,7 +255,8 @@ function B.LaySection(level)
     KeyRingShown(not Hidden(KEYRING) and placed)
 end
 
--- Our edit mode boxes (micro menu, latency bar, key ring) up while edit mode is open, their dialogs shut after (BandWatch).
+-- Our edit mode boxes (micro menu, latency bar, key ring) up while edit mode is open, their dialogs shut after or once a
+-- piece of the game's is picked (BandWatch's edit beat).
 -- A group's level moves with its buttons' and takes the box along: set again as it shows.
 local function ShowHandle(home, want)
     local handle = home and home.handle
@@ -269,7 +271,9 @@ function B.ShowEditHandles(art, editing)
     for _, el in ipairs(ELEMENTS) do
         if el.home then ShowHandle(el.home, editing and el.home:IsShown()) end
     end
-    if editing then return end
+    if editing and not ns.EditMode.GamePicked() then return end
     if art and art.microDialog and art.microDialog:IsShown() then art.microDialog:Hide() end
     if dialog and dialog:IsShown() then dialog:Hide() end
+    -- The gryphons' dialog; out of edit mode our Windows edit mode shuts it itself.
+    if editing and ns.windowEdit then ns.windowEdit.HideDialog() end
 end

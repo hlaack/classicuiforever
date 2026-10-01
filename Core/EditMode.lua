@@ -13,6 +13,20 @@ function EditMode.Live()
     return mgr and mgr.IsEditModeActive and mgr:IsEditModeActive() and true or false
 end
 
+-- A box of ours picked takes the pick: the game's piece kept it, and the arrow keys moved that piece. The game's own
+-- secure delegate, out of combat.
+function EditMode.TakePick()
+    local mgr = EditModeManagerFrame
+    if InCombatLockdown() or not (EditMode.Live() and mgr.ClearSelectedSystem) then return end
+    mgr:ClearSelectedSystem()
+end
+
+-- A piece of the game's picked: its settings dialog is up.
+function EditMode.GamePicked()
+    local dialog = EditModeSystemSettingsDialog
+    return dialog ~= nil and dialog:IsShown()
+end
+
 -- nil when unknown (no method, uninitialized, secret, failed call); callers decide what nil means.
 function ns.InDefaultPosition(frame, requireInitialized)
     if type(frame) ~= "table" or type(frame.IsInDefaultPosition) ~= "function" then return nil end

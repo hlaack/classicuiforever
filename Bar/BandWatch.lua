@@ -200,6 +200,14 @@ local function ReadBarPlacement()
     if baseline[bar] and Differs(bar, baseline[bar]) then ns.db.barDragged = true end
 end
 
+-- The game's arrow keys move the picked bar 1 with no mouse: a placement as a drop is, or the pass put it back home
+-- under the keys. Its nudge leaves a top left anchor; the game's own re-stacks never do. Read by the pass (ClassicBar).
+function B.ReadNudge(bar)
+    if ns.db.barDragged or B.dragging or not EditModeLive() or not bar.isSelected then return end
+    local point, rel, relPoint = bar:GetPoint(1)
+    if point == "TOPLEFT" and rel == UIParent and relPoint == "TOPLEFT" then ReadBarPlacement() end
+end
+
 -- Bar 1 dropped near the centred spot goes exactly home (the client snaps its buttons, not the band, to the centre line);
 -- by our record, never a layout write (that marks every piece as ours).
 local HOME_REACH = 40

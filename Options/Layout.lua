@@ -285,6 +285,7 @@ local function ResetNow()
     -- Windows and gryphons placed or sized in the windows edit mode (the map included) back to their own; Movable
     -- anytime is kept.
     ns.db.windowPos, ns.db.windowScale = nil, nil
+    if ns.SettleWindowEdits then ns.SettleWindowEdits() end
     ns.db.barDragged, ns.db.barOffsetX, ns.db.barOffsetY = false, nil, nil
     local names = { "MainActionBar", "MainMenuBar", "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight",
         "MultiBarLeft", "StanceBar", "PetActionBar", "PossessActionBar", "MainStatusTrackingBarContainer",

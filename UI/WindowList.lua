@@ -5,7 +5,7 @@ local L = ns.L
 
 -- w, h: box before made; cut: old 384 x 512 frame's bare edges; stripRight, stripH: strip inset, height; toggle: unlock option;
 -- quests: the map; section: heading; piece: laid by ns.LayPiece; ringKey: minimap angle (while ringIf); fixedIf: no drag then;
--- choice: radio dropdown; client: game window; follows: its place and unlock (followIf); gameEdit: box in the game's edit mode.
+-- choice: radio list; client: game window; follows: place, unlock (while followIf, or always), followSize: size; gameEdit.
 ns.WINDOW_LIST = {
     { key = "character", label = L["UI_CHARACTER"], name = "CharacterFrame", w = 354, h = 467, cut = { 30, 45 }, client = true },
     -- The classic professions book wears the spellbook's frame, its corner on the book's art (homes 0, -104 and 12, -118).
@@ -54,4 +54,8 @@ ns.WINDOW_LIST = {
     -- Dressed as the social window, the group finder stands in its place at its size.
     { key = "groupFinder", label = L["OPT_groupFinder"], name = "LFGParentFrame", w = 338, h = 424, client = true,
         follows = "social", followIf = "groupFinder", followX = 0, followY = 0 },
+    -- The NPC's quest and gossip windows open on one spot: one place, lock and size.
+    { key = "questGiver", label = L["UI_QUEST_GIVER"], name = "QuestFrame", w = 338, h = 427, client = true },
+    { key = "gossip", label = L["UI_GOSSIP"], name = "GossipFrame", w = 338, h = 427, client = true,
+        follows = "questGiver", followX = 0, followY = 0, followSize = true },
 }

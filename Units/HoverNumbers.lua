@@ -302,8 +302,9 @@ function UF.HoverBoth(clientBar, bar, holder, offsets, owner, unit, power)
     e.owner, e.unit, e.power = owner, unit, power
     UF.HoverRelist()
     local key = power and "hoverPower" or "hoverHealth"
-    e.left = ns.OwnFontString(holder, key .. "L", "OVERLAY", "TextStatusBarText")
-    e.right = ns.OwnFontString(holder, key .. "R", "OVERLAY", "TextStatusBarText")
+    local font = offsets.font or "TextStatusBarText"
+    e.left = ns.OwnFontString(holder, key .. "L", "OVERLAY", font)
+    e.right = ns.OwnFontString(holder, key .. "R", "OVERLAY", font)
     local l, r = offsets[2], offsets[3]
     ns.SetPointOnce(e.left, l[1], bar, l[1], l[2], l[3])
     ns.SetPointOnce(e.right, r[1], bar, r[1], r[2], r[3])

@@ -137,6 +137,8 @@ local function Layout()
     -- the bar's rectangle is its twelve buttons: a drag moves the whole band and its dialog works.
     art:SetScale(BandScale(bar))
     art:ClearAllPoints()
+    -- Before the pass would put it home: a bar 1 nudged by arrow key counts as dragged.
+    if B.ReadNudge then B.ReadNudge(bar) end
     local moved = BarMoved(bar)
     ns.barMoved = moved
     -- At its default place the bar goes where the band's centred spot needs it (offsets in screen px: it keeps scale 1).

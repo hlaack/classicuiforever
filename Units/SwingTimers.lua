@@ -24,13 +24,14 @@ local LABEL_X = 10
 -- The border's opening sits 2.5 rows above the bar's middle.
 local OPENING_UP = 2.5
 -- The player cast bar's border (256 x 64) round its 195 x 13 bar, 30.5 past each end, scaled with the swing bar's
--- height (edit mode). Cut in nine so thickness moves only the outer parts.
+-- height (edit mode). The rails are one nine; the opening (rows 28-37, columns 34-222) another, its soft shade 4 deep
+-- at each edge, so the shade keeps its shape at any thickness (stretched whole it swelled, cut off it left a seam).
 local BAR_H, OUT_X = 13, 30.5
--- Cut round the opening (rows 28-37, columns 38-217) so every rail is in an outer piece: the 1.x border covers the
--- bar's foot and 7.5 of each end.
-local CUT_LEFT, CUT_RIGHT, CUT_TOP, CUT_FOOT = 38, 217, 28, 37
+local CUT_LEFT, CUT_RIGHT, CUT_TOP, CUT_FOOT, SHADE = 34, 222, 28, 37, 4
 local COLS = { 0, CUT_LEFT / 256, CUT_RIGHT / 256, 1 }
 local ROWS = { 0, CUT_TOP / 64, CUT_FOOT / 64, 1 }
+local SHADE_COLS = { CUT_LEFT / 256, (CUT_LEFT + SHADE) / 256, (CUT_RIGHT - SHADE) / 256, CUT_RIGHT / 256 }
+local SHADE_ROWS = { CUT_TOP / 64, (CUT_TOP + SHADE) / 64, (CUT_FOOT - SHADE) / 64, CUT_FOOT / 64 }
 local IN_X, IN_H = CUT_LEFT - OUT_X, CUT_FOOT - CUT_TOP
 local FLASH_TIME = 0.3
 local RESET_DROP = 0.5   -- a fall of this much of the bar is a new swing
@@ -52,14 +53,14 @@ end
 local active = false
 local own = setmetatable({}, { __mode = "k" })   -- status bar -> our border and flash
 
--- Nine pieces of a border sheet, row by row from the top left.
-local function Slices(bar, key, layer)
+-- Nine pieces of a border sheet cut at cols and rows, row by row from the top left.
+local function Slices(bar, key, layer, cols, rows)
     local list = {}
     for row = 1, 3 do
         for col = 1, 3 do
             local tex = bar:CreateTexture(nil, layer, nil, 2)
             ns.SetTex(tex, key)
-            tex:SetTexCoord(COLS[col], COLS[col + 1], ROWS[row], ROWS[row + 1])
+            tex:SetTexCoord(cols[col], cols[col + 1], rows[row], rows[row + 1])
             list[#list + 1] = tex
         end
     end
@@ -94,6 +95,27 @@ local function LaySlices(list, bar, inset, depth, l, t, b)
     br:SetSize(l, b)
 end
 
+-- The opening's shade on the rails' middle piece (only an anchor now): corners s square, edges between, centre.
+local function LayShade(list, mid, s)
+    local tl, top, tr, left, centre, right, bl, bottom, br = unpack(list)
+    for i = 1, #list do list[i]:ClearAllPoints() end
+    tl:SetPoint("TOPLEFT", mid, "TOPLEFT")
+    tr:SetPoint("TOPRIGHT", mid, "TOPRIGHT")
+    bl:SetPoint("BOTTOMLEFT", mid, "BOTTOMLEFT")
+    br:SetPoint("BOTTOMRIGHT", mid, "BOTTOMRIGHT")
+    for _, corner in ipairs({ tl, tr, bl, br }) do corner:SetSize(s, s) end
+    top:SetPoint("TOPLEFT", tl, "TOPRIGHT")
+    top:SetPoint("BOTTOMRIGHT", tr, "BOTTOMLEFT")
+    bottom:SetPoint("TOPLEFT", bl, "TOPRIGHT")
+    bottom:SetPoint("BOTTOMRIGHT", br, "BOTTOMLEFT")
+    left:SetPoint("TOPLEFT", tl, "BOTTOMLEFT")
+    left:SetPoint("BOTTOMRIGHT", bl, "TOPRIGHT")
+    right:SetPoint("TOPLEFT", tr, "BOTTOMLEFT")
+    right:SetPoint("BOTTOMRIGHT", br, "TOPRIGHT")
+    centre:SetPoint("TOPLEFT", tl, "BOTTOMRIGHT")
+    centre:SetPoint("BOTTOMRIGHT", br, "TOPLEFT")
+end
+
 local function ShowSlices(list, shown)
     for i = 1, #list do list[i]:SetShown(shown) end
 end
@@ -112,14 +134,20 @@ local function Dress(entry)
     local parts = own[bar]
     if not parts then
         parts = {}
-        parts.border = Slices(bar, "castBorder", "ARTWORK")
+        parts.border = Slices(bar, "castBorder", "ARTWORK", COLS, ROWS)
+        parts.shade = Slices(bar, "castBorder", "ARTWORK", SHADE_COLS, SHADE_ROWS)
         -- The 1.x cast bar's dark backing, the bar's own size.
         parts.back = bar:CreateTexture(nil, "BACKGROUND")
         parts.back:SetColorTexture(0, 0, 0, 0.5)
         parts.back:SetAllPoints(bar)
-        parts.flash = Slices(bar, "castFlash", "OVERLAY")
+        parts.flash = Slices(bar, "castFlash", "OVERLAY", COLS, ROWS)
+        parts.flashShade = Slices(bar, "castFlash", "OVERLAY", SHADE_COLS, SHADE_ROWS)
         local anim = bar:CreateAnimationGroup()
-        for _, tex in ipairs(parts.flash) do
+        local glows = {}
+        for _, list in ipairs({ parts.flash, parts.flashShade }) do
+            for _, tex in ipairs(list) do glows[#glows + 1] = tex end
+        end
+        for _, tex in ipairs(glows) do
             tex:SetBlendMode("ADD")
             tex:SetAlpha(0)
             local fade = anim:CreateAnimation("Alpha")
@@ -142,14 +170,16 @@ local function Dress(entry)
     local l, t, b = CUT_LEFT * sk, CUT_TOP * sk, (64 - CUT_FOOT) * sk
     LaySlices(parts.border, bar, inset, depth, l, t, b)
     LaySlices(parts.flash, bar, inset, depth, l, t, b)
+    -- The shade as deep as the rails are thick, never more than the opening holds.
+    local s = SHADE * math.min(sk, depth / IN_H)
+    LayShade(parts.shade, parts.border[5], s)
+    LayShade(parts.flashShade, parts.flash[5], s)
     local up = OPENING_UP * sk
     if bar.TypeLabel then ns.SetPointOnce(bar.TypeLabel, "LEFT", bar, "LEFT", LABEL_X, up) end
     if bar.TimeLabel then ns.SetPointOnce(bar.TimeLabel, "RIGHT", bar, "RIGHT", -LABEL_X, up) end
-    ShowSlices(parts.border, true)
-    ShowSlices(parts.flash, true)
-    -- The middle slice is only the rails' soft inner fade: stretched round a thinner border's wider opening it swelled.
-    parts.border[5]:SetShown(k >= 1)
-    parts.flash[5]:SetShown(k >= 1)
+    for _, list in ipairs({ parts.border, parts.shade, parts.flash, parts.flashShade }) do ShowSlices(list, true) end
+    parts.border[5]:Hide()
+    parts.flash[5]:Hide()
     parts.back:Show()
 end
 
@@ -167,8 +197,7 @@ local function Undress(entry)
     bar:SetStatusBarColor(1, 1, 1)
     local parts = own[bar]
     if parts then
-        ShowSlices(parts.border, false)
-        ShowSlices(parts.flash, false)
+        for _, list in ipairs({ parts.border, parts.shade, parts.flash, parts.flashShade }) do ShowSlices(list, false) end
         parts.back:Hide()
     end
 end

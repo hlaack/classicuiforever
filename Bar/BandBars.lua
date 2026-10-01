@@ -473,12 +473,18 @@ local function BandTop()
     for _, holder in ipairs(B.StatusPair()) do
         if holder and B.OnBand(holder) then top = math.max(top, TopOf(holder)) end
     end
-    for _, button in ipairs(B.MicroButtonList and B.MicroButtonList() or {}) do
-        if button:GetParent() == art then top = math.max(top, TopOf(button)) end
+    -- A moved group keeps the band as parent: only one standing on it counts, or the stack rose with a moved menu.
+    local shape = B.shape
+    if shape.micro then
+        for _, button in ipairs(B.MicroButtonList and B.MicroButtonList() or {}) do
+            if button:GetParent() == art then top = math.max(top, TopOf(button)) end
+        end
     end
-    for _, name in ipairs(B.BAG_BUTTONS) do
-        local button = _G[name]
-        if button and button:GetParent() == art then top = math.max(top, TopOf(button)) end
+    if shape.bags then
+        for _, name in ipairs(B.BAG_BUTTONS) do
+            local button = _G[name]
+            if button and button:GetParent() == art then top = math.max(top, TopOf(button)) end
+        end
     end
     return top
 end

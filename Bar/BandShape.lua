@@ -5,7 +5,7 @@ local B = ns.band
 -- Edit mode can take micro or bags off; the band ends at what remains, right gryphon on the last piece.
 -- Micro moved: bags close up against bar 1's page arrows; both moved: bar 1 alone.
 
-local ART_W, PAGE_ROOM = B.ART_W, B.PAGE_ROOM
+local ART_W, PAGE_ROOM, PAGE_POST = B.ART_W, B.PAGE_ROOM, B.PAGE_POST
 local MICRO_LEAD, MICRO_REGION_MAX, MICRO_END_GAP = B.MICRO_LEAD, B.MICRO_REGION_MAX, B.MICRO_END_GAP
 local POST_U, POST_W = B.POST_U, B.POST_W
 local ROW_X, ROW_Y = B.ROW_X, B.ROW_Y
@@ -112,9 +112,13 @@ local function BandPlan(microOn, bagsOn, bagsFirst, region)
             x = x + POST_W
         end
     else
-        -- The page number slot's post closes what follows up to it; that piece's own leading post goes.
+        -- What follows the page number slot starts at its post (no dark stone between) under the box's jutting edge
+        -- (plan.pageEdge); bags drop their own leading post there, the section keeps its own.
         local paged = not plan.noPages
-        if paged then x = x + PAGE_ROOM end
+        if paged then
+            x = x + PAGE_POST
+            plan.pageEdge = x
+        end
         local bag = B.Bag()
         local bagTrim = paged and bag.postTrim or bag.trim
         if bagsOn and microOn then
@@ -128,18 +132,18 @@ local function BandPlan(microOn, bagsOn, bagsFirst, region)
             plan.microRow = plan.microStart + (plan.microEnd - POST_W - plan.microStart - row) / 2
         elseif bagsOn then
             local before = x
-            x = Tail(plan, x, paged, true)
+            x = Tail(plan, x, false, true)
             x = Bags(plan, x, x == before and bagTrim or bag.trim)
         else
             -- Neither group on the band: the section stays with bar 1, its own post ending the band.
             local before = x
-            x = Tail(plan, x, paged, false)
+            x = Tail(plan, x, false, false)
             if x ~= before then
                 plan.ownEnd = true
             elseif paged then
                 -- Bar 1 alone: the page number slot's post, then dark stone under the gryphon.
-                plan.ownEnd, plan.pageRoom = true, PAGE_ROOM + ALONE_DARK
-                x = x + ALONE_DARK
+                plan.ownEnd, plan.pageRoom, plan.pageEdge = true, PAGE_ROOM + ALONE_DARK, nil
+                x = plan.base + PAGE_ROOM + ALONE_DARK
             end
         end
     end
@@ -188,7 +192,7 @@ function B.Segments()
         if region > 256 then list[#list + 1] = { half + 256, region - 256, 4, 0, (region - 256) / 256, "micro" } end
         if plan.microPost then list[#list + 1] = { plan.microPost, POST_W, 4, POST_U / 256, (POST_U + POST_W) / 256, "micro" } end
     elseif not plan.microFirst and not plan.noPages then
-        local room = plan.pageRoom or PAGE_ROOM
+        local room = plan.pageRoom or (plan.pageEdge and PAGE_POST) or PAGE_ROOM
         list[#list + 1] = { half, room, 3, 0, room / 256, "bar" }
     end
     if plan.bagsStart then

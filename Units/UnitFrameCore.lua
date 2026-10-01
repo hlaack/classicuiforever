@@ -124,11 +124,13 @@ local function TextHolder(frame, above)
     return Child(frame, "texts", (above or frame):GetFrameLevel() + 3)
 end
 
+-- offsets: { point, x, y } per text; offsets.font a font object for all of them (small bars).
 local function AttachTexts(bar, texts, offsets, textParent)
     for i, fs in ipairs(texts) do
         if fs then
             fs:SetParent(textParent or bar)
             fs:SetDrawLayer("OVERLAY")
+            if offsets.font then fs:SetFontObject(offsets.font) end
             fs:ClearAllPoints()
             local o = offsets[i]
             fs:SetPoint(o[1], bar, o[1], o[2], o[3])

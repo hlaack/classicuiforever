@@ -201,6 +201,10 @@ local function MicroTip(button)
     if name == "NEWBIE_TOOLTIP_GUILDTAB" and not (IsInGuild and IsInGuild()) then name = "NEWBIE_TOOLTIP_LOOKINGFORGUILDTAB" end
     local text = name and ns.EraText(name)
     if not text then return end
+    -- Once per tooltip: a pad over a button of ours runs its enter, this hook included, then calls this again.
+    local last = _G["GameTooltipTextLeft" .. GameTooltip:NumLines()]
+    local shown = last and last:GetText()
+    if not ns.IsSecret(shown) and shown == text then return end
     GameTooltip:AddLine(text, 1, 0.82, 0, true)
     GameTooltip:Show()
 end
@@ -363,7 +367,9 @@ local function MicroHome()
             ns.db.bagsFirst = place
         elseif left and bottom then
             ns.MicroTouched()
-            ns.db.microPos = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = left, y = bottom }
+            -- Read in its in-hand scale; stored in the one it takes off the band.
+            local k = home:GetEffectiveScale() / (UIParent:GetEffectiveScale() * MicroUserScale())
+            ns.db.microPos = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = left * k, y = bottom * k }
         end
         SaveMicro()
         ns.MicroDroppedInFight()
@@ -382,6 +388,7 @@ local function MicroHome()
         end
         -- A click selects it and opens its settings, as edit mode does; the release ending a drag is not a click.
         if home.moving or home.dragged then return end
+        ns.EditMode.TakePick()
         local dialog = MicroDialog()
         DressBox("editmode-actionbar-selected")
         ns.SetPointOnce(dialog, "BOTTOM", home, "TOP", 0, 40)
@@ -458,12 +465,12 @@ function B.LayoutMicroButtons()
     local scale, region = MicroPlan(#wanted, out and 1 or MicroUserScale(), sized)
     -- The row at its own scale: what the band's sockets were drawn around.
     local baseScale = MicroPlan(#wanted, 1, sized)
-    local bandScale = BandNow()
-    local homeScale = out and (group / bandScale) or 1
+    local home = MicroHome()
+    -- In hand it keeps its scale: a change mid-drag (the preview taking it off the band) threw it off the cursor, up.
+    local homeScale = home.moving and home:GetScale() or (out and (group / BandNow()) or 1)
     local buttonScale = scale * homeScale
     local level = ButtonLevel()
 
-    local home = MicroHome()
     local plan = CurrentPlan()
     local groupX, rowIn = MICRO_GROUP_X, MICRO_ROW_IN
     if not out and plan.microRow then
@@ -474,10 +481,10 @@ function B.LayoutMicroButtons()
         rowIn = row - groupX
     end
     local groupW = (not out and plan.microEnd) and (plan.microEnd - groupX) or ((ART_W / 2 + region) - MICRO_GROUP_X)
-    home:SetSize(groupW, BAND_H)
-    home:SetScale(homeScale)
     home:SetFrameLevel(math.max(0, level - 1))
     if not home.moving then
+        home:SetSize(groupW, BAND_H)
+        home:SetScale(homeScale)
         home:ClearAllPoints()
         local pos = ns.db.microPos
         if ns.ValidPlace(pos) then

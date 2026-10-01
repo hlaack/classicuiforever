@@ -46,7 +46,8 @@ end
 local function SyncBox(element)
     local nameBox = element.fcui and element.fcui.nameBox
     if not nameBox then return end
-    local filled = element.Item == nil or element.Item:IsShown()
+    -- A looted slot comes back from the list as the bare template, no item button: empty.
+    local filled = element.Item ~= nil and element.Item:IsShown()
     if element.Text then
         local text = element.Text:GetText()
         if not IsSecret(text) and (text or "") == "" then filled = false end
@@ -104,19 +105,11 @@ local function EnableIf(button, on)
     if button:IsEnabled() ~= on then button:SetEnabled(on) end
 end
 
--- Scroll by whole rows (wheel and arrows); free scrolling cut rows at each end.
-local function LootScroll(box, rows)
-    if not box.GetDerivedScrollRange or not box.SetScrollPercentage then return end
-    local range = box:GetDerivedScrollRange() or 0
-    if range <= 0 then return end
-    local pitch = LootPitch(box)
-    local offset = (box.GetDerivedScrollOffset and box:GetDerivedScrollOffset()) or 0
-    local at = math.floor(offset / pitch + 0.5) + rows
-    local last = math.floor(range / pitch + 0.01)
-    at = math.max(0, math.min(last, at))
-    box:SetScrollPercentage(math.min(1, (at * pitch) / range))
-end
+-- The page shown, from 0; a new loot starts on the first.
+local page = 0
 
+-- Whole pages as in 1.x: the list can't scroll past its end, so the last page shrinks to what is left and scrolls
+-- to the end, its rows at the top (a full last page repeated rows from the page before).
 local function UpdateLootPages(frame, visit)
     local box = frame.ScrollBox
     if not box then return end
@@ -127,13 +120,18 @@ local function UpdateLootPages(frame, visit)
     local paged = total > LootRows(pitch, false)
     ns.SetShownIf(pager, paged)
     local rows = LootRows(pitch, paged)
-    frame.fcuiRows = rows
-    KeepFoot(box, frame, LOOT_H - LOOT_TOP - rows * pitch)
-    if paged then
-        local pct = box.GetScrollPercentage and box:GetScrollPercentage() or 0
-        EnableIf(pager.up, pct > 0.001)
-        EnableIf(pager.down, pct < 0.999)
+    local last = paged and math.ceil(total / rows) - 1 or 0
+    page = math.max(0, math.min(page, last))
+    local shown = paged and math.min(rows, total - page * rows) or rows
+    KeepFoot(box, frame, LOOT_H - LOOT_TOP - shown * pitch)
+    if not paged then return end
+    local range = (total - shown) * pitch
+    local want = range > 0 and math.min(1, page * rows * pitch / range) or 0
+    if box.SetScrollPercentage and not Near(box.GetScrollPercentage and box:GetScrollPercentage(), want, 0.001) then
+        box:SetScrollPercentage(want)
     end
+    EnableIf(pager.up, page > 0)
+    EnableIf(pager.down, page < last)
 end
 
 -- Overflow pages with two arrows at the foot, as in 1.x.
@@ -161,18 +159,18 @@ local function LootPager(frame)
     local nxt = pager:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     nxt:SetPoint("RIGHT", pager.down, "LEFT", -2, 0)
     nxt:SetText(NEXT or "Next")
-    local function Page(direction)
-        LootScroll(box, direction * (frame.fcuiRows or 1))
-        PlaySound(SOUNDKIT.IG_ABILITY_PAGE_TURN)
+    local function Turn(direction)
+        page = page + direction
         UpdateLootPages(frame)
+    end
+    local function Page(direction)
+        Turn(direction)
+        PlaySound(SOUNDKIT.IG_ABILITY_PAGE_TURN)
     end
     pager.up:SetScript("OnClick", function() Page(-1) end)
     pager.down:SetScript("OnClick", function() Page(1) end)
-    -- The wheel steps a row at a time instead of free scrolling.
-    box:SetScript("OnMouseWheel", function(_, delta)
-        LootScroll(box, -delta)
-        UpdateLootPages(frame)
-    end)
+    -- The wheel turns pages instead of free scrolling.
+    box:SetScript("OnMouseWheel", function(_, delta) Turn(-delta) end)
     -- Polled from our own frame, never a callback on the client's list (that
     -- taints the rest of its pass). Not the pager's frame: it hides when all fits.
     local look = CreateFrame("Frame", nil, frame)
@@ -186,7 +184,10 @@ local function LootPager(frame)
     local slots = CreateFrame("Frame", nil, pager)
     ns.RegisterEvents(slots, LOOT_EVENTS)
     local function Redraw() if frame:IsShown() then UpdateLootPages(frame) end end
-    slots:SetScript("OnEvent", function() ns.Sched.NextFrame("loot.update", Redraw) end)
+    slots:SetScript("OnEvent", function(_, event)
+        if event == "LOOT_OPENED" then page = 0 end
+        ns.Sched.NextFrame("loot.update", Redraw)
+    end)
     UpdateLootPages(frame)
 end
 
@@ -242,6 +243,8 @@ local function SkinLoot(frame)
         end
         -- New rows are dressed by the pager's look, not a list callback.
         if box.ForEachFrame then box:ForEachFrame(SkinLootElement) end
+        -- Its own shadows past an edge (more rows above or below) darkened the end rows; 1.x had none.
+        if box.Shadows then box.Shadows:SetAlpha(0) end
     end
     -- The thin scroll bar goes; the wheel still scrolls.
     if frame.ScrollBar then frame.ScrollBar:SetAlpha(0) end

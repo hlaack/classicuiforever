@@ -4,6 +4,7 @@ local B = ns.band
 -- Band art: the stone runs, the gryphons and the thin top bar.
 
 local ART_W, BAND_H, CAP_SIZE = B.ART_W, B.BAND_H, B.CAP_SIZE
+local PAGE_ROOM, PAGE_POST, PAGE_BOX_Y, PAGE_BOX_H = B.PAGE_ROOM, B.PAGE_POST, B.PAGE_BOX_Y, B.PAGE_BOX_H
 local PIECES, CAP_KEYS, BAND_RUN = B.PIECES, B.CAP_KEYS, B.BAND_RUN
 local ART_H = 53
 local Segments, ArtWidth = B.Segments, B.ArtWidth
@@ -37,6 +38,7 @@ function B.BuildArt()
     for i = 1, 12 do
         art.pieces[i] = art:CreateTexture(nil, "BACKGROUND")
     end
+    art.pageEdge = art:CreateTexture(nil, "BACKGROUND", nil, 1)
     -- Gryphons on their own layer under the buttons, as 1.x drew the end caps.
     local capLayer = CreateFrame("Frame", nil, art)
     capLayer:SetAllPoints(art)
@@ -105,6 +107,17 @@ function B.PaintArt()
         else
             tex:Hide()
         end
+    end
+    -- The number box's edge jutting past its post, over the piece that starts there.
+    local edgeX = B.CurrentPlan().pageEdge
+    if edgeX and not bare then
+        local band = PIECES[3].band
+        local row = (band[2] - band[1]) / BAND_H
+        RUN[1], RUN[2] = PAGE_POST / 256, PAGE_ROOM / 256
+        RUN[3], RUN[4] = band[2] - (PAGE_BOX_Y + PAGE_BOX_H) * row, band[2] - PAGE_BOX_Y * row
+        Dress(art.pageEdge, PIECES[3].key, BAND_RUN, art, edgeX, PAGE_BOX_Y, PAGE_ROOM - PAGE_POST, PAGE_BOX_H, RUN)
+    else
+        art.pageEdge:Hide()
     end
     B.LayLatency(bare)
     Dress(art.leftCap, "endCap", CAP_LEFT)
