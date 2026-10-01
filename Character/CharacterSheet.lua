@@ -95,7 +95,7 @@ end
 
 local function SetSelected(tab, selected)
     TabPieces(tab, selected)
-    tab.text:SetFontObject(selected and "GameFontHighlightSmall" or "GameFontNormalSmall")
+    tab:SetNormalFontObject(selected and "GameFontHighlightSmall" or "GameFontNormalSmall")
     -- The picked tab never glows (1.x disabled it).
     local glow = tab.fcui and tab.fcui.glow
     if glow then glow:SetShown(not selected) end
@@ -110,6 +110,10 @@ local function ClassicTab(parent, index)
     tab.text:SetPoint("CENTER", tab, "CENTER", 0, ns.TabTextY())
     tab.text:SetWordWrap(false)
     tab.text:SetJustifyH("CENTER")
+    -- The button's own label, so its hover (LockHighlight from the client tab over it) turns it white, as in 1.x.
+    tab:SetFontString(tab.text)
+    tab:SetNormalFontObject("GameFontNormalSmall")
+    tab:SetHighlightFontObject("GameFontHighlightSmall")
     tab.SetLabel, tab.SetSelected = SetLabel, SetSelected
     TabPieces(tab, false)
     return tab

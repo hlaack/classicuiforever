@@ -299,6 +299,10 @@ local function FootTab(parent)
     tab.label = tab:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     -- One spot, picked or not: the shared tab label height.
     tab.label:SetPoint("CENTER", tab, "CENTER", 0, ns.TabTextY())
+    -- The button's own label: white on hover and picked, gold otherwise, as 1.x.
+    tab:SetFontString(tab.label)
+    tab:SetNormalFontObject("GameFontNormalSmall")
+    tab:SetHighlightFontObject("GameFontHighlightSmall")
     function tab:Set(text, picked)
         if self.text ~= text then
             self.text = text
@@ -309,7 +313,7 @@ local function FootTab(parent)
             self.picked = picked
             for _, tex in ipairs(self.on) do ns.ShowTabPiece(tex, picked) end
             for _, tex in ipairs(self.off) do ns.ShowTabPiece(tex, not picked) end
-            if picked then self.label:SetTextColor(1, 1, 1) else self.label:SetTextColor(1, 0.82, 0) end
+            self:SetNormalFontObject(picked and "GameFontHighlightSmall" or "GameFontNormalSmall")
         end
     end
     return tab

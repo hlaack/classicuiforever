@@ -38,8 +38,8 @@ end
 -- Hover glow: 1.x's light blue tab sheet (128 x 32; lit body columns 14 to 115, rows 5 to 24), additive, cut across
 -- to its lit body and drawn over the drawn tab's cap pieces by these numbers. A flipped (foot-anchored) face flips it.
 local TAB_GLOW_INSET = 11         -- glow: in from the drawn tab's left and right ends (+ narrower)
-local TAB_GLOW_TOP = 8            -- glow: its sheet's top above the tab art's top (+ up)
-local TAB_GLOW_BOTTOM = 3         -- glow: its sheet's bottom below the tab art's foot (+ lower)
+local TAB_GLOW_TOP = 4            -- glow: its sheet's top above the tab art's top (+ up)
+local TAB_GLOW_BOTTOM = 1         -- glow: its sheet's bottom below the tab art's foot (+ lower)
 local TAB_GLOW_SHEET_LEFT = 14    -- glow: first sheet column drawn, of 128 (+ cuts more off the left)
 local TAB_GLOW_SHEET_RIGHT = 115  -- glow: last sheet column drawn, of 128 (+ shows more of the right)
 
@@ -71,8 +71,8 @@ local OFF_COORDS = { { 0, 0.15625, 0, 1 }, { 0.15625, 0.84375, 0, 1 }, { 0.84375
 -- Every foot tab row. Faces at their spots; the label at one height, picked or not.
 local TAB_PICKED_Y = 1   -- picked face: above the tab's top (+ up; covers the window's foot line)
 local TAB_OFF_Y = 2      -- unpicked faces: above the tab's top (+ up; the art's top 2 rows are clear)
-local TAB_EXTRA = 4      -- both faces: the plain body under the window's foot lengthened by this (+ longer tabs)
-local TAB_TEXT_Y = -0.5  -- label: over the tab's middle, picked or not (+ up)
+local TAB_EXTRA = 0      -- both faces: the plain body under the window's foot lengthened by this (+ longer tabs); Era's 0
+local TAB_TEXT_Y = 2    -- label: over the tab's middle, picked or not (+ up); Era's 2
 ns.TAB_PICKED_Y, ns.TAB_OFF_Y = TAB_PICKED_Y, TAB_OFF_Y
 function ns.TabTextY() return TAB_TEXT_Y end
 

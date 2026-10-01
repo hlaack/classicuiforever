@@ -664,8 +664,9 @@ local function CreateBookTab(parent, i, prev)
     -- The face's body sits a pixel right of the sheet's middle (a soft shadow on its left).
     tab.Text:SetPoint("CENTER", tab, "CENTER", 2, 3)
     tab:SetFontString(tab.Text)
-    -- Gold unpicked, white picked (disabled); without the normal font a tab picked once stayed white.
+    -- Gold unpicked, white hovered and picked (disabled); without the normal font a tab picked once stayed white.
     tab:SetNormalFontObject(GameFontNormalSmall)
+    tab:SetHighlightFontObject(GameFontHighlightSmall)
     tab:SetDisabledFontObject(GameFontHighlightSmall)
     tab.picked = i >= 3 and "sbTab3Selected" or "sbTab1Selected"
     ns.DressStates(tab, "sbTabUnselected", nil, tab.picked, "sbTabHighlight", ADD_HL)
