@@ -86,6 +86,7 @@ ns.TOGGLES = {
     { "eliteFramePlayer", L["OPT_eliteFramePlayer"], L["OPT_eliteFramePlayer_TIP"], parent = "eliteFrames" },
     { "eliteFrameTarget", L["OPT_eliteFrameTarget"], L["OPT_eliteFrameTarget_TIP"], parent = "eliteFrames" },
     { "eliteFrameFocus", L["OPT_eliteFrameFocus"], L["OPT_eliteFrameFocus_TIP"], parent = "eliteFrames" },
+    { "hideThreatGlow", L["OPT_hideThreatGlow"], L["OPT_hideThreatGlow_TIP"], parent = "unitFrames", search = "aggro red flash" },
     { "castBars", L["OPT_castBars"], L["OPT_castBars_TIP"] },
     { "castBarShake", L["OPT_castBarShake"], L["OPT_castBarShake_TIP"], parent = "castBars" },
     { "swingTimers", L["OPT_swingTimers"], L["OPT_swingTimers_TIP"], search = "melee ranged auto attack" },

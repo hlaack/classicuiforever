@@ -102,6 +102,7 @@ return {
     hideStanceBar = false,
     hideStatusMain = false,
     hideStatusSecond = false,
+    hideThreatGlow = false,
     hoverAddonBag = false,
     hoverBothNumbers = true,
     hoverGroupFinderButton = false,

@@ -58,7 +58,7 @@ local function PlayerArt()
     local sheet = UF.ThickSheet(elite and "targetingElite" or "targetingFrame", "player")
     Dress(container.FrameTexture, sheet, ART, frame)
     Dress(container.AlternatePowerFrameTexture, sheet, ALT_ART, frame)
-    Dress(container.FrameFlash, "targetingFlash", elite and ELITE_FLASH or FLASH, frame)
+    UF.DressGlow(container.FrameFlash, "targetingFlash", elite and ELITE_FLASH or FLASH, frame)
     local main = ns.Path(frame, "PlayerFrameContent", "PlayerFrameContentMain")
     Dress(main and main.StatusTexture, "playerStatus", STATUS, frame)
     -- Modern circles return with the art; 1.x had none.

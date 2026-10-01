@@ -39,6 +39,29 @@ function UF.ThickSheet(key, kind)
     return (style and THICK_SHEETS[key]) and (key .. THICK_SUFFIX[style]) or key
 end
 
+-- Threat glow: 1.x art, or no file with Hide threat glow on, so the client's Show draws nothing (its number stays).
+-- Each glow's last dress kept (weak keys) to redo it when the option turns.
+local glowDress = setmetatable({}, { __mode = "k" })
+function UF.DressGlow(tex, key, spec, rel, x, y, w, h, coords)
+    ns.Dress(tex, key, spec, rel, x, y, w, h, coords)
+    if not tex then return end
+    local last = glowDress[tex]
+    if not last then
+        last = {}
+        glowDress[tex] = last
+    end
+    last[1], last[2], last[3], last[4], last[5], last[6], last[7], last[8] = key, spec, rel, x, y, w, h, coords
+    if ns.db and ns.db.hideThreatGlow == true then tex:SetTexture(nil) end
+end
+
+-- The options pass waits out a fight, where the glow shows; textures may change in one, so the option turns at once.
+ns.OnToggle(function(key)
+    if key ~= "hideThreatGlow" or not UF.active then return end
+    for tex, last in pairs(glowDress) do
+        UF.DressGlow(tex, last[1], last[2], last[3], last[4], last[5], last[6], last[7], last[8])
+    end
+end)
+
 -- Per-frame toggles under the module switch.
 local KEYS = { player = "unitFramePlayer", target = "unitFrameTarget", focus = "unitFrameFocus", pet = "unitFramePet", party = "unitFrameParty" }
 function UF.On(kind) return ns.db == nil or ns.db[KEYS[kind]] ~= false end

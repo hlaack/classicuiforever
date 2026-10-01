@@ -90,6 +90,7 @@ ns.DB_DEFAULTS = {
     eliteFramePlayer = true,
     eliteFrameTarget = true,
     eliteFrameFocus = true,
+    hideThreatGlow = false,
     hideStatusMain = false,
     hideStatusSecond = false,
     hoverBothNumbers = true,

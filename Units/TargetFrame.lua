@@ -81,7 +81,7 @@ local function ApplyClassification(frame)
     local art = CLASSIFICATION_ART[classification] or CLASSIFICATION_ART.normal
     local minus = classification == "minus"
     Dress(container.FrameTexture, UF.ThickSheet(art.key, entry.unit), ART, frame)
-    Dress(container.Flash, art.flashKey or "targetingFlash", FLASH, frame, art.flashPoint[1], art.flashPoint[2],
+    UF.DressGlow(container.Flash, art.flashKey or "targetingFlash", FLASH, frame, art.flashPoint[1], art.flashPoint[2],
         art.flashSize[1], art.flashSize[2], art.flashCoords)
     ns.Fade(container.BossPortraitFrameTexture)
     local contextual = ns.Path(frame, "TargetFrameContent", "TargetFrameContentContextual")
