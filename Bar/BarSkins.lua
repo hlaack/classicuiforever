@@ -20,8 +20,8 @@ local MICRO_ART = {
     LegacyMicroButton = "Achievement", ProfessionMicroButton = "Professions",
     ForeverClassicUIWorldMapMicroButton = "World",
 }
--- The classic sheets are 32x64 with the button art in the lower 42 rows.
-local MICRO_CROP = 22 / 64
+-- The classic sheets are 32x64; Era draws the lower 41 rows into its 29x37 buttons.
+local MICRO_CROP = 23 / 64
 local PORTRAIT_W, PORTRAIT_H, PORTRAIT_Y = 18, 25, -7
 -- The 1.x menu button has no latency blob: faded while ours is on; the band draws the old tube instead.
 local function ShowPerfBar(button, shown)

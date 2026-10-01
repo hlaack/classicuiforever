@@ -31,6 +31,10 @@ local WINDOWS = {
         section = "Minimap", piece = true, ringKey = "zoomOutAngle", choice = "minimapZoomOutShow", choiceLabel = "Show" },
     { key = "minimapClock", label = "Clock", name = "ForeverClassicUIMinimapClockHome", w = 60, h = 28,
         section = "Minimap", piece = true, choice = "minimapClockShow", choiceLabel = "Show" },
+    { key = "minimapDiel", label = "Day and night", name = "ForeverClassicUIMinimapDielHome", w = 40, h = 40,
+        section = "Minimap", piece = true, choice = "minimapDielShow", choiceLabel = "Show" },
+    { key = "minimapCoords", label = "Coordinates", name = "ForeverClassicUIMinimapCoordsHome", w = 90, h = 10,
+        section = "Minimap", piece = true, choice = "minimapCoordsShow", choiceLabel = "Show" },
 }
 local SLOT_LEFT, SLOT_TOP = 0, 104
 local STRIP_H, STRIP_LEFT, STRIP_RIGHT = 24, 60, 30

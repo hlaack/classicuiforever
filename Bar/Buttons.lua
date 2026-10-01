@@ -157,8 +157,7 @@ local ICON_RIM_SHARE = { bronze = ns.BRONZE_SOFT, dark = 1.28 }
 -- outermost pixels, which otherwise showed as a light sliver outside it (probe /fcuidev icons, 2026-09-29).
 local ICON_RIM_OUT = 1 / 64
 local rimOut = setmetatable({}, { __mode = "k" })
--- Every icon's own light bevel cropped off while the rim shows, as Lorti-UI (10%) and EllesmereUI (5.5%) do; whole
--- without a theme, as 1.x drew it.
+-- Every icon's own light bevel cropped off while the rim shows; whole without a theme, as 1.x drew it.
 local ICON_CROP = 0.08
 local cropped = setmetatable({}, { __mode = "k" })
 local function IconRim(button)

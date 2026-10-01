@@ -164,6 +164,57 @@ local function Stepper(parent, key, label, tooltip, low, high, apply)
     return row
 end
 
+-- The custom theme's colour: a swatch opening the game's colour picker (its hex box included).
+local function PickColor(r, g, b)
+    ns.Sched.NextFrame("options.themeColor", function() ns.SetThemeColor(r, g, b) end)
+end
+
+local function ColorRow(parent, key, label, tooltip)
+    local row = CreateFrame("Button", nil, parent)
+    row:SetSize(24, 24)
+    local swatch = row:CreateTexture(nil, "ARTWORK")
+    swatch:SetSize(16, 16)
+    swatch:SetPoint("LEFT", row, "LEFT", 4, 0)
+    local rim = row:CreateTexture(nil, "BACKGROUND")
+    rim:SetColorTexture(0, 0, 0, 1)
+    rim:SetPoint("TOPLEFT", swatch, "TOPLEFT", -1, 1)
+    rim:SetPoint("BOTTOMRIGHT", swatch, "BOTTOMRIGHT", 1, -1)
+    local text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    text:SetPoint("LEFT", swatch, "RIGHT", 6, 1)
+    text:SetJustifyH("LEFT")
+    text:SetWordWrap(false)
+    text:SetText(label)
+    row.text = text
+    function row:Sync()
+        local r, g, b = ns.HexColor(ns.db[key])
+        swatch:SetColorTexture(r or 1, g or 1, b or 1)
+        swatch:SetAlpha(self.on == false and 0.4 or 1)
+    end
+    function row:SetChecked() self:Sync() end
+    function row:SetEnabled(on)
+        self.on = on and true or false
+        self:EnableMouse(self.on)
+        self:Sync()
+    end
+    row:SetScript("OnClick", function()
+        local r, g, b = ns.HexColor(ns.db[key])
+        local was = ns.db[key]
+        ColorPickerFrame:SetupColorPickerAndShow({
+            r = r or 1, g = g or 1, b = b or 1,
+            swatchFunc = function()
+                PickColor(ColorPickerFrame:GetColorRGB())
+                row:Sync()
+            end,
+            cancelFunc = function()
+                PickColor(ns.HexColor(was))
+                row:Sync()
+            end,
+        })
+    end)
+    Describe(row, key, label, tooltip)
+    return row
+end
+
 -- ToggleChanged refreshes whichever copy of the panel is shown; a radio row only turns on.
 local function BoxClick(self)
     ns.db[self.key] = (self.radio or self:GetChecked()) and true or false
@@ -190,19 +241,11 @@ local function Checkbox(parent, key, label, tooltip, radio)
     return box
 end
 
--- A drop radio group ("Label: item" rows) as one row: label, then the old drop down box over its items.
 local DROP_W = 92
-local function DropRow(parent, group)
-    local rows, words, first = {}, {}, nil
-    for _, entry in ipairs(ns.TOGGLES) do
-        if entry.radio == group then
-            first = first or entry
-            local item = entry[2]:match(":%s*(.+)$") or entry[2]
-            rows[#rows + 1] = { key = entry[1], text = (item:gsub("^%l", string.upper)) }
-            words[#words + 1] = item .. " " .. (entry.search or "")
-        end
-    end
-    local label = first and first[2]:match("^(.-):") or group
+local SWING_HANDS = { { "swingColorMain", "Main hand" }, { "swingColorOff", "Off hand" }, { "swingColorRanged", "Ranged" } }
+
+-- Label, then the old drop down box; items(root) fills its menu.
+local function DropShell(parent, label, items)
     local row = CreateFrame("Frame", nil, parent)
     row:SetSize(24, 24)
     local text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -215,19 +258,49 @@ local function DropRow(parent, group)
     dropdown:SetWidth(DROP_W)
     dropdown:SetPoint("LEFT", text, "RIGHT", 4, -1)
     ns.SkinDropdown(dropdown)
-    dropdown:SetupMenu(function(_, root)
-        for _, choice in ipairs(rows) do
-            root:CreateRadio(choice.text, function(key) return ns.db[key] == true end, function(key)
-                ns.db[key] = true
-                ns.ToggleChanged(key)
-            end, choice.key)
-        end
-    end)
+    dropdown:SetupMenu(function(_, root) items(root) end)
     row.dropdown = dropdown
     function row:SetChecked() self.dropdown:GenerateMenu() end
     function row:SetEnabled(on) self.dropdown:SetEnabled(on) end
+    return row
+end
+
+local function PickToggle(key)
+    ns.db[key] = true
+    ns.ToggleChanged(key)
+end
+
+local function ToggleOn(key) return ns.db[key] == true end
+
+-- A drop radio group ("Label: item" rows) as one row.
+local function DropRow(parent, group)
+    local rows, words, first = {}, {}, nil
+    for _, entry in ipairs(ns.TOGGLES) do
+        if entry.radio == group then
+            first = first or entry
+            local item = entry[2]:match(":%s*(.+)$") or entry[2]
+            rows[#rows + 1] = { key = entry[1], text = (item:gsub("^%l", string.upper)) }
+            words[#words + 1] = item .. " " .. (entry.search or "")
+        end
+    end
+    local label = first and first[2]:match("^(.-):") or group
+    local row = DropShell(parent, label, function(root)
+        for _, choice in ipairs(rows) do root:CreateRadio(choice.text, ToggleOn, PickToggle, choice.key) end
+    end)
     Describe(row, group, label, first and first[3])
     row.keyLow = row.keyLow .. " " .. table.concat(words, " "):lower()
+    return row
+end
+
+-- A setting holding one of a list's keys (choices: { key, label }); apply(key, pick) saves and shows it.
+local function ValueDropRow(parent, key, label, tooltip, choices, apply)
+    local row = DropShell(parent, label, function(root)
+        for _, choice in ipairs(choices) do
+            root:CreateRadio(choice.label, function(pick) return ns.db[key] == pick end,
+                function(pick) apply(key, pick) end, choice.key)
+        end
+    end)
+    Describe(row, key, label, tooltip)
     return row
 end
 
@@ -370,6 +443,31 @@ local function Build(canvas)
             size.keyLow = size.keyLow .. " keybind font hotkey"
             Grouped(size)
             Add(size, "buttons")
+        end
+        if entry[1] == "themeCustom" then
+            local color = ColorRow(child, "themeColor", "Colour",
+                "The custom theme's colour. The picker takes a hex code too.")
+            color.text:SetWidth(LIST_W / COLUMNS - 40 - INDENT)
+            color.keyLow = color.keyLow .. " rgb hex color theme"
+            Grouped(color)
+            Add(color, "themeCustom")
+        end
+        if entry[1] == "swingTimers" and ns.SWING_COLORS then
+            for _, hand in ipairs(SWING_HANDS) do
+                local row = ValueDropRow(child, hand[1], hand[2], "The swing bar's colour, from the 1.x bars.",
+                    ns.SWING_COLORS, ns.SetSwingLook)
+                row.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - INDENT)
+                row.keyLow = row.keyLow .. " swing colour color"
+                Grouped(row)
+                Add(row, "swingTimers")
+            end
+            local border = Stepper(child, "swingBorder", "Border thickness",
+                "How thick the swing bars' border is. 0 is the 1.x cast bar's own.",
+                ns.SWING_BORDER_MIN or -3, ns.SWING_BORDER_MAX or 3, ns.SetSwingBorder)
+            border.text:SetWidth(LIST_W / COLUMNS - 70 - INDENT)
+            border.keyLow = border.keyLow .. " swing"
+            Grouped(border)
+            Add(border, "swingTimers")
         end
         if entry[1] == "classColorPlates" then
             local nameSize = Stepper(child, "plateNameSize", "Name text size",

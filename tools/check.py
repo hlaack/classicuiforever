@@ -83,6 +83,7 @@ ALLOWED_SITES = {
         "Units/LastNames.lua:TRIM_EVENTS": "only with Hide Last Names on; the trim is keyed per frame",
         "Units/LastNames.lua:NAME_EVENTS": "only with Hide Last Names on; a unit's event re-trims only its own texts",
         "Units/NamePlates.lua:PLATE_EVENTS": "plates show every unit; OnEvent looks the plate up by its unit",
+        "Units/NamePlateAuras.lua:RING_EVENTS": "nameplate units cannot be listed; other units return first thing",
         "Units/UnitFrames.lua:DRIVER_EVENTS": "OnEvent drops units the frames do not show (ShownUnit)",
     },
     "REGEVENTS": {

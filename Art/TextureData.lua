@@ -269,16 +269,33 @@ end
 local THEMES = {
     bronze = { tint = { 0.9, 0.62, 0.32 }, dir = BUNDLED .. "bronze\\", client = true, copies = {} },
     dark = { tint = { 0.38, 0.38, 0.40 }, dir = BUNDLED .. "dark\\", copies = {} },
+    -- Grey copies coloured in game (colorCopies) with the picked colour, which is also its tint.
+    custom = { tint = { 0.9, 0.62, 0.32 }, dir = BUNDLED .. "custom\\", copies = {}, colorCopies = true },
 }
 B.THEMES = THEMES
 -- Toggles that change the theme.
-B.THEME_KEYS = { bronzeTheme = true, themeBronze = true, themeDark = true }
+B.THEME_KEYS = { bronzeTheme = true, themeBronze = true, themeDark = true, themeCustom = true }
+
+-- "rrggbb" to 0-1 channels, or nil.
+function ns.HexColor(hex)
+    if type(hex) ~= "string" or not hex:match("^%x%x%x%x%x%x$") then return nil end
+    return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255
+end
 
 -- nil while the custom theme is off, else the pick under it.
 function ns.ThemeName()
     local db = ns.db
     if not db or db.bronzeTheme ~= true then return nil end
-    return db.themeDark == true and "dark" or "bronze"
+    if db.themeDark == true then return "dark" end
+    if db.themeCustom == true then
+        local r, g, b = ns.HexColor(db.themeColor)
+        if r then
+            local tint = THEMES.custom.tint
+            tint[1], tint[2], tint[3] = r, g, b
+        end
+        return "custom"
+    end
+    return "bronze"
 end
 
 local ART = "\n" .. (ns.THEME_ART or "")

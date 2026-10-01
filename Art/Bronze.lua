@@ -14,6 +14,7 @@ local function Theme()
 end
 
 local weak = { __mode = "k" }
+local ONE = { 1, 1, 1 }
 local tinted = setmetatable({}, weak)    -- texture -> share, or true for full
 local silvered = setmetatable({}, weak)  -- tinted gold art, drained grey when off
 local kept = setmetatable({}, weak)      -- client bronze shown only with the theme
@@ -21,6 +22,7 @@ local drained = setmetatable({}, weak)   -- client bronze drained when off -> {r
 local bordered = setmetatable({}, weak)  -- backdrop -> base colour and backdrop pair
 local swapped = setmetatable({}, weak)   -- texture -> TEX key, or a file path (it holds a separator)
 local swapArgs = setmetatable({}, weak)  -- file-swapped texture -> its extra SetTexture args, when it had any
+local coloured = setmetatable({}, weak)  -- texture on a custom colour copy -> true
 B.tinted, B.silvered, B.swapped, B.swapArgs = tinted, silvered, swapped, swapArgs
 
 function ns.BronzeOn()
@@ -92,7 +94,7 @@ end
 
 -- Forever's thin bronze rim over an icon's grey bevel, theme only.
 -- outset puts it just past the quality border so both show.
-function ns.BronzeRim(button, icon, outset)
+function ns.BronzeRim(button, icon, outset, share)
     if not button then return end
     outset = outset or 0
     icon = icon or button.icon or button.Icon
@@ -107,7 +109,7 @@ function ns.BronzeRim(button, icon, outset)
     rim:ClearAllPoints()
     rim:SetPoint("TOPLEFT", icon, "TOPLEFT", -outset, outset)
     rim:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", outset, -outset)
-    ns.BronzeTint(rim)
+    ns.BronzeTint(rim, share)
     ns.BronzeKeep(rim)
 end
 
@@ -141,7 +143,8 @@ function ns.BronzeBackdrop(frame, r, g, b, a)
             frame:SetBackdrop(want)
             if fr then frame:SetBackdropColor(fr, fg, fb, fa) end
         end
-        frame:SetBackdropBorderColor(base[1], base[2], base[3], base[4])
+        local tint = name and THEMES[name].colorCopies and THEMES[name].tint or ONE
+        frame:SetBackdropBorderColor(tint[1] * base[1], tint[2] * base[2], tint[3] * base[3], base[4])
     elseif name then
         local tint = THEMES[name].tint
         frame:SetBackdropBorderColor(tint[1] * base[1], tint[2] * base[2], tint[3] * base[3], base[4])
@@ -217,6 +220,29 @@ function ns.TintSlice(slice)
     if slice then ns.EachRegion(slice, SliceTint, slice.Center) end
 end
 
+-- A texture on a theme copy takes the custom colour; off it, or on another theme, it is drawn as is.
+function ns.PaintCopy(texture, onCopy)
+    if not (texture and texture.SetVertexColor) then return end
+    local theme = Theme()
+    if onCopy and theme and theme.colorCopies then
+        coloured[texture] = true
+        texture:SetVertexColor(theme.tint[1], theme.tint[2], theme.tint[3])
+    elseif coloured[texture] then
+        coloured[texture] = nil
+        texture:SetVertexColor(1, 1, 1)
+    end
+end
+
+-- The picked custom colour: saved, then every piece repainted.
+function ns.SetThemeColor(r, g, b)
+    ns.db.themeColor = string.format("%02x%02x%02x", math.floor(r * 255 + 0.5), math.floor(g * 255 + 0.5),
+        math.floor(b * 255 + 0.5))
+    ThemeName()
+    ns.RepaintBronze()
+    for texture in pairs(coloured) do ns.PaintCopy(texture, true) end
+    if ns.QueueApply then ns.QueueApply() end
+end
+
 -- Repaint every remembered piece for the current theme.
 function ns.RepaintBronze()
     for texture in pairs(tinted) do PaintTint(texture) end
@@ -230,8 +256,10 @@ function ns.RepaintBronze()
             local args = swapArgs[texture]
             local want = ns.BronzeOn() and ns.BronzeCopy(what) or what
             if args then SetWithFallback(texture, want, what, unpack(args)) else SetWithFallback(texture, want, what) end
+            ns.PaintCopy(texture, want ~= what)
         else
             SetWithFallback(texture, ns.TexPath(what))
+            ns.PaintCopy(texture, ns.BronzeOn() and select(3, ns.TexPaths(what)) and true)
         end
     end
 end

@@ -72,6 +72,9 @@ Units\RaidManager.lua
 Units\UnitFrames.lua
 Units\BuffArrow.lua
 Units\CastBars.lua
+Units\SwingTimers.lua
+Units\ResourceDisplay.lua
+Units\StatusFont.lua
 Units\MirrorTimers.lua
 Units\ComboPoints.lua
 Map\Minimap.lua
@@ -82,6 +85,7 @@ Map\MinimapButton.lua
 Map\MinimapCollector.lua
 Units\NamePlates.lua
 Units\NamePlateOptions.lua
+Units\NamePlateAuras.lua
 Quest\QuestTracker.lua
 Quest\QuestLogData.lua
 Quest\QuestLogShare.lua
@@ -111,6 +115,7 @@ Map\MapFade.lua
 Map\WorldMapClassic.lua
 Windows\BagBand.lua
 Windows\Bags.lua
+Windows\DamageMeter.lua
 Character\CharacterModel.lua
 Character\CharacterCore.lua
 Character\CharacterStats.lua

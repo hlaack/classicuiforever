@@ -62,6 +62,11 @@ function ns.ChatIconButton(button, name, set, fixed)
     local copy = not swap and bronze and ns.ThemeLook() == "themed"
     ns.DressStates(button, FacePath(prefix, "Normal", copy), FacePath(prefix, "Pushed", copy),
         FacePath(prefix, "Disabled", copy), HILIGHT, swap and FACE_SWAP or FACE_SET)
+    if not swap then
+        ns.PaintCopy(button:GetNormalTexture(), copy)
+        ns.PaintCopy(button:GetPushedTexture(), copy)
+        ns.PaintCopy(button:GetDisabledTexture(), copy)
+    end
 end
 
 local COLUMN = { "ScrollUp", "ScrollDown", "ScrollEnd", VOICE }

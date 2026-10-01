@@ -5,7 +5,7 @@ local B = ns.band
 -- Edit mode can take micro or bags off; the band ends at what remains, right gryphon on the last piece.
 -- Micro moved: bags close up against bar 1's page arrows; both moved: bar 1 alone.
 
-local ART_W, PAGE_ROOM, BAG_PART = B.ART_W, B.PAGE_ROOM, B.BAG_PART
+local ART_W, PAGE_ROOM = B.ART_W, B.PAGE_ROOM
 local MICRO_LEAD, MICRO_REGION_MAX, MICRO_END_GAP = B.MICRO_LEAD, B.MICRO_REGION_MAX, B.MICRO_END_GAP
 local POST_U, POST_W = B.POST_U, B.POST_W
 local ROW_X, ROW_Y = B.ROW_X, B.ROW_Y
@@ -71,7 +71,7 @@ local function Tail(plan, x, afterPost, beforeBags)
     return x + u1 - u0
 end
 
--- The bag part at x, less its first trim columns (B.BAG_TRIM, or B.BAG_POST_TRIM past the page number slot's post).
+-- The bag part at x, less its first trim columns (trim, or postTrim past the page number slot's post).
 local function Bags(plan, x, trim)
     plan.bagsStart, plan.bagTrim = x, trim
     x = x + B.BagPart() - trim
@@ -106,7 +106,7 @@ local function BandPlan(microOn, bagsOn, bagsFirst, region)
         -- Last on the band, the section's own post ends it; a micro region standing last leaves room for the end post.
         plan.ownEnd = plan.tailStart ~= nil and not bagsOn
         if bagsOn then
-            x = Bags(plan, x, B.BAG_TRIM)
+            x = Bags(plan, x, B.Bag().trim)
         elseif x == before then
             x = x + POST_W
         end
@@ -114,7 +114,8 @@ local function BandPlan(microOn, bagsOn, bagsFirst, region)
         -- The page number slot's post closes what follows up to it; that piece's own leading post goes.
         local paged = not plan.noPages
         if paged then x = x + PAGE_ROOM end
-        local bagTrim = paged and B.BAG_POST_TRIM or B.BAG_TRIM
+        local bag = B.Bag()
+        local bagTrim = paged and bag.postTrim or bag.trim
         if bagsOn and microOn then
             x = Bags(plan, x, bagTrim)
             x = Tail(plan, x, true, false)
@@ -127,7 +128,7 @@ local function BandPlan(microOn, bagsOn, bagsFirst, region)
         elseif bagsOn then
             local before = x
             x = Tail(plan, x, paged, true)
-            x = Bags(plan, x, x == before and bagTrim or B.BAG_TRIM)
+            x = Bags(plan, x, x == before and bagTrim or bag.trim)
         else
             -- Neither group on the band: the section stays with bar 1, its own post ending the band.
             local before = x
@@ -190,15 +191,17 @@ function B.Segments()
         list[#list + 1] = { half, room, 3, 0, room / 256, "bar" }
     end
     if plan.bagsStart then
-        local x, u0 = plan.bagsStart, 256 - BAG_PART + plan.bagTrim
+        local bag = B.Bag()
+        local x, u0, sheet = plan.bagsStart, 256 - bag.part + plan.bagTrim, bag.sheet
         if B.ReagentSlot() then
             -- Up to the first socket's far wall, the wall-and-socket unit once more, then the rest from that wall.
-            local head, unit = B.SOCKET_U0 - u0, B.SOCKET_U1 - B.SOCKET_U0
-            list[#list + 1] = { x, head, 4, u0 / 256, B.SOCKET_U0 / 256, "bags" }
-            list[#list + 1] = { x + head, unit, 4, B.SOCKET_U0 / 256, B.SOCKET_U1 / 256, "bags" }
-            list[#list + 1] = { x + head + unit, 256 - B.SOCKET_U0, 4, B.SOCKET_U0 / 256, 1, "bags" }
+            local s0, s1 = bag.socketU0, bag.socketU1
+            local head, unit = s0 - u0, s1 - s0
+            list[#list + 1] = { x, head, sheet, u0 / 256, s0 / 256, "bags" }
+            list[#list + 1] = { x + head, unit, sheet, s0 / 256, s1 / 256, "bags" }
+            list[#list + 1] = { x + head + unit, 256 - s0, sheet, s0 / 256, 1, "bags" }
         else
-            list[#list + 1] = { x, 256 - u0, 4, u0 / 256, 1, "bags" }
+            list[#list + 1] = { x, 256 - u0, sheet, u0 / 256, 1, "bags" }
         end
     end
     if plan.microStart and (not plan.microFirst or headless) then

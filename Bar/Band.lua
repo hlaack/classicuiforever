@@ -19,20 +19,27 @@ B.CORNER_X = -6
 B.MICRO_SKIP = { StoreMicroButton = true }
 -- Gap before the latency and key ring section's first post (the 1.x button art has its own margin).
 B.MICRO_END_GAP = 1
--- Micro region head (holds the page arrows), its max width, the bag part.
-B.MICRO_LEAD, B.MICRO_REGION_MAX, B.BAG_PART = 45, 330, 182
--- The reagent bag in a slot of its own (reagentBagSlot, the default): one more socket, one 32 px period of the client's
--- fourth sheet (u 104-135; its sockets repeat every 32 from the bag post at 84) drawn again after the first socket.
-B.REAGENT_SOCKET, B.SOCKET_U0, B.SOCKET_U1 = 32, 104, 136
+-- Micro region head (holds the page arrows), its max width.
+B.MICRO_LEAD, B.MICRO_REGION_MAX = 45, 330
+-- Bag part per sheet: part from u (256 - part); trim before the bag post, postTrim past the page post; one socket period
+-- (socketU0-U1) drawn again for the reagent slot; buttons, gap, backpack corner. client: Forever's 30 px sockets every 32.
+-- era: Era's key ring sheet, 37 px sockets every 42 from its bag post at u 38, 5 apart like Era's bar.
+B.BAG_GEOMETRY = {
+    client = { sheet = 4, part = 182, trim = 10, postTrim = 21, socket = 32, socketU0 = 104, socketU1 = 136,
+        size = 30, gap = -2, x = -5, y = 6 },
+    era = { sheet = 5, part = 228, trim = 10, postTrim = 16, socket = 42, socketU0 = 80, socketU1 = 122,
+        size = 37, gap = -5, x = -6, y = 2 },
+}
+function B.Bag()
+    return B.BAG_GEOMETRY[(ns.db and ns.db.eraBagSize == true) and "era" or "client"]
+end
 function B.ReagentSlot()
     return CharacterReagentBag0Slot ~= nil and ns.db ~= nil and ns.db.reagentBagSlot ~= false
 end
 function B.BagPart()
-    return B.BAG_PART + (B.ReagentSlot() and B.REAGENT_SOCKET or 0)
+    local bag = B.Bag()
+    return bag.part + (B.ReagentSlot() and bag.socket or 0)
 end
--- The client's fourth sheet has stone before its bag post (u 84-89): cut, whatever stands before the bags. Past the page
--- number slot's post, the bag post and the first socket's left frame (u 92-94) go too: that post is the socket's wall.
-B.BAG_TRIM, B.BAG_POST_TRIM = 10, 21
 -- Latency and key ring section, cut from the 1.x key ring sheet (Era's, the fifth piece): left post, the window the latency
 -- tube shows through, shared post, key slot, post.
 B.TAIL_WINDOW, B.TAIL_SLOT = 7, 30   -- window's left column, key slot's centre

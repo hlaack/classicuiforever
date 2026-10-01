@@ -6,8 +6,8 @@ local B = ns.band
 local ART_W, BAND_H, CORNER_X = B.ART_W, B.BAND_H, B.CORNER_X
 local MICRO_SKIP, MICRO_END_GAP, MICRO_LEAD, MICRO_REGION_MAX = B.MICRO_SKIP, B.MICRO_END_GAP, B.MICRO_LEAD, B.MICRO_REGION_MAX
 local MICRO_BUTTONS, PIECES = B.MICRO_BUTTONS, B.PIECES
--- 1.x overlap of 3 px; without the shop button the row scales to about 0.9.
-local MICRO_Y, MICRO_W, MICRO_H, MICRO_STEP = 2.5, 28, 38, -3
+-- Era: 29x37 buttons 3 px overlapped, 2 up.
+local MICRO_Y, MICRO_W, MICRO_H, MICRO_STEP = 2, 29, 37, -3
 -- The group's rectangle starts a little before its first button.
 local MICRO_GROUP_X, MICRO_ROW_IN, MICRO_NUDGE = 548, 7, 4
 local Remember, Seat, BandNow, OneBar = B.Remember, B.Seat, B.BandNow, B.OneBar
@@ -98,7 +98,7 @@ end
 
 -- Row scale and region for this many buttons: fitted to the old art's room, times the player's size
 -- (settable on the band too, even past the art); snapping the group back restores default size.
--- sizeCount: the count the size is fitted to; an option-hidden button in it keeps the rest at size and the row closes up.
+-- Fitted to the buttons on the row, so Era's set draws at Era's size; sizeCount (Keep button size) counts hidden ones too.
 local function MicroPlan(count, userScale, sizeCount)
     local need = MicroNeed(count)
     if need <= 0 then return 1, MICRO_LEAD + MICRO_END_GAP end
@@ -116,6 +116,9 @@ local MICRO_HIDE = {
     QuestLogMicroButton = "hideMicroQuestLog", ForeverClassicUIWorldMapMicroButton = "hideMicroWorldMap",
     GuildMicroButton = "hideMicroGuild", LFDMicroButton = "hideMicroGroupFinder",
     CollectionsMicroButton = "hideMicroCollections", MainMenuMicroButton = "hideMicroGameMenu",
+    PlayerSpellsMicroButton = "hideMicroTalents", AchievementMicroButton = "hideMicroAchievements",
+    LegacyMicroButton = "hideMicroLegacy", EJMicroButton = "hideMicroJournal", HousingMicroButton = "hideMicroHousing",
+    HelpMicroButton = "hideMicroHelp",
 }
 
 -- Off the row: the shop always; the ones picked under Hide micro buttons. Second value: left off by the option.
@@ -124,8 +127,27 @@ local function MicroSkipped(button)
     if MICRO_SKIP[name] then return true, false end
     local key = MICRO_HIDE[name]
     local db = ns.db
-    if key and db and db.hideMicroButtons == true and db[key] == true then return true, true end
+    if key and db and db.hideMicroButtons == true and db[key] == true and not db.hideMicroKeepWidth then return true, true end
     return false, false
+end
+
+-- Keep the menu's width: a hidden button keeps its seat, faded and unclickable, so the row and its art stay as wide.
+local seatHidden = setmetatable({}, { __mode = "k" })
+local function IsSeatHidden(button)
+    local key = MICRO_HIDE[button:GetName() or ""]
+    local db = ns.db
+    return key and db and db.hideMicroButtons == true and db.hideMicroKeepWidth == true and db[key] == true or false
+end
+local function SeatHidden(button)
+    if IsSeatHidden(button) then
+        ns.SetFrameAlphaIf(button, 0)
+        if button:IsMouseEnabled() then button:EnableMouse(false) end
+        seatHidden[button] = true
+    elseif seatHidden[button] then
+        ns.SetFrameAlphaIf(button, 1)
+        button:EnableMouse(true)
+        seatHidden[button] = nil
+    end
 end
 
 -- 1.x's gold line under each button's name, from the client's own strings.
@@ -152,9 +174,10 @@ ns.MicroTip = MicroTip
 
 local function SeatShown(button)
     ns.HookScriptOnce(button, "OnEnter", MicroTip)
+    SeatHidden(button)
 end
 
--- Buttons on the row, and the count their size is fitted to.
+-- Buttons on the row, and with Keep button size the count their size is fitted to.
 function B.MicroCounts()
     local shown, sized = 0, 0
     for _, button in ipairs(MicroButtonList()) do
@@ -164,7 +187,7 @@ function B.MicroCounts()
             if not skipped or byOption then sized = sized + 1 end
         end
     end
-    return shown, sized
+    return shown, (ns.db and ns.db.hideMicroKeepSize == true) and sized or nil
 end
 
 local function Percent(value) return string.format("%d%%", value) end
@@ -352,6 +375,19 @@ local function FitRegion(last, art)
     end
 end
 
+-- Spread the rest evenly: the shown buttons span the width all of them would, in button units, so any size fits.
+local function SpreadStep(wanted)
+    local db = ns.db
+    if not (db.hideMicroButtons and db.hideMicroKeepWidth and db.hideMicroSpread) then return false, MICRO_STEP end
+    local visible = 0
+    for _, button in ipairs(wanted) do
+        if not IsSeatHidden(button) then visible = visible + 1 end
+    end
+    if visible < 2 or visible >= #wanted then return false, MICRO_STEP end
+    local span = #wanted * MICRO_W + (#wanted - 1) * MICRO_STEP
+    return true, (span - visible * MICRO_W) / (visible - 1)
+end
+
 local microBusy = false
 local offRow = setmetatable({}, { __mode = "k" })   -- buttons we took off the row, to give back
 function B.LayoutMicroButtons()
@@ -379,11 +415,11 @@ function B.LayoutMicroButtons()
         end
     end
     if #wanted == 0 then microBusy = false return end
-    local _, sized = B.MicroCounts()
     -- Off the band (moved, or one-bar corner) the chosen size rides on the group frame with the band scale
     -- divided out; on it the row itself is drawn bigger or smaller.
     local out = (not B.shape.micro) or OneBar()
     local group = out and MicroUserScale() or 1
+    local _, sized = B.MicroCounts()
     local scale, region = MicroPlan(#wanted, out and 1 or MicroUserScale(), sized)
     -- The row at its own scale: what the band's sockets were drawn around.
     local baseScale = MicroPlan(#wanted, 1, sized)
@@ -443,21 +479,23 @@ function B.LayoutMicroButtons()
         end
     end
 
+    local spread, step = SpreadStep(wanted)
+    local rowY = MICRO_Y
+    if not out then rowY = MICRO_Y + MICRO_H * (baseScale - scale) / 2 end
     local prev
     for _, button in ipairs(wanted) do
         Seat(button, buttonScale, MICRO_W, MICRO_H, level)
-        if prev then
-            button:SetPoint("BOTTOMLEFT", prev, "BOTTOMRIGHT", MICRO_STEP, 0)
+        local parked = spread and IsSeatHidden(button)
+        if prev and not parked then
+            button:SetPoint("BOTTOMLEFT", prev, "BOTTOMRIGHT", step, 0)
         else
             -- From the group corner by band numbers, read in the button's scale. On the band the row stays centred
             -- on the sockets (hung from the floor, a resized row grew out of them); off it the whole group scales.
-            local rowY = MICRO_Y
-            if not out then rowY = MICRO_Y + MICRO_H * (baseScale - scale) / 2 end
             button:SetPoint("BOTTOMLEFT", home, "BOTTOMLEFT", rowIn / scale, rowY / scale)
         end
         ns.SkinMicroButton(button)
         SeatShown(button)
-        prev = button
+        if not parked then prev = button end
     end
     if not out and prev then FitRegion(prev, art) end
     if MicroMenu then

@@ -1,6 +1,6 @@
 local _, ns = ...
 
--- Made by dev/tools/bronze_variants.py: the art with a copy in every theme folder (media/bronze/, media/dark/),
+-- Made by dev/tools/bronze_variants.py: the art with a copy in every theme folder (media/bronze/, media/dark/, media/custom/),
 -- one file name per line, read case-blind in TextureData.lua. Do not edit by hand; run the tool again.
 ns.THEME_ART = [[
 Button-Backpack-Up
