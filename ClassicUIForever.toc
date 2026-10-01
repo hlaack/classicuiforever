@@ -24,6 +24,7 @@ Core\Settings.lua
 Core\Profiles.lua
 Core\Scheduler.lua
 Core\Util.lua
+Core\Gamepad.lua
 Core\Setters.lua
 Core\EditMode.lua
 Core\Hooks.lua
@@ -141,6 +142,7 @@ Character\PetView.lua
 Character\StatPanes.lua
 Character\EquipmentPane.lua
 Spells\SpellBook.lua
+Spells\SpellsHost.lua
 Skills\SkillShell.lua
 Skills\ProfessionsBook.lua
 Skills\ProfessionsBookFrame.lua

@@ -93,7 +93,7 @@ function T.BookTabs()
                 end
                 if InCombatLockdown() then ns.SayNotInCombat() return end
                 PlaySound(SOUNDKIT.IG_ABILITY_PAGE_TURN)
-                HideUIPanel(frame)
+                ns.HidePanel(frame)
                 ns.ShowSpellBookBank(i == 3)
             end)
         end
@@ -105,7 +105,7 @@ function T.BookTabs()
             bookPads = {}
             for _, i in ipairs({ 1, 3 }) do
                 local tab = bookTabs[i]
-                local pad = CreateFrame("Button", nil, frame, "SecureActionButtonTemplate")
+                local pad = ns.NewFrame("Button", nil, frame, "SecureActionButtonTemplate")
                 pad:SetFrameStrata("HIGH")
                 pad:RegisterForClicks("AnyUp", "AnyDown")
                 pad:SetAttribute("useOnKeyDown", false)
@@ -134,7 +134,7 @@ function T.BookTabs()
             local coll = _G.CollectionsMicroButton
             if coll then
                 local tab = bookTabs[4]
-                local pad = CreateFrame("Button", nil, frame, "SecureActionButtonTemplate")
+                local pad = ns.NewFrame("Button", nil, frame, "SecureActionButtonTemplate")
                 pad:SetFrameStrata("HIGH")
                 pad:RegisterForClicks("AnyUp", "AnyDown")
                 pad:SetAttribute("useOnKeyDown", false)

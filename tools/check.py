@@ -39,7 +39,7 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "HELDCVAR", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
@@ -47,7 +47,7 @@ LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
               "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX",
-              "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "HELDCVAR")
+              "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -69,6 +69,12 @@ ALLOWED = {
     "GAMEMENU": {"UI/Escape.lua": "ns.CloseWithGameMenu", "Options/GameMenu.lua": "the game menu look"},
     "OWNRELOAD": {"Options/Layout.lua": "ns.ReloadForLayout and the turn-off popup's own press"},
     "PLATES": {"Units/NamePlates.lua": "ns.NP.EachPlate"},
+    # Frames that never stand inside a window the gamepad navigates.
+    "NAVFRAME": {"Core/": "ns.NewFrame itself, and the core's own frames", "Art/": "no windows",
+                 "Bar/": "the band stands on UIParent", "Units/": "unit frames and plates are no windows",
+                 "Map/Minimap.lua": "the minimap cluster is no window", "Map/MinimapButton.lua": "on the minimap",
+                 "Map/MinimapCalendar.lua": "on the minimap", "Map/MinimapEye.lua": "on the minimap",
+                 "Map/MinimapCollector.lua": "on the minimap", "Map/TrackingBuff.lua": "on the minimap"},
     "FORBIDDEN": {"Core/Util.lua": "ns.IsForbidden"},
     # Unit frame bars only: our own frames, buttons and client tabs never answer IsMouseOver with a secret.
     "SECRETMOUSE": {folder: "only unit frame bars can answer secret" for folder in (
@@ -202,6 +208,8 @@ FIX = {
                  "PAGE_NEXT (UI/Dress.lua) or ns.PanelToggleFace",
     "POINTONCE": "use ns.SetPointOnce(X, ...) (Core/Setters.lua); keep two-point anchors as they are",
     "PLATES": "use ns.NP.EachPlate(fn, withForbidden) (Units/NamePlates.lua)",
+    "NAVFRAME": "make it with ns.NewFrame (Core/Gamepad.lua): the gamepad's CreateFrame hook re-reads an open window's "
+                "controls in our name, and every later close of it is refused (ADDON_ACTION_FORBIDDEN)",
     "FORBIDDEN": "use ns.IsForbidden(object) (Core/Util.lua)",
     "DEADNS": "delete it, or add it to DEV_NAMES (ClassicUIForeverDev reads it) or KEPT_API (planned shared API) "
               "in tools/check.py",
@@ -281,6 +289,9 @@ LINE_PATTERNS = {
         r"\s*:\s*(?:SetPoint|ClearAllPoints|SetScale|SetAllPoints)\s*\("),
     # No `not` between the halves: `f.IsForbidden and not f:IsForbidden()` is a positive test that needs the method.
     "FORBIDDEN": re.compile(r"\b([A-Za-z_][\w.]*)\s*\.\s*IsForbidden\s+and\s+\1\s*:\s*IsForbidden\s*\("),
+    # A parent other than nil or UIParent: the frame may be made inside an open window.
+    "NAVFRAME": re.compile(r"(?:(?<![\w.:])CreateFrame\s*\(|\bpcall\s*\(\s*CreateFrame\s*,)\s*[^,()]*,\s*[^,()]*,"
+                           r"\s*(?!nil\b|UIParent\b)[A-Za-z_]"),
     # Lua's api check in the beta client: pcall pushes its true past a frame of 22+ results (lapi.c 577).
     "FADEDPIECE": re.compile(r"\b(?:FadeTextures|SetAlpha|SetAlphaIf|OverlayOnBand)\s*\(\s*[\w.]*(?:\bcap|EndCap)\b"
                              r"|(?:\bcap|EndCap)\w*\s*:\s*SetAlpha\s*\(\s*0\b"),
@@ -402,6 +413,7 @@ MESSAGES = {
     "SYSBASE": "anchor or scale of a bar or edit mode system through the client's wrapper (its snap note taints the next drag)",
     "SHAREDART": "shared control art copied (clear icon, red button coords or page arrow paths)",
     "PLATES": "nameplate loop by hand outside Units/NamePlates.lua",
+    "NAVFRAME": "a frame made with a parent in window code by raw CreateFrame",
     "FORBIDDEN": "ns.IsForbidden written out by hand",
 }
 
@@ -1031,7 +1043,7 @@ def throttle_frame_hits(lx):
     return found
 
 
-CHECK_MADE = re.compile(r"\b(\w+)\s*=\s*CreateFrame\(\s*\"CheckButton\"")
+CHECK_MADE = re.compile(r"\b(\w+)\s*=\s*(?:CreateFrame|ns\.NewFrame)\(\s*\"CheckButton\"")
 LABEL_MADE = re.compile(r"\blocal\s+(\w+)\s*=\s*([\w.]+):CreateFontString\(")
 LABEL_BESIDE = re.compile(r"(?<![.\w])(\w+):SetPoint\(\s*\"LEFT\"\s*,\s*([\w.]+)\s*,\s*\"RIGHT\"")
 

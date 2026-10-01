@@ -47,7 +47,7 @@ local function LockShown(entry)
     if not lock then return end
     local reset = resets[entry.key]
     -- A toplevel window is raised as it opens or is clicked; its drag strip, lock and reset follow it up.
-    local frame = _G[entry.name]
+    local frame = ns.WindowFrame(entry)
     local level = frame:GetFrameLevel()
     ns.SetLevelIf(lock, level + LIFT)
     ns.SetLevelIf(reset, level + LIFT)
@@ -83,7 +83,7 @@ end
 -- Beside the close button (the map's maximize), looked up while shown: our windows make theirs after they register, and
 -- the character sheet sizes its X after the window shows.
 local function PlaceLock(entry)
-    local frame, lock, reset = _G[entry.name], locks[entry.key], resets[entry.key]
+    local frame, lock, reset = ns.WindowFrame(entry), locks[entry.key], resets[entry.key]
     local close = frame.close or frame.Close or frame.CloseButton or _G[entry.name .. "CloseButton"]
     local beside = close
     if entry.quests then
@@ -142,17 +142,17 @@ end
 
 -- The title bar is watched while the window shows: a hover sensor over it would take the close button's hover.
 local function MakeLock(entry)
-    local frame = _G[entry.name]
+    local frame = ns.WindowFrame(entry)
     if entry.piece or locks[entry.key] or not frame then return end
     local parent = entry.quests and frame.BorderFrame or frame
-    local lock = CreateFrame("Button", nil, parent)
+    local lock = ns.NewFrame("Button", nil, parent)
     -- Over the drag strip, which reaches under it.
     lock:SetFrameLevel(frame:GetFrameLevel() + LIFT)
     lock:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
     lock:SetScript("OnClick", function() ToggleLock(entry) end)
     ns.AttachTip(lock, LockTip(entry))
     -- The lock's size and red face, with a turning arrow: back where it was.
-    local reset = CreateFrame("Button", nil, parent)
+    local reset = ns.NewFrame("Button", nil, parent)
     reset:SetFrameLevel(frame:GetFrameLevel() + LIFT)
     fits[entry.key] = ResetFace(reset)
     reset:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
@@ -163,7 +163,7 @@ local function MakeLock(entry)
     ns.AttachTip(reset, RESET_TIP)
     reset:Hide()
     resets[entry.key] = reset
-    local zone = CreateFrame("Frame", nil, parent)
+    local zone = ns.NewFrame("Frame", nil, parent)
     zone:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     zone:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", 0, -LOCK_ZONE_H)
     locks[entry.key], zones[entry.key] = lock, zone

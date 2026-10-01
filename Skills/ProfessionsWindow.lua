@@ -157,7 +157,7 @@ end
 local function TabToggle()
     local frame = ProfessionsFrame
     if tabToggle or not frame then return end
-    tabToggle = CreateFrame("Button", "ClassicUIForeverProfessionTabsToggle", frame)
+    tabToggle = ns.NewFrame("Button", "ClassicUIForeverProfessionTabsToggle", frame)
     tabToggle:SetSize(24, 24)
     -- Top of the book's right page, under and just inside the close button.
     tabToggle:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -15, -28)
@@ -182,7 +182,7 @@ SizeButton = function(shown)
     local frame = ProfessionsFrame
     if not frame then return end
     if not sizeButton then
-        local ok, button = pcall(CreateFrame, "Frame", nil, frame, "MaximizeMinimizeButtonFrameTemplate")
+        local ok, button = pcall(ns.NewFrame, "Frame", nil, frame, "MaximizeMinimizeButtonFrameTemplate")
         if not ok or not button then return end
         sizeButton = button
         button:SetOnMaximizedCallback(function() PickSize(true) end)
@@ -237,7 +237,7 @@ end
 local function EnsureShape(frame)
     local fcui = frame.fcui
     if shape or not (fcui and fcui.backing) or InCombatLockdown() then return end
-    shape = CreateFrame("Frame", nil, frame)
+    shape = ns.NewFrame("Frame", nil, frame)
     shape:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
     shape:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
     shape.grown, shape.art = false, {}

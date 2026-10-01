@@ -21,8 +21,9 @@ local SIDE_PIECES = { CharacterFrame = { "ModeTabs" } }
 local PlaceClassicWindows   -- forward declared: must stay local
 local MovedSig              -- forward declared: our moved windows' edges, summed as the client blocks are
 
+-- The gamepad's windows close only by their own hand (Core/Gamepad.lua): ours then stand beside them.
 local function HideClientPanels(except)
-    if InCombatLockdown() then return end
+    if InCombatLockdown() or ns.GamepadUI() then return end
     for name in pairs(UIPanelWindows or {}) do
         local panel = _G[name]
         -- The guild window kept open unseen under our roster (note bridge).
@@ -611,7 +612,7 @@ end
 
 -- Parented to the character window so it runs only while that is up.
 if CharacterFrame then
-    ns.Sched.OnFrame(CreateFrame("Frame", nil, CharacterFrame), { name = "windows.sheetGap", every = 0, fn = SheetPass })
+    ns.Sched.OnFrame(ns.NewFrame("Frame", nil, CharacterFrame), { name = "windows.sheetGap", every = 0, fn = SheetPass })
 end
 
 function ns.RegisterClassicWindow(frame, shares, editKey)
@@ -668,17 +669,17 @@ end
 
 local function EscProxy(frame)
     if escProxies[frame] or frame.Layout then return end
-    local proxy = CreateFrame("Frame", nil, frame)
+    local proxy = ns.NewFrame("Frame", nil, frame)
     escProxies[frame] = proxy
     ns.CloseOnEscape(proxy, function() ns.HidePanel(frame) end, function() return not OnPanelList(frame) end, frame)
     if ns.debugSink then ns.Persist("esc: stand-in made for " .. tostring(frame:GetName())) end
 end
 
 -- In combat the client refuses addon opens: an unprotected window is shown raw (outside the
--- panel list; our Escape closes it), a protected one is left alone.
+-- panel list; our Escape closes it), a protected one is left alone. With the gamepad on too: its focus would be ours.
 function ns.ShowPanel(frame)
     if not frame or frame:IsShown() then return true end
-    if not InCombatLockdown() then
+    if not InCombatLockdown() and not ns.GamepadUI() then
         if ShowUIPanel then ShowUIPanel(frame) else frame:Show() end
         return true
     end
@@ -692,8 +693,14 @@ function ns.ShowPanel(frame)
     return true
 end
 
+-- A window the gamepad holds is left for its own close: shut from our code, every later close is refused.
 function ns.HidePanel(frame)
     if not frame or not frame:IsShown() then return true end
+    if ns.GamepadUI() then
+        if ns.GamepadHolds(frame) or (frame.IsProtected and frame:IsProtected()) then return false end
+        frame:Hide()
+        return true
+    end
     if not InCombatLockdown() then
         if HideUIPanel then HideUIPanel(frame) else frame:Hide() end
         return true

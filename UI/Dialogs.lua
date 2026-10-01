@@ -83,7 +83,7 @@ local RIM_PIECES = {
 }
 
 function ns.TipRim(host, l, t, r, b)
-    local rim = CreateFrame("Frame", nil, host)
+    local rim = ns.NewFrame("Frame", nil, host)
     rim:SetPoint("TOPLEFT", host, "TOPLEFT", l, t)
     rim:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", r, b)
     if rim.SetUsingParentLevel then rim:SetUsingParentLevel(true) else rim:SetFrameLevel(host:GetFrameLevel()) end
@@ -124,7 +124,7 @@ local function SafeCoords(self)
     BackdropTemplateMixin.SetupTextureCoordinates(self)
 end
 function ns.OwnBackdropFrame(parent)
-    local frame = CreateFrame("Frame", nil, parent, ns.BACKDROP_TEMPLATE)
+    local frame = ns.NewFrame("Frame", nil, parent, ns.BACKDROP_TEMPLATE)
     if frame.SetupTextureCoordinates then frame.SetupTextureCoordinates = SafeCoords end
     return frame
 end
@@ -244,7 +244,7 @@ function ns.MakeDraggable(frame, onStop)
 end
 
 function ns.DialogClose(frame, onClick, x, y)
-    local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+    local close = ns.NewFrame("Button", nil, frame, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", frame, "TOPRIGHT", x or -6, y or -6)
     close:SetScript("OnClick", onClick)
     if ns.SkinCloseButton then ns.SkinCloseButton(close, true) end
@@ -276,7 +276,7 @@ function ns.CheckPanel(width, text, onClick)
     -- The client's edit mode dialogs are DIALOG strata throughout.
     panel:SetFrameStrata("DIALOG")
     ns.DialogBacking(panel)
-    local check = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+    local check = ns.NewFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
     check:SetSize(26, 26)
     check:SetPoint("LEFT", panel, "LEFT", 12, 0)
     ns.SkinCheckbox(check)

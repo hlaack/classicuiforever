@@ -78,9 +78,9 @@ end
 
 local function NewBar(parent)
     -- The old bar is still a client template; made from here it is ours.
-    local ok, bar = pcall(CreateFrame, "StatusBar", nil, parent, "ProfessionStatusBarTemplate")
+    local ok, bar = pcall(ns.NewFrame, "StatusBar", nil, parent, "ProfessionStatusBarTemplate")
     if not ok or not bar then
-        bar = CreateFrame("StatusBar", nil, parent)
+        bar = ns.NewFrame("StatusBar", nil, parent)
         bar:SetSize(95, 16)
         bar:SetStatusBarTexture("Interface\\Spellbook\\Professions-Progress-Fill")
         bar.rankText = bar:CreateFontString(nil, "OVERLAY", "TextStatusBarText")
@@ -92,7 +92,7 @@ local function NewBar(parent)
 end
 
 local function NewRow(content, primary, index)
-    local row = CreateFrame("Frame", nil, content)
+    local row = ns.NewFrame("Frame", nil, content)
     row.index = index
     row.primary = primary
 
@@ -391,7 +391,7 @@ function T.Build()
     end
     rows.small = {}
     -- Clipped to the window's inside: the page stands lower than the window, and the art ran past its foot.
-    local clip = CreateFrame("Frame", nil, page)
+    local clip = ns.NewFrame("Frame", nil, page)
     clip:SetPoint("TOPLEFT", ProfessionsFrame, "TOPLEFT", 4, -20)
     clip:SetPoint("BOTTOMRIGHT", ProfessionsFrame, "BOTTOMRIGHT", -4, 4)
     clip:SetClipsChildren(true)

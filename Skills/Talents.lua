@@ -10,6 +10,8 @@ ns.talents = TL
 
 local active = false
 local frame
+-- Gamepad on at login: the window lives in the game's spell window (Spells/SpellsHost.lua), which opens and closes it.
+local function Hosted() return ns.padSession == true end
 -- Up only while someone's talents are shown.
 local inspectWatch
 local selectedTab = 1
@@ -248,7 +250,7 @@ end
 local function TalentButton(child, index)
     local button = buttons[index]
     if button then return button end
-    button = CreateFrame("Button", nil, child)
+    button = ns.NewFrame("Button", nil, child)
     button:SetSize(BUTTON, BUTTON)
     button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     button.icon = button:CreateTexture(nil, "BORDER")
@@ -291,7 +293,7 @@ end
 -- Our own foot tab: the client template resizes and moves its tabs on every
 -- pick (it cut ours to "B...").
 local function FootTab(parent)
-    local tab = CreateFrame("Button", nil, parent)
+    local tab = ns.NewFrame("Button", nil, parent)
     tab:SetHeight(32)
     tab.on = FootFace(tab, FOOT_ON)
     tab.off = FootFace(tab, FOOT_OFF, "glowOff")
@@ -430,7 +432,8 @@ local function Build()
     frame:SetHitRectInsets(0, 30, 0, 45)
     frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, -104)
     frame:Hide()
-    ns.CloseWithGameMenu(frame)
+    -- Hosted, the game's window places and closes it; otherwise our window handles move it.
+    if not Hosted() then ns.CloseWithGameMenu(frame) end
 
     ns.DressPieces(frame, TALENT_QUARTERS)
 
@@ -444,7 +447,7 @@ local function Build()
     title:SetText(TALENTS or "Talents")
     frame.title = title
 
-    local close = CreateFrame("Button", nil, frame)
+    local close = ns.NewFrame("Button", nil, frame)
     -- Sized after the skin, which sets the stock 32.
     ns.SkinCloseButton(close, true)
     close:SetSize(TALENTS_CLOSE_SIZE, TALENTS_CLOSE_SIZE)
@@ -452,10 +455,12 @@ local function Build()
     close:SetScript("OnClick", function() frame:Hide() end)
     frame.close = close
     -- A secure pad over it: a fight's Escape binding (UI/Escape.lua) is let go in the same click.
-    if ns.EscDisarmOnClick then ns.EscDisarmOnClick(ns.MapPad(close, "DIALOG", function() frame:Hide() end, "")) end
+    if ns.EscDisarmOnClick and not Hosted() then
+        ns.EscDisarmOnClick(ns.MapPad(close, "DIALOG", function() frame:Hide() end, ""))
+    end
 
     -- Points spent in the tree, on a dark bar with the old round-ended grey rim.
-    local spentBar = CreateFrame("Frame", nil, frame)
+    local spentBar = ns.NewFrame("Frame", nil, frame)
     spentBar:SetSize(258, 13)
     spentBar:SetPoint("TOP", frame, "TOP", 12, -48)
     local spentFill = spentBar:CreateTexture(nil, "BACKGROUND")
@@ -467,16 +472,16 @@ local function Build()
     frame.spent:SetPoint("CENTER", spentBar, "CENTER", 0, 0)
 
     -- The tree, in a window that scrolls.
-    local scroll = CreateFrame("ScrollFrame", nil, frame)
+    local scroll = ns.NewFrame("ScrollFrame", nil, frame)
     scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", VIEW_X, VIEW_Y)
     scroll:SetSize(VIEW_W, VIEW_H)
     scroll:EnableMouseWheel(true)
-    local child = CreateFrame("Frame", nil, scroll)
+    local child = ns.NewFrame("Frame", nil, scroll)
     child:SetSize(VIEW_W, VIEW_H)
     scroll:SetScrollChild(child)
     frame.scroll, frame.child = scroll, child
     -- The arrows stand over the talents they point into.
-    frame.arrows = CreateFrame("Frame", nil, child)
+    frame.arrows = ns.NewFrame("Frame", nil, child)
     frame.arrows:SetAllPoints(child)
     frame.arrows:SetFrameLevel(child:GetFrameLevel() + 5)
 
@@ -499,7 +504,7 @@ local function Build()
     -- Foot: undo, points-left box, Apply Changes, fixed sizes so nothing moves when
     -- a point is staged; buttons grey until needed; Escape and the X close. The old
     -- art's painted points box is covered with stone.
-    local foot = CreateFrame("Frame", nil, frame)
+    local foot = ns.NewFrame("Frame", nil, frame)
     foot:SetPoint("TOPLEFT", frame, "TOPLEFT", 14, -409)
     -- To the border's inner edge (340 in the old art); 352 ran past the window's side.
     foot:SetPoint("BOTTOMRIGHT", frame, "TOPLEFT", 340, -435)
@@ -574,32 +579,35 @@ local function Build()
         -- Hidden and shown in one go (inspect to own) with a talent tooltip up: keep listening.
         if frame.hovered then HearWords(true) end
         if SetPortraitTexture then SetPortraitTexture(frame.portrait, inspectUnit or "player") end
-        PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN)
+        -- Hosted, the game's window sounds its own.
+        if not Hosted() then PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN) end
         Refresh()
     end)
     frame:SetScript("OnHide", function()
         inspectUnit = nil
         if inspectWatch then inspectWatch:Hide() end
         HearWords(false)
-        PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE)
+        if not Hosted() then PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE) end
     end)
     -- Inspect talents sit beside the inspect window and close with it: the client
     -- drops the data then.
     frame.fcuiKeep = function()
         return inspectUnit and _G["InspectFrame"] or nil
     end
-    inspectWatch = CreateFrame("Frame", nil, frame)
+    inspectWatch = ns.NewFrame("Frame", nil, frame)
     inspectWatch:Hide()
     ns.Sched.OnFrame(inspectWatch, { name = "talents.inspect", every = 0.2, fn = function()
         if not inspectUnit then return end
         local inspect = _G["InspectFrame"]
         if not (inspect and inspect:IsShown()) then frame:Hide() end
     end })
-    -- After the window's own SetScripts, which wipe earlier hooks (it then opened
-    -- over vendors, mail and the spellbook, and lost Escape).
-    ns.RegisterClassicWindow(frame, true)
-    -- Escape shuts the window before the client drops the target.
-    ns.CloseOnEscape(frame)
+    if not Hosted() then
+        -- After the window's own SetScripts, which wipe earlier hooks (it then opened
+        -- over vendors, mail and the spellbook, and lost Escape).
+        ns.RegisterClassicWindow(frame, true)
+        -- Escape shuts the window before the client drops the target.
+        ns.CloseOnEscape(frame)
+    end
 
     -- A change to the tree is a burst of events: one refresh, next frame.
     ns.EventFrame(TREE_EVENTS, function()
@@ -638,7 +646,7 @@ end
 
 -- Public API (Core/API.lua): the player's talents shown, on tree tab if given.
 function ns.ShowTalents(tab)
-    if not active then return false end
+    if not active or Hosted() then return false end
     Build()
     if inspectUnit then
         inspectUnit = nil
@@ -719,6 +727,11 @@ end
 
 local function Apply()
     active = true
+    if Hosted() then
+        -- Nothing of the client's is taken: its keys and buttons open the window the talents sit in.
+        if ns.HostSpellsWindow then ns.HostSpellsWindow() end
+        return
+    end
     if not bindButton then
         -- Secure, so its click can bind Escape in a fight (UI/Escape.lua); its events live on a side frame, as a
         -- frame with registrations can be refused by the secure environment.
@@ -741,7 +754,22 @@ local function Restore()
     TakeButton(false)
     TakeInspectButton(false)
     UpdateBinding()
-    if frame then frame:Hide() end
+    if frame and not Hosted() then frame:Hide() end
+    if ns.HostSpellsWindow then ns.HostSpellsWindow() end
 end
 
-ns.RegisterModule("talents", { apply = Apply, restore = Restore })
+ns.RegisterModule("talents", { apply = Apply, restore = Restore, padHost = true })
+
+function ns.TalentsActive() return active end
+function ns.TalentsRefresh() if frame and frame:IsShown() then Refresh() end end
+
+-- Hosted: built with a button for every talent of the largest tree, so the window's read on opening finds them all.
+function ns.TalentsBuilt()
+    if not active or InCombatLockdown() then return frame end
+    Build()
+    local tree = TL.ReadTree and TL.ReadTree()
+    local most = 0
+    for _, tab in ipairs(tree and tree.tabs or {}) do most = math.max(most, #tab.nodes) end
+    for i = 1, most do TalentButton(frame.child, i):Hide() end
+    return frame
+end

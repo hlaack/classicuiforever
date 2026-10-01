@@ -98,7 +98,7 @@ local function Restore(snap, apply)
         end
     end
     EachKey(function(entry, key)
-        local frame = _G[entry.name]
+        local frame = ns.WindowFrame(entry)
         local placed = places[key] ~= nil
         local pos = snap.pos[key]
         places[key] = pos and { pos[1], pos[2] } or nil
@@ -194,7 +194,7 @@ local BACK_TIP = { text = L["UI_BACK_TO_REGULAR_EDIT_MODE"], r = 1, g = 1, b = 1
 local function Toggle()
     local hit = CreateFrame("Button", nil, UIParent)
     hit:SetHeight(TOGGLE_H)
-    local check = CreateFrame("CheckButton", nil, hit, "UICheckButtonTemplate")
+    local check = ns.NewFrame("CheckButton", nil, hit, "UICheckButtonTemplate")
     check:SetSize(TOGGLE_H, TOGGLE_H)
     check:SetPoint("LEFT", hit, "LEFT", 0, 0)
     check:EnableMouse(false)
@@ -259,7 +259,7 @@ end
 
 local function ModeCheck(entry, index, top)
     local col, row = (index - 1) % 2, math.floor((index - 1) / 2)
-    local check = CreateFrame("CheckButton", nil, mode, "UICheckButtonTemplate")
+    local check = ns.NewFrame("CheckButton", nil, mode, "UICheckButtonTemplate")
     check:SetSize(ROW_H, ROW_H)
     check:SetPoint("TOPLEFT", mode, "TOPLEFT", MODE_PAD + col * ROW_W, -(top + row * ROW_H))
     check:SetHitRectInsets(0, -(ROW_W - ROW_H), 0, 0)
@@ -277,7 +277,7 @@ local function ModeCheck(entry, index, top)
 end
 
 local function FootButton(text, point, x, onClick)
-    local button = CreateFrame("Button", nil, mode, "UIPanelButtonTemplate")
+    local button = ns.NewFrame("Button", nil, mode, "UIPanelButtonTemplate")
     button:SetSize(FOOT_W, FOOT_H)
     button:SetPoint(point, mode, point, x, FOOT_Y)
     button:SetText(text)
@@ -334,7 +334,7 @@ local function Mode()
     -- Under a window's own dialog (200), children and all: lowered after they were made, its close stood over it.
     mode = ns.band.EditDialog("ForeverClassicUIWindowsEditMode", MODE_W, tall + FOOT_GAP + FOOT_H + FOOT_Y, MODE_TITLE, 150)
     mode.close:SetScript("OnClick", TryClose)
-    local back = CreateFrame("Button", nil, mode, "UIPanelButtonTemplate")
+    local back = ns.NewFrame("Button", nil, mode, "UIPanelButtonTemplate")
     back:SetSize(BACK_W, BACK_H)
     back:SetPoint("TOPLEFT", mode, "TOPLEFT", BACK_X, BACK_Y)
     ns.EditModeRed(back)

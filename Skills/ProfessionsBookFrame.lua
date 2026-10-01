@@ -28,13 +28,13 @@ end
 
 local function Holder(frame)
     if holder then return holder end
-    holder = CreateFrame("Frame", nil, frame)
+    holder = ns.NewFrame("Frame", nil, frame)
     holder:SetSize(ART_W, ART_H)
     holder:SetPoint("TOPLEFT", frame, "TOPLEFT", ART_X, ART_Y)
     ns.DressPieces(holder, ns.SPELLBOOK_QUARTERS)
     holder:Hide()
     -- The portrait ring again over the page, whose bands reach under it.
-    ringFrame = CreateFrame("Frame", nil, frame)
+    ringFrame = ns.NewFrame("Frame", nil, frame)
     ringFrame:SetSize(96, 96)
     ringFrame:SetPoint("TOPLEFT", holder, "TOPLEFT")
     local ring = ringFrame:CreateTexture(nil, "OVERLAY")

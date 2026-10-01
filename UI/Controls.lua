@@ -32,13 +32,13 @@ end
 -- Our own red button (options, welcome, status); raw paths: no bronze swap.
 local PANEL_RAW = { set = "raw", coords = ns.RED_COORDS, add = true }
 function ns.PanelButton(parent, text, width)
-    local button = CreateFrame("Button", nil, parent)
+    local button = ns.NewFrame("Button", nil, parent)
     button:SetSize(width or 96, 22)
     local ok = button:SetNormalTexture(PANEL_BUTTON .. "Up")
     if ok == false then
         -- Old sheet missing on this client: fall back to the modern button.
         button:Hide()
-        button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+        button = ns.NewFrame("Button", nil, parent, "UIPanelButtonTemplate")
         button:SetSize(width or 96, 22)
         button:SetText(text)
         return button
@@ -77,7 +77,7 @@ end
 
 -- A page-arrow toggle on a window; the global name is kept.
 function ns.PanelToggle(parent, name, size, point, rel, relPoint, x, y, level, onClick, tip)
-    local button = CreateFrame("Button", name, parent)
+    local button = ns.NewFrame("Button", name, parent)
     button:SetSize(size, size)
     button:SetPoint(point, rel, relPoint, x, y)
     button:SetFrameLevel(level)
@@ -116,7 +116,7 @@ end
 
 -- The client's X at a search box's right end, hidden; callers show it while there is text.
 function ns.SearchClear(box)
-    local clear = CreateFrame("Button", nil, box)
+    local clear = ns.NewFrame("Button", nil, box)
     clear:SetSize(17, 17)
     clear:SetPoint("RIGHT", box, "RIGHT", -3, 0)
     clear:SetNormalTexture(CLEAR_ICON)
@@ -129,7 +129,7 @@ end
 
 -- A search box in the old input look: hint text while empty, the X to clear; callers show those two by the text.
 function ns.SearchBox(parent, width, hintText)
-    local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+    local box = ns.NewFrame("EditBox", nil, parent, "InputBoxTemplate")
     box:SetSize(width, 20)
     box:SetAutoFocus(false)
     box:SetFontObject("ChatFontNormal")

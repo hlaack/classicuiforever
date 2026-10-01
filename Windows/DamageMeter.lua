@@ -180,16 +180,16 @@ local function Boxes(window)
     barRun:SetPoint("TOPLEFT", window, "TOPLEFT", -OUT + KNOB_IN, DIVIDER_Y + BAR_H / 2)
     barRun:SetPoint("TOPRIGHT", barEnd, "TOPLEFT")
     -- The body in the container the meter hides when minimized: marble, and the tree art clipped over it.
-    local body = CreateFrame("Frame", nil, window.MinimizeContainer or window)
+    local body = ns.NewFrame("Frame", nil, window.MinimizeContainer or window)
     body:SetFrameLevel(level)
     body:SetPoint("TOPLEFT", window, "TOPLEFT", INSET - OUT, DIVIDER_Y)
     body:SetPoint("BOTTOMRIGHT", window, "BOTTOMRIGHT", OUT - INSET, INSET - OUT)
     local floor = ns.TileTex(body:CreateTexture(nil, "BACKGROUND"), "marbleBg", MARBLE_TILE, MARBLE)
     floor:SetAllPoints(body)
-    local clip = CreateFrame("Frame", nil, body)
+    local clip = ns.NewFrame("Frame", nil, body)
     clip:SetAllPoints(body)
     clip:SetClipsChildren(true)
-    local canvas = CreateFrame("Frame", nil, clip)
+    local canvas = ns.NewFrame("Frame", nil, clip)
     canvas:SetAllPoints(clip)
     local tree = {}
     for i, piece in ipairs(TREE_PIECES) do
@@ -200,7 +200,7 @@ local function Boxes(window)
     end
     tree[1]:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", TREE_BLANK_RIGHT, 0)
     -- Move background art: a pan pad over the rows, the four-way arrow in its middle.
-    local pan = CreateFrame("Frame", nil, body)
+    local pan = ns.NewFrame("Frame", nil, body)
     pan:SetAllPoints(body)
     pan:SetFrameStrata("HIGH")
     pan:EnableMouse(true)
@@ -213,7 +213,7 @@ local function Boxes(window)
     tree[3]:SetPoint("TOPRIGHT", tree[1], "BOTTOMRIGHT")
     tree[4]:SetPoint("TOPRIGHT", tree[3], "TOPLEFT")
     -- Full art while panning: the whole tree faded, unclipped, under the meter's own art and metal.
-    local ghost = CreateFrame("Frame", nil, body)
+    local ghost = ns.NewFrame("Frame", nil, body)
     ghost:SetFrameStrata("BACKGROUND")
     ghost:SetAlpha(GHOST_ALPHA)
     ghost:Hide()
@@ -225,7 +225,7 @@ local function Boxes(window)
         faded[i] = tex
     end
     -- The stone that shows: from the metal's inner edge to the divider bar's top (its 8 px bar mid-sheet).
-    local mid = CreateFrame("Frame", nil, box)
+    local mid = ns.NewFrame("Frame", nil, box)
     mid:SetPoint("TOPLEFT", stone, "TOPLEFT")
     mid:SetPoint("BOTTOMRIGHT", window, "TOPRIGHT", 0, DIVIDER_Y + BAR_H / 4)
     pair = { pan = pan, mid = mid, box = box, bar = { barRun, barEnd }, body = body, floor = floor, canvas = canvas, tree = tree,

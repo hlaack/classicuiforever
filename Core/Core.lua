@@ -153,6 +153,24 @@ local function ModuleOn(key)
     return true
 end
 
+-- A module whose pieces the gamepad interface replaces (padOff) stands down while it is on; toggles and reload debts stay.
+-- A window the gamepad cannot navigate (padLogin) is never taken with the gamepad on at login: its hand-back stays tainted.
+local function Runs(mod)
+    if not ModuleOn(mod.key) then return false end
+    if mod.padLogin and ns.padSession then return false end
+    return not (mod.padOff and ns.GamepadUI and ns.GamepadUI())
+end
+
+-- The interface switched since login while a padLogin or padHost module is ticked: only a reload swaps those windows.
+function ns.PadSwapOwed()
+    if ns.padSession == nil or not ns.GamepadUI then return false end
+    if ns.GamepadUI() == ns.padSession then return false end
+    for _, mod in ipairs(ns.modules) do
+        if (mod.padLogin or mod.padHost) and ModuleOn(mod.key) then return true end
+    end
+    return false
+end
+
 -- Modules move and re-level protected frames: a pass asked for in combat runs when it ends. A module that touches
 -- nothing protected (inFight = true) runs now as well, so its toggle answers in a fight.
 local applyAfterCombat = false
@@ -161,13 +179,13 @@ function ns.ApplyAll()
     if InCombatLockdown() then
         applyAfterCombat = true
         for _, mod in ipairs(ns.modules) do
-            if mod.inFight then ns.SafeCall(ModuleOn(mod.key) and mod.apply or mod.restore) end
+            if mod.inFight then ns.SafeCall(Runs(mod) and mod.apply or mod.restore) end
         end
         return
     end
     ns.WriteHeldCVars()
     for _, mod in ipairs(ns.modules) do
-        if ModuleOn(mod.key) then
+        if Runs(mod) then
             ns.SafeCall(mod.apply)
         else
             ns.SafeCall(mod.restore)
@@ -414,6 +432,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         end
     elseif event == "PLAYER_LOGIN" then
         ns.ready = true
+        ns.padSession = ns.GamepadUI() and true or false
         ns.ReadGameDamageNumbers()
         OrderModules()
         for _, mod in ipairs(ns.modules) do

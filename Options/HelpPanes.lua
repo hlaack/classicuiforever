@@ -35,14 +35,14 @@ local FAQ = {
 }
 
 local function Pane(frame, search, list)
-    local pane = CreateFrame("Frame", nil, frame)
+    local pane = ns.NewFrame("Frame", nil, frame)
     pane:SetAllPoints(frame)
     pane:Hide()
     local caption = pane:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     caption:SetPoint("TOP", search, "TOP", 0, -3)
     caption:SetWidth(list:GetWidth())
     pane.caption = caption
-    local child = CreateFrame("Frame", nil, list)
+    local child = ns.NewFrame("Frame", nil, list)
     child:SetSize(list:GetWidth(), 1)
     child:Hide()
     pane.child = child

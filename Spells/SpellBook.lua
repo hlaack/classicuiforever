@@ -43,6 +43,8 @@ local RANKS_BOX = { set = "raw", checked = CHECK .. "Check", add = true, hit = {
 
 local active = false
 local book
+-- Gamepad on at login: the book lives in the game's spell window (Spells/SpellsHost.lua), which opens and closes it.
+local function Hosted() return ns.padSession == true end
 -- A skill line hidden for a moment (a form change): its tab comes back once shown (UpdateSkillTabs).
 local heldLine
 -- Secure drag from our own casting buttons: the wrap hands the game "spell, id" and the game picks it up itself,
@@ -53,6 +55,16 @@ local DRAG_BODY = [[
     local id = self:GetAttribute("dragspell")
     if id then return "spell", id end
 ]]
+
+-- Hosted, the window's footer keeps A for the game's own spell buttons: while a casting button is picked, A is bound
+-- to that button itself, by secure code so a fight allows it, and let go when the pick moves on or the book shuts.
+local PAD_PICK = [[
+    local key = self:GetAttribute("padkey")
+    local bind = self:GetAttribute("padbind")
+    if key and bind and self:GetAttribute("type1") then self:SetBindingClick(true, key, bind) end
+]]
+local PAD_DROP = [[ self:ClearBindings() ]]
+local pickCount = 0
 
 local function BookMacro()
     -- The professions window first: its close is the client's own, so it goes in a fight too (the book takes its slot).
@@ -477,7 +489,7 @@ end
 -- A spell is two frames: the visible slot in the book and a casting button on
 -- a clear layer above, so the book holds nothing protected and opens in combat.
 local function CreateSpellButton(parent, id, clicks)
-    local slot = CreateFrame("Frame", nil, parent)
+    local slot = ns.NewFrame("Frame", nil, parent)
     slot:SetID(id)
     slot:SetSize(BUTTON_SIZE, BUTTON_SIZE)
     local column = id > 6 and 1 or 0
@@ -515,11 +527,11 @@ local function CreateSpellButton(parent, id, clicks)
     sub:SetJustifyH("LEFT")
     sub:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -2)
 
-    local cooldown = CreateFrame("Cooldown", nil, slot, "CooldownFrameTemplate")
+    local cooldown = ns.NewFrame("Cooldown", nil, slot, "CooldownFrameTemplate")
     cooldown:SetAllPoints(slot)
 
     -- Click target on the layer above its slot.
-    local btn = CreateFrame("CheckButton", "ForeverClassicUISpellButton" .. id, clicks, "SecureActionButtonTemplate")
+    local btn = ns.NewFrame("CheckButton", "ForeverClassicUISpellButton" .. id, clicks, "SecureActionButtonTemplate")
     btn:SetID(id)
     -- Placed by offsets, never anchored to the slot: that protects the slot, and
     -- a book built before combat then could not show during it.
@@ -539,8 +551,27 @@ local function CreateSpellButton(parent, id, clicks)
 end
 
 -- One page's casting button over a book slot (see the pages).
+-- Hosted: the press binding (PAD_PICK). The deferred bind lands after the footer's own rebind of the same pick.
+local function WirePadPick(btn)
+    btn:SetAttribute("padkey", GAMEPAD_FACE_BOTTOM or "PAD1")
+    btn:SetAttribute("padbind", ns.KeyProxy(btn:GetName()))
+    SecureHandlerWrapScript(btn, "OnEnter", dragWrap, PAD_PICK)
+    SecureHandlerWrapScript(btn, "OnLeave", dragWrap, PAD_DROP)
+    SecureHandlerWrapScript(btn, "OnHide", dragWrap, PAD_DROP)
+    btn:HookScript("OnEnter", function(self)
+        ns.Sched.NextFrame("spellBookPadPick", function()
+            if InCombatLockdown() or not self:IsVisible() or not self:GetAttribute("type1") then return end
+            if not (SmartNavigation and SmartNavigation:GetCurrentButton() == self) then return end
+            SecureHandlerExecute(self, PAD_PICK)
+        end)
+    end)
+end
+
 local function CreatePageButton12(layer, id)
-    local btn = CreateFrame("Button", nil, layer, "SecureActionButtonTemplate")
+    -- Named: a key binding clicks a button by its name.
+    pickCount = pickCount + 1
+    local name = Hosted() and ("ForeverClassicUIPagePick" .. pickCount) or nil
+    local btn = ns.NewFrame("Button", name, layer, "SecureActionButtonTemplate")
     local column = id > 6 and 1 or 0
     local row = (id - 1) % 6
     btn:SetSize(BUTTON_SIZE, BUTTON_SIZE)
@@ -559,6 +590,7 @@ local function CreatePageButton12(layer, id)
     btn:SetScript("OnDragStart", Button_OnDragStart)
     SecureHandlerWrapScript(btn, "OnDragStart", dragWrap, DRAG_BODY)
     btn:SetScript("PostClick", Button_PostClick)
+    if name then WirePadPick(btn) end
     return btn
 end
 
@@ -586,7 +618,7 @@ local function SkillTab_OnEnter(self)
 end
 
 local function CreateSkillTab(parent, i, prev)
-    local tab = CreateFrame("CheckButton", nil, parent)
+    local tab = ns.NewFrame("CheckButton", nil, parent)
     tab:SetSize(32, 32)
     if prev then
         tab:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -17)
@@ -651,7 +683,7 @@ function ns.DressBookTab(tab, narrow)
 end
 
 local function CreateBookTab(parent, i, prev)
-    local tab = CreateFrame("Button", nil, parent)
+    local tab = ns.NewFrame("Button", nil, parent)
     tab:SetSize(128, 64)
     tab:SetHitRectInsets(BOOK_TAB_HIT.left, BOOK_TAB_HIT.right, BOOK_TAB_HIT.top, BOOK_TAB_HIT.bottom)
     if prev then
@@ -689,7 +721,7 @@ local function Page_OnClick(self)
 end
 
 local function CreatePageButton(parent, key, step, x)
-    local btn = CreateFrame("Button", nil, parent)
+    local btn = ns.NewFrame("Button", nil, parent)
     btn:SetSize(32, 32)
     btn:SetPoint("CENTER", parent, "BOTTOMLEFT", x, 105)
     ns.DressStates(btn, key .. "Up", key .. "Down", key .. "Disabled", "mouseHighlight", ADD_HL)
@@ -717,13 +749,13 @@ local function CreateBook()
     -- book stuck open). Escape and placement are ours: the left window slot,
     -- like the classic quest log.
     f.fcuiSlotWidth = 392
-    ns.RegisterClassicWindow(f, true, "spellBook")
+    if not Hosted() then ns.RegisterClassicWindow(f, true, "spellBook") end
     ns.db.spellBookPos = nil
     -- Our Escape out of combat: the client's clears the target first, 1.x closed
     -- windows first. Closes like the X: a bare hide in combat leaves the layer up
     -- and the book reopens.
-    if ns.CloseOnEscape then ns.CloseOnEscape(f, function() ns.HideSpellBook() end) end
-    if GameMenuFrame then
+    if ns.CloseOnEscape and not Hosted() then ns.CloseOnEscape(f, function() ns.HideSpellBook() end) end
+    if GameMenuFrame and not Hosted() then
         -- The menu stays open: in combat Escape cannot be taken, so it must still open.
         GameMenuFrame:HookScript("OnShow", function()
             -- Not in combat: the layer is still up there, so the book reopens and flaps.
@@ -755,7 +787,7 @@ local function CreateBook()
     f.PrevPage = CreatePageButton(f, "sbPrev", -1, 50)
     f.NextPage = CreatePageButton(f, "sbNext", 1, 314)
 
-    f.Close = CreateFrame("Button", nil, f)
+    f.Close = ns.NewFrame("Button", nil, f)
     -- Sized after the skin, which sets the stock 32.
     ns.SkinCloseButton(f.Close, true)
     f.Close:SetSize(SPELLBOOK_CLOSE_SIZE, SPELLBOOK_CLOSE_SIZE)
@@ -763,7 +795,7 @@ local function CreateBook()
     f.Close:SetScript("OnClick", function() ns.HidePanel(f) end)
 
     -- Search over the right page, across every tab; the X clears it.
-    local search = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    local search = ns.NewFrame("EditBox", nil, f, "InputBoxTemplate")
     search:SetSize(130, 20)
     search:SetPoint("TOPRIGHT", f, "TOPRIGHT", -42, -47)
     search:SetAutoFocus(false)
@@ -772,7 +804,7 @@ local function CreateBook()
     local hint = search:CreateFontString(nil, "ARTWORK", "GameFontDisable")
     hint:SetPoint("LEFT", search, "LEFT", 2, 0)
     hint:SetText(SEARCH or "Search")
-    local clear = CreateFrame("Button", nil, search)
+    local clear = ns.NewFrame("Button", nil, search)
     clear:SetSize(17, 17)
     clear:SetPoint("RIGHT", search, "RIGHT", -3, 0)
     clear:SetNormalTexture("Interface\\FriendsFrame\\ClearBroadcastIcon")
@@ -795,7 +827,7 @@ local function CreateBook()
     f.Search = search
 
     -- 1.x rank box: ticked lists every rank; the inverse of spellBookTopRank.
-    local ranks = CreateFrame("CheckButton", nil, f)
+    local ranks = ns.NewFrame("CheckButton", nil, f)
     ranks:SetSize(22, 22)
     ranks:SetPoint("TOPLEFT", f, "TOPLEFT", 74, -46)
     ns.DressStates(ranks, CHECK .. "Up", CHECK .. "Down", nil, CHECK .. "Highlight", RANKS_BOX)
@@ -827,7 +859,7 @@ local function CreateBook()
     f.Clicks = clicks
     -- Follows the book's place and size (slot or edit mode); moved out of combat only, re-placed at combat end.
     local function FollowBook()
-        if InCombatLockdown() and clicks:IsProtected() then return end
+        if Hosted() or (InCombatLockdown() and clicks:IsProtected()) then return end
         local left, top = f:GetLeft(), f:GetTop()
         ns.SetScaleIf(clicks, f:GetScale())
         clicks:ClearAllPoints()
@@ -852,7 +884,8 @@ local function CreateBook()
     end
     -- Out of combat: write the attribute and show the layer now, not at the next poll.
     f.SetLayer = function(_, on)
-        if InCombatLockdown() then return end
+        -- Hosted, the layer shows and hides with the game's window.
+        if InCombatLockdown() or Hosted() then return end
         on = on and true or false
         if clicks.fcuiLinked then clicks:SetAttribute("unit", on and "player" or "none") end
         clicks:SetShown(on)
@@ -901,7 +934,9 @@ local function CreateBook()
         layer:Hide()
         layer:ClearBindings()
     ]]
-    f.WrapTradeCast = function(btn) SecureHandlerWrapScript(btn, "OnClick", layerWrap, TRADE_PRE, TRADE_POST) end
+    f.WrapTradeCast = function(btn)
+        if not Hosted() then SecureHandlerWrapScript(btn, "OnClick", layerWrap, TRADE_PRE, TRADE_POST) end
+    end
     -- The book follows its layer down (Escape's key press in a fight, the quest log's openers).
     layerOff:SetScript("PostClick", function(_, _, down)
         if not down and ns.HideSpellBook then ns.HideSpellBook() end
@@ -910,7 +945,7 @@ local function CreateBook()
     -- Secure pad over a closing control: writes "none" (the control cannot in combat), then runs the control's work.
     f.LayerPads = {}
     local function LayerPad(over, width, height, point, x, y, after)
-        local pad = CreateFrame("Button", nil, clicks, "SecureActionButtonTemplate")
+        local pad = ns.NewFrame("Button", nil, clicks, "SecureActionButtonTemplate")
         f.LayerPads[#f.LayerPads + 1] = pad
         pad:SetSize(width, height)
         pad:SetPoint("CENTER", clicks, point, x, y)
@@ -937,6 +972,29 @@ local function CreateBook()
         return pad
     end
 
+    -- Hosted: the Professions tab is a secure twin in the drawn one's spot. Its macro shuts the game's spell window and
+    -- presses the game's own button, as our code may not open a window the gamepad holds.
+    local function SecureProfTab()
+        local pad = ns.NewFrame("Button", "ForeverClassicUIBookProfTab", clicks, "SecureActionButtonTemplate")
+        pad:SetSize(128, 64)
+        pad:SetHitRectInsets(BOOK_TAB_HIT.left, BOOK_TAB_HIT.right, BOOK_TAB_HIT.top, BOOK_TAB_HIT.bottom)
+        pad:SetPoint("CENTER", clicks, "BOTTOMLEFT", 187, 61)
+        pad.Text = pad:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+        pad.Text:SetHeight(13)
+        pad.Text:SetPoint("CENTER", pad, "CENTER", 0, 3)
+        pad:SetFontString(pad.Text)
+        pad:SetNormalFontObject(GameFontNormalSmall)
+        pad:SetText(TRADE_SKILLS or "Professions")
+        ns.DressStates(pad, "sbTabUnselected", nil, nil, "sbTabHighlight", ADD_HL)
+        pad:RegisterForClicks("AnyUp", "AnyDown")
+        pad:SetAttribute("useOnKeyDown", false)
+        pad:SetAttribute("type1", "macro")
+        pad:SetAttribute("macrotext", "/click PlayerSpellsFrameCloseButton\n/click ProfessionMicroButton")
+        if ns.ProfessionsSizeWrap then ns.ProfessionsSizeWrap(pad) end
+        WirePadPick(pad)
+        f.ProfPad = pad
+    end
+
     -- Attribute writes, so out of combat: once at build or when combat ends.
     local function LinkLayer()
         if clicks.fcuiLinked or InCombatLockdown() then return end
@@ -944,6 +1002,15 @@ local function CreateBook()
         if not toggle then return end
         clicks.fcuiLinked = true
         for _, btn in ipairs(f.Buttons or {}) do btn:EnableMouse(false) end
+        if Hosted() then
+            -- No unit watch: the layer is up whenever the window is. The pages' buttons alone are the gamepad's.
+            for _, btn in ipairs(f.Buttons or {}) do btn:Hide() end
+            clicks:SetAttribute("unit", "player")
+            toggle:SetAttribute("type", "macro")
+            toggle:SetAttribute("macrotext", "/click ProfessionsFrameCloseButton\n/click SpellbookMicroButton")
+            SecureProfTab()
+            return
+        end
         clicks:RegisterForClicks("AnyUp", "AnyDown")
         clicks:SetAttribute("useOnKeyDown", false)
         clicks:SetAttribute("type", "attribute")
@@ -1053,7 +1120,7 @@ local function CreateBook()
     -- turns lag up to 0.2 s.
     local SELECTORS = { { "p", "layer" }, { "pl", "ayer" }, { "pla", "yer" }, { "play", "er" }, { "playe", "r" }, { "player" } }
     local DYNAMIC = #SELECTORS
-    local holder = CreateFrame("Frame", nil, clicks)
+    local holder = ns.NewFrame("Frame", nil, clicks)
     holder:SetAllPoints(clicks)
     local containers, lineContainer = {}, {}
     local petContainer
@@ -1126,7 +1193,7 @@ local function CreateBook()
     -- named twin, pressed by the pad's macro.
     local padCount = 0
     local function NewPad(parent, over, width, height, enter)
-        local pad = CreateFrame("Button", nil, parent, "SecureActionButtonTemplate")
+        local pad = ns.NewFrame("Button", nil, parent, "SecureActionButtonTemplate")
         SecureHandlerWrapScript(pad, "OnClick", pageWrap, PAD_BODY)
         padCount = padCount + 1
         pad.twinName = "ForeverClassicUIBookAct" .. padCount
@@ -1187,7 +1254,7 @@ local function CreateBook()
     end
 
     local function NewLayer(c, page)
-        local layer = CreateFrame("Frame", nil, c.frame)
+        local layer = ns.NewFrame("Frame", nil, c.frame)
         layer:SetAllPoints(clicks)
         layer:SetFrameLevel(clicks:GetFrameLevel() + 10 + page * 12)
         layer.buttons = {}
@@ -1209,7 +1276,7 @@ local function CreateBook()
 
     local function NewContainer(index)
         local c = { index = index, selector = SELECTORS[index][1], layers = {}, skillPads = {} }
-        c.frame = CreateFrame("Frame", nil, holder)
+        c.frame = ns.NewFrame("Frame", nil, holder)
         c.frame:SetAllPoints(clicks)
         c.frame:SetAttribute("useparent-unit", true)
         if SELECTORS[index][2] then c.frame:SetAttribute("unitsuffix", SELECTORS[index][2]) end
@@ -1352,6 +1419,19 @@ local function CreateBook()
         SetPage(page)
     end
 
+    -- Hosted, the book's own controls take the gamepad: a pad over each was a twin it bounced between.
+    local function HidePads()
+        for _, c in pairs(containers) do
+            for _, pad in pairs(c.skillPads) do pad:Hide() end
+            c.bookPad:Hide()
+            c.petPad:Hide()
+            for _, layer in ipairs(c.layers) do
+                layer.prev:Hide()
+                layer.next:Hide()
+            end
+        end
+    end
+
     -- Out of combat the book state drives the frames.
     local function ApplyPages()
         local c, content = ContainerFor()
@@ -1370,6 +1450,7 @@ local function CreateBook()
             layer:SetAttribute("unit", up and "player" or "none")
             layer:SetShown(up)
         end
+        if Hosted() then HidePads() end
         return c
     end
     f.ReadPages, f.ApplyPages, f.ContainerFor = ReadPages, ApplyPages, ContainerFor
@@ -1379,16 +1460,17 @@ local function CreateBook()
     f:SetScript("OnMouseWheel", Book_OnMouseWheel)
     -- HookScript: SetScript would wipe the earlier hooks (layer show/hide, the
     -- one-window rule) and the layer stayed up after the book closed.
+    -- Hosted, the game's window plays its own sounds and lights its own micro button.
     f:HookScript("OnShow", function(self)
-        PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN)
+        if not Hosted() then PlaySound(SOUNDKIT.IG_SPELLBOOK_OPEN) end
         self:Refresh()
         ns.RefreshMicroButtons()
     end)
     f:HookScript("OnHide", function()
-        PlaySound(SOUNDKIT.IG_SPELLBOOK_CLOSE)
+        if not Hosted() then PlaySound(SOUNDKIT.IG_SPELLBOOK_CLOSE) end
         ns.RefreshMicroButtons()
     end)
-    if ns.MicroButtonFollows then
+    if ns.MicroButtonFollows and not Hosted() then
         for _, name in ipairs({ "SpellbookMicroButton", "PlayerSpellsMicroButton" }) do
             ns.MicroButtonFollows(_G[name], function() return f:IsShown() end, f)
         end
@@ -1553,7 +1635,8 @@ local function CreateBook()
         tab1:Show()
         profTab.professions = true
         profTab:SetText(TRADE_SKILLS or "Professions")
-        profTab:Show()
+        -- Hosted, its secure twin stands in its spot (SecureProfTab); two there, the gamepad stepped between them.
+        profTab:SetShown(self.ProfPad == nil)
         local petTitle
         if petCount > 0 then
             petTitle = (token and _G["PET_TYPE_" .. token]) or PET
@@ -1648,6 +1731,7 @@ local function ShowClicks(on)
 end
 
 local function Show()
+    if Hosted() then return end
     -- May build in combat: its frames are plain; casting-layer writes wait for combat end.
     if not book then book = CreateBook() end
     -- Leave the client's talents window open: closed from here its close code runs
@@ -1667,7 +1751,7 @@ end
 
 local function Hide()
     wanted = false
-    if not book then return end
+    if not book or Hosted() then return end
     -- A tip one of its pieces owns goes now: a book faded in a fight stays shown, so no watch sees it go.
     local ok, owner = pcall(GameTooltip.GetOwner, GameTooltip)
     while ok and type(owner) == "table" do
@@ -1809,7 +1893,8 @@ local function UpdateBinding()
     ClearOverrideBindings(bindButton)
     if profBind then ClearOverrideBindings(profBind) end
     wipe(boundKeys)
-    if not active then return end
+    -- Hosted, the keys stay the game's: they open the window that holds the book.
+    if not active or Hosted() then return end
     if profBind then
         for _, k in ipairs({ GetBindingKey("TOGGLEPROFESSIONBOOK") }) do
             SetOverrideBindingClick(profBind, true, k, ns.KeyProxy(PROF_BIND_NAME), "LeftButton")
@@ -1830,7 +1915,7 @@ end
 -- Macro for Escape's secure click (Widgets): drops the layer, which our code
 -- cannot in combat; Escape's code then hides the book.
 function ns.SpellBookEscText()
-    if not book or not book.Clicks or not book.Clicks.fcuiLinked then return nil end
+    if Hosted() or not book or not book.Clicks or not book.Clicks.fcuiLinked then return nil end
     if not book:LayerUp() then return nil end
     return "/click ForeverClassicUISpellBookLayerOff"
 end
@@ -1899,6 +1984,12 @@ end
 
 local function Apply()
     active = true
+    if Hosted() then
+        -- Nothing of the client's is taken: its keys and buttons open the window the book sits in.
+        if IsLoggedIn and IsLoggedIn() then ns.SafeCall(Prebuild) end
+        if ns.HostSpellsWindow then ns.HostSpellsWindow() end
+        return
+    end
     TakeOver(true)
     TakeButton(true)
     UpdateBinding()
@@ -1918,6 +2009,7 @@ local function Restore()
     TakeButton(false)
     UpdateBinding()
     if book and book:IsShown() then Hide() end
+    if ns.HostSpellsWindow then ns.HostSpellsWindow() end
 end
 
 -- For the professions window, which carries the same tabs at its foot.
@@ -1968,6 +2060,13 @@ function ns.SpellBookButtonSpell(btn)
     return nil
 end
 
+-- Hosted gamepad book: puts a casting button's spell on the cursor, as its drag does; out of combat.
+function ns.SpellBookPickUp(btn)
+    if type(btn) ~= "table" or not btn.slot or btn.isPassive or InCombatLockdown() then return false end
+    Button_OnDragStart(btn)
+    return GetCursorInfo() ~= nil
+end
+
 function ns.SpellBookButtonFor(spellID)
     if not (active and book and book:IsShown()) or type(spellID) ~= "number" then return nil end
     local btn = PageButtonFor(spellID)
@@ -1984,7 +2083,14 @@ function ns.ToggleSpellBook()
     return true
 end
 
-ns.RegisterModule("spellBook", { init = Init, apply = Apply, restore = Restore })
+ns.RegisterModule("spellBook", { init = Init, apply = Apply, restore = Restore, padHost = true })
+
+-- Built and armed now, out of combat; the host calls it before moving the book in.
+function ns.SpellBookBuilt()
+    if not active or InCombatLockdown() then return book end
+    Prebuild()
+    return book
+end
 
 -- Top-rank toggle: recollect.
 local function RelistBook()

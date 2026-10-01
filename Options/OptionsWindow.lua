@@ -73,7 +73,7 @@ local function ShowMatch(box, on)
 end
 
 local function Arrow(row, kind, x)
-    local button = CreateFrame("Button", nil, row)
+    local button = ns.NewFrame("Button", nil, row)
     button:SetSize(16, 16)
     button:SetPoint("LEFT", row, "LEFT", x, 0)
     ns.DressStates(button, BTN .. kind .. "Button-Up", BTN .. kind .. "Button-Down", BTN .. kind .. "Button-Disabled", ns.ART.PLUS_GLOW, RAW_ADD)
@@ -82,7 +82,7 @@ end
 
 -- Number row (minus, value, plus, label) with the checkbox methods, so the list treats it alike.
 local function Stepper(parent, key, label, tooltip, low, high, apply)
-    local row = CreateFrame("Frame", nil, parent)
+    local row = ns.NewFrame("Frame", nil, parent)
     row:SetSize(24, 24)
     row.minus = Arrow(row, "Minus", 4)
     row.value = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -126,7 +126,7 @@ local function PickColor(r, g, b)
 end
 
 local function ColorRow(parent, key, label, tooltip)
-    local row = CreateFrame("Button", nil, parent)
+    local row = ns.NewFrame("Button", nil, parent)
     row:SetSize(24, 24)
     local swatch = row:CreateTexture(nil, "ARTWORK")
     swatch:SetSize(16, 16)
@@ -174,14 +174,14 @@ end
 -- A button for a mode that lasts while the options are open, not a saved setting; Done while on.
 -- check: { key, label, tooltip, set } for a saved box beside it.
 local function ButtonRow(parent, key, label, tooltip, press, isOn, check)
-    local row = CreateFrame("Frame", nil, parent)
+    local row = ns.NewFrame("Frame", nil, parent)
     row:SetSize(24, 24)
     local button = ns.PanelButton(row, label, check and 130 or 150)
     button:SetPoint("LEFT", row, "LEFT", 4, 0)
     row.button, row.text = button, button:GetFontString()
     local box
     if check then
-        box = CreateFrame("CheckButton", nil, row)
+        box = ns.NewFrame("CheckButton", nil, row)
         box:SetSize(24, 24)
         box:SetPoint("LEFT", button, "RIGHT", 4, 0)
         ns.DressStates(box, C .. "Up", C .. "Down", nil, C .. "Highlight", OPTION_BOX)
@@ -211,7 +211,7 @@ local function BoxClick(self)
 end
 
 local function Checkbox(parent, key, label, tooltip, radio)
-    local box = CreateFrame("CheckButton", nil, parent)
+    local box = ns.NewFrame("CheckButton", nil, parent)
     box:SetSize(24, 24)
     if radio then
         box.radio = true
@@ -235,7 +235,7 @@ local SWING_HANDS = { { "swingColorMain", L["OPTWIN_MAIN_HAND"] }, { "swingColor
 
 -- Label, then the old drop down box; items(root) fills its menu.
 local function DropShell(parent, label, items)
-    local row = CreateFrame("Frame", nil, parent)
+    local row = ns.NewFrame("Frame", nil, parent)
     row:SetSize(24, 24)
     local text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     text:SetPoint("LEFT", row, "LEFT", 4, 1)
@@ -243,7 +243,7 @@ local function DropShell(parent, label, items)
     text:SetWordWrap(false)
     text:SetText(label)
     row.text = text
-    local dropdown = CreateFrame("DropdownButton", nil, row, "WowStyle1DropdownTemplate")
+    local dropdown = ns.NewFrame("DropdownButton", nil, row, "WowStyle1DropdownTemplate")
     dropdown:SetWidth(DROP_W)
     dropdown:SetPoint("LEFT", text, "RIGHT", 4, -1)
     ns.SkinDropdown(dropdown)
@@ -335,7 +335,7 @@ end
 
 -- A group's title over its toggles, in the old gold.
 local function GroupHead(parent, title, width)
-    local head = CreateFrame("Frame", nil, parent)
+    local head = ns.NewFrame("Frame", nil, parent)
     head:SetSize(width, ROW)
     local text = head:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     text:SetPoint("BOTTOMLEFT", head, "BOTTOMLEFT", 2, 4)
@@ -383,10 +383,10 @@ local function AddTabs(frame, list, child, togglesOnly, listRows)
         end
     end
     -- On their own holder: the bottom tab skin lifts tabs anchored to their parent onto a client window's metal.
-    local holder = CreateFrame("Frame", nil, frame)
+    local holder = ns.NewFrame("Frame", nil, frame)
     holder:SetAllPoints(frame)
     for i, name in ipairs(TAB_NAMES) do
-        local tab = CreateFrame("Button", nil, holder, "PanelTabButtonTemplate")
+        local tab = ns.NewFrame("Button", nil, holder, "PanelTabButtonTemplate")
         tab:SetText(L[name])
         if i == 1 then
             tab:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", SETTINGS_TABS_X, SETTINGS_TABS_Y)
@@ -421,11 +421,11 @@ local function Build(canvas)
 
     -- Two scrolling columns, children indented; the bulk buttons sit between search and list.
     local LIST_TOP, LIST_W = canvas and -76 or -110, width - 70
-    local list = CreateFrame("ScrollFrame", nil, frame)
+    local list = ns.NewFrame("ScrollFrame", nil, frame)
     list:SetPoint("TOPLEFT", frame, "TOPLEFT", 22, LIST_TOP)
     list:SetSize(LIST_W, listRows * ROW)
     list:SetClipsChildren(true)
-    local child = CreateFrame("Frame", nil, list)
+    local child = ns.NewFrame("Frame", nil, list)
     child:SetSize(LIST_W, 1)
     list:SetScrollChild(child)
     list:EnableMouseWheel(true)
@@ -723,7 +723,7 @@ local function Build(canvas)
     preferred:SetPoint("BOTTOMLEFT", github, "TOPLEFT", 2, 3)
     preferred:SetText(L["OPTWIN_PREFERRED"])
     -- A font string takes no mouse: a frame over it carries the tip.
-    local preferredHover = CreateFrame("Frame", nil, frame)
+    local preferredHover = ns.NewFrame("Frame", nil, frame)
     preferredHover:SetAllPoints(preferred)
     preferredHover:EnableMouse(true)
     ns.AttachTip(preferredHover, PREFERRED_TIP)
