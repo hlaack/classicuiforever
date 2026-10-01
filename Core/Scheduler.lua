@@ -16,10 +16,15 @@ driver:Hide()
 
 local GetTime = GetTime
 
--- A watcher child under a client frame. Never under a client layout frame: its layout reads every child's fields, and
--- one we wrote runs its pass in our name (protected calls refused in a fight). Made round the gamepad's CreateFrame
--- hook (ns.NewFrame): made straight into an open window, the hook re-reads its buttons, and its focus, in our name.
+-- A watcher child under a client frame, made round the gamepad's CreateFrame hook (ns.NewFrame). Never in a layout
+-- frame (its pass reads every child and runs in our name; one swelled the game's popups): its out-of-layout border
+-- takes it instead, or nothing does (nil).
 local function Child(host)
+    if host.IsLayoutFrame and host:IsLayoutFrame() then
+        local border = host.Border
+        if not (border and border.ignoreInLayout and border.IsObjectType and border:IsObjectType("Frame")) then return nil end
+        host = border
+    end
     if ns.NewFrame then return ns.NewFrame("Frame", nil, host) end
     return CreateFrame("Frame", nil, host)
 end
@@ -354,7 +359,9 @@ function Sched.Attach(host, spec)
     end
     local job = byName[spec.name]
     if job then return job, false end
-    job = Sched.OnFrame(Child(host), spec)
+    local child = Child(host)
+    if not child then return nil, false end
+    job = Sched.OnFrame(child, spec)
     byName[spec.name] = job
     return job, true
 end
@@ -378,6 +385,7 @@ function Sched.OnVisible(host, name, fn)
     local child = byName[name]
     if child then return child end
     child = Child(host)
+    if not child then return nil end
     child:SetScript("OnShow", function() fn(true) end)
     child:SetScript("OnHide", function() fn(false) end)
     byName[name] = child
@@ -396,6 +404,7 @@ function Sched.AfterShow(host, name, fn)
     end
     if byName[name] then return byName[name] end
     local child = Child(host)
+    if not child then return nil end
     local function Run(self)
         self:SetScript("OnUpdate", nil)
         xpcall(fn, Report)
@@ -442,6 +451,7 @@ end
 -- OnMove(frame, fn): fn() in the layout pass that moves or resizes frame, before a draw. Two unseen helpers, each from one
 -- of its corners to the screen's far corner, so any move or resize changes one helper's size. Not heard in edit mode.
 function Sched.OnMove(frame, fn)
+    if not fn then return end
     if not editHooked then
         editHooked = true
         ns.OnEditMode(SyncHelpers)
@@ -475,6 +485,7 @@ end
 -- takes no clicks and passes its motion on to host, so host keeps its own hover. False: the client refused (poll instead).
 function Sched.OnHover(host, fn, pad)
     local child = Child(host)
+    if not child then return false end
     pad = pad or 0
     child:SetPoint("TOPLEFT", host, "TOPLEFT", -pad, pad)
     child:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", pad, -pad)
