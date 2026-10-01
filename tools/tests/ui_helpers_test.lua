@@ -320,7 +320,13 @@ Test("Themes: dark tint, a copy folder per theme, the look rule", function()
     Check(Near(tex._vertex[1], 0.38) and Near(tex._vertex[3], 0.40), "dark tint")
     local BORDER = "Interface/DialogFrame/UI-DialogBox-Border"
     local copy = ns.BronzeCopy(BORDER)
-    Check(copy ~= nil and copy:find("dark", 1, true) ~= nil, "dark copy: " .. tostring(copy))
+    Check(copy ~= nil and copy:find("custom", 1, true) ~= nil, "dark shows the tinted copies: " .. tostring(copy))
+    Check(Near(ns.DarkGrey(0), 0.75) and Near(ns.DarkGrey(50), 0.38) and Near(ns.DarkGrey(100), 0), "darkness range")
+    ns.db.themeDarkness = 100
+    ns.ThemeName()
+    ns.Dress(tex, "barBody", { tint = 1.28 })
+    Check(tex._vertex[1] == 0 and tex._vertex[3] == 0, "black, a strong share held at zero")
+    ns.db.themeDarkness = nil
     Check(ns.ThemeLook(true) == "themed" and ns.ThemeLook() == "themed", "dark keeps the 1.x shapes everywhere")
     ns.db.themeDark = false
     copy = ns.BronzeCopy(BORDER)

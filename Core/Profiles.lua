@@ -7,7 +7,7 @@ local L = ns.L
 
 local DEFAULT = "Default"
 local NAME_MAX = 32
-local EXTRA = { "themeColor", "barScale", "microScale", "oneBagColumns", "keyTextSize", "plateNameSize",
+local EXTRA = { "themeColor", "themeDarkness", "barScale", "microScale", "oneBagColumns", "keyTextSize", "plateNameSize",
     "swingColorMain", "swingColorOff", "swingColorRanged", "swingBorder", "meterBackground", "prdGap", "meterHeader", "unitNameSize", "thickEnemyColor", "meterArtPan",
     "meterPanPreview" }
 -- The game's own setting mirrored, not ours to keep per profile.

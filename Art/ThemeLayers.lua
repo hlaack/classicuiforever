@@ -76,10 +76,8 @@ function ns.PaintCopy(piece, copyPath, ...)
     job:Wake()
 end
 
--- The picked custom colour: saved, then every layer and tinted piece repainted.
-function ns.SetThemeColor(r, g, b)
-    ns.db.themeColor = string.format("%02x%02x%02x", math.floor(r * 255 + 0.5), math.floor(g * 255 + 0.5),
-        math.floor(b * 255 + 0.5))
+-- Every layer and tinted piece repainted in the theme's colour now.
+local function Retint()
     ns.ThemeName()
     local theme = Custom()
     if theme then
@@ -89,4 +87,17 @@ function ns.SetThemeColor(r, g, b)
     end
     ns.RepaintBronze()
     if ns.QueueApply then ns.QueueApply() end
+end
+
+-- The picked custom colour, saved and painted.
+function ns.SetThemeColor(r, g, b)
+    ns.db.themeColor = string.format("%02x%02x%02x", math.floor(r * 255 + 0.5), math.floor(g * 255 + 0.5),
+        math.floor(b * 255 + 0.5))
+    Retint()
+end
+
+-- Dark's slider (0-100), saved and painted.
+function ns.SetThemeDarkness(level)
+    ns.db.themeDarkness = math.max(0, math.min(100, math.floor((tonumber(level) or ns.DARKNESS_DEFAULT) + 0.5)))
+    Retint()
 end

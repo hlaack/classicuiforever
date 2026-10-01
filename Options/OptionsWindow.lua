@@ -56,6 +56,7 @@ local function Describe(row, key, label, tooltip)
     row.keyLow, row.tipLow = label:lower(), (tooltip or ""):lower()
     ns.AttachTip(row, OPTION_TIP)
 end
+O.Describe = Describe
 
 -- A soft gold bar behind a matching row's label; the rest of its section is dimmed.
 local MATCH_DIM = 0.4
@@ -116,57 +117,6 @@ local function Stepper(parent, key, label, tooltip, low, high, apply)
     row.minus:SetScript("OnClick", Step(-1))
     row.plus:SetScript("OnClick", Step(1))
     row:EnableMouse(true)
-    Describe(row, key, label, tooltip)
-    return row
-end
-
--- The custom theme's colour: a swatch opening the game's colour picker (its hex box included).
-local function PickColor(r, g, b)
-    ns.Sched.NextFrame("options.themeColor", function() ns.SetThemeColor(r, g, b) end)
-end
-
-local function ColorRow(parent, key, label, tooltip)
-    local row = ns.NewFrame("Button", nil, parent)
-    row:SetSize(24, 24)
-    local swatch = row:CreateTexture(nil, "ARTWORK")
-    swatch:SetSize(16, 16)
-    swatch:SetPoint("LEFT", row, "LEFT", 4, 0)
-    local rim = row:CreateTexture(nil, "BACKGROUND")
-    rim:SetColorTexture(0, 0, 0, 1)
-    rim:SetPoint("TOPLEFT", swatch, "TOPLEFT", -1, 1)
-    rim:SetPoint("BOTTOMRIGHT", swatch, "BOTTOMRIGHT", 1, -1)
-    local text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    text:SetPoint("LEFT", swatch, "RIGHT", 6, 1)
-    text:SetJustifyH("LEFT")
-    text:SetWordWrap(false)
-    text:SetText(label)
-    row.text = text
-    function row:Sync()
-        local r, g, b = ns.HexColor(ns.db[key])
-        swatch:SetColorTexture(r or 1, g or 1, b or 1)
-        swatch:SetAlpha(self.on == false and 0.4 or 1)
-    end
-    function row:SetChecked() self:Sync() end
-    function row:SetEnabled(on)
-        self.on = on and true or false
-        self:EnableMouse(self.on)
-        self:Sync()
-    end
-    row:SetScript("OnClick", function()
-        local r, g, b = ns.HexColor(ns.db[key])
-        local was = ns.db[key]
-        ColorPickerFrame:SetupColorPickerAndShow({
-            r = r or 1, g = g or 1, b = b or 1,
-            swatchFunc = function()
-                PickColor(ColorPickerFrame:GetColorRGB())
-                row:Sync()
-            end,
-            cancelFunc = function()
-                PickColor(ns.HexColor(was))
-                row:Sync()
-            end,
-        })
-    end)
     Describe(row, key, label, tooltip)
     return row
 end
@@ -501,8 +451,13 @@ local function Build(canvas)
             ExtraStep("buttons", "keyTextSize", L["OPTWIN_KEY_TEXT_SIZE"], L["OPTWIN_HOW_BIG_THE_KEY_NAMES"],
                 ns.KEY_TEXT_MIN or 8, ns.KEY_TEXT_MAX or 20, ns.SetKeyTextSize, "keybind font hotkey")
         end
+        if entry[1] == "themeDark" then
+            local dark = O.DarknessRow(child, LIST_W / COLUMNS - 2 * INDENT)
+            Grouped(dark)
+            Add(dark, "themeDark")
+        end
         if entry[1] == "themeCustom" then
-            local color = ColorRow(child, "themeColor", L["OPTWIN_COLOUR"],
+            local color = O.ColorRow(child, "themeColor", L["OPTWIN_COLOUR"],
                 L["OPTWIN_THE_CUSTOM_THEME_S_COLOUR"])
             color.text:SetWidth(LIST_W / COLUMNS - 40 - INDENT)
             color.keyLow = color.keyLow .. " rgb hex color theme"

@@ -6,4 +6,5 @@ return {
     hideThreatGlow = "same for everyone: opt-in, off by default",
     plainQuestItems = "same for everyone: opt-in, off by default",
     plainNumbers = "same for everyone: mirrors the game's own setting, which only the player changes",
+    themeDarkness = "same for everyone: its default is the Dark theme's one shade, unchanged",
 }

@@ -279,8 +279,8 @@ end
 -- Forever's own art. Keys with a copy swap to it with the theme.
 local THEMES = {
     bronze = { tint = { 0.9, 0.62, 0.32 }, dir = BUNDLED .. "bronze\\", client = true, copies = {} },
-    dark = { tint = { 0.38, 0.38, 0.40 }, dir = BUNDLED .. "dark\\", copies = {} },
-    -- Grey copies coloured in game (colorCopies) with the picked colour, which is also its tint.
+    -- Grey copies coloured in game (colorCopies): dark's grey by its slider, custom's picked colour; also the tint.
+    dark = { tint = { 0.38, 0.38, 0.40 }, dir = BUNDLED .. "custom\\", copies = {}, colorCopies = true },
     custom = { tint = { 0.9, 0.62, 0.32 }, dir = BUNDLED .. "custom\\", copies = {}, colorCopies = true },
 }
 B.THEMES = THEMES
@@ -293,11 +293,24 @@ function ns.HexColor(hex)
     return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255
 end
 
+-- Dark's slider (0-100) to its grey: light grey at 0, the first dark at 50, black at 100; blue a shade over.
+ns.DARKNESS_DEFAULT = 50
+local DARK_LIGHT, DARK_MID, DARK_BLUE = 0.75, 0.38, 0.40 / 0.38
+function ns.DarkGrey(level)
+    level = math.max(0, math.min(100, tonumber(level) or ns.DARKNESS_DEFAULT)) / 100
+    if level <= 0.5 then return DARK_LIGHT + (DARK_MID - DARK_LIGHT) * level * 2 end
+    return DARK_MID * (1 - level) * 2
+end
+
 -- nil while the custom theme is off, else the pick under it.
 function ns.ThemeName()
     local db = ns.db
     if not db or db.bronzeTheme ~= true then return nil end
-    if db.themeDark == true then return "dark" end
+    if db.themeDark == true then
+        local grey, tint = ns.DarkGrey(db.themeDarkness), THEMES.dark.tint
+        tint[1], tint[2], tint[3] = grey, grey, math.min(1, grey * DARK_BLUE)
+        return "dark"
+    end
     if db.themeCustom == true then
         local r, g, b = ns.HexColor(db.themeColor)
         if r then

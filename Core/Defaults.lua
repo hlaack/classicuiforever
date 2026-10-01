@@ -41,6 +41,7 @@ ns.DB_DEFAULTS = {
     themeDark = false,
     themeCustom = false,
     themeColor = "e69e52",
+    themeDarkness = 50,
     castAnim = true,
     professionsBook = true,
     tradeSkill = true,

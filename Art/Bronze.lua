@@ -54,7 +54,9 @@ local function Paint(texture, theme, share, silver)
         if type(share) == "table" then share = share[ThemeName()] end
         share = type(share) == "number" and share or 1
         texture:SetDesaturated(true)
-        texture:SetVertexColor(1 + (tint[1] - 1) * share, 1 + (tint[2] - 1) * share, 1 + (tint[3] - 1) * share)
+        local max = math.max
+        texture:SetVertexColor(max(0, 1 + (tint[1] - 1) * share), max(0, 1 + (tint[2] - 1) * share),
+            max(0, 1 + (tint[3] - 1) * share))
     else
         texture:SetDesaturated(silver == true)
         texture:SetVertexColor(1, 1, 1)

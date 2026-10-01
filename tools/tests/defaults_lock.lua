@@ -192,6 +192,7 @@ return {
     themeColor = "e69e52",
     themeCustom = false,
     themeDark = false,
+    themeDarkness = 50,
     thickEnemyColor = "green",
     thickHealth = false,
     thickHealthFocus = true,
