@@ -63,7 +63,6 @@ ns.TOGGLES = {
     { "showGryphonRight", L["OPT_showGryphonRight"], GRYPHON_TIP, parent = "classicBar", radio = "gryphonRightShow", drop = true },
     { "hideGryphonRight", L["OPT_hideGryphonRight"], GRYPHON_TIP, parent = "classicBar", radio = "gryphonRightShow", drop = true },
     { "bagsAboveRow", L["OPT_bagsAboveRow"], L["OPT_bagsAboveRow_TIP"], parent = "classicBar" },
-    { "hideExtraBars", L["OPT_hideExtraBars"], L["OPT_hideExtraBars_TIP"] },
 
     { "unitFrames", L["OPT_unitFrames"], L["OPT_unitFrames_TIP"], group = L["GROUP_UNIT_FRAMES"] },
     { "unitFramePlayer", L["OPT_unitFramePlayer"], L["OPT_unitFramePlayer_TIP"], parent = "unitFrames" },

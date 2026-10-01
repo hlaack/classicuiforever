@@ -61,7 +61,6 @@ return {
     hideChatFriends = true,
     hideChatMenu = true,
     hideChatScroll = true,
-    hideExtraBars = true,
     hideGryphonLeft = false,
     hideGryphonRight = false,
     hideKeyRing = false,

@@ -18,7 +18,7 @@ local OnBandMicro, OnBandBags, ArtWidth, HomeSpot, DropPlace = B.OnBandMicro, B.
 local CurrentPlan = B.CurrentPlan
 local BuildArt, PaintArt, ApplyArtShape = B.BuildArt, B.PaintArt, B.ApplyArtShape
 local LayoutButtons, LayoutOnOwnBar, BandRow, LayoutPetRow = B.LayoutButtons, B.LayoutOnOwnBar, B.BandRow, B.LayoutPetRow
-local LayoutSideBars, LayoutExtraBars, LayoutPageArrows = B.LayoutSideBars, B.LayoutExtraBars, B.LayoutPageArrows
+local LayoutSideBars, LayoutPageArrows = B.LayoutSideBars, B.LayoutPageArrows
 local RestoreSelections, PlacePageArrows = B.RestoreSelections, B.PlacePageArrows
 local Remember, BaseSetters = B.Remember, ns.BaseSetters
 local LayoutBags, MicroButtonList, MicroPlan, LayoutMicroButtons = B.LayoutBags, B.MicroButtonList, B.MicroPlan, B.LayoutMicroButtons
@@ -210,8 +210,6 @@ local function Layout()
             LayoutOnOwnBar(extra, 8 + i, BarVertical(extra) == true, BarRows(extra))
         end
     end
-    LayoutExtraBars(ns.db.hideExtraBars)
-    ns.HookGlobal("MultiActionBar_Update", B.FollowSettings)
     LayoutBags()
     LayoutMicroButtons()
     LayoutStatusBars()
@@ -388,7 +386,6 @@ local function Restore()
         art:Hide()
         if art.bagFloor then art.bagFloor:Hide() end
     end
-    LayoutExtraBars(false)
     B.ButtonsHome()
     UnskinRows()
     -- Nothing stacked before the anchors go back.

@@ -4,7 +4,6 @@ local B = ns.band
 -- Action bars on the band: button rows at their 1.x spots, page arrows, pet and stance row, right columns, bars 6-8.
 
 local ART_W, BUTTON_PITCH, PET_ROW_Y, PAGE_ROOM = B.ART_W, B.BUTTON_PITCH, B.PET_ROW_Y, B.PAGE_ROOM
-local EXTRA_BARS = B.EXTRA_BARS
 local BUTTON_SIZE = 36
 local STANCE_X, PET_X = 30, 36
 local SMALL_PITCH, SMALL_BUTTON = 33, 30    -- 30 px buttons on the pet and stance bars
@@ -67,7 +66,7 @@ local function Holder(bar)
         holder:SetAllPoints(UIParent)
         holderOf[bar] = holder
     end
-    -- Bars 6-8 are faded, not hidden (LayoutExtraBars).
+    -- At the bar's own alpha.
     holder:SetAlpha(bar:GetAlpha())
     if not InCombatLockdown() then
         -- A spell drag lifts the bar to TOOLTIP for the drop: never copied, and its frame takes no mouse, or the lifted empty
@@ -408,43 +407,6 @@ end
 
 -- Bars 6-8 are enabled in the game's Settings (Action Bars). Our toggle hides them; enabling any there turns the
 -- toggle off. Never written: the client's apply is refused to addons (blocked). Faded and click-free, keybinds still work.
-local EXTRA_SETTINGS = { "PROXY_SHOW_ACTIONBAR_6", "PROXY_SHOW_ACTIONBAR_7", "PROXY_SHOW_ACTIONBAR_8" }
-
-local function ExtraBarsEnabledInSettings()
-    if not Settings or not Settings.GetValue then return false end
-    for _, var in ipairs(EXTRA_SETTINGS) do
-        local ok, value = pcall(Settings.GetValue, var)
-        if ok and value then return true end
-    end
-    return false
-end
-
-local function LayoutExtraBars(hide)
-    for _, name in ipairs(EXTRA_BARS) do
-        local bar = _G[name]
-        if bar then
-            bar:SetAlpha(hide and 0 or 1)
-            if holderOf[bar] then holderOf[bar]:SetAlpha(hide and 0 or 1) end
-            if not InCombatLockdown() then
-                for _, button in ipairs(bar.actionButtons or {}) do
-                    button:EnableMouse(not hide)
-                end
-            end
-        end
-    end
-end
-B.LayoutExtraBars = LayoutExtraBars
-
--- A bar enabled in Settings while the toggle hides them was wanted: toggle off.
-function B.FollowSettings()
-    if not B.active or not ns.db or not ns.db.hideExtraBars then return end
-    if ExtraBarsEnabledInSettings() then
-        ns.db.hideExtraBars = false
-        LayoutExtraBars(false)
-        if ns.RefreshOptionsWindow then ns.RefreshOptionsWindow() end
-    end
-end
-
 -- Bottom managed frames stand over the (emptied) micro menu, mid bar 1, and took its mouse: stood over the band instead.
 local BOTTOM_MARGIN = 15
 

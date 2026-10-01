@@ -401,6 +401,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         ns.BarSizeKey()
         ns.db.lastOutput = nil   -- stale keys from old saves
         ns.db.meterPanArt = nil
+        ns.db.hideExtraBars = nil
         ns.db.capHeldLeft, ns.db.capHeldRight = nil, nil
         ns.LoadProfile()
         -- The old default sat on the tracking spell; a dragged angle is never exactly 160.

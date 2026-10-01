@@ -63,7 +63,6 @@ ns.DB_DEFAULTS = {
     -- bagsFirst is the band order.
     microScale = 1,
     bagsFirst = false,
-    hideExtraBars = true,
     unitFrames = true,
     castBars = true,
     swingTimers = true,

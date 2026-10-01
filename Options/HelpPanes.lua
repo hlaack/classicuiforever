@@ -27,7 +27,7 @@ local FAQ = {
     { "FAQ_COLLECTIONS_Q", "FAQ_COLLECTIONS_A",
         function() return KeyOf("TOGGLECOLLECTIONS"), L["OPT_hideMicroCollections"], L["OPT_hideMicroButtons"] end },
     { "FAQ_REAGENT_Q", "FAQ_REAGENT_A", function() return L["OPT_reagentBagRound"], L["OPT_reagentBagSlot"] end },
-    { "FAQ_BARS_Q", "FAQ_BARS_A", function() return L["OPT_hideExtraBars"] end },
+    { "FAQ_BARS_Q", "FAQ_BARS_A" },
     { "FAQ_MOVE_Q", "FAQ_MOVE_A", function() return L["UI_CLASSICUI_FOREVER_WINDOWS"] end },
     { "FAQ_SETTING_Q", "FAQ_SETTING_A", function() return L["OPTWIN_TAB_TOGGLES"] end },
     { "FAQ_FOREVER_Q", "FAQ_FOREVER_A", function() return L["OPTWIN_TAB_TOGGLES"] end },
