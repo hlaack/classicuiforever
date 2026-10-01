@@ -39,7 +39,7 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
@@ -47,7 +47,7 @@ LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
               "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX",
-              "FADEDPIECE", "PCALLMANY", "LOCALE")
+              "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -67,6 +67,7 @@ ALLOWED = {
     "SETIF": {"Core/Setters.lua": "the compare-before-set setters"},
     "THEME": {"Art/": "the theme owns its registries", "Options/Welcome.lua": "the theme's first-run offer"},
     "GAMEMENU": {"UI/Escape.lua": "ns.CloseWithGameMenu", "Options/GameMenu.lua": "the game menu look"},
+    "OWNRELOAD": {"Options/Layout.lua": "ns.ReloadForLayout and the turn-off popup's own press"},
     "PLATES": {"Units/NamePlates.lua": "ns.NP.EachPlate"},
     "FORBIDDEN": {"Core/Util.lua": "ns.IsForbidden"},
     # Unit frame bars only: our own frames, buttons and client tabs never answer IsMouseOver with a secret.
@@ -181,6 +182,8 @@ FIX = {
     "ONCEFLAG": "use ns.Once(frame, key), ns.Sched.Attach, or a file-local weak table; never our state as a field "
                 "on a client frame",
     "GAMEMENU": "use ns.CloseWithGameMenu(frame|getter, closer) (UI/Escape.lua): one hook per call, same moment",
+    "OWNRELOAD": "show a game popup whose OnAccept calls ns.ReloadForLayout (ns.ReloadPopup, UI/Dialogs.lua): a press "
+                 "started on our own button that saved the layout first had the game refuse its reload (2026-10-01)",
     "CVARREG": "keep our settings in ForeverClassicUIDB only: saved variables persist on Forever since beta 70009, and an "
                "addon cvar is written mid-game in our name (the old settings mirror)",
     "REGEVENTS": "use ns.RegisterEvents(frame, LIST) (Core/Util.lua) on the same frame, same order",
@@ -288,6 +291,9 @@ EDITSAVE_FILES = ("UI/WindowHandles.lua", "UI/WindowsEditMode.lua")
 EDITSAVE_RX = re.compile(r"\bns\s*\.\s*db\s*(?:\.\s*\w+|\[[^\]]*\])\s*=(?!=)")
 # Plain matches per line, on code with strings kept (macro text, securecall names, art paths).
 KEEP_PATTERNS = {
+    # The game's reload from our own button's click, or called outside ns.ReloadForLayout's file.
+    "OWNRELOAD": re.compile(r'SetScript\s*\(\s*"On(?:Click|MouseUp|MouseDown)"[^\n]*\bReloadForLayout\b'
+                            r"|\bC_UI\s*\.\s*Reload\b|(?<![\w.:])ReloadUI\s*\("),
     "KEYUP": re.compile(r"SetOverrideBindingClick\s*\((?![^\n]*ns\.KeyProxy\()|SetBindingClick\s*\([^\n]*[\"']\w*(?<!Key)[\"']\s*\)"),
     "CVAR": re.compile(r"[\"']\s*/console\b|[\"']SetCVar\w*[\"']"),
     "PANELMGR": re.compile(r"\bSetAttribute\b[^\n]*[\"']UIPanelLayout-"),
@@ -384,6 +390,7 @@ MESSAGES = {
     "THEME": "theme branch or input grey by hand outside Art/",
     "ONCEFLAG": "our state as a field on a frame",
     "GAMEMENU": "GameMenuFrame hooked outside ns.CloseWithGameMenu",
+    "OWNRELOAD": "the game's reload from our own button's click (or called directly outside ns.ReloadForLayout)",
     "CVARREG": "an addon-registered cvar (a settings copy outside saved variables)",
     "LAYOUTFIELD": "a field client layout code reads, written from our code (its layout pass then runs in our name)",
     "PADART": "a secure pad on UIParent with art or text of its own (a ghost bar where it outlives its window)",
