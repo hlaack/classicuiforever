@@ -2,6 +2,20 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN13_1_TITLE"] = "Threat glow"
+L["WN13_1_TEXT"] = "Hide threat glow (Unit frames) takes the red threat glow off the unit frames. The game's threat number stays."
+L["WN13_2_TITLE"] = "Quest items"
+L["WN13_2_TEXT"] = "Plain quest items (Bag windows) shows quest items in the bags and bank without the quest border."
+L["WN13_3_TITLE"] = "Numbers"
+L["WN13_3_TEXT"] = "Numbers without separators (Unit frames) drops the thousands separators from large numbers, on the bars and across the game."
+L["WN13_4_TITLE"] = "Action icons"
+L["WN13_4_TEXT"] = "With a theme on, action icons show whole again, as in Classic Era; only their own border takes the theme's colour."
+L["WN13_5_TITLE"] = "Your bars"
+L["WN13_5_TEXT"] = "If 0.14.0 changed your bars, a chat line at login lets you put them back as they were or take the classic look."
+L["WN13_6_TITLE"] = "Social window"
+L["WN13_6_TEXT"] = "The Friends and Raid tabs sit in their thin border as in Classic Era, and the Raid tab's description shows again outside a raid."
+L["WN13_7_TITLE"] = "Fixes"
+L["WN13_7_TEXT"] = "Loot at the mouse opens with the first item under the cursor, tab labels turn white on hover, and Classic layout brings back the classic micro menu and bag slots."
 L["WN12_1_TITLE"] = "Windows"
 L["WN12_1_TEXT"] = "A lock and a reset sit beside each window's close button: unlock a window to drag it by its title. The quest and gossip windows, social window, group finder and professions book can be placed and sized in ClassicUI Forever Windows."
 L["WN12_2_TITLE"] = "Swing timers"

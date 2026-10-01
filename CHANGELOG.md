@@ -2,6 +2,29 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.14.1] - 2026-10-01
+
+### Added
+- Hide threat glow under Unit frames: no red threat glow round the unit frames. The game's threat number still shows. Off by default.
+- Plain quest items under Bag windows: quest items in the bags and bank show as plain icons, without the quest border. Off by default.
+- Numbers without separators under Unit frames: large numbers show without thousands separators, on the bars and across the game. It is the game's own setting, which its options do not show, and takes effect after a reload.
+- Players who updated to 0.14.0 get a chat line at login, "Bars look different than you expect?", until they choose: the bars as they were before 0.14.0, the classic look, or keep them as they are. 0.14.0 had added the Help button and resized the micro buttons without asking.
+
+### Changed
+- The Friends and Raid tabs of the social window show the thin inset border round their content, as in Classic Era.
+- Updating from a version before 0.14.0 keeps the bars as they were, without the Help button or resized micro buttons; the classic look is offered once.
+- Reload UI in the options window asks first, in a game popup.
+
+### Fixed
+- With the game's Open loot window at mouse setting on, the loot window opens with the first item under the cursor. The skull ring was under it.
+- The Raid tab shows its description of raids again when you are not in a raid. It was blank.
+- A tab's label turns white on hover, as in Classic Era. The character sheet, spellbook, professions and talent tabs stayed gold.
+- With a theme on, action button icons show whole again, as in Classic Era, with only their own border in the theme's colour. Since 0.13.1 they were cropped and looked zoomed in.
+- Classic layout also brings back the classic micro menu and bag slots: Legacy, the group finder and collections hidden, and Era's bag slots.
+- A reload asked for during a fight waits for the fight to end instead of being refused.
+- One bag, Quest levels and Numbers without separators, changed in a fight, take effect as it ends. The change was lost and the option unticked itself.
+- Small alignment fixes on the world map with the navigation bar on and on the tabs.
+
 ## [0.14.0] - 2026-09-30
 
 ### Added
