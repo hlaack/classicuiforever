@@ -274,6 +274,7 @@ local function UnskinRows()
     for _, name in ipairs(BAG_BUTTONS) do
         if _G[name] then ns.UnskinBagButton(_G[name]) end
     end
+    ns.GameBackpackFreeSlots()
     if CharacterReagentBag0Slot then
         ns.UnskinBagButton(CharacterReagentBag0Slot)
         ns.UnskinKeyRing(CharacterReagentBag0Slot)
@@ -373,6 +374,7 @@ end
 local function Restore()
     if not B.active then
         SetLane(false)
+        ns.GameBackpackFreeSlots()
         return
     end
     if InCombatLockdown() then return end

@@ -544,7 +544,7 @@ end
 
 local function OnFreeSlotsEvent()
     for button, state in pairs(bags) do
-        if state.backpack and state.active and state.count then ShowFreeSlots(button, state) end
+        if state.backpack and (state.active or state.game) and state.count then ShowFreeSlots(button, state) end
     end
 end
 
@@ -570,6 +570,24 @@ local function UnskinFreeSlots(button, state)
     if button.Count then ns.SetAlphaIf(button.Count, 1) end
     if freeWatch then freeWatch:UnregisterAllEvents() end
     freeWatching = false
+end
+
+-- Our bar off: the game's own backpack takes the ammo count too, so it shows the free slots the same way, on its spot.
+function ns.GameBackpackFreeSlots()
+    local button = MainMenuBarBackpackButton
+    if not (button and button.Count) then return end
+    local state = bags[button]
+    if not state then
+        state = { backpack = true }
+        bags[button] = state
+    end
+    state.game = true
+    if not state.count then
+        state.count = button:CreateFontString(nil, "ARTWORK")
+        state.count:SetFontObject(button.Count:GetFontObject() or "NumberFontNormalSmall")
+        state.count:SetPoint("CENTER", button.Count, "CENTER", 0, 0)
+    end
+    SkinFreeSlots(button, state)
 end
 
 local function HookBag(button)
