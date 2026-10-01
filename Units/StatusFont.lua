@@ -32,3 +32,11 @@ local function Restore()
 end
 
 ns.RegisterModule("classicStatusFont", { apply = Apply, restore = Restore })
+
+-- plainNumbers mirrors the game's breakUpLargeNumbers CVar (ns.ToggleChanged writes it).
+local function ReadPlainNumbers()
+    if not ns.db then return end
+    local value = ns.GetCVar("breakUpLargeNumbers")
+    if value ~= nil then ns.db.plainNumbers = tostring(value) == "0" end
+end
+ns.RegisterModule("plainNumbers", { apply = ReadPlainNumbers, restore = ReadPlainNumbers })

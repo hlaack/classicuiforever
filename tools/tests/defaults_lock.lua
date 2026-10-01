@@ -142,6 +142,7 @@ return {
     oneBagColumns = 8,
     oneBar = false,
     panels = true,
+    plainNumbers = false,
     plainQuestItems = false,
     plateNameSize = 0,
     prdGap = 0,

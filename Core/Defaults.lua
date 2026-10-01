@@ -92,6 +92,7 @@ ns.DB_DEFAULTS = {
     eliteFrameFocus = true,
     hideThreatGlow = false,
     plainQuestItems = false,
+    plainNumbers = false,
     hideStatusMain = false,
     hideStatusSecond = false,
     hoverBothNumbers = true,
@@ -196,7 +197,7 @@ ns.DB_DEFAULTS = {
 -- Matches the registration order.
 ns.MODULE_ORDER = {
     "bronzeTheme", "classicBar", "buttons", "castAnim", "pageArrows", "unitFrames", "hideBuffArrow",
-    "castBars", "swingTimers", "resourceDisplay", "classicStatusFont", "mirrorTimers", "comboPoints", "minimap", "minimapButton", "lfgMinimapButton", "minimapCollector", "namePlates", "classColorPlates",
+    "castBars", "swingTimers", "resourceDisplay", "classicStatusFont", "plainNumbers", "mirrorTimers", "comboPoints", "minimap", "minimapButton", "lfgMinimapButton", "minimapCollector", "namePlates", "classColorPlates",
     "fullPlates", "questTracker", "hideObjectiveTracker", "questLog", "questLogDual", "questLevels", "questMapPane", "panels", "worldMap", "lootWindow", "classicChat", "lootRoll",
     "guildRoster", "whoList", "groupFinder", "hideLastNames", "mapFade", "oneBag", "bags", "characterSheet", "statPanes",
     "spellBook", "spellBookTopRank", "spellBookSearch", "professionsBook", "tradeSkillSearch", "tradeSkill",
@@ -210,6 +211,8 @@ ns.RELOAD_KEYS = {
     -- The game reads showQuestLevel as its windows build; open ones keep the old titles.
     questLevels = { own = true, on = L["CORE_QUEST_LEVELS_SHOW_EVERYWHERE_ONCE"],
         off = L["CORE_QUEST_LEVELS_LEAVE_THE_MAP"] },
+    -- The game redraws bar numbers only as they change, and ours cannot redraw them (the values are secret).
+    plainNumbers = { own = true, on = L["CORE_NUMBERS_DROP_SEPARATORS_ONCE"], off = L["CORE_NUMBERS_TAKE_SEPARATORS_ONCE"] },
     classicBar = {
         -- ns.PinBandBars writes the layout only in ns.ReloadForLayout; unpinned, combat moves the bars.
         on = L["CORE_THE_ACTION_BARS_ARE_FIXED"],
