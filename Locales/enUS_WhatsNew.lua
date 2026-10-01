@@ -2,6 +2,20 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN14_1_TITLE"] = "Controller"
+L["WN14_1_TEXT"] = "With the gamepad interface on, the classic spellbook, talents and quest log open inside the game's own windows, so a controller can move through them."
+L["WN14_2_TITLE"] = "Theme everywhere"
+L["WN14_2_TEXT"] = "With a theme on, the game's own pieces take its colour too where you left the classic ones off: minimap, unit frames, bars, windows and the game menu's buttons."
+L["WN14_3_TITLE"] = "Darkness"
+L["WN14_3_TEXT"] = "Dark has a slider from light grey to black, with a button back to the default."
+L["WN14_4_TITLE"] = "Flat colour"
+L["WN14_4_TEXT"] = "Flat colour (Custom theme) shows the parts you tick in one flat colour, in the same shapes."
+L["WN14_5_TITLE"] = "Micro buttons"
+L["WN14_5_TEXT"] = "Hide micro buttons now works on the game's own micro menu with the classic bar off, and can hide the Shop."
+L["WN14_6_TITLE"] = "Bars 6 to 8"
+L["WN14_6_TEXT"] = "Hide bars 6 to 8 is gone: the game's own action bar settings decide."
+L["WN14_7_TITLE"] = "Fixes"
+L["WN14_7_TEXT"] = "Hidden and on hover minimap coordinates work with the game's minimap, other add-ons' minimap buttons take the theme, and a hunter's backpack shows free bag slots instead of ammo."
 L["WN13_1_TITLE"] = "Threat glow"
 L["WN13_1_TEXT"] = "Hide threat glow (Unit frames) takes the red threat glow off the unit frames. The game's threat number stays."
 L["WN13_2_TITLE"] = "Quest items"

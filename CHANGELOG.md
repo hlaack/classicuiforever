@@ -2,19 +2,31 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
-## [Unreleased]
+## [0.15.0] - 2026-10-01
+
+### Added
+- Darkness slider under Dark: from light grey, through the Dark you know (the default, in the middle), to black. A button beside it puts it back to the default.
+- Flat colour under Custom theme: the parts you tick show their metal in one flat colour of the theme, in the same shapes. Gryphons, bar art, action buttons, unit frames and cast bars, the minimap, nameplates, the character sheet, the spellbook and other windows each have their own box. Off by default.
+- Hide micro buttons works on the game's own micro menu too, with the classic bar off, and has a Shop pick. Installs that already had the classic bar off keep every button.
 
 ### Changed
 - With WoW Forever's gamepad interface on, the classic bar steps aside for the gamepad's own action bars. It comes back when you switch to mouse and keyboard.
 - With the gamepad interface on at login, the classic spellbook opens inside the game's spell window, so the controller can move through it and close it with B. A casts the selected spell and presses the tabs and page arrows, and X adds the selected spell to the first free gamepad bar slot (Y then moves it). Pages and tabs turn out of combat only.
 - With the gamepad interface on at login, the classic talents window opens inside the game's talent window the same way. A learns the selected talent and presses the tabs, Undo and Apply Changes, and Y takes back a staged point.
 - With the gamepad interface on at login, the quest log key and button open the game's own quest log, which the controller can navigate and close with B. Switching interfaces mid-session asks for a reload in chat.
+- With a theme on, the game's own versions of pieces whose classic replacement is unticked take the theme too: the minimap, unit frames, action bars and gryphons, nameplates, game windows, the pet happiness frame and the game menu's red buttons. Before, only the classic art changed colour.
+
+### Removed
+- Hide bars 6 to 8. The game's own action bar settings decide which of those bars show.
 
 ### Fixed
 - With the gamepad interface on, closing a window with the controller no longer raises "ClassicUI Forever tried to call the protected function SetPreferredGamepadInteractTarget()". Afterwards, other windows such as the game menu no longer refuse to open or close until a reload.
 - With the gamepad interface on, the world map and its quest log now take the controller's focus as they open. Before, nothing was selected until you pressed Start, including after moving over to the quest log.
 - With the gamepad interface on, using the character window with the controller no longer raises "ClassicUI Forever tried to call the protected function SetPreferredGamepadInteractTarget()". Closing it, or clicking the world to hand control back, failed after that until a reload. The same applied to other windows the add-on dresses as they open.
 - With the gamepad interface on, the gold focus glow round the character window now follows the classic window's edges (and its side panel when open) instead of a larger box offset from it.
+- With the game's minimap, Coordinates: hidden and Coordinates: on hover now reach the game's coordinates line, and its preview box sits by the minimap. Before, the line stayed and the box showed elsewhere.
+- With the game's minimap, the theme reaches the minimap button's border and other add-ons' minimap buttons. They stayed silver.
+- With the game's bags, a hunter's backpack shows the free bag slots. The ammo count covered it.
 
 ## [0.14.1] - 2026-10-01
 
