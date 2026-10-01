@@ -155,12 +155,17 @@ function ns.CollectionsMicroHidden()
 end
 
 -- Off the row: the shop always; the ones picked under Hide micro buttons. Second value: left off by the option.
+-- Help hides by its own row even with Hide micro buttons off: it came with 0.14.0, and older installs keep it off.
+local function HiddenByOption(db, key)
+    return db[key] == true and (db.hideMicroButtons == true or key == "hideMicroHelp")
+end
+
 local function MicroSkipped(button)
     local name = button:GetName() or ""
     if MICRO_SKIP[name] then return true, false end
     local key = MICRO_HIDE[name]
     local db = ns.db
-    if key and db and db.hideMicroButtons == true and db[key] == true and not db.hideMicroKeepWidth then return true, true end
+    if key and db and HiddenByOption(db, key) and not db.hideMicroKeepWidth then return true, true end
     return false, false
 end
 
@@ -169,7 +174,7 @@ local seatHidden = setmetatable({}, { __mode = "k" })
 local function IsSeatHidden(button)
     local key = MICRO_HIDE[button:GetName() or ""]
     local db = ns.db
-    return key and db and db.hideMicroButtons == true and db.hideMicroKeepWidth == true and db[key] == true or false
+    return key and db and db.hideMicroKeepWidth == true and HiddenByOption(db, key) or false
 end
 local function SeatHidden(button)
     if IsSeatHidden(button) then
@@ -216,13 +221,14 @@ local function SeatShown(button)
 end
 
 -- Buttons on the row, and with Keep button size the count their size is fitted to.
+-- A hidden Help button takes no seat: it came with 0.14.0, and the rows before it were fitted without it.
 function B.MicroCounts()
     local shown, sized = 0, 0
     for _, button in ipairs(MicroButtonList()) do
         if button:IsShown() then
             local skipped, byOption = MicroSkipped(button)
             if not skipped then shown = shown + 1 end
-            if not skipped or byOption then sized = sized + 1 end
+            if not skipped or (byOption and button:GetName() ~= "ForeverClassicUIHelpMicroButton") then sized = sized + 1 end
         end
     end
     return shown, (ns.db and ns.db.hideMicroKeepSize == true) and sized or nil

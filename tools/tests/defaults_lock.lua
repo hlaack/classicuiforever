@@ -38,7 +38,7 @@ return {
     comboPoints = true,
     damageMeter = true,
     damageNumbersRepaired = false,
-    dbVersion = 3,
+    dbVersion = 4,
     eliteFrameFocus = true,
     eliteFramePlayer = true,
     eliteFrameTarget = true,

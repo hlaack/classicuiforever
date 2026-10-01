@@ -115,6 +115,8 @@ local function OnItemRef(link)
         ns.ShowWhatsNew()
     elseif target == "bars" then
         ns.ShowBarsNote()
+    elseif target == "look" then
+        ns.ShowBarsLook()
     end
 end
 
@@ -312,6 +314,37 @@ function ns.AnnounceBarsNote()
     ns.Print(string.format(L["WELCOME_BARS_CHAT"], Link("bars", L["WELCOME_HERE"])))
 end
 
+-- 0.14.0's bar changes reached players from before it unasked: back as they were, the classic look, or kept as they are.
+local LOOK_BUTTON_W = 128
+local lookWindow
+function ns.ShowBarsLook()
+    if not lookWindow then
+        local frame = O.DialogWindow("ForeverClassicUIBarsLook", 120)
+        ns.DialogHeader(frame, L["WELCOME_YOUR_BARS"])
+        local body = BodyText(frame, L["WELCOME_BARS_LOOK_TEXT"])
+        local old = ns.PanelButton(frame, L["WELCOME_PRE_0140_LOOK"], LOOK_BUTTON_W)
+        local classic = ns.PanelButton(frame, L["WELCOME_CLASSIC_LOOK"], LOOK_BUTTON_W)
+        local keep = ns.PanelButton(frame, L["OPTWIN_KEEP_MINE"], LOOK_BUTTON_W)
+        classic:SetPoint("BOTTOM", frame, "BOTTOM", 0, 20)
+        old:SetPoint("RIGHT", classic, "LEFT", -6, 0)
+        keep:SetPoint("LEFT", classic, "RIGHT", 6, 0)
+        -- The switch runs from a game popup's button: from ours the game refused it, from its popups it never has.
+        old:SetScript("OnClick", function() frame:Hide() StaticPopup_Show("FCUI_OLD_LOOK_CONFIRM") end)
+        classic:SetScript("OnClick", function() frame:Hide() StaticPopup_Show("FCUI_CLASSIC_LOOK_OFFER") end)
+        keep:SetScript("OnClick", function() frame:Hide() ns.ChooseBarsLook(nil) end)
+        frame:SetSize(WIDTH, 50 + body:GetStringHeight() + 64)
+        lookWindow = frame
+    end
+    lookWindow:Show()
+end
+
+-- Every login until they choose; the Addon messages row hushes it.
+function ns.AnnounceBarsLook()
+    if not ns.db or not ns.db.barsLookNote or ns.db.addonMessages == false then return end
+    HookLinks()
+    ns.Print(string.format(L["WELCOME_BARS_LOOK_CHAT"], Link("look", L["WELCOME_HERE"])))
+end
+
 -- Once per new version, as a chat line with a link; the dev addon clears the mark to see it again.
 function ns.AnnounceWhatsNew()
     if not ns.db then return end
@@ -344,6 +377,7 @@ function ns.FirstRun()
     if ns.db.welcomed then
         ns.SafeCall(ns.AnnounceWhatsNew)
         ns.SafeCall(ns.AnnounceBarsNote)
+        ns.SafeCall(ns.AnnounceBarsLook)
         ns.CheckLayoutPosition()
         return
     end
