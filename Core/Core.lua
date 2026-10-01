@@ -1,4 +1,5 @@
 local ADDON, ns = ...
+local L = ns.L
 
 ns.PREFIX = "|cffe6c56cClassicUI Forever|r: "
 
@@ -271,13 +272,13 @@ local function ReloadText(hits)
             if #lines < RELOAD_LINES then lines[#lines + 1] = hit.text else more = more + 1 end
         end
     end
-    if more > 0 then lines[#lines + 1] = string.format("And %d more that a reload finishes.", more) end
+    if more > 0 then lines[#lines + 1] = string.format(L["CORE_AND_N_MORE_THAT_A"], more) end
     return table.concat(lines, "\n\n")
 end
 
 -- Raw entry, not ns.ReloadPopup: this file loads before UI/Dialogs.lua.
 StaticPopupDialogs["FOREVERCLASSICUI_RELOAD"] = {
-    text = "ClassicUI Forever\n\n%s",
+    text = L["CORE_CLASSICUI_FOREVER_N_NX"],
     button1 = RELOADUI or "Reload Now",
     button2 = LATER or "Later",
     OnAccept = function() ns.ReloadForLayout() end,

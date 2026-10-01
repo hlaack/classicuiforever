@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- The /fcui options dialog (ticked is the classic look), also the Settings page canvas.
 
@@ -27,12 +28,10 @@ local function TipLabel(self) return self.label end
 local function TipBody(self) return self.tooltip end
 -- White title, wrapped body; nothing without a body.
 local OPTION_TIP = { when = TipBody, text = TipLabel, r = 1, g = 1, b = 1, lines = { { TipBody, nil, nil, nil, true } } }
-local PREFERRED_TIP = { text = "Why GitHub", r = 1, g = 1, b = 1, lines = {
-    { "Reports there are easier to track, and each one can hold screenshots, the status report and the full error text, "
-        .. "so a fix comes sooner.", nil, nil, nil, true },
+local PREFERRED_TIP = { text = L["OPTWIN_WHY_GITHUB"], r = 1, g = 1, b = 1, lines = {
+    { L["OPTWIN_REPORTS_THERE_ARE_EASIER_TO"], nil, nil, nil, true },
     { " ", nil, nil, nil, true },
-    { "You need a GitHub account and to be signed in to open an issue. Signed out, the New issue button says issue "
-        .. "creation is restricted; that is GitHub's sign-in notice, not a closed tracker.", 1, 0.82, 0, true },
+    { L["OPTWIN_YOU_NEED_A_GITHUB_ACCOUNT"], 1, 0.82, 0, true },
 } }
 
 -- Not part of the classic look, so Toggle none leaves them (the minimap button leads back here), nor the radio picks.
@@ -227,7 +226,7 @@ local function Checkbox(parent, key, label, tooltip, radio)
 end
 
 local DROP_W = 92
-local SWING_HANDS = { { "swingColorMain", "Main hand" }, { "swingColorOff", "Off hand" }, { "swingColorRanged", "Ranged" } }
+local SWING_HANDS = { { "swingColorMain", L["OPTWIN_MAIN_HAND"] }, { "swingColorOff", L["OPTWIN_OFF_HAND"] }, { "swingColorRanged", L["OPTWIN_RANGED"] } }
 
 -- Label, then the old drop down box; items(root) fills its menu.
 local function DropShell(parent, label, items)
@@ -303,11 +302,26 @@ local function DropCheckRow(parent, group)
 end
 
 -- A setting holding one of a list's keys (choices: { key, label }); apply(key, pick) saves and shows it.
-local function ValueDropRow(parent, key, label, tooltip, choices, apply)
-    local row = DropShell(parent, label, function(root)
+-- preview(key) shows a choice while it is hovered, preview(nil) the setting again once the menu shuts.
+local function ValueDropRow(parent, key, label, tooltip, choices, apply, preview)
+    local row, shut
+    local function Hover(choice)
+        preview(choice)
+        shut = shut or ns.Sched.Job({ name = "options.preview." .. key, every = 0.2, awake = false, fn = function()
+            if row.dropdown:IsMenuOpen() then return end
+            preview(nil)
+            shut:Sleep()
+        end })
+        shut:Wake()
+    end
+    row = DropShell(parent, label, function(root)
         for _, choice in ipairs(choices) do
-            root:CreateRadio(choice.label, function(pick) return ns.db[key] == pick end,
+            local item = root:CreateRadio(choice.label, function(pick) return ns.db[key] == pick end,
                 function(pick) apply(key, pick) end, choice.key)
+            if preview and item and item.SetOnEnter then
+                item:SetOnEnter(function() Hover(choice.key) end)
+                item:SetOnLeave(function() preview(nil) end)
+            end
         end
     end)
     Describe(row, key, label, tooltip)
@@ -426,8 +440,8 @@ local function Build(canvas)
         Grouped(row)
         Add(row, parent)
     end
-    local function ExtraDrop(parent, key, label, tip, choices, apply, words, depth)
-        local row = ValueDropRow(child, key, label, tip, choices, apply)
+    local function ExtraDrop(parent, key, label, tip, choices, apply, words, depth, preview)
+        local row = ValueDropRow(child, key, label, tip, choices, apply, preview)
         row.text:SetWidth(LIST_W / COLUMNS - 14 - DROP_W - (depth or 1) * INDENT)
         row.keyLow = row.keyLow .. " " .. words
         Grouped(row)
@@ -454,49 +468,49 @@ local function Build(canvas)
         end
         -- Settings under their toggle; not toggles, so the bulk buttons skip them.
         if entry[1] == "oneBag" then
-            ExtraStep("oneBag", "oneBagColumns", "Columns", "How many slots across the one bag window is. The old bags were four across.",
+            ExtraStep("oneBag", "oneBagColumns", L["OPTWIN_COLUMNS"], L["OPTWIN_HOW_MANY_SLOTS_ACROSS_THE"],
                 ns.ONE_BAG_COLUMNS_MIN or 4, ns.ONE_BAG_COLUMNS_MAX or 16, ns.SetOneBagColumns)
         end
         if entry[1] == "hideKeyText" then
-            ExtraStep("buttons", "keyTextSize", "Key text size", "How big the key names on the action buttons are. 12 is Classic Era's size.",
+            ExtraStep("buttons", "keyTextSize", L["OPTWIN_KEY_TEXT_SIZE"], L["OPTWIN_HOW_BIG_THE_KEY_NAMES"],
                 ns.KEY_TEXT_MIN or 8, ns.KEY_TEXT_MAX or 20, ns.SetKeyTextSize, "keybind font hotkey")
         end
         if entry[1] == "themeCustom" then
-            local color = ColorRow(child, "themeColor", "Colour",
-                "The custom theme's colour. The picker takes a hex code too.")
+            local color = ColorRow(child, "themeColor", L["OPTWIN_COLOUR"],
+                L["OPTWIN_THE_CUSTOM_THEME_S_COLOUR"])
             color.text:SetWidth(LIST_W / COLUMNS - 40 - INDENT)
             color.keyLow = color.keyLow .. " rgb hex color theme"
             Grouped(color)
             Add(color, "themeCustom")
         end
         if entry[1] == "damageMeter" and ns.METER_BACKGROUNDS then
-            ExtraDrop("damageMeter", "meterBackground", "Background", "The meter's back: the marble, or a class's old talent tree art.",
-                ns.METER_BACKGROUNDS, ns.SetMeterBackground, "talent tree damage meter")
-            ExtraStep("damageMeter", "meterHeader", "Header height", "Extra height over the meter's header, in pixels.",
+            ExtraDrop("damageMeter", "meterBackground", L["OPTWIN_BACKGROUND"], L["OPTWIN_THE_METER_S_BACK_THE"],
+                ns.METER_BACKGROUNDS, ns.SetMeterBackground, "talent tree damage meter", nil, ns.PreviewMeterBackground)
+            ExtraStep("damageMeter", "meterHeader", L["OPTWIN_HEADER_HEIGHT"], L["OPTWIN_EXTRA_HEIGHT_OVER_THE_METER"],
                 ns.METER_HEADER_MIN or 0, ns.METER_HEADER_MAX or 16, ns.SetMeterHeader, "damage meter title")
         end
         if entry[1] == "thickHealthMana" and ns.ENEMY_HEALTH_COLORS then
-            ExtraDrop("thickHealth", "thickEnemyColor", "Enemy health", "The colour of an enemy's thick health bar.",
+            ExtraDrop("thickHealth", "thickEnemyColor", L["OPTWIN_ENEMY_HEALTH"], L["OPTWIN_THE_COLOUR_OF_AN_ENEMY"],
                 ns.ENEMY_HEALTH_COLORS, ns.SetEnemyHealthColor, "colour color hostile red", 2)
         end
         if entry[1] == "unitFrames" and ns.SetUnitNameSize then
-            ExtraStep("unitFrames", "unitNameSize", "Name size", "Text size of the player, target and focus names.",
+            ExtraStep("unitFrames", "unitNameSize", L["OPTWIN_NAME_SIZE"], L["OPTWIN_TEXT_SIZE_OF_THE_PLAYER"],
                 ns.UNIT_NAME_MIN or 8, ns.UNIT_NAME_MAX or 16, ns.SetUnitNameSize, "font unit frame name text")
         end
         if entry[1] == "resourceDisplay" and ns.SetPrdGap then
-            ExtraStep("resourceDisplay", "prdGap", "Bar gap", "Space between the health and power bars. 0 joins them under one shared border.",
+            ExtraStep("resourceDisplay", "prdGap", L["OPTWIN_BAR_GAP"], L["OPTWIN_SPACE_BETWEEN_THE_HEALTH_AND"],
                 ns.PRD_GAP_MIN or 0, ns.PRD_GAP_MAX or 20, ns.SetPrdGap, "personal resource padding spacing")
         end
         if entry[1] == "swingTimers" and ns.SWING_COLORS then
             for _, hand in ipairs(SWING_HANDS) do
-                ExtraDrop("swingTimers", hand[1], hand[2], "The swing bar's colour, from the 1.x bars.", ns.SWING_COLORS,
+                ExtraDrop("swingTimers", hand[1], hand[2], L["OPTWIN_THE_SWING_BAR_S_COLOUR"], ns.SWING_COLORS,
                     ns.SetSwingLook, "swing colour color")
             end
-            ExtraStep("swingTimers", "swingBorder", "Border thickness", "How thick the swing bars' border is. 0 is the 1.x cast bar's own.",
+            ExtraStep("swingTimers", "swingBorder", L["OPTWIN_BORDER_THICKNESS"], L["OPTWIN_HOW_THICK_THE_SWING_BARS"],
                 ns.SWING_BORDER_MIN or -3, ns.SWING_BORDER_MAX or 3, ns.SetSwingBorder, "swing")
         end
         if entry[1] == "classColorPlates" then
-            ExtraStep("namePlates", "plateNameSize", "Name text size", "Points bigger or smaller than the game's own nameplate name. 0 keeps it as is.",
+            ExtraStep("namePlates", "plateNameSize", L["OPTWIN_NAME_TEXT_SIZE"], L["OPTWIN_POINTS_BIGGER_OR_SMALLER_THAN"],
                 ns.PLATE_NAME_MIN or -6, ns.PLATE_NAME_MAX or 6, ns.SetPlateNameSize, "font")
         end
     end
@@ -513,7 +527,7 @@ local function Build(canvas)
     ns.DrainInput(search)
     local hint = search:CreateFontString(nil, "ARTWORK", "GameFontDisable")
     hint:SetPoint("LEFT", search, "LEFT", 2, 0)
-    hint:SetText("Search toggles")
+    hint:SetText(L["OPTWIN_SEARCH_TOGGLES"])
     search.hint = hint
     frame.search = search
     -- The X clears it; shown only while there is text.
@@ -625,7 +639,7 @@ local function Build(canvas)
     frame.note = note
 
     -- Bulk writes skip ToggleChanged's per-key side effects on purpose; the reload ask runs before Refresh reads it.
-    local none = ns.PanelButton(frame, "Toggle none", 100)
+    local none = ns.PanelButton(frame, L["OPTWIN_TOGGLE_NONE"], 100)
     none:SetPoint("TOPRIGHT", search, "BOTTOM", -3, -6)
     none:SetScript("OnClick", function()
         for _, entry in ipairs(ns.TOGGLES) do
@@ -635,11 +649,11 @@ local function Build(canvas)
         ns.AskReloadIfNeeded()
         frame:Refresh()
     end)
-    none.tooltip = "Turns every piece of the classic look off, to see the game's own interface without disabling the addon. Reset toggles brings the defaults back; a profile keeps a set of your own."
-    none.label = "Toggle none"
+    none.tooltip = L["OPTWIN_TURNS_EVERY_PIECE_OF_THE"]
+    none.label = L["OPTWIN_TOGGLE_NONE"]
     ns.AttachTip(none, OPTION_TIP)
 
-    local defaults = ns.PanelButton(frame, "Reset toggles", 100)
+    local defaults = ns.PanelButton(frame, L["OPTWIN_RESET_TOGGLES"], 100)
     defaults:SetPoint("TOPLEFT", search, "BOTTOM", 3, -6)
     defaults:SetScript("OnClick", function()
         for _, entry in ipairs(ns.TOGGLES) do
@@ -653,13 +667,13 @@ local function Build(canvas)
         ns.AskReloadIfNeeded()
         frame:Refresh()
     end)
-    defaults.tooltip = "Puts every checkbox and number back to its default. Nothing to do with edit mode layouts."
-    defaults.label = "Reset toggles"
+    defaults.tooltip = L["OPTWIN_PUTS_EVERY_CHECKBOX_AND_NUMBER"]
+    defaults.label = L["OPTWIN_RESET_TOGGLES"]
     ns.AttachTip(defaults, OPTION_TIP)
     AddTabs(frame, list, child, { search, none, defaults, child }, listRows)
 
     -- Foot left: layout button over Reload UI; on the classic layout it offers a reset.
-    local layout = ns.PanelButton(frame, "Classic layout", 130)
+    local layout = ns.PanelButton(frame, L["OPTWIN_CLASSIC_LAYOUT"], 130)
     layout:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 26, 46)
     layout:SetScript("OnClick", function()
         if ns.ClassicLayoutActive() then
@@ -668,41 +682,41 @@ local function Build(canvas)
             ns.CreateClassicLayout()
         end
     end)
-    layout.tooltip = "Adds an edit mode layout with every bar in its 1.x place and switches to it. Your current layout and keybinds stay, and edit mode switches between layouts as ever. Once the classic layout is on, this button resets it to its defaults."
-    layout.label = "Classic layout"
+    layout.tooltip = L["OPTWIN_ADDS_AN_EDIT_MODE_LAYOUT"]
+    layout.label = L["OPTWIN_CLASSIC_LAYOUT"]
     ns.AttachTip(layout, OPTION_TIP)
 
-    local reload = ns.PanelButton(frame, "Reload UI", 130)
+    local reload = ns.PanelButton(frame, L["OPTWIN_RELOAD_UI"], 130)
     reload:SetPoint("TOPLEFT", layout, "BOTTOMLEFT", 0, -4)
     reload:SetScript("OnClick", function() ns.ReloadForLayout() end)
 
     -- Foot right: feedback buttons, GitHub first (preferred), CurseForge under it.
     local curse, github = O.FeedbackButtons(frame, 130)
     github:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -26, 46)
-    github.tooltip = "Copies the address of the GitHub issue tracker, for bug reports and requests."
-    github.label = "GitHub issues"
+    github.tooltip = L["OPTWIN_COPIES_THE_ADDRESS_OF_THE"]
+    github.label = L["OPTWIN_GITHUB_ISSUES"]
     ns.AttachTip(github, OPTION_TIP)
     curse:SetPoint("TOPRIGHT", github, "BOTTOMRIGHT", 0, -4)
-    curse.tooltip = "Copies the addon's CurseForge address, for comments and reports there."
-    curse.label = "CurseForge"
+    curse.tooltip = L["OPTWIN_COPIES_THE_ADDON_S_CURSEFORGE"]
+    curse.label = L["OPTWIN_CURSEFORGE"]
     ns.AttachTip(curse, OPTION_TIP)
     local preferred = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     preferred:SetPoint("BOTTOMLEFT", github, "TOPLEFT", 2, 3)
-    preferred:SetText("Preferred:")
+    preferred:SetText(L["OPTWIN_PREFERRED"])
     -- A font string takes no mouse: a frame over it carries the tip.
     local preferredHover = CreateFrame("Frame", nil, frame)
     preferredHover:SetAllPoints(preferred)
     preferredHover:EnableMouse(true)
     ns.AttachTip(preferredHover, PREFERRED_TIP)
-    local status = ns.PanelButton(frame, "Status report", 130)
+    local status = ns.PanelButton(frame, L["OPTWIN_STATUS_REPORT"], 130)
     status:SetPoint("RIGHT", github, "LEFT", -6, 0)
     status:SetScript("OnClick", function() ns.ShowStatus() end)
-    status.tooltip = "Opens a window with your addon version, game build, changed settings and other addons, to screenshot or copy into a bug report."
-    status.label = "Status report"
+    status.tooltip = L["OPTWIN_OPENS_A_WINDOW_WITH_YOUR"]
+    status.label = L["OPTWIN_STATUS_REPORT"]
     ns.AttachTip(status, OPTION_TIP)
     local feedback = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     feedback:SetPoint("BOTTOM", github, "TOP", 0, 18)
-    feedback:SetText("Bug reports/Feedback:")
+    feedback:SetText(L["OPTWIN_BUG_REPORTS_FEEDBACK"])
 
     if not canvas then frame:SetSize(WIDTH, 110 + LIST_ROWS * ROW + 108) end
 
@@ -722,7 +736,7 @@ local function Build(canvas)
         end
         -- Same source as the reload prompt: a change still owed a reload.
         local owed = ns.ReloadOwed()
-        self.note:SetText(owed and "Reload the interface to finish some of the changes you made." or "")
+        self.note:SetText(owed and L["OPTWIN_RELOAD_THE_INTERFACE_TO_FINISH"] or "")
         if self.tab == 2 then self.profiles:Refresh() end
     end
     frame:SetScript("OnShow", frame.Refresh)

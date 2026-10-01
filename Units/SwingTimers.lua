@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- Swing timers in the 1.x player cast bar's look: its border, the old fill, its finish flash as a swing lands.
 -- Blizzard's own frame art is blanked (range dimming resets its alpha); ours hangs on the bar and dims with it.
@@ -6,13 +7,13 @@ local _, ns = ...
 local FILL_TEXTURE = "Interface\\TargetingFrame\\UI-StatusBar"
 -- 1.x bar colours to pick from per hand, in menu order.
 ns.SWING_COLORS = {
-    { key = "cast", label = "Cast gold", rgb = { 1, 0.7, 0 } },
-    { key = "darkGold", label = "Dark gold", rgb = { 0.85, 0.55, 0 } },
-    { key = "focus", label = "Focus orange", rgb = { 1, 0.5, 0.25 } },
-    { key = "energy", label = "Energy yellow", rgb = { 1, 1, 0 } },
-    { key = "channel", label = "Channel green", rgb = { 0, 1, 0 } },
-    { key = "mana", label = "Mana blue", rgb = { 0, 0, 1 } },
-    { key = "failed", label = "Failed red", rgb = { 1, 0, 0 } },
+    { key = "cast", label = L["UI_CAST_GOLD"], rgb = { 1, 0.7, 0 } },
+    { key = "darkGold", label = L["UI_DARK_GOLD"], rgb = { 0.85, 0.55, 0 } },
+    { key = "focus", label = L["UI_FOCUS_ORANGE"], rgb = { 1, 0.5, 0.25 } },
+    { key = "energy", label = L["UI_ENERGY_YELLOW"], rgb = { 1, 1, 0 } },
+    { key = "channel", label = L["UNIT_CHANNEL_GREEN"], rgb = { 0, 1, 0 } },
+    { key = "mana", label = L["UI_MANA_BLUE"], rgb = { 0, 0, 1 } },
+    { key = "failed", label = L["UI_FAILED_RED"], rgb = { 1, 0, 0 } },
 }
 local COLOR_BY_KEY = {}
 for _, color in ipairs(ns.SWING_COLORS) do COLOR_BY_KEY[color.key] = color.rgb end
@@ -241,9 +242,9 @@ local function BorderValues()
     return tonumber(ns.db and ns.db.swingBorder) or 0, low, high, high - low
 end
 ns.DialogExtra({
-    title = "ClassicUI Forever",
+    title = L["MAP_CLASSICUI_FOREVER"],
     match = function(system) return active and HANDS[system:GetName() or ""] == true end,
-    build = function(panel) panel.border = ns.DialogExtraSlider(panel, "Border thickness", BorderValues, ns.SetSwingBorder) end,
+    build = function(panel) panel.border = ns.DialogExtraSlider(panel, L["OPTWIN_BORDER_THICKNESS"], BorderValues, ns.SetSwingBorder) end,
     fill = function(panel) panel.border() end,
 })
 

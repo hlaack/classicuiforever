@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- 1.x spellbook: parchment book, 12 spells a page in two columns, school tabs
 -- on the right, page arrows and book tabs at the foot. Geometry from Classic
@@ -1006,7 +1007,7 @@ local function CreateBook()
     -- replace, so open its window through its slash command.
     f.TrainTab = CreateSkillTab(f, MAX_SKILL_TABS + 1, nil)
     f.TrainTab:SetNormalTexture("Interface\\Icons\\INV_Misc_Book_09")
-    f.TrainTab.tooltip = "What can I train?"
+    f.TrainTab.tooltip = L["SPELL_WHAT_CAN_I_TRAIN"]
     f.TrainTab:SetScript("OnClick", function(self)
         self:SetChecked(false)
         local open = SlashCmdList and SlashCmdList.WHATSTRAINING
@@ -1554,7 +1555,7 @@ local function CreateBook()
         end
         local collTab = self.BookTabs[4]
         collTab.collections = true
-        collTab:SetText("Collections")
+        collTab:SetText(L["SKILL_COLLECTIONS"])
         collTab:SetShown(narrow == true)
         tab1:SetEnabled(state.bank ~= BANK_PLAYER)
         tab2:SetEnabled(state.bank ~= BANK_PET)

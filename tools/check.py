@@ -39,14 +39,14 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "LOCALE", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
-              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER")
+              "DRAGPOINT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "LOCALE")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -131,6 +131,8 @@ FIX = {
              "(the luac 5.4 here accepts them; the game refuses the whole file)",
     "EDITSAVE": "write it with Set(key, value) (UI/WindowHandles.lua), and add a new key to DialogKeys, so Save lights "
                 "and Revert puts it back",
+    "LOCALE": "put the text in Locales/enUS.lua under a stable id and read it as L[\"ID\"] (local L = ns.L), then add "
+              "it to every language file in Locales/; the game's own strings (_G globals like SPELLBOOK) need no entry",
     "KEYUP": "bind the key to ns.KeyProxy(name) (Core/Util.lua): it acts on press, as the game's own windows do, and "
              "clicks the button; a snippet's SetBindingClick names that proxy (name .. \"Key\")",
     "MOUSEORDER": "set OnEnter/OnLeave/OnMouse* first, then SetMouseClickEnabled(false) (the hover sensor over the "
@@ -200,6 +202,9 @@ FIX = {
     "DUPFN": "keep one copy in the shared layer (Core/Util.lua, UI/...) as ns.Name, or call the twin",
     "TOC": "list every addon .lua in " + TOC_NAME + " and remove entries for files that are gone",
     "BASELINE": "run python tools/check.py --carry-renames, then git add " + BASELINE_NAME,
+    "LOCALEKEYS": "every language file in Locales/ holds exactly the keys of Locales/enUS.lua, each with the same %s and "
+                  "%d placeholders in the same order: translate a new or changed English string into every language "
+                  "before committing (skill cuif-conventions, Localization)",
 }
 
 # Names counted only where they are used (called, wrapped in pcall, passed, or assigned),
@@ -265,6 +270,13 @@ KEEP_PATTERNS = {
     "KEYUP": re.compile(r"SetOverrideBindingClick\s*\((?![^\n]*ns\.KeyProxy\()|SetBindingClick\s*\([^\n]*[\"']\w*(?<!Key)[\"']\s*\)"),
     "CVAR": re.compile(r"[\"']\s*/console\b|[\"']SetCVar\w*[\"']"),
     "PANELMGR": re.compile(r"\bSetAttribute\b[^\n]*[\"']UIPanelLayout-"),
+    # Player-facing text as a literal: a set text or tooltip line, a text/title/label/tooltip field, or one of our
+    # option and dialog row builders given a label (a capital letter then lower case: words, not keys or paths).
+    # A literal after `or` is the English fallback for the game's own translated global (CLOSE or "Close").
+    "LOCALE": re.compile(r":\s*(?:SetText|SetFormattedText|AddLine|AddDoubleLine|SetLabel)\s*\(\s*\"[A-Z][a-z]"
+                         r"|\b(?:text|title|label|tooltip)\s*=\s*\"[A-Z][a-z]"
+                         r"|\b(?:Stepper|ExtraStep|ExtraDrop|ValueDropRow|ColorRow|PanelButton|BagsCheck|DropShell)\s*\("
+                         r"(?:[^\n\"]|\"[^\"]*\")*?(?<!or )\"[A-Z][a-z]"),
 }
 # Shared art literals, each with the files that own it (strings kept).
 SHARED_ART = (
@@ -316,6 +328,7 @@ NOT_A_CALL = {"and", "or", "not", "if", "elseif", "while", "until", "return", "i
 MESSAGES = {
     "LUA51": "syntax WoW's Lua 5.1 refuses (the file would not load at all)",
     "EDITSAVE": "a setting written straight to ns.db in the windows edit mode (Save never lights, Revert misses it)",
+    "LOCALE": "text the player reads written as a literal (never translated)",
     "KEYUP": "a key bound straight to a release-acting button (it opens on release; the game's windows on press)",
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "MOUSEORDER": "a mouse script set after the frame's clicks were switched off (setting it turns clicks back on)",
@@ -1302,6 +1315,44 @@ def toc_entries(text):
         yield no, line.replace("\\", "/")
 
 
+LOCALE_DIR = "Locales"
+LOCALE_ROW = re.compile(r'^L\["(\w+)"\]\s*=\s*"((?:[^"\\]|\\.)*)"', re.M)
+LOCALE_ARGS = re.compile(r"%[sd]")
+
+
+def locale_hits():
+    """Each language file against enUS: keys missing or extra, and placeholders that differ."""
+    hits = []
+    base_path = os.path.join(LOCALE_DIR, "enUS.lua")
+    if not os.path.isfile(base_path):
+        return hits
+    with open(base_path, encoding="utf-8") as fh:
+        base = dict(LOCALE_ROW.findall(fh.read()))
+    for name in sorted(os.listdir(LOCALE_DIR)):
+        if not name.endswith(".lua") or name == "enUS.lua":
+            continue
+        path = LOCALE_DIR + "/" + name
+        with open(os.path.join(LOCALE_DIR, name), encoding="utf-8") as fh:
+            text = fh.read()
+        rows = LOCALE_ROW.findall(text)
+        # A language that shares another's table (esMX from esES) holds no rows of its own.
+        if not rows and "LocaleFrom" in text:
+            continue
+        have = dict(rows)
+        missing = [k for k in base if k not in have]
+        extra = [k for k in have if k not in base]
+        if missing:
+            hits.append((path, 1, "LOCALEKEYS", "%d English strings untranslated: %s%s" % (
+                len(missing), ", ".join(missing[:6]), " ..." if len(missing) > 6 else "")))
+        if extra:
+            hits.append((path, 1, "LOCALEKEYS", "%d keys English no longer has: %s" % (len(extra), ", ".join(extra[:6]))))
+        for key, value in rows:
+            if key in base and LOCALE_ARGS.findall(value) != LOCALE_ARGS.findall(base[key]):
+                line = text[:text.find('L["' + key + '"]')].count("\n") + 1
+                hits.append((path, line, "LOCALEKEYS", key + " placeholders differ from English"))
+    return hits
+
+
 def toc_hits(tracked, toc_text):
     hits, listed = [], set()
     tracked_set = set(tracked)
@@ -1605,6 +1656,9 @@ def run(argv):
                 continue
             if path == TOC_NAME and entry.lower() not in target_lower:
                 continue
+        fail(path, line, rule, msg)
+
+    for path, line, rule, msg in locale_hits():
         fail(path, line, rule, msg)
 
     elapsed = time.time() - started

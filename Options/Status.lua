@@ -1,4 +1,5 @@
 local ADDON, ns = ...
+local L = ns.L
 
 -- Status report for bug reports: read fresh on each open, never saved; screenshot or copy.
 
@@ -111,15 +112,13 @@ local window
 local function Build()
     local frame = O.DialogWindow("ForeverClassicUIStatus", 60)
     frame:SetSize(560, 380)
-    ns.DialogHeader(frame, "ClassicUI Forever status", HEADER)
+    ns.DialogHeader(frame, L["OPTWIN_STATUS_TITLE"], HEADER)
 
     local how = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     how:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -32)
     how:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -24, -32)
     how:SetJustifyH("LEFT")
-    how:SetText("Reporting a bug? Take a screenshot with this window and the problem both in it, or press Select all, "
-        .. "copy with Ctrl+C, and paste the text into your report. Say what you did and what you expected. "
-        .. "If it may be another addon, try once with only this one on.")
+    how:SetText(L["OPTWIN_REPORTING_A_BUG_TAKE_A"])
 
     local box = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     ns.Backdrop(box, ns.BACKDROP.TIP14, TEXT_BOX)
@@ -148,7 +147,7 @@ local function Build()
     edit:SetScript("OnEditFocusLost", function(self) self:HighlightText(0, 0) end)
     frame.edit = edit
 
-    local select = ns.PanelButton(frame, "Select all", 100)
+    local select = ns.PanelButton(frame, L["OPTWIN_SELECT_ALL"], 100)
     select:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 22, 20)
     select:SetScript("OnClick", function()
         edit:SetFocus()
@@ -157,10 +156,10 @@ local function Build()
     local close = ns.PanelButton(frame, CLOSE or "Close", 100)
     close:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -22, 20)
     close:SetScript("OnClick", function() frame:Hide() end)
-    local github = ns.PanelButton(frame, "GitHub issues", 120)
+    local github = ns.PanelButton(frame, L["OPTWIN_GITHUB_ISSUES"], 120)
     github:SetPoint("RIGHT", close, "LEFT", -6, 0)
     github:SetScript("OnClick", O.CopyGitHub)
-    local curse = ns.PanelButton(frame, "CurseForge", 120)
+    local curse = ns.PanelButton(frame, L["OPTWIN_CURSEFORGE"], 120)
     curse:SetPoint("RIGHT", github, "LEFT", -6, 0)
     curse:SetScript("OnClick", O.CopyCurseForge)
 
@@ -187,6 +186,5 @@ local offered = false
 function ns.OfferStatus()
     if offered then return end
     offered = true
-    ns.Print("the game blocked something this addon tried to do. If anything looks broken, "
-        .. ns.ChatLink("status", "open the status report") .. " and send it with a note of what you were doing.")
+    ns.Print(string.format(L["CHAT_17"], ns.ChatLink("status", L["CHAT_18"])))
 end

@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- ClassicUI Forever Windows: our edit mode window around the window placeholders (UI/WindowHandles.lua), and its toggle
 -- on the client's HUD Edit Mode window.
@@ -21,9 +22,8 @@ local FOOT_W, FOOT_H, FOOT_X, FOOT_Y, FOOT_GAP = 220, 28, 15, 16, 14
 local TOGGLE_X, TOGGLE_Y, TOGGLE_H = -20, -50, 26
 local BACK_X, BACK_Y, BACK_W, BACK_H, ARROW = 14, -12, 44, 24, 16
 local EDIT_MODE_SLASH = SLASH_EDITMODE1 or "/editmode"
-local MODE_TITLE = "ClassicUI Forever Windows"
-local MODE_HELP = "Check the windows to move. Drag a window's box to place it; click the box to size it, make it movable "
-    .. "anytime or reset it."
+local MODE_TITLE = L["UI_CLASSICUI_FOREVER_WINDOWS"]
+local MODE_HELP = L["UI_CHECK_THE_WINDOWS_TO_MOVE"]
 local UNSAVED = "FCUI_WINDOWS_UNSAVED"
 local mode, modeToggle
 -- The toggle pressed edit mode's close: our mode opens once it is shut (its unsaved changes prompt may hold it).
@@ -127,7 +127,7 @@ local function RevertAll() if saved then Restore(saved, true) end end
 -- The client's own exit prompt, in its words and order: Save and Exit, Exit (drops the changes), Cancel.
 ns.Popup(UNSAVED, {
     text = _G.HUD_EDIT_MODE_UNSAVED_CHANGES_EXIT_DIALOG_TITLE
-        or "If you exit now you will lose any unsaved changes.\nHow would you like to proceed?",
+        or L["UI_IF_YOU_EXIT_NOW_YOU"],
     button1 = _G.HUD_EDIT_MODE_SAVE_AND_EXIT or "Save and Exit",
     button2 = _G.HUD_EDIT_MODE_EXIT or "Exit",
     button3 = CANCEL,
@@ -154,10 +154,9 @@ local function TryClose()
 end
 
 local TOGGLE_TIP = { text = MODE_TITLE, r = 1, g = 1, b = 1, lines = { {
-    "Switch to moving the ClassicUI Forever windows (character, professions, talents, quest log, map): pick the "
-    .. "ones to move and size.", nil, nil, nil, true } } }
-local BACK_TIP = { text = "Back to regular edit mode", r = 1, g = 1, b = 1, lines = { {
-    "The HUD Edit Mode. Save or revert window changes first.", nil, nil, nil, true } } }
+    L["UI_SWITCH_TO_MOVING_THE_CLASSICUI"], nil, nil, nil, true } } }
+local BACK_TIP = { text = L["UI_BACK_TO_REGULAR_EDIT_MODE"], r = 1, g = 1, b = 1, lines = { {
+    L["UI_THE_HUD_EDIT_MODE_SAVE"], nil, nil, nil, true } } }
 
 -- On the client's window: the check and its label under one button, which its pad covers whole.
 local function Toggle()
@@ -307,7 +306,7 @@ local function Mode()
     help:SetText(MODE_HELP)
     local head = mode:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     head:SetPoint("BOTTOMLEFT", mode, "TOPLEFT", MODE_PAD + 5, -(MODE_TOP - 6))
-    head:SetText("Windows")
+    head:SetText(L["UI_WINDOWS"])
     mode.checks = {}
     for i, entry in ipairs(windows) do mode.checks[#mode.checks + 1] = ModeCheck(entry, i, MODE_TOP) end
     if #pieces > 0 then

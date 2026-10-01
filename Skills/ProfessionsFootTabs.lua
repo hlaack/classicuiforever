@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- The spellbook's foot tabs on the professions book page, with their secure pads (ProfessionsWindow.lua calls these).
 
@@ -75,7 +76,7 @@ function T.BookTabs()
         bookTabs = {}
         for i = 1, 4 do bookTabs[i] = ns.NewBookTab(page, i, bookTabs[i - 1]) end
         bookTabs[1]:SetText(SPELLBOOK or "Spellbook")
-        bookTabs[4]:SetText("Collections")
+        bookTabs[4]:SetText(L["SKILL_COLLECTIONS"])
         bookTabs[2]:SetText(TRADE_SKILLS or "Professions")
         bookTabs[2]:SetEnabled(false)
         for i, tab in ipairs(bookTabs) do

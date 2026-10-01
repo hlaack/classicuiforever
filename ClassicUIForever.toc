@@ -11,6 +11,12 @@
 ## SavedVariablesPerCharacter: ForeverClassicUICharDB
 ## DefaultState: enabled
 
+Core\Localization.lua
+Locales\enUS.lua
+Locales\deDE.lua
+Locales\frFR.lua
+Locales\esES.lua
+Locales\itIT.lua
 Core\Core.lua
 Core\Defaults.lua
 Core\Settings.lua

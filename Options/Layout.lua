@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- The addon's edit mode layout: create, reset, select, hand back.
 -- An addon layout write taints every edit mode system for the session (refused in combat), so writes
@@ -35,7 +36,7 @@ ns.ReloadPopup("FCUI_LAYOUT_PENDING", TITLE .. "\n\n%s\n\nIt is done as the inte
 -- (damage meter, action bars) were refused secret values in fights for the session.
 ns.Popup("FCUI_SIZE_RESET", {
     text = TITLE .. "\n\nPut the %s back to the default size? The interface reloads to do it.",
-    button1 = "Reload now",
+    button1 = L["OPTWIN_RELOAD_NOW"],
     button2 = CANCEL,
     OnAccept = function(_, job)
         ns.QueueLayoutJob(job, true)
@@ -109,8 +110,8 @@ end
 
 ns.Popup("FCUI_BAR_SIZE_OFFER", {
     text = TITLE .. "\n\nThe classic bar now comes at the game's own size (45 px buttons) for new installs. Yours keeps the 1.x size (36 px).\n\nSwitch to the game's size? The Classic-sized bars option changes it any time.",
-    button1 = "Game size",
-    button2 = "Keep mine",
+    button1 = L["OPTWIN_GAME_SIZE"],
+    button2 = L["OPTWIN_KEEP_MINE"],
     OnAccept = function()
         ns.db.classicBarSize = false
         ns.TogglesChanged({ "classicBarSize" })
@@ -163,7 +164,7 @@ end
 
 ns.Popup("FCUI_TURN_OFF", {
     text = TITLE .. "\n\nTurn the addon off for this character? Your earlier layout and game settings come back. The interface reloads.",
-    button1 = "Turn off",
+    button1 = L["OPTWIN_TURN_OFF"],
     button2 = CANCEL or "Cancel",
     OnAccept = function() ns.TurnOffCleanly() end,
 })
@@ -276,7 +277,7 @@ end
 -- Layout button pressed while already on the classic layout.
 ns.Popup("FCUI_LAYOUT_RESET", {
     text = TITLE .. "\n\nReset the " .. LAYOUT_NAME .. " layout to its defaults? Your other layouts are not touched. The interface reloads.",
-    button1 = "Reset and reload",
+    button1 = L["OPTWIN_RESET_AND_RELOAD"],
     button2 = CANCEL or "Cancel",
     OnAccept = function() ns.ResetClassicLayout(true) end,
 })
@@ -455,9 +456,7 @@ end
 
 -- No room for another layout. Steps, not a button: edit mode opened from our code would run its setup in our name.
 ns.Popup("FCUI_LAYOUTS_FULL", {
-    text = TITLE .. "\n\nEdit mode is at its layout limit, so there is no room for the " .. LAYOUT_NAME .. " layout.\n\n"
-        .. "Delete one you no longer use: press Escape, choose Edit Mode, pick it in the layout list and delete it. "
-        .. "Then set up the classic layout again from the options.",
+    text = string.format(L["OPTWIN_LAYOUTS_FULL"], TITLE, LAYOUT_NAME),
     button1 = OKAY or "Okay",
 })
 
@@ -466,7 +465,7 @@ function ns.CreateClassicLayout(reloadNow)
     if RefuseInCombat("cannot change layouts in combat") then return end
     local mgr = EditModeManagerFrame
     if not mgr or not mgr.GetLayouts or not EditModePresetLayoutManager or not (C_EditMode and C_EditMode.SaveLayouts) then
-        ns.Print("edit mode layouts are not available on this client")
+        ns.Print(L["CHAT_15"])
         return
     end
     local exists = LayoutIndexByName(LAYOUT_NAME) ~= nil
@@ -483,7 +482,7 @@ function ns.CreateClassicLayout(reloadNow)
         ns.ReloadForLayout()
         return
     end
-    ns.AskLayoutReload(exists and ("Switching to your " .. LAYOUT_NAME .. " layout.") or ("Setting up the " .. LAYOUT_NAME .. " layout."))
+    ns.AskLayoutReload(string.format(exists and L["OPTWIN_SWITCHING_TO_LAYOUT"] or L["OPTWIN_SETTING_UP_LAYOUT"], LAYOUT_NAME))
 end
 
 ns.Popup("FCUI_LAYOUT_PICK", {
@@ -495,8 +494,8 @@ ns.Popup("FCUI_LAYOUT_PICK", {
 -- First login: set up the classic layout or keep the current one.
 ns.Popup("FCUI_FIRST_LOGIN", {
     text = TITLE .. "\n\nSet up the classic layout now? This adds an edit mode layout named \"" .. LAYOUT_NAME .. "\" and switches to it. Your current layout stays in the list. The interface reloads.",
-    button1 = "Set up and reload",
-    button2 = "Keep my layout",
+    button1 = L["OPTWIN_SET_UP_AND_RELOAD"],
+    button2 = L["OPTWIN_KEEP_MY_LAYOUT"],
     OnAccept = function() ns.CreateClassicLayout(true) end,
 })
 
@@ -555,7 +554,7 @@ function ns.ApplyClassicFrameSpots()
     end
     if changed then
         mgr:SaveLayouts()
-        ns.Print("player, target and focus frames moved to their 1.x spots")
+        ns.Print(L["CHAT_16"])
     end
     return true
 end

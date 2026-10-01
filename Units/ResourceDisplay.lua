@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- The game's personal resource display as 1.x nameplates: the plates' flat fill (the game still colours it by health
 -- and power type) in the plate's border without its level slot. The power bar hangs our gap under health (0: flush,
@@ -167,15 +168,15 @@ local function GapValues()
     return BarGap(), ns.PRD_GAP_MIN, ns.PRD_GAP_MAX, ns.PRD_GAP_MAX - ns.PRD_GAP_MIN
 end
 ns.DialogExtra({
-    title = "ClassicUI Forever",
+    title = L["MAP_CLASSICUI_FOREVER"],
     match = function(system) return active and system == Display() end,
     build = function(panel)
-        panel.gap = ns.DialogExtraSlider(panel, "Bar gap", GapValues, ns.SetPrdGap)
+        panel.gap = ns.DialogExtraSlider(panel, L["OPTWIN_BAR_GAP"], GapValues, ns.SetPrdGap)
         local reset = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
         reset:SetHeight(28)
         reset:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", 26, 16)
         reset:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -26, 16)
-        reset:SetText("Reset To Default Settings")
+        reset:SetText(L["UNIT_RESET_TO_DEFAULT_SETTINGS"])
         reset:SetScript("OnClick", function()
             ns.SetPrdGap(0)
             panel.gap()
@@ -191,7 +192,7 @@ ns.DialogExtra({
     fill = function(panel)
         panel.gap()
         local defaults = ns.ClientDefaults(Display())
-        panel.note:SetText(defaults and ("Game defaults: " .. defaults) or "")
+        panel.note:SetText(defaults and string.format(L["UNIT_GAME_DEFAULTS"], defaults) or "")
     end,
 })
 

@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- The 1.x quest log window on the modern quest API; also takes the 3.x double pane shape.
 
@@ -687,7 +688,7 @@ local function Build()
     frame.allIcon = frame.allTab.icon
     frame.track = RadioCheck(frame, frame.allTab, 17, TRACK_QUEST or "Track Quest")
     frame.track:SetScript("OnClick", TrackClick)
-    frame.dualToggle = RadioCheck(frame, frame.allTab, 0, "Double pane")
+    frame.dualToggle = RadioCheck(frame, frame.allTab, 0, L["OPT_questLogDual"])
     frame.dualToggle:SetScript("OnClick", DualClick)
     frame.showMap = ShowMapButton(frame)
     frame.showMap:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -36, -40)

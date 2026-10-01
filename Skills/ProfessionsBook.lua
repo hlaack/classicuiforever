@@ -19,9 +19,9 @@ local BIG = { rowX = 80, rowW = 437, ring = 72, ringX = 7, ringY = -12, textX = 
 local SMALL = { rowX = 17, rowW = 305, ring = 48, ringX = 4, ringY = -23, textX = 58, nameY = -11, rankW = 97,
     spellX = 159, barW = 64, plates = false, iconsX = 159, descX = 129, descSize = 9, rowY = { -37, -131, -230, -294, -358 } }
 -- The small page's art: { texture top, bottom, drawn top, emblem moved } on the left page from its spine margin, 322 wide.
--- A secondary band's emblem (at x 150-186) stands EMBLEM_SHIFT right of its name: the band split at SPLIT_U, the seam
--- filled with plain band.
-local SPLIT_U, EMBLEM_SHIFT = 140, 12
+-- A secondary band's emblem (at x 150-186) moves EMBLEM_PULL left toward its name: that many plain columns come out
+-- of the band at SPLIT_U.
+local SPLIT_U, EMBLEM_PULL = 140, 12
 local SMALL_ART_X, SMALL_ART_U, SMALL_ART_W = 8, 64, 322
 local SMALL_BANDS = {
     { 26, 38, 24 },    -- the page's top edge
@@ -408,10 +408,8 @@ function T.Build()
     local artEnd = SMALL_ART_U + SMALL_ART_W
     for _, band in ipairs(SMALL_BANDS) do
         if band[4] then
-            local seam = SMALL_ART_X + SPLIT_U - SMALL_ART_U
             Piece(band, SMALL_ART_U, SPLIT_U, SMALL_ART_X)
-            Piece(band, SPLIT_U - EMBLEM_SHIFT, SPLIT_U, seam)
-            Piece(band, SPLIT_U, artEnd - EMBLEM_SHIFT, seam + EMBLEM_SHIFT)
+            Piece(band, SPLIT_U + EMBLEM_PULL, artEnd + EMBLEM_PULL, SMALL_ART_X + SPLIT_U - SMALL_ART_U)
         else
             Piece(band, SMALL_ART_U, artEnd, SMALL_ART_X)
         end
@@ -463,6 +461,14 @@ function T.ShowOurs(on)
     if not T.built then return end
     T.shown = on
     local big = T.Big()
+    -- The small page's art inside the window's metal: the chrome's backing marks where the rails start.
+    local fcui = ProfessionsFrame and ProfessionsFrame.fcui
+    local backing = fcui and fcui.backing
+    if backing and rows.clipOn ~= backing then
+        rows.clipOn = backing
+        rows.clip:ClearAllPoints()
+        rows.clip:SetAllPoints(backing)
+    end
     for _, tex in ipairs(rows.art) do SetShownIf(tex, on and big) end
     for _, tex in ipairs(rows.small) do SetShownIf(tex, on and not big) end
     for i = 1, 5 do

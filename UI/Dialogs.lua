@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- Dialog kit: backdrops, header plate, drag, close X, popups, the client's popups, tooltips.
 -- Helpers from later files are looked up at call time.
@@ -297,7 +298,7 @@ end
 local function Reload() ns.ReloadForLayout() end
 
 function ns.ReloadPopup(name, text, button1, button2)
-    return ns.Popup(name, { text = text, button1 = button1 or "Reload now", button2 = button2 or "Later", OnAccept = Reload })
+    return ns.Popup(name, { text = text, button1 = button1 or L["OPTWIN_RELOAD_NOW"], button2 = button2 or L["UI_LATER"], OnAccept = Reload })
 end
 
 -------------------------------------------------------- client popups

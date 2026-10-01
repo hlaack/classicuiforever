@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- Colours, gold fonts and unit bar fills.
 
@@ -132,13 +133,13 @@ end
 -- In a dungeon UnitIsPlayer and UnitClass are secret: such a unit stays green.
 -- Enemy health on a thick bar (option): 1.x bar colours, green by default.
 ns.ENEMY_HEALTH_COLORS = {
-    { key = "green", label = "Health green", rgb = { 0, 1, 0 } },
-    { key = "red", label = "Failed red", rgb = { 1, 0, 0 } },
-    { key = "cast", label = "Cast gold", rgb = { 1, 0.7, 0 } },
-    { key = "darkGold", label = "Dark gold", rgb = { 0.85, 0.55, 0 } },
-    { key = "focus", label = "Focus orange", rgb = { 1, 0.5, 0.25 } },
-    { key = "energy", label = "Energy yellow", rgb = { 1, 1, 0 } },
-    { key = "mana", label = "Mana blue", rgb = { 0, 0, 1 } },
+    { key = "green", label = L["UI_HEALTH_GREEN"], rgb = { 0, 1, 0 } },
+    { key = "red", label = L["UI_FAILED_RED"], rgb = { 1, 0, 0 } },
+    { key = "cast", label = L["UI_CAST_GOLD"], rgb = { 1, 0.7, 0 } },
+    { key = "darkGold", label = L["UI_DARK_GOLD"], rgb = { 0.85, 0.55, 0 } },
+    { key = "focus", label = L["UI_FOCUS_ORANGE"], rgb = { 1, 0.5, 0.25 } },
+    { key = "energy", label = L["UI_ENERGY_YELLOW"], rgb = { 1, 1, 0 } },
+    { key = "mana", label = L["UI_MANA_BLUE"], rgb = { 0, 0, 1 } },
 }
 local ENEMY_RGB = {}
 for _, color in ipairs(ns.ENEMY_HEALTH_COLORS) do ENEMY_RGB[color.key] = color.rgb end

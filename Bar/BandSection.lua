@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 local B = ns.band
 
 -- The latency bar and the key ring as pieces of their own: in the band's section (BandShape) until hidden (their options,
@@ -14,8 +15,8 @@ local RUN = {}
 -- u0, u1: the piece standing alone. The shared post between window and slot is wider than the end posts: the latency bar
 -- keeps 8 of its 9 columns, the key ring takes its own end post mirrored (cap, cap wide) on its left instead.
 local ELEMENTS = {
-    { label = "Latency Bar", hideKey = "hideLatencyBar", posKey = "latencyPos", u0 = 0, u1 = 22, cap = 0 },
-    { label = "Key Ring", hideKey = "hideKeyRing", posKey = "keyRingPos", u0 = 23, u1 = 45, cap = 7 },
+    { label = L["BAR_LATENCY_BAR"], hideKey = "hideLatencyBar", posKey = "latencyPos", u0 = 0, u1 = 22, cap = 0 },
+    { label = L["BAR_KEY_RING"], hideKey = "hideKeyRing", posKey = "keyRingPos", u0 = 23, u1 = 45, cap = 7 },
 }
 local LATENCY, KEYRING = ELEMENTS[1], ELEMENTS[2]
 
@@ -100,7 +101,7 @@ local function Dialog()
     ns.EditModeCheck(check)
     local label = check:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
     label:SetPoint("LEFT", check, "RIGHT", 4, 0)
-    label:SetText("Hide")
+    label:SetText(L["BAR_HIDE"])
     check:SetScript("OnClick", function(self)
         local key = dialog.el.hideKey
         ns.db[key] = self:GetChecked() and true or false
@@ -123,8 +124,8 @@ end
 ------------------------------------------------------------------ homes
 
 local HANDLE_TIP = { anchor = "ANCHOR_TOP", text = function(self) return self.el.label end, r = 1, g = 1, b = 1, lines = {
-    { "Drag off the bar to stand it alone. Let go near the bar to put it back.", 1, 0.82, 0 },
-    { "Click to hide it or reset its place. Right-click puts it back.", 1, 0.82, 0 },
+    { L["BAR_DRAG_OFF_THE_BAR_TO"], 1, 0.82, 0 },
+    { L["BAR_CLICK_TO_HIDE_IT_OR"], 1, 0.82, 0 },
 } }
 
 local function Undrag()

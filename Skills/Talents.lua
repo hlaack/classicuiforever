@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- The old talent window: one tree per foot tab on its old background, rank plates and arrows, points spent atop and left at the foot.
 -- A click stages, Apply commits (old preview). Our own window like the spellbook, so it opens in combat; the client's window is untouched.
@@ -208,7 +209,7 @@ local function Button_OnEnter(self)
             for _, edge in ipairs(other.edges) do
                 if edge.targetNode == talent.nodeID and edge.type ~= 0 and other.rank < other.maxRank then
                     local otherName = other.spellID and C_Spell.GetSpellName(other.spellID) or "?"
-                    local format = TOOLTIP_TALENT_PREREQ or (other.maxRank == 1 and "Requires %d point in %s" or "Requires %d points in %s")
+                    local format = TOOLTIP_TALENT_PREREQ or (other.maxRank == 1 and L["SKILL_REQUIRES_N_POINT_IN_X"] or L["SKILL_REQUIRES_N_POINTS_IN_X"])
                     GameTooltip:AddLine(string.format(format, other.maxRank, otherName), 1, 0.1, 0.1, true)
                 end
             end
@@ -356,7 +357,7 @@ Refresh = function()
     art.BottomLeft:SetTexCoord(0, 1, 0, 75 / 128)
     art.BottomRight:SetTexCoord(0, 1, 0, 75 / 128)
 
-    frame.spent:SetText(string.format("Points spent in %s Talents: ", tab.name) .. "|cffffffff" .. tab.spent .. "|r")
+    frame.spent:SetText(string.format(L["SKILL_POINTS_SPENT_IN_X_TALENTS"], tab.name) .. "|cffffffff" .. tab.spent .. "|r")
     frame.points:SetText(tree.inspect and "" or ((TALENT_POINTS or "Talent Points") .. ": |cffffffff" .. tree.points .. "|r"))
     frame.title:SetText(tree.inspect and (UnitName(inspectUnit) or TALENTS or "Talents") or (TALENTS or "Talents"))
     frame.learn:SetEnabled(tree.staged)
@@ -521,7 +522,7 @@ local function Build()
     frame.points = pointsBox:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     frame.points:SetPoint("RIGHT", pointsBox, "RIGHT", -10, 0)
 
-    frame.learn = ns.PanelButton(foot, "Apply Changes", 104)
+    frame.learn = ns.PanelButton(foot, L["SKILL_APPLY_CHANGES"], 104)
     frame.learn:SetPoint("LEFT", pointsBox, "RIGHT", 1, 0)
     frame.learn:SetScript("OnClick", function()
         local tree = frame.tree

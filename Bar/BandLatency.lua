@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 local B = ns.band
 
 -- 1.x latency bar: a tube behind the latency window (under the band art, so the window's frame and dividers draw over it),
@@ -38,7 +39,7 @@ local function TipText()
     if not home then return nil end
     local label = _G.MAINMENUBAR_LATENCY_LABEL
     if type(label) == "string" and label:find("%", 1, true) then return label:format(home, world) end
-    return ("Latency: %d ms (home), %d ms (world)"):format(home, world)
+    return (L["BAR_LATENCY_N_MS_HOME_N"]):format(home, world)
 end
 -- Era's gold description under it.
 local function TipDesc() return ns.EraText("NEWBIE_TOOLTIP_LATENCY") end

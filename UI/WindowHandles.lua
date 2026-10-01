@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- ClassicUI Forever Windows: our edit mode for the windows. A placeholder drag places a window; its dialog holds Movable
 -- anytime, Size and resets. Places (db.windowPos, UIParent units) and sizes (db.windowScale) are put back the frame after
@@ -8,32 +9,32 @@ local _, ns = ...
 -- quests: the map; section: heading; piece: laid by ns.LayPiece; ringKey: its angle, dragged round the minimap
 -- (only while ringIf is on, if given); fixedIf: no drag while that is on; choice: an options radio group as a dropdown.
 local WINDOWS = {
-    { key = "character", label = "Character", name = "CharacterFrame", w = 354, h = 467, cut = { 30, 45 } },
-    { key = "professions", label = "Professions", name = "ProfessionsFrame", w = 550, h = 525 },
-    { key = "talents", label = "Talents", name = "ClassicUIForeverTalents", w = 354, h = 467, cut = { 30, 45 } },
-    { key = "questLog", label = "Quest log", name = "ForeverClassicUIQuestLog", w = 349, h = 437, cut = { 35, 75 } },
-    { key = "map", label = "World map", name = "WorldMapFrame", w = 1035, h = 534, stripRight = 90, toggle = "mapUnlocked",
+    { key = "character", label = L["UI_CHARACTER"], name = "CharacterFrame", w = 354, h = 467, cut = { 30, 45 } },
+    { key = "professions", label = L["UI_PROFESSIONS"], name = "ProfessionsFrame", w = 550, h = 525 },
+    { key = "talents", label = L["UI_TALENTS"], name = "ClassicUIForeverTalents", w = 354, h = 467, cut = { 30, 45 } },
+    { key = "questLog", label = L["UI_QUEST_LOG"], name = "ForeverClassicUIQuestLog", w = 349, h = 437, cut = { 35, 75 } },
+    { key = "map", label = L["UI_WORLD_MAP"], name = "WorldMapFrame", w = 1035, h = 534, stripRight = 90, toggle = "mapUnlocked",
         quests = true },
-    { key = "calendar", label = "Calendar", name = "ForeverClassicUICalendarHome", w = 28, h = 28, section = "Minimap",
+    { key = "calendar", label = L["UI_CALENDAR"], name = "ForeverClassicUICalendarHome", w = 28, h = 28, section = L["UI_MINIMAP"],
         piece = true, ringKey = "calendarAngle", ringIf = "calendarRing", fixedIf = "calendarBehind", choice = "calendarSpot",
         choiceLabel = "Mode" },
-    { key = "spellBook", label = "Spellbook", name = "ForeverClassicUISpellBook", w = 384, h = 512, stripRight = 64,
+    { key = "spellBook", label = L["UI_SPELLBOOK"], name = "ForeverClassicUISpellBook", w = 384, h = 512, stripRight = 64,
         calm = true },
-    { key = "minimapZone", label = "Zone name", name = "ForeverClassicUIMinimapZoneHome", w = 140, h = 12,
+    { key = "minimapZone", label = L["UI_ZONE_NAME"], name = "ForeverClassicUIMinimapZoneHome", w = 140, h = 12,
         section = "Minimap", piece = true, choice = "minimapZoneShow", choiceLabel = "Show" },
-    { key = "minimapTracking", label = "Tracking", name = "ForeverClassicUIMinimapTrackingHome", w = 32, h = 32,
+    { key = "minimapTracking", label = L["UI_TRACKING"], name = "ForeverClassicUIMinimapTrackingHome", w = 32, h = 32,
         section = "Minimap", piece = true, choice = "minimapTrackingShow", choiceLabel = "Show" },
-    { key = "minimapMail", label = "Mail", name = "ForeverClassicUIMinimapMailHome", w = 33, h = 33,
+    { key = "minimapMail", label = L["UI_MAIL"], name = "ForeverClassicUIMinimapMailHome", w = 33, h = 33,
         section = "Minimap", piece = true, choice = "minimapMailShow", choiceLabel = "Show" },
-    { key = "minimapZoomIn", label = "Zoom in", name = "ForeverClassicUIMinimapZoomInHome", w = 32, h = 32,
+    { key = "minimapZoomIn", label = L["UI_ZOOM_IN"], name = "ForeverClassicUIMinimapZoomInHome", w = 32, h = 32,
         section = "Minimap", piece = true, ringKey = "zoomInAngle", choice = "minimapZoomInShow", choiceLabel = "Show" },
-    { key = "minimapZoomOut", label = "Zoom out", name = "ForeverClassicUIMinimapZoomOutHome", w = 32, h = 32,
+    { key = "minimapZoomOut", label = L["UI_ZOOM_OUT"], name = "ForeverClassicUIMinimapZoomOutHome", w = 32, h = 32,
         section = "Minimap", piece = true, ringKey = "zoomOutAngle", choice = "minimapZoomOutShow", choiceLabel = "Show" },
-    { key = "minimapClock", label = "Clock", name = "ForeverClassicUIMinimapClockHome", w = 60, h = 28,
+    { key = "minimapClock", label = L["UI_CLOCK"], name = "ForeverClassicUIMinimapClockHome", w = 60, h = 28,
         section = "Minimap", piece = true, choice = "minimapClockShow", choiceLabel = "Show" },
-    { key = "minimapDiel", label = "Day and night", name = "ForeverClassicUIMinimapDielHome", w = 40, h = 40,
+    { key = "minimapDiel", label = L["UI_DAY_AND_NIGHT"], name = "ForeverClassicUIMinimapDielHome", w = 40, h = 40,
         section = "Minimap", piece = true, choice = "minimapDielShow", choiceLabel = "Show" },
-    { key = "minimapCoords", label = "Coordinates", name = "ForeverClassicUIMinimapCoordsHome", w = 90, h = 10,
+    { key = "minimapCoords", label = L["UI_COORDINATES"], name = "ForeverClassicUIMinimapCoordsHome", w = 90, h = 10,
         section = "Minimap", piece = true, choice = "minimapCoordsShow", choiceLabel = "Show" },
 }
 local SLOT_LEFT, SLOT_TOP = 0, 104
@@ -258,9 +259,9 @@ end
 -- The map's lock, beside its maximize and close buttons: the same switch as its option and its edit mode box.
 local LOCK = "Interface\\Buttons\\LockButton-"
 local MAP_ENTRY = WINDOWS[5]
-local LOCK_TIP = { text = "Map lock", r = 1, g = 1, b = 1, lines = { { function()
-    return ns.db.mapUnlocked and "Unlocked: drag the map by its title bar. Click to lock it."
-        or "Locked. Click to drag the map anywhere by its title bar."
+local LOCK_TIP = { text = L["UI_MAP_LOCK"], r = 1, g = 1, b = 1, lines = { { function()
+    return ns.db.mapUnlocked and L["UI_UNLOCKED_DRAG_THE_MAP_BY"]
+        or L["UI_LOCKED_CLICK_TO_DRAG_THE"]
 end, nil, nil, nil, true } } }
 local lock
 local function SyncLock()
@@ -504,11 +505,11 @@ local function ViewCheck(parent, text, x, only)
     return check
 end
 
-local FADE_TIP = { text = "Fade while moving", r = 1, g = 1, b = 1, lines = { {
-    "The map dims while you move. The same setting as in the options (the game's own).", nil, nil, nil, true } } }
+local FADE_TIP = { text = L["UI_FADE_WHILE_MOVING"], r = 1, g = 1, b = 1, lines = { {
+    L["UI_THE_MAP_DIMS_WHILE_YOU"], nil, nil, nil, true } } }
 
-local FREE_TIP = { text = "Movable anytime", r = 1, g = 1, b = 1, lines = { {
-    "Drag the window by its title bar whenever it is open, not only here. Off, it stays where it is placed.",
+local FREE_TIP = { text = L["UI_MOVABLE_ANYTIME"], r = 1, g = 1, b = 1, lines = { {
+    L["UI_DRAG_THE_WINDOW_BY_ITS"],
     nil, nil, nil, true } } }
 
 -- Shaped like edit mode's own dialog, as the band's pieces are.
@@ -522,8 +523,8 @@ local function Dialog()
     views:SetSize(343, 30)
     views:SetPoint("TOPLEFT", dialog, "TOPLEFT", 20, FREE_Y)
     dialog.views = views
-    dialog.wide = ViewCheck(views, "With quest log", 0, false)
-    dialog.narrow = ViewCheck(views, "Map only", 180, true)
+    dialog.wide = ViewCheck(views, L["UI_WITH_QUEST_LOG"], 0, false)
+    dialog.narrow = ViewCheck(views, L["UI_MAP_ONLY"], 180, true)
     local check = CreateFrame("CheckButton", nil, dialog, "UICheckButtonTemplate")
     check:SetSize(30, 30)
     check:SetPoint("TOPLEFT", dialog, "TOPLEFT", 20, FREE_Y)
@@ -531,7 +532,7 @@ local function Dialog()
     -- On the check itself, so it hides with it (a piece has no Movable anytime row).
     local label = check:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
     label:SetPoint("LEFT", check, "RIGHT", 4, 0)
-    label:SetText("Movable anytime, by its title bar")
+    label:SetText(L["UI_MOVABLE_ANYTIME_BY_ITS_TITLE"])
     check:SetScript("OnClick", function(self) SetFree(selected, self:GetChecked() and true or false) end)
     ns.AttachTip(check, FREE_TIP)
     dialog.check = check
@@ -543,7 +544,7 @@ local function Dialog()
     -- On the check itself, so it hides with it on every window but the map.
     local fadeLabel = fade:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
     fadeLabel:SetPoint("LEFT", fade, "RIGHT", 4, 0)
-    fadeLabel:SetText("Fade while moving")
+    fadeLabel:SetText(L["UI_FADE_WHILE_MOVING"])
     fade:SetScript("OnClick", function(self)
         Set("mapFade", self:GetChecked() and true or false)
         ns.ToggleChanged("mapFade")
@@ -570,7 +571,7 @@ local function Dialog()
     local resize = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
     resize:SetSize(330, 28)
     resize:SetPoint("BOTTOM", dialog.reset, "TOP", 0, 6)
-    resize:SetText("Reset To Default Size")
+    resize:SetText(L["BAR_RESET_TO_DEFAULT_SIZE"])
     resize:SetScript("OnClick", function()
         OnSize(100)
         Refresh()

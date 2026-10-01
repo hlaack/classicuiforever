@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- The game's damage meter windows in the professions window's look: one box in the game menu's metal border, stone
 -- over the trainer's divider bar, marble (or a talent tree) under it. Chrome only, never rows or data; dressed as the
@@ -35,11 +36,15 @@ local TREES = { "DruidBalance", "DruidFeralCombat", "DruidRestoration", "HunterB
     "WarlockDestruction", "WarriorArms", "WarriorFury", "WarriorProtection" }
 -- The tree art's pieces: painted 300 x 331 (the right files 44 of 64 columns, the lower 75 of 128 rows).
 local TREE_BLANK_RIGHT = 20
+-- The painted art's size: panned (option) only as far as it still covers the whole body, so no gap opens.
+local ART_W, ART_H = 300, 331
+local MOVE_ICON = "Interface\\CURSOR\\UI-Cursor-Move"
+local previewName   -- a background hovered in the options' drop down, shown until the menu shuts
 local TREE_PIECES = {
     { key = "TopRight", w = 64, h = 256 }, { key = "TopLeft", w = 256, h = 256 },
     { key = "BottomRight", w = 64, h = 75, v1 = 75 / 128 }, { key = "BottomLeft", w = 256, h = 75, v1 = 75 / 128 },
 }
-ns.METER_BACKGROUNDS = { { key = "marble", label = "Marble" } }
+ns.METER_BACKGROUNDS = { { key = "marble", label = L["WIN_MARBLE"] } }
 for _, tree in ipairs(TREES) do
     local class, spec = tree:match("^(%u%l+)(.+)$")
     ns.METER_BACKGROUNDS[#ns.METER_BACKGROUNDS + 1] = { key = tree, label = class .. ": " .. spec:gsub("(%l)(%u)", "%1 %2") }
@@ -179,6 +184,16 @@ local function Boxes(window)
         tree[i] = tex
     end
     tree[1]:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", TREE_BLANK_RIGHT, 0)
+    -- Move background art: a pan pad over the rows, the four-way arrow in its middle.
+    local pan = CreateFrame("Frame", nil, body)
+    pan:SetAllPoints(body)
+    pan:SetFrameStrata("HIGH")
+    pan:EnableMouse(true)
+    local icon = pan:CreateTexture(nil, "OVERLAY")
+    icon:SetTexture(MOVE_ICON)
+    icon:SetSize(32, 32)
+    icon:SetPoint("CENTER", pan, "CENTER")
+    pan:Hide()
     tree[2]:SetPoint("TOPRIGHT", tree[1], "TOPLEFT")
     tree[3]:SetPoint("TOPRIGHT", tree[1], "BOTTOMRIGHT")
     tree[4]:SetPoint("TOPRIGHT", tree[3], "TOPLEFT")
@@ -186,7 +201,7 @@ local function Boxes(window)
     local mid = CreateFrame("Frame", nil, box)
     mid:SetPoint("TOPLEFT", stone, "TOPLEFT")
     mid:SetPoint("BOTTOMRIGHT", window, "TOPRIGHT", 0, DIVIDER_Y + BAR_H / 4)
-    pair = { mid = mid, box = box, bar = { barRun, barEnd }, body = body, floor = floor, canvas = canvas, tree = tree }
+    pair = { pan = pan, mid = mid, box = box, bar = { barRun, barEnd }, body = body, floor = floor, canvas = canvas, tree = tree }
     boxes[window] = pair
     return pair
 end
@@ -207,16 +222,68 @@ local function Fold(window, pair)
     end
 end
 
--- The picked tree's files, or none for the marble.
+local function TreeName()
+    local pick = previewName or (ns.db and ns.db.meterBackground)
+    return pick ~= "marble" and pick or nil
+end
+
+-- A tree's pan, kept inside what leaves no gap: right 0 to the art's spare width, up 0 to its spare height.
+local function Clamp(pair, x, y)
+    local w, h = pair.canvas:GetWidth() or 0, pair.canvas:GetHeight() or 0
+    return math.max(0, math.min(math.max(0, ART_W - w), x)), math.max(0, math.min(math.max(0, ART_H - h), y))
+end
+
+local function SavedPan(name)
+    local all = ns.db and ns.db.meterArtPan
+    local pan = all and all[name]
+    return pan and tonumber(pan.x) or 0, pan and tonumber(pan.y) or 0
+end
+
+local function PlaceTree(pair, x, y)
+    x, y = Clamp(pair, x, y)
+    pair.panX, pair.panY = x, y
+    ns.SetPointOnce(pair.tree[1], "TOPRIGHT", pair.canvas, "TOPRIGHT", TREE_BLANK_RIGHT + x, y)
+end
+
+-- The picked (or hovered) tree's files at its saved pan, or none for the marble.
 local function PaintTree(pair)
-    local pick = ns.db and ns.db.meterBackground
-    local name = pick ~= "marble" and pick or nil
-    if pair.treeName == name then return end
-    pair.treeName = name
-    for i, piece in ipairs(TREE_PIECES) do
-        if name then pair.tree[i]:SetTexture(TALENT_ART .. name .. "-" .. piece.key) end
+    local name = TreeName()
+    if pair.treeName ~= name then
+        pair.treeName = name
+        for i, piece in ipairs(TREE_PIECES) do
+            if name then pair.tree[i]:SetTexture(TALENT_ART .. name .. "-" .. piece.key) end
+        end
+        pair.canvas:SetShown(name ~= nil)
     end
-    pair.canvas:SetShown(name ~= nil)
+    if name then PlaceTree(pair, SavedPan(name)) end
+    ns.SetShownIf(pair.pan, name ~= nil and not previewName and ns.db.meterPanArt == true)
+end
+
+-- Dragging the pan pad moves the art with the cursor; let go, and the pan is kept for that tree.
+local drag
+local function Cursor()
+    local x, y = GetCursorPosition()
+    local k = UIParent:GetEffectiveScale()
+    return x / k, y / k
+end
+local panJob = ns.Sched.Job({ name = "damageMeter.pan", every = 0, awake = false, fn = function()
+    if not drag then return end
+    local x, y = Cursor()
+    PlaceTree(drag.pair, drag.x + x - drag.cx, drag.y + y - drag.cy)
+end })
+local function PanStart(pair)
+    local cx, cy = Cursor()
+    drag = { pair = pair, x = pair.panX or 0, y = pair.panY or 0, cx = cx, cy = cy }
+    panJob:Wake()
+end
+local function PanStop()
+    if not drag then return end
+    local pair, name = drag.pair, TreeName()
+    drag = nil
+    panJob:Sleep()
+    if not name then return end
+    ns.db.meterArtPan = ns.db.meterArtPan or {}
+    ns.db.meterArtPan[name] = { x = pair.panX or 0, y = pair.panY or 0 }
 end
 
 -- The detail window a row opens: the meter's marble in the metal border, the old scroll bar and close button.
@@ -251,6 +318,12 @@ local function Dress(window)
         if type(alpha) == "number" and not ns.IsSecret(alpha) then
             pair.floor:SetAlpha(alpha)
         end
+    end
+    if not pair.panHooked then
+        pair.panHooked = true
+        pair.pan:SetScript("OnMouseDown", function() PanStart(pair) end)
+        pair.pan:SetScript("OnMouseUp", PanStop)
+        pair.pan:SetScript("OnHide", PanStop)
     end
     PaintTree(pair)
     DressMinimize(window)
@@ -314,6 +387,13 @@ end
 -- The header height picked in the options.
 function ns.SetMeterHeader(value)
     ns.db.meterHeader = math.max(ns.METER_HEADER_MIN, math.min(ns.METER_HEADER_MAX, math.floor(tonumber(value) or 6)))
+    DressAll()
+end
+
+-- A background hovered in the options (nil: the picked one again).
+function ns.PreviewMeterBackground(key)
+    if previewName == key then return end
+    previewName = key
     DressAll()
 end
 

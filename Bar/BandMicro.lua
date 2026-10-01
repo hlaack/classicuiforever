@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 local B = ns.band
 
 -- Micro menu on the band, or off it on our group frame dragged by an edit mode style handle, with its own size dialog.
@@ -19,9 +20,9 @@ local POST_SHEET = PIECES[4]
 local END_POST_LEFT = { tint = ns.BRONZE_SOFT, coords = B.POST_LEFT, w = B.POST_W, h = BAND_H, point = "BOTTOMLEFT", show = true }
 local END_POST_RIGHT = { tint = ns.BRONZE_SOFT, coords = B.POST_RIGHT, w = B.POST_W, h = BAND_H, point = "BOTTOMRIGHT", show = true }
 local RUN = {}   -- a floor run's coords, refilled per run
-local HANDLE_TIP = { anchor = "ANCHOR_TOP", text = "Micro Menu", r = 1, g = 1, b = 1, lines = {
-    { "Drag to move. Let go near the bar to put it back.", 1, 0.82, 0 },
-    { "Click for its size and reset. The mouse wheel sizes it too.", 1, 0.82, 0 },
+local HANDLE_TIP = { anchor = "ANCHOR_TOP", text = L["BAR_MICRO_MENU"], r = 1, g = 1, b = 1, lines = {
+    { L["BAR_DRAG_TO_MOVE_LET_GO"], 1, 0.82, 0 },
+    { L["BAR_CLICK_FOR_ITS_SIZE_AND"], 1, 0.82, 0 },
 } }
 
 -- This client's micro buttons in its order, read once before any is reparented (retail 13, Forever 14).
@@ -249,7 +250,7 @@ local function MicroDialog()
     local art = B.art
     local dialog = art.microDialog
     if dialog then return dialog end
-    dialog = B.EditDialog("ForeverClassicUIMicroDialog", 383, 226, "Micro Menu")
+    dialog = B.EditDialog("ForeverClassicUIMicroDialog", 383, 226, L["BAR_MICRO_MENU"])
     art.microDialog = dialog
 
     local label = dialog:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
@@ -289,7 +290,7 @@ local function MicroDialog()
     local resize = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
     resize:SetSize(330, 28)
     resize:SetPoint("BOTTOM", reset, "TOP", 0, 6)
-    resize:SetText("Reset To Default Size")
+    resize:SetText(L["BAR_RESET_TO_DEFAULT_SIZE"])
     resize:SetScript("OnClick", function()
         ns.MicroTouched()
         ns.db.microScale = nil
@@ -325,7 +326,7 @@ local function MicroHome()
     home.floor = { home:CreateTexture(nil, "BACKGROUND"), home:CreateTexture(nil, "BACKGROUND") }
     home.posts = { home:CreateTexture(nil, "BORDER"), home:CreateTexture(nil, "BORDER") }
 
-    local handle = B.SelectionHandle(home, "Micro Menu")
+    local handle = B.SelectionHandle(home, L["BAR_MICRO_MENU"])
     handle:EnableMouseWheel(true)
     local DressBox = handle.Dress
     -- While dragged the band redraws as the group crosses the snap-back line, so the drop's result shows first.

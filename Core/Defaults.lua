@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 ns.DB_DEFAULTS = {
     dbVersion = 2,
@@ -82,6 +83,7 @@ ns.DB_DEFAULTS = {
     thickHealthPlayer = true, thickHealthTarget = true, thickHealthFocus = true, thickEnemyColor = "green",
     classColorNames = false,
     profBookBig = false,
+    meterPanArt = false,
     reagentBagSlot = false,
     reagentBagRound = false,
     reagentBagHover = true,
@@ -200,65 +202,65 @@ ns.MODULE_ORDER = {
 -- Off-only: owed on every turn-off. Both ways: owed while it differs from the session start (pins, spellbook key: once a session).
 ns.RELOAD_KEYS = {
     -- The game reads showQuestLevel as its windows build; open ones keep the old titles.
-    questLevels = { own = true, on = "Quest levels show everywhere once the interface reloads.",
-        off = "Quest levels leave the map and tracker once the interface reloads." },
+    questLevels = { own = true, on = L["CORE_QUEST_LEVELS_SHOW_EVERYWHERE_ONCE"],
+        off = L["CORE_QUEST_LEVELS_LEAVE_THE_MAP"] },
     classicBar = {
         -- ns.PinBandBars writes the layout only in ns.ReloadForLayout; unpinned, combat moves the bars.
-        on = "The action bars are fixed in the classic bar's places as the interface reloads; until then a fight can move them.",
+        on = L["CORE_THE_ACTION_BARS_ARE_FIXED"],
         -- Pins stay until ns.UnpinBandBars runs in the reload press; Restore only re-anchors.
-        off = "The edit mode layout keeps the action bars in the classic bar's places until the interface reloads.",
+        off = L["CORE_THE_EDIT_MODE_LAYOUT_KEEPS"],
     },
     -- PlayerSpellsUtil entries we write back stay tainted (SpellBook TakeOver).
-    spellBook = { off = "The game's own spellbook counts as the addon's until the interface reloads, and misbehaves until then." },
+    spellBook = { off = L["CORE_THE_GAME_S_OWN_SPELLBOOK"] },
     -- The micro button's click is handed back by our SetScript, so it runs tainted (Talents TakeButton).
-    talents = { off = "The talents button opens the game's window in the addon's name until the interface reloads, and a fight can block it." },
+    talents = { off = L["CORE_THE_TALENTS_BUTTON_OPENS_THE"] },
     -- Same for QuestLogMicroButton's click (QuestLog Restore).
-    questLog = { off = "The quest log button opens the map in the addon's name until the interface reloads, and a fight can block it." },
+    questLog = { off = L["CORE_THE_QUEST_LOG_BUTTON_OPENS"] },
     -- ToggleGuildFrame stays our wrapper once taken (Guild WrapGuildToggle).
-    guildRoster = { off = "The guild key and button go through the addon until the interface reloads, and a fight can block the guild window." },
+    guildRoster = { off = L["CORE_THE_GUILD_KEY_AND_BUTTON"] },
     -- Restore hides the Who tab only; the first tab keeps its name and the row its cut tabs.
-    whoList = { off = "The social window's tabs keep the old names and spacing until the interface reloads." },
+    whoList = { off = L["CORE_THE_SOCIAL_WINDOW_S_TABS"] },
     -- Restore hides our host and bars; the client frames keep our anchors and art.
-    unitFrames = { off = "The unit frames keep some of the old art and places until the interface reloads." },
+    unitFrames = { off = L["CORE_THE_UNIT_FRAMES_KEEP_SOME"] },
     -- Same, for the player frame (RestorePlayer).
-    unitFramePlayer = { off = "The player frame keeps some of the old art and places until the interface reloads." },
+    unitFramePlayer = { off = L["CORE_THE_PLAYER_FRAME_KEEPS_SOME"] },
     -- Target and target of target (RestoreTargetLike).
-    unitFrameTarget = { off = "The target frame keeps some of the old art and places until the interface reloads." },
+    unitFrameTarget = { off = L["CORE_THE_TARGET_FRAME_KEEPS_SOME"] },
     -- Focus frame (RestoreTargetLike).
-    unitFrameFocus = { off = "The focus frame keeps some of the old art and places until the interface reloads." },
+    unitFrameFocus = { off = L["CORE_THE_FOCUS_FRAME_KEEPS_SOME"] },
     -- No hand-back: nothing removes the pet frame's skin.
-    unitFramePet = { off = "The pet frame keeps the old art until the interface reloads." },
+    unitFramePet = { off = L["CORE_THE_PET_FRAME_KEEPS_THE"] },
     -- Party frames (RestoreParty).
-    unitFrameParty = { off = "The party frames keep some of the old art until the interface reloads." },
+    unitFrameParty = { off = L["CORE_THE_PARTY_FRAMES_KEEP_SOME"] },
     -- Restore puts the atlases back only; fill, spark and flash keep our texture and size.
-    castBars = { off = "The cast bars keep the old fill and flash until the interface reloads." },
+    castBars = { off = L["CORE_THE_CAST_BARS_KEEP_THE"] },
     -- Restore hides the dark ground only; the bars keep our border, texture and size.
-    mirrorTimers = { off = "The breath and fatigue bars keep the old border and bar until the interface reloads." },
+    mirrorTimers = { off = L["CORE_THE_BREATH_AND_FATIGUE_BARS"] },
     -- The client's ComboFrame keeps our anchors (ComboPoints Restore).
-    comboPoints = { off = "The game's own combo points keep the old places until the interface reloads." },
+    comboPoints = { off = L["CORE_THE_GAME_S_OWN_COMBO"] },
     -- Restore hides the ring art only; buttons, zone name and clock keep the old layout.
-    minimap = { off = "The minimap's buttons and zone name keep the old places until the interface reloads." },
+    minimap = { off = L["CORE_THE_MINIMAP_S_BUTTONS_AND"] },
     -- Restore hides our pieces; the plates keep our anchors, scale and font.
-    namePlates = { off = "Nameplates keep the old sizes and places until the interface reloads." },
+    namePlates = { off = L["CORE_NAMEPLATES_KEEP_THE_OLD_SIZES"] },
     -- Only the main header is put back; module headers keep the stone art.
-    questTracker = { off = "The objective tracker keeps the old stone headers until the interface reloads." },
+    questTracker = { off = L["CORE_THE_OBJECTIVE_TRACKER_KEEPS_THE"] },
     -- Restore hides the floor and parchment; the rows keep the old dress.
-    questMapPane = { off = "The map's quest list keeps the old rows until the interface reloads." },
+    questMapPane = { off = L["CORE_THE_MAP_S_QUEST_LIST"] },
     -- Restore hides the title strips only; dressed windows keep the old frame.
-    panels = { off = "Windows already opened keep the old frames until the interface reloads." },
-    worldMap = { off = "The world map keeps the old frame until the interface reloads." },
-    lootWindow = { off = "The loot window keeps the old art until the interface reloads." },
+    panels = { off = L["CORE_WINDOWS_ALREADY_OPENED_KEEP_THE"] },
+    worldMap = { off = L["CORE_THE_WORLD_MAP_KEEPS_THE"] },
+    lootWindow = { off = L["CORE_THE_LOOT_WINDOW_KEEPS_THE"] },
     -- Restore changes nothing; the window keeps our size, buttons and side tabs.
-    groupFinder = { off = "The group finder keeps the old size, buttons and side tabs until the interface reloads." },
+    groupFinder = { off = L["CORE_THE_GROUP_FINDER_KEEPS_THE"] },
     -- Restore changes nothing; dressed bag windows keep the old art.
-    bags = { off = "Bag windows already opened keep the old art until the interface reloads." },
+    bags = { off = L["CORE_BAG_WINDOWS_ALREADY_OPENED_KEEP"] },
     -- No characterSheet: its Restore (GiveBack) undoes everything, side pane and setting too.
     -- Restore changes nothing; the window keeps the book's size with its pieces hidden.
-    professionsBook = { off = "The professions window keeps the old book's size until the interface reloads." },
+    professionsBook = { off = L["CORE_THE_PROFESSIONS_WINDOW_KEEPS_THE"] },
     -- The client's crafting page stays parked off screen (ns.ShowTradeSkill).
     tradeSkill = { off = "A profession's own crafting page stays out of sight until the interface reloads." },
     -- Restore changes nothing; the menu keeps the old dialog art.
-    gameMenu = { off = "The game menu keeps the old dialog look until the interface reloads." },
+    gameMenu = { off = L["CORE_THE_GAME_MENU_KEEPS_THE"] },
     -- Restore changes nothing; the window keeps the old dialog art.
-    settingsPanel = { off = "The settings window keeps Classic Era's art until the interface reloads." },
+    settingsPanel = { off = L["CORE_THE_SETTINGS_WINDOW_KEEPS_CLASSIC"] },
 }

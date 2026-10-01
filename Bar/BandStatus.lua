@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 local B = ns.band
 
 -- XP and reputation bars in the band's top strip: the client's two holders re-hung, re-drawn in 1.x art, and watched.
@@ -738,7 +739,7 @@ local function Veil()
         Undim()
     end)
     local note = veil:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    note:SetText("Follows the classic bar")
+    note:SetText(L["BAR_FOLLOWS_THE_CLASSIC_BAR"])
     veil.note = note
     veil:Hide()
     return veil

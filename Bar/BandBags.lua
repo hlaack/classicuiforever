@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 local B = ns.band
 
 -- Bag row: on the band's bag part, off it on the client's bags piece, or in one-bar mode's corner;
@@ -322,9 +323,9 @@ local function BagsExtra()
     extra:Hide()
     art.bagsExtra = extra
     B.PanelBorder(extra)
-    local check = BagsCheck(extra, extra, "TOPLEFT", 22, -14, "Opened bags take this size too", FollowClick)
+    local check = BagsCheck(extra, extra, "TOPLEFT", 22, -14, L["BAR_OPENED_BAGS_TAKE_THIS_SIZE"], FollowClick)
     extra.check = check
-    local above = BagsCheck(extra, check, "BOTTOMLEFT", 0, -2, "Opened bags above the bag buttons", AboveClick)
+    local above = BagsCheck(extra, check, "BOTTOMLEFT", 0, -2, L["BAR_OPENED_BAGS_ABOVE_THE_BAG"], AboveClick)
     extra.above = above
     local hideArt = BagsCheck(extra, above, "BOTTOMLEFT", 0, -2, HUD_EDIT_MODE_SETTING_ACTION_BAR_HIDE_BAR_ART or "Hide Bar Art",
         function(self)
@@ -333,7 +334,7 @@ local function BagsExtra()
             ns.ToggleChanged("hideBagsArt")
         end)
     extra.art = hideArt
-    local one = BagsCheck(extra, hideArt, "BOTTOMLEFT", 0, -2, "One bag: all bags open as one window", function(self)
+    local one = BagsCheck(extra, hideArt, "BOTTOMLEFT", 0, -2, L["BAR_ONE_BAG_ALL_BAGS_OPEN"], function(self)
         ns.db.oneBag = self:GetChecked() and true or false
         ns.ToggleChanged("oneBag")
         if extra.InitColumns then extra.InitColumns() end
@@ -342,7 +343,7 @@ local function BagsExtra()
     -- One bag window's width in slots; only with One bag on.
     local colsLabel = extra:CreateFontString(nil, "ARTWORK", "GameFontHighlightMedium")
     colsLabel:SetPoint("TOPLEFT", one, "BOTTOMLEFT", 6, -10)
-    colsLabel:SetText("One bag columns")
+    colsLabel:SetText(L["BAR_ONE_BAG_COLUMNS"])
     extra.colsLabel = colsLabel
     local slider, formatters = B.StepperSlider(extra, 180, colsLabel, 10, WholeNumber)
     if slider then
@@ -353,10 +354,10 @@ local function BagsExtra()
     -- Addon settings save on click, outside Save/Revert, and say so (a dark Save reads as "nothing happened").
     local saved = extra:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     saved:SetPoint("BOTTOMLEFT", extra, "BOTTOMLEFT", 26, 14)
-    saved:SetText("Bag window options apply and save the moment you change them.")
+    saved:SetText(L["BAR_BAG_WINDOW_OPTIONS_APPLY_AND"])
     local resize = CreateFrame("Button", nil, extra, "UIPanelButtonTemplate")
     resize:SetHeight(28)
-    resize:SetText("Reset To Default Size")
+    resize:SetText(L["BAR_RESET_TO_DEFAULT_SIZE"])
     resize:SetFrameLevel(210)
     resize:SetScript("OnClick", ResetBagsSize)
     ns.EditModeRed(resize)

@@ -185,6 +185,8 @@ local function Load(path)
     chunk("ClassicUIForever", ns)
 end
 
+Load("Core/Localization.lua")
+Load("Locales/enUS.lua")
 Load("Core/Util.lua")
 Load("Core/Scheduler.lua")
 Load("Core/Setters.lua")

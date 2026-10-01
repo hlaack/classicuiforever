@@ -1,4 +1,5 @@
 local _, ns = ...
+local L = ns.L
 
 -- Buttons on the minimap ring, 1.x tracking-button style, dragged round it with their angle saved: our options button
 -- (gryphon) here, the addon button collector in MinimapCollector.lua.
@@ -149,10 +150,10 @@ local ShowOptions, HideOptions = ns.RingButton({
             ns.OpenOptions()
         end
     end,
-    tip = { anchor = "ANCHOR_LEFT", text = "ClassicUI Forever", r = 1, g = 1, b = 1, lines = {
-        { "Left-click: options", 0.8, 0.8, 0.8 },
-        { "Right-click: welcome note", 0.8, 0.8, 0.8 },
-        { "Drag to move around the ring", 0.8, 0.8, 0.8 },
+    tip = { anchor = "ANCHOR_LEFT", text = L["MAP_CLASSICUI_FOREVER"], r = 1, g = 1, b = 1, lines = {
+        { L["MAP_LEFT_CLICK_OPTIONS"], 0.8, 0.8, 0.8 },
+        { L["MAP_RIGHT_CLICK_WELCOME_NOTE"], 0.8, 0.8, 0.8 },
+        { L["MAP_DRAG_TO_MOVE_AROUND_THE"], 0.8, 0.8, 0.8 },
     } },
 })
 
