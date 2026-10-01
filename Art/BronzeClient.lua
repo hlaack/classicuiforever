@@ -45,6 +45,7 @@ local FILES = {
     [137072] = "UI-TradeFrame-EnchantIcon.tga",
 }
 local clientWas = setmetatable({}, { __mode = "k" })
+B.clientWas = clientWas
 local IsSecret = ns.IsSecret
 
 -- Atlas info is static and GetAtlasInfo builds a table per call: per atlas, its info if its sheet has a copy, else false.
@@ -110,6 +111,7 @@ local function BronzeClient(texture, off)
             if texture.SetHorizTile then texture:SetHorizTile(across and true or false) end
             if texture.SetVertTile then texture:SetVertTile(down and true or false) end
             Remember(texture, was, atlas, nil)
+            ns.UntintGameArt(texture)
             ns.PaintCopy(texture, copy, across and "REPEAT" or "CLAMP", down and "REPEAT" or "CLAMP")
         else
             texture:SetAtlas(atlas)
@@ -121,6 +123,7 @@ local function BronzeClient(texture, off)
     if copy then
         if texture:SetTexture(copy) ~= false then
             Remember(texture, was, nil, file)
+            ns.UntintGameArt(texture)
             ns.PaintCopy(texture, copy)
         else
             texture:SetTexture(file)
@@ -159,7 +162,12 @@ local function ChatTextures()
 end
 
 local CLIENT_WINDOWS = { "MailFrame", "TradeFrame", "MerchantFrame", "BankFrame", "GossipFrame", "QuestFrame",
-    "ClassTrainerFrame", "LootFrame" }
+    "ClassTrainerFrame", "LootFrame", "GameMenuFrame", "CharacterFrame", "PlayerSpellsFrame", "FriendsFrame", "PVEFrame",
+    "LFGParentFrame", "WorldMapFrame", "SettingsPanel", "ContainerFrameCombinedBags", "ContainerFrame1", "ContainerFrame2",
+    "ContainerFrame3", "ContainerFrame4", "ContainerFrame5", "ContainerFrame6", "ProfessionsFrame", "ProfessionsBookFrame",
+    "CalendarFrame", "CommunitiesFrame", "AchievementFrame", "MacroFrame", "AddonList", "InspectFrame", "AuctionHouseFrame",
+    "GuildBankFrame", "ItemSocketingFrame", "DressUpFrame", "TaxiFrame", "PetStableFrame", "HelpFrame", "TimeManagerFrame",
+    "ChannelFrame", "StaticPopup1", "StaticPopup2", "StaticPopup3", "StaticPopup4" }
 
 -- Forbidden pieces (trade window money boxes) may not be asked for regions.
 local Forbidden = ns.IsForbidden
@@ -178,7 +186,7 @@ function ns.BronzeClientTexture(texture, off)
     if texture and not Forbidden(texture) then pcall(BronzeClient, texture, off) end
 end
 
-local WalkClient
+local WalkClient, Watch
 local function ClientChild(child, depth)
     WalkClient(child, depth + 1)
 end
@@ -192,6 +200,21 @@ end
 -- Theme last seen by the client pass; turning it on wakes the aura rims.
 local themeSeen = {}
 local WakeAuras
+
+-- A client window opening: a pass that frame, then every frame for 1 s (0.5 s later showed its old art first).
+local clientJob
+local watched = setmetatable({}, { __mode = "k" })
+local function Opened(shown)
+    if shown and clientJob then
+        clientJob:Kick()
+        clientJob:Burst(1)
+    end
+end
+Watch = function(window)
+    if watched[window] then return end
+    watched[window] = true
+    ns.Sched.OnVisible(window, "bronze.client", Opened)
+end
 
 -- Every 0.5 s, and every frame for 1 s after a client window opens; off, asleep once every copy is handed back.
 local function ClientPass(job)
@@ -211,14 +234,17 @@ local function ClientPass(job)
     end
     local list, n = ChatTextures()
     for i = 1, n do BronzeClient(list[i]) end
-    -- Open client windows only.
+    -- Open client windows only; each watched so its opening wakes the pass at once.
     for _, name in ipairs(CLIENT_WINDOWS) do
         local window = _G[name]
-        if window and window:IsShown() then WalkClient(window, 0) end
+        if window then
+            Watch(window)
+            if window:IsShown() then WalkClient(window, 0) end
+        end
     end
 end
 
-local clientJob = ns.Sched.Job({ name = "bronze.client", every = 0.5, awake = true, fn = ClientPass })
+clientJob = ns.Sched.Job({ name = "bronze.client", every = 0.5, awake = true, fn = ClientPass })
 ns.OnToggle(function(key)
     if not B.THEME_KEYS[key] then return end
     clientJob:Wake()

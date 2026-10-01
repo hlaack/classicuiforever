@@ -34,6 +34,7 @@ Art\Textures.lua
 Art\Bronze.lua
 Art\ThemeLayers.lua
 Art\BronzeClient.lua
+Art\GameArt.lua
 UI\Dress.lua
 UI\Dialogs.lua
 UI\DialogExtras.lua

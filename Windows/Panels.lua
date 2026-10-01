@@ -127,6 +127,8 @@ local WINDOWS = {
     { "CooldownViewerSettings", lift = 5, scrollBars = false, after = A.CooldownViewerSettings },
 }
 
+P.WINDOWS = WINDOWS
+
 local watcher
 local done = {}   -- WINDOWS index -> dressed (for good)
 

@@ -47,20 +47,51 @@ end
 
 -- Softer share for the slots and the band; full bronze read too strong.
 ns.BRONZE_SOFT = 0.9
-local function PaintTint(texture)
-    if not texture.SetDesaturated then return end
-    local theme = Theme()
+-- Drained and tinted to the theme (share: of its colour), or as drawn without one (silver: drained grey).
+local function Paint(texture, theme, share, silver)
     if theme then
-        local tint, share = theme.tint, tinted[texture]
+        local tint = theme.tint
         if type(share) == "table" then share = share[ThemeName()] end
         share = type(share) == "number" and share or 1
         texture:SetDesaturated(true)
         texture:SetVertexColor(1 + (tint[1] - 1) * share, 1 + (tint[2] - 1) * share, 1 + (tint[3] - 1) * share)
     else
-        texture:SetDesaturated(silvered[texture] == true)
+        texture:SetDesaturated(silver == true)
         texture:SetVertexColor(1, 1, 1)
     end
 end
+
+local function PaintTint(texture)
+    if texture.SetDesaturated then Paint(texture, Theme(), tinted[texture], silvered[texture]) end
+end
+
+-- The game's own art where our piece is off (Art/GameArt.lua): as drawn with no theme or one showing client art,
+-- else tinted like our metal. Art another paint holds is left to it.
+local gameArt = setmetatable({}, weak)   -- texture -> share, or true for full
+local function OnCopy(texture)
+    return tinted[texture] or drained[texture] ~= nil or swapped[texture] or (B.clientWas and B.clientWas[texture])
+end
+local function PaintGame(texture)
+    if OnCopy(texture) then return end
+    local theme = Theme()
+    Paint(texture, not (theme and theme.client) and theme or nil, gameArt[texture])
+end
+
+function ns.TintGameArt(texture, share)
+    if not (texture and texture.SetDesaturated and texture.SetVertexColor) then return end
+    gameArt[texture] = share or true
+    PaintGame(texture)
+end
+
+function ns.UntintGameArt(texture)
+    if not texture or gameArt[texture] == nil then return end
+    gameArt[texture] = nil
+    if OnCopy(texture) then return end
+    texture:SetDesaturated(false)
+    texture:SetVertexColor(1, 1, 1)
+end
+
+function ns.GameArtTinted(texture) return gameArt[texture] ~= nil end
 
 -- silver: the art is gold, drained grey when the theme is off.
 function ns.BronzeTint(texture, share, silver)
@@ -222,6 +253,7 @@ end
 -- Repaint every remembered piece for the current theme.
 function ns.RepaintBronze()
     for texture in pairs(tinted) do PaintTint(texture) end
+    for texture in pairs(gameArt) do PaintGame(texture) end
     for region in pairs(kept) do PaintKeep(region) end
     for region, tint in pairs(drained) do
         if region.SetDesaturated then PaintDrain(region, tint or nil) end

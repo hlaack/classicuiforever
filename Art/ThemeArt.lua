@@ -12,6 +12,7 @@ HelpFrameTab-Active
 HelpFrameTab-Inactive
 MailItemBorder
 Nameplate-Border
+PetHappinessFaces
 QuickJoin-Atlas
 SpellBook-SkillLineTab
 UI-BackpackBackground

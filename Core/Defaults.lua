@@ -200,7 +200,7 @@ ns.MODULE_ORDER = {
     "fullPlates", "questTracker", "hideObjectiveTracker", "questLog", "questLogDual", "questLevels", "questMapPane", "panels", "worldMap", "lootWindow", "classicChat", "lootRoll",
     "guildRoster", "whoList", "groupFinder", "hideLastNames", "mapFade", "oneBag", "bags", "characterSheet", "statPanes",
     "spellBook", "spellBookTopRank", "spellBookSearch", "professionsBook", "tradeSkillSearch", "tradeSkill",
-    "trainer", "talents", "options", "gameMenu", "tooltips", "clientMenus", "settingsPanel", "damageMeter",
+    "trainer", "talents", "options", "gameMenu", "tooltips", "clientMenus", "settingsPanel", "damageMeter", "gameArt",
 }
 
 -- Reload-only toggles per direction with popup text; unlisted apply live. Owed for art or anchors left on client frames,
