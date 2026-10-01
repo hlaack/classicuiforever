@@ -39,7 +39,7 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
@@ -133,6 +133,8 @@ KEPT_API = frozenset((
 ))
 
 FIX = {
+    "OTHERADDON": "say what it does in plain words; never name another addon or UI in a shipped file (the settings "
+                  "Support tab's own lines, SUPPORT_MORE and its links, are the one exception)",
     "LUA51": "WoW runs Lua 5.1: no statement starting with ';', no goto or labels, no // or bitwise operators "
              "(the luac 5.4 here accepts them; the game refuses the whole file)",
     "EDITSAVE": "write it with Set(key, value) (UI/WindowHandles.lua), and add a new key to DialogKeys, so Save lights "
@@ -345,6 +347,7 @@ NOT_A_CALL = {"and", "or", "not", "if", "elseif", "while", "until", "return", "i
               "type", "assert"}
 
 MESSAGES = {
+    "OTHERADDON": "another addon or UI named in a shipped file (the repo is public and players read it)",
     "LUA51": "syntax WoW's Lua 5.1 refuses (the file would not load at all)",
     "EDITSAVE": "a setting written straight to ns.db in the windows edit mode (Save never lights, Revert misses it)",
     "LOCALE": "text the player reads written as a literal (never translated)",
@@ -1099,6 +1102,37 @@ def drag_point_hits(lx, funcs):
     return found
 
 
+# Comments and strings count: names hid in a tooltip and a comment.
+def otheraddon_rx():
+    """The names, from the main checkout's gitignored dev/otheraddons.txt (no name in the repo); None without it."""
+    try:
+        common = subprocess.run(["git", "rev-parse", "--git-common-dir"], capture_output=True, text=True,
+                                cwd=os.path.dirname(os.path.abspath(__file__))).stdout.strip()
+        path = os.path.join(os.path.dirname(os.path.abspath(common)), "dev", "otheraddons.txt")
+        with open(path, encoding="utf-8") as fh:
+            names = [n.strip() for n in fh if n.strip() and not n.startswith("#")]
+    except OSError:
+        return None
+    parts = [r"[-\s]*".join(re.escape(w) for w in re.split(r"[-\s]+", n)) for n in names]
+    return re.compile(r"(?i)\b(?:" + "|".join(parts) + r")\b") if parts else None
+
+
+OTHERADDON_RX = otheraddon_rx()
+# The settings Support tab is the one place that names our other addon.
+OTHERADDON_HOME = "Options/HelpPanes.lua"
+OTHERADDON_OK = re.compile(r"SUPPORT_MORE")
+
+
+def otheraddon_hits(path, text):
+    if OTHERADDON_RX is None or path == OTHERADDON_HOME:
+        return []
+    hits = []
+    for no, line in enumerate(text.splitlines(), 1):
+        if OTHERADDON_RX.search(line) and not OTHERADDON_OK.search(line):
+            hits.append(("OTHERADDON", no, MESSAGES["OTHERADDON"]))
+    return hits
+
+
 def pattern_hits(path, lx, funcs):
     found = set()
     for rule, rx in USE_PATTERNS.items():
@@ -1424,7 +1458,7 @@ def analyse(corpus):
     code = {p: code_lines(lx) for p, lx in lexed.items()}
     hits = {}
     for p, lx in lexed.items():
-        hits[p] = pattern_hits(p, lx, funcs[p]) + size_hits(lx, funcs[p]) + comment_hits(lx)
+        hits[p] = pattern_hits(p, lx, funcs[p]) + size_hits(lx, funcs[p]) + comment_hits(lx) + otheraddon_hits(p, corpus[p])
     same_fn = {}
     for p, items in dupfn_hits(lexed, funcs).items():
         for rule, start, msg, end in items:
