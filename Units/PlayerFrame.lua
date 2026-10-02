@@ -57,12 +57,21 @@ local ELITE_RING = { own = "statusRing", coords = ELITE_FLASH.coords, w = ELITE_
 local ringOn = false
 -- Its watcher hangs off UIParent: one under the protected frame could not wake in a fight.
 local ringWatch = ns.NewFrame("Frame", nil, UIParent)
+-- Hide combat glow took the status file: the game's glow is red.
+local glowOff = false
+
+-- Hide combat glow: the game's red status glow (auto attack on) draws nothing; the gold resting one stays.
+local function CombatGlowOff(status)
+    if not (ns.db and ns.db.hideCombatGlow == true) then return false end
+    local _, g = status:GetVertexColor()
+    return not IsSecret(g) and g < 0.5
+end
 
 local function MirrorRing(job)
     local main = ns.Path(PlayerFrame, "PlayerFrameContent", "PlayerFrameContentMain")
     local status = main and main.StatusTexture
     local ring = PlayerFrame.fcui and PlayerFrame.fcui.statusRing
-    local shown = ringOn and UF.active and status ~= nil and ring ~= nil and status:IsShown()
+    local shown = ringOn and UF.active and status ~= nil and ring ~= nil and status:IsShown() and not CombatGlowOff(status)
     if shown then
         local alpha = status:GetAlpha()
         local r, g, b = status:GetVertexColor()
@@ -88,10 +97,25 @@ local function DressStatus(status, frame)
         ring:SetDesaturated(true)
         ring:SetBlendMode("ADD")
         ringJob:Wake()
-    elseif ring then
-        ring:Hide()
+    else
+        if ring then ring:Hide() end
+        glowOff = CombatGlowOff(status)
+        if glowOff then status:SetTexture(nil) end
     end
 end
+
+-- The game turns its glow on its own events: the red one's file goes, the gold one's comes back.
+local function KeepStatusFile(status, frame)
+    if ringOn or not status or CombatGlowOff(status) == glowOff then return end
+    DressStatus(status, frame)
+end
+
+-- The options pass waits out a fight, where the glow shows: the option turns at once.
+ns.OnToggle(function(key)
+    if key ~= "hideCombatGlow" or not UF.active or not On("player") then return end
+    local main = ns.Path(PlayerFrame, "PlayerFrameContent", "PlayerFrameContentMain")
+    DressStatus(main and main.StatusTexture, PlayerFrame)
+end)
 
 -- The client re-sets its atlas on art changes (combat, low health); textures are unprotected, so ours returns mid fight.
 local function PlayerArt()
@@ -276,6 +300,7 @@ local function SkinPlayer()
         -- The zzz and swords sit on the level circle: hide the number, as 1.x did.
         if PlayerLevelText then SetShownIf(PlayerLevelText, not showRest and not showAttack) end
         if ringOn then ringJob:Wake() end
+        KeepStatusFile(main.StatusTexture, frame)
     end
     Keeper("player.status", UpdateStatus)
 

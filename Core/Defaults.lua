@@ -102,6 +102,7 @@ ns.DB_DEFAULTS = {
     eliteFrameTarget = true,
     eliteFrameFocus = true,
     hideThreatGlow = true,
+    hideCombatGlow = false,
     threatNumber = true,
     druidMana = true,
     englishSettings = false,

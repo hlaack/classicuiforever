@@ -95,6 +95,8 @@ ns.TOGGLES = {
     { "eliteFrameTarget", L["OPT_eliteFrameTarget"], L["OPT_eliteFrameTarget_TIP"], parent = "eliteFrames" },
     { "eliteFrameFocus", L["OPT_eliteFrameFocus"], L["OPT_eliteFrameFocus_TIP"], parent = "eliteFrames" },
     { "hideThreatGlow", L["OPT_hideThreatGlow"], L["OPT_hideThreatGlow_TIP"], parent = "unitFrames", search = "aggro red flash" },
+    { "hideCombatGlow", L["OPT_hideCombatGlow"], L["OPT_hideCombatGlow_TIP"], parent = "unitFrames",
+        search = "attack attacked red flash pulse health bar name" },
     { "threatNumber", L["OPT_threatNumber"], L["OPT_threatNumber_TIP"], parent = "unitFrames", search = "aggro threat percent focus" },
     { "druidMana", L["OPT_druidMana"], L["OPT_druidMana_TIP"], parent = "unitFrames", search = "bear cat form mana" },
     { "plainNumbers", L["OPT_plainNumbers"], L["OPT_plainNumbers_TIP"], search = "commas thousands separators digits large" },

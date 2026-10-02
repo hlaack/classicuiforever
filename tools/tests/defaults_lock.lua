@@ -73,6 +73,7 @@ return {
     hideChatFriends = true,
     hideChatMenu = true,
     hideChatScroll = true,
+    hideCombatGlow = false,
     hideGryphonLeft = false,
     hideGryphonRight = false,
     hideKeyRing = false,
