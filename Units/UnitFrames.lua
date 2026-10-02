@@ -330,6 +330,7 @@ local function Apply()
         end)
     end
     if On("player") then SkinPlayer() else RestorePlayer() end
+    ns.DruidManaSync()
     if On("target") then SkinTarget(TargetFrame, "target") else RestoreTargetLike(TargetFrame) end
     ns.ThreatNumberSync()
     if On("focus") then SkinTarget(FocusFrame, "focus") else RestoreTargetLike(FocusFrame) end
@@ -350,6 +351,7 @@ local function Restore()
     HoverGate()
     LayoutRaidManager()
     RestorePlayer()
+    ns.DruidManaSync()
     RestoreTargetLike(TargetFrame)
     ns.ThreatNumberSync()
     RestoreTargetLike(FocusFrame)

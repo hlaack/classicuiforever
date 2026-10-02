@@ -17,5 +17,6 @@ return {
     flatHideBorders = "same for everyone: an option of Flat color, which is off by default",
     swingFlash = "same for everyone: on by default, the flash every swing timer had before",
     threatNumber = "on for everyone: players asked for Era's threat percent back; it shows only in a fight with a target",
+    druidMana = "on for everyone: only a druid sees it, in bear and cat form",
     themeDarkness = "same for everyone: its default is the Dark theme's one shade, unchanged",
 }

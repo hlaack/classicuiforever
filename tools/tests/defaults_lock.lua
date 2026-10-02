@@ -40,6 +40,7 @@ return {
     damageMeter = true,
     damageNumbersRepaired = false,
     dbVersion = 4,
+    druidMana = true,
     eliteFrameFocus = true,
     eliteFramePlayer = true,
     eliteFrameTarget = true,

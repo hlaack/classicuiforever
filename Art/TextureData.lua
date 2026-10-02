@@ -55,6 +55,8 @@ ns.TEX = {
     playerStatus = "CharacterFrame\\UI-Player-Status",
     leaderIcon = "GroupFrame\\UI-Group-LeaderIcon",
     groupIndicator = "CharacterFrame\\UI-CharacterFrame-GroupIndicator",
+    -- The group tab's opening, flipped as the druid mana bar wears it: that bar's mask.
+    druidManaMask = "!DruidManaMask.tga",
     -- cast bars
     castBorder = "CastingBar\\UI-CastingBar-Border",
     castBorderSmall = "CastingBar\\UI-CastingBar-Border-Small",

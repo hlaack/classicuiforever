@@ -95,6 +95,7 @@ ns.TOGGLES = {
     { "eliteFrameFocus", L["OPT_eliteFrameFocus"], L["OPT_eliteFrameFocus_TIP"], parent = "eliteFrames" },
     { "hideThreatGlow", L["OPT_hideThreatGlow"], L["OPT_hideThreatGlow_TIP"], parent = "unitFrames", search = "aggro red flash" },
     { "threatNumber", L["OPT_threatNumber"], L["OPT_threatNumber_TIP"], parent = "unitFrames", search = "aggro threat percent" },
+    { "druidMana", L["OPT_druidMana"], L["OPT_druidMana_TIP"], parent = "unitFrames", search = "bear cat form mana" },
     { "plainNumbers", L["OPT_plainNumbers"], L["OPT_plainNumbers_TIP"], search = "commas thousands separators digits large" },
     { "castBars", L["OPT_castBars"], L["OPT_castBars_TIP"] },
     { "castBarShake", L["OPT_castBarShake"], L["OPT_castBarShake_TIP"], parent = "castBars" },
