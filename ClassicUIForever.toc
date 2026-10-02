@@ -16,9 +16,13 @@ Core\Localization.lua
 Locales\enUS.lua
 Locales\enUS_WhatsNew.lua
 Locales\deDE.lua
+Locales\deDE_WhatsNew.lua
 Locales\frFR.lua
+Locales\frFR_WhatsNew.lua
 Locales\esES.lua
+Locales\esES_WhatsNew.lua
 Locales\itIT.lua
+Locales\itIT_WhatsNew.lua
 Core\Core.lua
 Core\Defaults.lua
 Core\Settings.lua
