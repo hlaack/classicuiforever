@@ -59,14 +59,16 @@ local function IsMetal(atlas)
     return metal
 end
 
+-- A nameplate's art can come back secret: never a table key.
 local function Match(region)
     if not (region.IsObjectType and region:IsObjectType("Texture")) then return end
     local atlas = region:GetAtlas()
+    if ns.IsSecret(atlas) then return end
     if atlas then
         if IsMetal(atlas) then want[region] = true end
     else
         local file = region:GetTexture()
-        if type(file) == "number" and METAL_FILES[file] then want[region] = true end
+        if not ns.IsSecret(file) and type(file) == "number" and METAL_FILES[file] then want[region] = true end
     end
 end
 
