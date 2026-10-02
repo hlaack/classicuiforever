@@ -38,6 +38,32 @@ local function FollowOne(tex, on, shown, alpha, piece)
     tex:SetTexCoord(piece:GetTexCoord())
 end
 
+-- The lowest sublevel above the piece's that another of its parent's regions holds in its draw layer (an action
+-- button's icon over its slot art); nil when none.
+local ceiling, ceilingPiece, ceilingLayer, ceilingSub
+local function Above(region)
+    if region == ceilingPiece or own[region] or not region.GetDrawLayer then return end
+    local drawLayer, sub = region:GetDrawLayer()
+    if drawLayer == ceilingLayer and sub and sub > ceilingSub and (not ceiling or sub < ceiling) then ceiling = sub end
+end
+local function Ceiling(piece, drawLayer, sub)
+    ceiling, ceilingPiece, ceilingLayer, ceilingSub = nil, piece, drawLayer, sub or 0
+    ns.EachRegion(piece:GetParent(), Above)
+    return ceiling
+end
+
+-- Our layers take the two sublevels over the piece; where a region drawn above the piece holds one of them (same
+-- sublevel: the game picks the order, and the dark layer covered the icon), the piece steps down under it first.
+local function MakeRoom(piece, drawLayer, sub)
+    sub = sub or 0
+    local top = Ceiling(piece, drawLayer, sub)
+    if top and sub + 2 >= top and top - 3 >= -8 then
+        sub = top - 3
+        piece:SetDrawLayer(drawLayer, sub)
+    end
+    return sub
+end
+
 local function Follow(piece, layer)
     local shown = piece:IsShown() and piece:IsVisible()
     local alpha = shown and piece:GetAlpha() or nil
@@ -46,6 +72,7 @@ local function Follow(piece, layer)
     FollowOne(layer.cells, layer.flat, shown, alpha, piece)
     if not shown then return end
     local drawLayer, sub = piece:GetDrawLayer()
+    if drawLayer ~= layer.drawLayer or sub ~= layer.sub then sub = MakeRoom(piece, drawLayer, sub) end
     if drawLayer ~= layer.drawLayer or sub ~= layer.sub then
         layer.drawLayer, layer.sub = drawLayer, sub
         if layer.tex then layer.tex:SetDrawLayer(drawLayer, math.min(7, (sub or 0) + 1)) end
