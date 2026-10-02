@@ -61,6 +61,18 @@ function ns.InnerBorder(box)
     end
 end
 
+-- Era's list inset round a list and its scroll column: left pad out from the list, top 3 over it, right past the bar's
+-- arrows, foot on foot (else the list's, less low). host: what it hangs on, when the list clips its children.
+function ns.ListInset(list, bar, foot, host, pad, low)
+    local inset = ns.NewFrame("Frame", nil, host or list)
+    inset:SetPoint("LEFT", list, "LEFT", -(pad or 0), 0)
+    inset:SetPoint("TOP", list, "TOP", 0, 3)
+    inset:SetPoint("RIGHT", bar.up or bar, "RIGHT", 6.5, 0)
+    inset:SetPoint("BOTTOM", foot or list, foot and "TOP" or "BOTTOM", 0, -(low or 0))
+    ns.InnerBorder(inset)
+    return inset
+end
+
 local STONE_LIT = { coords = { 0, 1, 0, 1 }, shade = { 1.25, 1.2, 1.1 } }
 
 function ns.StoneFill(frame, layer)

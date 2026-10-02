@@ -265,17 +265,8 @@ function S.ScrollRows(panel, foot, gap, onValue, columns, onClick, onDoubleClick
     -- No bar until the list outgrows its box, then the old scroll column round it.
     bar.hideWhenIdle = true
     ns.ScrollColumnOn(bar)
-    -- Era's list inset: top 2 under the plates, right on the scroll column's, foot on panel.insetFoot (the Who buttons).
-    local inset = ns.NewFrame("Frame", nil, panel.listBox)
-    inset:SetPoint("LEFT", panel.listBox, "LEFT", 0, 0)
-    inset:SetPoint("TOP", panel.listBox, "TOP", 0, 3)
-    inset:SetPoint("RIGHT", bar.up, "RIGHT", 6.5, 0)
-    if panel.insetFoot then
-        inset:SetPoint("BOTTOM", panel.insetFoot, "TOP", 0, 0)
-    else
-        inset:SetPoint("BOTTOM", panel.listBox, "BOTTOM", 0, 0)
-    end
-    ns.InnerBorder(inset)
+    -- Era's list inset, its foot on panel.insetFoot (the Who buttons) where set.
+    ns.ListInset(panel.listBox, bar, panel.insetFoot)
     list:SetScript("OnMouseWheel", function(_, delta)
         bar:SetValue((bar:GetValue() or 0) - delta)
     end)

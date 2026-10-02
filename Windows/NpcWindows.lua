@@ -132,6 +132,7 @@ local QUEST_PANELS = { "QuestFrameDetailPanel", "QuestFrameProgressPanel", "Ques
 
 function P.after.QuestFrame(frame)
     ShortenNpcWindow(frame, QUEST_SCROLLS, QUEST_PANELS)
+    if frame.Inset then ns.ShowInsetBorder(frame.Inset.NineSlice, true) end
     -- Each panel's per-campaign backdrop, over our parchment otherwise.
     for _, name in ipairs(QUEST_PANELS) do ns.Fade(ns.Path(_G[name], "SealMaterialBG")) end
     ns.SkinQuestRewards()
@@ -141,4 +142,5 @@ end
 function P.after.GossipFrame(frame)
     local panel = frame.GreetingPanel
     ShortenNpcWindow(frame, { panel and panel.ScrollBox }, { panel }, { frame.Background })
+    if frame.Inset then ns.ShowInsetBorder(frame.Inset.NineSlice, true, true) end
 end

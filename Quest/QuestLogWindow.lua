@@ -706,6 +706,7 @@ local function Build()
     listArea:EnableMouseWheel(true)
     listArea:SetScript("OnMouseWheel", function(_, delta) frame.listBar:SetValue(frame.listBar:GetValue() - delta) end)
     frame.listBar = ns.ClassicScrollBar(frame, listArea, function() UpdateList() end)
+    frame.listInset = ns.ListInset(listArea, frame.listBar, nil, frame, 6, 3)
 
     local detail = ns.NewFrame("ScrollFrame", nil, frame)
     detail:SetPoint("TOPLEFT", listArea, "BOTTOMLEFT", 0, -DETAIL_GAP)

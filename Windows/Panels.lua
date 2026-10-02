@@ -27,10 +27,23 @@ local MERCHANT_TAB_LIFT = 1
 local MAIL_TAB_LIFT = 0
 local MAIL_TAB_STEP = -8
 
--- Era's inset border on the game's own social tabs (Friends, Raid); Who and Guild (ours) draw their own, and the skin
--- keeps every other inset border faded.
+-- Era's inset border on the game's own social tabs (Friends, Raid) and the quest and gossip windows; Who and Guild
+-- (ours) draw their own, and the skin keeps every other inset border faded.
 local INSET_EDGES = { "TopLeftCorner", "TopRightCorner", "BottomLeftCorner", "BottomRightCorner", "TopEdge", "BottomEdge",
     "LeftEdge", "RightEdge" }
+-- squareFoot: a page drawn under the border (gossip's) took the bottom left bevel on its corner; that corner goes square,
+-- the left edge run down to the foot.
+function ns.ShowInsetBorder(slice, up, squareFoot)
+    if not slice then return end
+    for _, key in ipairs(INSET_EDGES) do
+        if slice[key] then ns.SetAlphaIf(slice[key], up and not (squareFoot and key == "BottomLeftCorner") and 1 or 0) end
+    end
+    local edge, top = slice.LeftEdge, slice.TopLeftCorner
+    if squareFoot and edge and top then
+        ns.SetTwoPointsIf(edge, "TOPLEFT", top, "BOTTOMLEFT", 0, 0, "BOTTOMLEFT", slice, "BOTTOMLEFT", 0, 0)
+    end
+    if up then ns.DrainSlice(slice) end
+end
 local function GameSocialTabUp()
     local raid, header = _G.RaidFrame, _G.FriendsTabHeader
     if raid and raid:IsVisible() and raid:GetParent() == _G.FriendsFrame then return true end
@@ -38,13 +51,8 @@ local function GameSocialTabUp()
     return header ~= nil and header:IsVisible() and header:GetAlpha() > 0.5
 end
 function ns.SocialInsetBorder()
-    local slice = _G.FriendsFrameInset and _G.FriendsFrameInset.NineSlice
-    if not slice then return end
-    local up = GameSocialTabUp()
-    for _, key in ipairs(INSET_EDGES) do
-        if slice[key] then ns.SetAlphaIf(slice[key], up and 1 or 0) end
-    end
-    if up then ns.DrainSlice(slice) end
+    local inset = _G.FriendsFrameInset
+    if inset then ns.ShowInsetBorder(inset.NineSlice, GameSocialTabUp()) end
 end
 local function InsetSoon() ns.Sched.NextFrame("social.inset", ns.SocialInsetBorder) end
 local function GameSocialTabs()

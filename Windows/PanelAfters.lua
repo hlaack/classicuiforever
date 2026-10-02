@@ -126,10 +126,17 @@ end
 function A.MerchantFrame(frame)
     ns.FadeTextures(frame, 0, OWN_ONLY)
     ns.EraTabRow({ _G["MerchantFrameTab1"], _G["MerchantFrameTab2"] })
-    FadeTree(frame.Inset or _G["MerchantFrameInset"])
+    -- Era's inset border round the goods, as the Raid tab's; its fill stays faded over our floor.
+    local inset = frame.Inset or _G["MerchantFrameInset"]
+    if inset then
+        ns.FadeTextures(inset)
+        ns.ShowInsetBorder(inset.NineSlice, true)
+    end
     FadeTree(_G["MerchantExtraCurrencyInset"])
     FadeTree(_G["MerchantExtraCurrencyBg"])
-    FadeTree(_G["MerchantMoneyInset"])
+    -- Era's dark money box: the inset's own fill, its border as the goods'.
+    local money = _G["MerchantMoneyInset"]
+    if money then ns.ShowInsetBorder(money.NineSlice, true) end
     -- Old stone strip at the inset's foot, repair slots left. The client shows the
     -- left piece only on the merchant tab; our right piece follows it.
     local left = _G["MerchantFrameBottomLeftBorder"]
