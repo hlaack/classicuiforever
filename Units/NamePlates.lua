@@ -1,12 +1,13 @@
 local _, ns = ...
 
--- 1.x plate: 128x16 border with the level in its right slot, 102x8 health bar, name above, cast bar below.
+-- 1.x plate: 128x16 border with the level in its right slot, 103.75x10 health bar, name above, cast bar below.
 -- We re-lay the client plate's pieces and fade its retail art; forbidden plates (instances) are left alone.
 
 local Dress, DressNew, FadeKeys, IsSecret = ns.Dress, ns.DressNew, ns.FadeKeys, ns.IsSecret
 
 local BORDER_W, BORDER_H = 128, 16
-local INSET_L, INSET_R, INSET_T, INSET_B = 5, 21, 4, 4
+-- Era's classic plate: the bar 3.5 and 20.75 in from the border's ends, 0.5 above its 3-each centring.
+local INSET_L, INSET_R, INSET_T, INSET_B = 3.5, 20.75, 2.5, 3.5
 local BAR_W, BAR_H = BORDER_W - INSET_L - INSET_R, BORDER_H - INSET_T - INSET_B
 local BORDER_GAP = 2       -- health border to cast border
 local NAME_GAP = 2         -- name bottom above the border top
@@ -36,16 +37,16 @@ local PLATE_EVENTS = { "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED",
 local CAST_EVENTS = { UNIT_SPELLCAST_START = true, UNIT_SPELLCAST_STOP = true, UNIT_SPELLCAST_CHANNEL_START = true,
     UNIT_SPELLCAST_CHANNEL_STOP = true, UNIT_SPELLCAST_INTERRUPTED = true }
 
--- The game's nameplate Size (Small..Huge) at the client's classic-style scale steps.
+-- The game's nameplate Size (Small..Huge) one classic-style step up: Forever's default (Small) draws Era's (Medium).
 local SIZE_CVAR = "nameplateSize"
-local SIZE_SCALES = { 0.8, 1.0, 1.25, 1.4, 1.6 }
+local SIZE_SCALES = { 1.0, 1.25, 1.4, 1.6, 1.8 }
 -- Read at most once a second (every plate asks on every re-lay); CVAR_UPDATE clears it.
 local plateScale, plateScaleAt = nil, 0
 local function PlateScale()
     local now = GetTime()
     if plateScale and now - plateScaleAt < 1 then return plateScale end
     local value = tonumber(ns.GetCVar(SIZE_CVAR))
-    plateScale, plateScaleAt = SIZE_SCALES[value or 2] or 1, now
+    plateScale, plateScaleAt = SIZE_SCALES[value or 1] or 1, now
     return plateScale
 end
 
