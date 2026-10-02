@@ -2,7 +2,7 @@ local _, ns = ...
 local L = ns.L
 
 ns.DB_DEFAULTS = {
-    dbVersion = 4,
+    dbVersion = 6,
     classicBar = true,
     oneBar = false,
     classicBarSize = false,
@@ -100,7 +100,7 @@ ns.DB_DEFAULTS = {
     eliteFramePlayer = true,
     eliteFrameTarget = true,
     eliteFrameFocus = true,
-    hideThreatGlow = false,
+    hideThreatGlow = true,
     threatNumber = true,
     druidMana = true,
     plainQuestItems = false,

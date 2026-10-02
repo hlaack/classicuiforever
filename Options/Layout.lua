@@ -221,6 +221,18 @@ function ns.OfferClassicLook()
     if StaticPopup_Show then StaticPopup_Show("FCUI_CLASSIC_LOOK_OFFER") end
 end
 
+-- The threat glow, hidden by default now for every install, not offered (a small look, not a layout change): the account
+-- and every profile follow the new default; Hide threat glow brings it back.
+function ns.HideThreatGlowNow()
+    local db = ns.db
+    db.hideThreatGlow = true
+    db.threatGlowOffer = nil
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" then shot.hideThreatGlow = nil end
+    end
+    db.dbVersion = 6
+end
+
 -- Once, at the first world entry after the upgrade.
 function ns.OfferBarSize()
     if not ns.db or not ns.db.barSizeOffer then return end

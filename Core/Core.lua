@@ -414,6 +414,8 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         local upgraded = saved and saved < 2
         local big = ns.db.defaultBarSize == true
         if saved and saved < 3 then ns.KeepOldLook() elseif saved == 3 then ns.NoteBarsLook() end
+        -- Last, as it writes the newest dbVersion.
+        if saved and saved < 6 then ns.HideThreatGlowNow() end
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
         ns.BarSizeKey()
