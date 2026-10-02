@@ -9,6 +9,7 @@
 ## AddonCompartmentFunc: ForeverClassicUI_OnAddonCompartmentClick
 ## SavedVariables: ForeverClassicUIDB
 ## SavedVariablesPerCharacter: ForeverClassicUICharDB
+## LoadSavedVariablesFirst: 1
 ## DefaultState: enabled
 
 Core\Localization.lua

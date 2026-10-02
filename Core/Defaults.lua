@@ -103,6 +103,10 @@ ns.DB_DEFAULTS = {
     hideThreatGlow = true,
     threatNumber = true,
     druidMana = true,
+    englishSettings = false,
+    englishNews = false,
+    englishMessages = false,
+    englishWindows = false,
     plainQuestItems = false,
     plainNumbers = false,
     hideStatusMain = false,
@@ -284,4 +288,9 @@ ns.RELOAD_KEYS = {
     gameMenu = { off = L["CORE_THE_GAME_MENU_KEEPS_THE"] },
     -- Restore changes nothing; the window keeps the old dialog art.
     settingsPanel = { off = L["CORE_THE_SETTINGS_WINDOW_KEEPS_CLASSIC"] },
+    -- Core/Localization.lua picks each string's language as the addon loads.
+    englishSettings = { own = true, on = L["CORE_ENGLISH_TEXT_RELOAD"], off = L["CORE_ENGLISH_TEXT_RELOAD"] },
+    englishNews = { own = true, on = L["CORE_ENGLISH_TEXT_RELOAD"], off = L["CORE_ENGLISH_TEXT_RELOAD"] },
+    englishMessages = { own = true, on = L["CORE_ENGLISH_TEXT_RELOAD"], off = L["CORE_ENGLISH_TEXT_RELOAD"] },
+    englishWindows = { own = true, on = L["CORE_ENGLISH_TEXT_RELOAD"], off = L["CORE_ENGLISH_TEXT_RELOAD"] },
 }

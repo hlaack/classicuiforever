@@ -209,6 +209,18 @@ ns.TOGGLES = {
     { "addonMessages", L["OPT_addonMessages"], L["OPT_addonMessages_TIP"], search = "chat login lines quiet" },
 }
 
+-- Our own text in English on another client language, part by part (Core/Localization.lua); account-wide.
+local ENGLISH_ROWS = {
+    { "englishSettings", L["OPT_englishSettings"], L["OPT_englishSettings_TIP"], checks = "englishText", drop = true,
+        search = "english language translation locale" },
+    { "englishNews", L["OPT_englishNews"], nil, checks = "englishText", drop = true },
+    { "englishMessages", L["OPT_englishMessages"], nil, checks = "englishText", drop = true },
+    { "englishWindows", L["OPT_englishWindows"], nil, checks = "englishText", drop = true },
+}
+if not ns.ENGLISH_CLIENT then
+    for _, row in ipairs(ENGLISH_ROWS) do ns.TOGGLES[#ns.TOGGLES + 1] = row end
+end
+
 -- Radio rows: key -> its group's keys (Core ToggleChanged keeps exactly one on).
 ns.TOGGLE_RADIO = {}
 do

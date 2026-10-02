@@ -1,5 +1,5 @@
-if GetLocale() ~= "deDE" then return end
 local _, ns = ...
+if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- German. Keys and placeholders match Locales/enUS.lua (checker LOCALEKEYS).
@@ -356,6 +356,11 @@ L["OPT_welcomeNote"] = "Willkommensnotiz"
 L["OPT_welcomeNote_TIP"] = "Die Willkommensnotiz beim ersten Einloggen eines Charakters mit dem Addon."
 L["OPT_addonMessages"] = "Addonnachrichten"
 L["OPT_addonMessages_TIP"] = "Die Zeilen des Addons im Chat beim Einloggen: Neuerungen nach einem Update und Hinweise wie der zu den Leisten. Aus hält den Chat ruhig."
+L["OPT_englishSettings"] = "Englischer Text: Einstellungen"
+L["OPT_englishSettings_TIP"] = "Zeigt die eigenen Texte des Addons auf Englisch statt in der Sprache deines Spiels, Teil für Teil. Die Texte des Spiels bleiben, wie sie sind. Wirkt nach einem Neuladen."
+L["OPT_englishNews"] = "Englischer Text: Neuigkeiten und Willkommen"
+L["OPT_englishMessages"] = "Englischer Text: Chatmeldungen und Dialoge"
+L["OPT_englishWindows"] = "Englischer Text: Fenster, Leisten und Bearbeitungsmodus"
 L["BAR_OPENED_BAGS_TAKE_THIS_SIZE"] = "Geöffnete Taschen übernehmen diese Größe auch"
 L["BAR_OPENED_BAGS_ABOVE_THE_BAG"] = "Geöffnete Taschen über den Taschentasten"
 L["BAR_ONE_BAG_ALL_BAGS_OPEN"] = "Eine Tasche: Alle Taschen öffnen sich als ein Fenster"
@@ -522,6 +527,7 @@ L["CORE_QUEST_LEVELS_SHOW_EVERYWHERE_ONCE"] = "Queststufen erscheinen überall, 
 L["CORE_QUEST_LEVELS_LEAVE_THE_MAP"] = "Queststufen verschwinden von Karte und Questverfolgung, sobald die Oberfläche neu lädt."
 L["CORE_RELOAD_WAITS_FOR_FIGHT"] = "Das Neuladen wartet, bis dieser Kampf endet. Deine Änderung ist gespeichert."
 L["CORE_RELOAD_AFTER_FIGHT"] = "%s\n\nDer Kampf ist vorbei. Jetzt neu laden, um deine Änderung abzuschließen?"
+L["CORE_ENGLISH_TEXT_RELOAD"] = "Die Texte des Addons wechseln die Sprache, sobald die Oberfläche neu lädt."
 L["CORE_NUMBERS_DROP_SEPARATORS_ONCE"] = "Zahlen auf den Leisten verlieren ihre Tausendertrennzeichen, sobald die Oberfläche neu lädt."
 L["CORE_NUMBERS_TAKE_SEPARATORS_ONCE"] = "Zahlen auf den Leisten erhalten ihre Tausendertrennzeichen zurück, sobald die Oberfläche neu lädt."
 L["CORE_THE_ACTION_BARS_ARE_FIXED"] = "Die Aktionsleisten werden beim Neuladen der Oberfläche an den Plätzen der klassischen Leiste festgesetzt; bis dahin kann ein Kampf sie verschieben."

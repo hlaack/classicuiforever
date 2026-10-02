@@ -19,4 +19,8 @@ return {
     threatNumber = "on for everyone: players asked for Era's threat percent back; it shows only in a fight with a target",
     druidMana = "on for everyone: only a druid sees it, in bear and cat form",
     themeDarkness = "same for everyone: its default is the Dark theme's one shade, unchanged",
+    englishSettings = "same for everyone: opt-in, off by default; only shown on a non-English client",
+    englishNews = "same for everyone: opt-in, off by default; only shown on a non-English client",
+    englishMessages = "same for everyone: opt-in, off by default; only shown on a non-English client",
+    englishWindows = "same for everyone: opt-in, off by default; only shown on a non-English client",
 }

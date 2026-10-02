@@ -10,8 +10,9 @@ local NAME_MAX = 32
 local EXTRA = { "themeColor", "themeDarkness", "barScale", "microScale", "oneBagColumns", "keyTextSize", "plateNameSize",
     "swingColorMain", "swingColorOff", "swingColorRanged", "swingBorder", "meterBackground", "prdGap", "meterHeader", "unitNameSize", "thickEnemyColor", "meterArtPan",
     "meterPanPreview" }
--- The game's own setting mirrored, not ours to keep per profile.
-local SKIP = { gameDamageNumbers = true }
+-- The game's own setting mirrored, and the English text picks (read before the profile loads): account-wide.
+local SKIP = { gameDamageNumbers = true, englishSettings = true, englishNews = true, englishMessages = true,
+    englishWindows = true }
 ns.PROFILE_DEFAULT = DEFAULT
 
 local keys

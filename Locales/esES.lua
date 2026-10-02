@@ -1,6 +1,5 @@
-local locale = GetLocale()
-if locale ~= "esES" and locale ~= "esMX" then return end
 local _, ns = ...
+if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Spanish (Spain and Mexico). Keys and placeholders match Locales/enUS.lua (checker LOCALEKEYS).
@@ -357,6 +356,11 @@ L["OPT_welcomeNote"] = "Nota de bienvenida"
 L["OPT_welcomeNote_TIP"] = "La nota de bienvenida al primer inicio de sesión de un personaje con el accesorio."
 L["OPT_addonMessages"] = "Mensajes del accesorio"
 L["OPT_addonMessages_TIP"] = "Las líneas del accesorio en el chat al iniciar sesión: novedades tras una actualización y notas como la de las barras. Desactivado mantiene el chat en silencio."
+L["OPT_englishSettings"] = "Texto en inglés: Opciones"
+L["OPT_englishSettings_TIP"] = "Muestra los textos propios del addon en inglés en lugar del idioma de tu juego, parte por parte. Los textos del juego no cambian. Surte efecto tras recargar."
+L["OPT_englishNews"] = "Texto en inglés: Novedades y bienvenida"
+L["OPT_englishMessages"] = "Texto en inglés: Mensajes de chat y ventanas emergentes"
+L["OPT_englishWindows"] = "Texto en inglés: Ventanas, barras y modo de edición"
 L["BAR_OPENED_BAGS_TAKE_THIS_SIZE"] = "Las bolsas abiertas toman también este tamaño"
 L["BAR_OPENED_BAGS_ABOVE_THE_BAG"] = "Bolsas abiertas sobre los botones de bolsa"
 L["BAR_ONE_BAG_ALL_BAGS_OPEN"] = "Una bolsa: todas las bolsas se abren como una ventana"
@@ -523,6 +527,7 @@ L["CORE_QUEST_LEVELS_SHOW_EVERYWHERE_ONCE"] = "Los niveles de misión aparecen e
 L["CORE_QUEST_LEVELS_LEAVE_THE_MAP"] = "Los niveles de misión salen del mapa y del seguimiento al recargar la interfaz."
 L["CORE_RELOAD_WAITS_FOR_FIGHT"] = "La recarga espera a que termine este combate. Tu cambio está guardado."
 L["CORE_RELOAD_AFTER_FIGHT"] = "%s\n\nEl combate terminó. ¿Recargar ahora para completar tu cambio?"
+L["CORE_ENGLISH_TEXT_RELOAD"] = "Los textos del addon cambian de idioma al recargar la interfaz."
 L["CORE_NUMBERS_DROP_SEPARATORS_ONCE"] = "Los números de las barras pierden sus separadores de miles al recargar la interfaz."
 L["CORE_NUMBERS_TAKE_SEPARATORS_ONCE"] = "Los números de las barras recuperan sus separadores de miles al recargar la interfaz."
 L["CORE_THE_ACTION_BARS_ARE_FIXED"] = "Las barras de acción se fijan en los sitios de la barra clásica al recargar la interfaz; hasta entonces, un combate puede moverlas."
