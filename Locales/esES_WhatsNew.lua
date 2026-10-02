@@ -3,6 +3,12 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
+L["WN16_1_TITLE"] = "Iconos de acción"
+L["WN16_1_TEXT"] = "Con un tema activo, los iconos de los botones de acción ya no se oscurecen al azar."
+L["WN16_2_TITLE"] = "Brillo de combate"
+L["WN16_2_TEXT"] = "Con Barras de salud gruesas sobre el nombre, el brillo rojo de combate y el dorado de descanso rodean ahora todo el marco del jugador en lugar de la barra de salud. Las Barras de salud gruesas están desactivadas por defecto; actívalas en las opciones (/fcui), en Marcos de unidad."
+L["WN16_3_TITLE"] = "Placas de nombre"
+L["WN16_3_TEXT"] = "Con las placas de nombre clásicas desactivadas, las placas de nombre del juego ya no causan mensajes de error."
 L["WN15_1_TITLE"] = "Amenaza"
 L["WN15_1_TEXT"] = "El porcentaje de amenaza de Classic Era aparece ahora sobre los marcos del objetivo y del foco en combate. El brillo rojo alrededor de los marcos de unidad queda oculto por defecto; para recuperarlo, desmarca Ocultar brillo de amenaza en las opciones (/fcui), en Marcos de unidad."
 L["WN15_2_TITLE"] = "Maná de druida"

@@ -2,6 +2,12 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN16_1_TITLE"] = "Action icons"
+L["WN16_1_TEXT"] = "With a theme on, action button icons no longer turn dark at random."
+L["WN16_2_TITLE"] = "Combat glow"
+L["WN16_2_TEXT"] = "With Thick health bars over the name, the red combat glow and the gold resting glow now light up the whole player frame instead of the health bar. Thick health bars are off by default; turn them on in the options (/fcui), under Unit frames."
+L["WN16_3_TITLE"] = "Nameplates"
+L["WN16_3_TEXT"] = "With the classic nameplates turned off, the game's own nameplates no longer cause error messages."
 L["WN15_1_TITLE"] = "Threat"
 L["WN15_1_TEXT"] = "Classic Era's threat percent now shows above the target and focus frames in a fight. The red glow around the unit frames is now hidden by default; to bring it back, uncheck Hide threat glow in the options (/fcui), under Unit frames."
 L["WN15_2_TITLE"] = "Druid mana"

@@ -2,6 +2,15 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.16.1] - 2026-10-02
+
+### Changed
+- With thick health bars over the name, the red combat glow and the gold resting glow light up the whole player frame, as the threat glow does, instead of washing over the health bar.
+
+### Fixed
+- With a theme on, action button icons no longer turn dark. A theme layer could draw on top of the icon, on and off.
+- With the classic nameplates off, the game's nameplates no longer raise "Attempt to access forbidden object" errors.
+
 ## [0.16.0] - 2026-10-02
 
 ### Added

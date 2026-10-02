@@ -3,6 +3,12 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN16_1_TITLE"] = "Aktionssymbole"
+L["WN16_1_TEXT"] = "Mit einem Design werden die Symbole der Aktionstasten nicht mehr zufällig dunkel."
+L["WN16_2_TITLE"] = "Kampfleuchten"
+L["WN16_2_TEXT"] = "Mit Dicke Gesundheitsleisten über dem Namen leuchten das rote Kampfleuchten und das goldene Ausruhleuchten jetzt um das ganze Spielerfenster statt über der Gesundheitsleiste. Dicke Gesundheitsleisten sind standardmäßig aus; schalte sie in den Optionen (/fcui) unter Einheitenfenster ein."
+L["WN16_3_TITLE"] = "Namensplaketten"
+L["WN16_3_TEXT"] = "Mit ausgeschalteten klassischen Namensplaketten lösen die Namensplaketten des Spiels keine Fehlermeldungen mehr aus."
 L["WN15_1_TITLE"] = "Bedrohung"
 L["WN15_1_TEXT"] = "Die Bedrohung in Prozent aus Classic Era steht jetzt im Kampf über dem Ziel- und Fokusfenster. Das rote Leuchten um die Einheitenfenster ist jetzt standardmäßig aus; um es zurückzuholen, entferne in den Optionen (/fcui) unter Einheitenfenster das Häkchen bei Bedrohungsleuchten ausblenden."
 L["WN15_2_TITLE"] = "Druidenmana"

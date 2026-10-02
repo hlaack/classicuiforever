@@ -3,6 +3,12 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN16_1_TITLE"] = "Icone delle azioni"
+L["WN16_1_TEXT"] = "Con un tema attivo, le icone dei pulsanti azione non si scuriscono più a caso."
+L["WN16_2_TITLE"] = "Bagliore di combattimento"
+L["WN16_2_TEXT"] = "Con Barre della salute spesse sopra il nome, il bagliore rosso di combattimento e quello dorato di riposo ora circondano l'intero riquadro del giocatore invece della barra della salute. Le Barre della salute spesse sono disattivate di base; attivale nelle opzioni (/fcui), sotto Riquadri delle unità."
+L["WN16_3_TITLE"] = "Targhette"
+L["WN16_3_TEXT"] = "Con le targhette classiche disattivate, le targhette del gioco non causano più messaggi di errore."
 L["WN15_1_TITLE"] = "Minaccia"
 L["WN15_1_TEXT"] = "La percentuale di minaccia di Classic Era ora compare sopra i riquadri del bersaglio e del focus in combattimento. Il bagliore rosso attorno ai riquadri delle unità ora è nascosto di base; per riaverlo, togli la spunta a Nascondi bagliore di minaccia nelle opzioni (/fcui), sotto Riquadri delle unità."
 L["WN15_2_TITLE"] = "Mana del druido"

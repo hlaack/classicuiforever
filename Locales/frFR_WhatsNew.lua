@@ -3,6 +3,12 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
+L["WN16_1_TITLE"] = "Icônes d'action"
+L["WN16_1_TEXT"] = "Avec un thème actif, les icônes des boutons d'action ne s'assombrissent plus au hasard."
+L["WN16_2_TITLE"] = "Lueur de combat"
+L["WN16_2_TEXT"] = "Avec Barres de vie épaisses sur le nom, la lueur rouge de combat et la lueur dorée de repos entourent désormais tout le cadre du joueur au lieu de la barre de vie. Les Barres de vie épaisses sont désactivées par défaut ; activez-les dans les options (/fcui), sous Cadres d'unité."
+L["WN16_3_TITLE"] = "Barres de nom"
+L["WN16_3_TEXT"] = "Avec les barres de nom classiques désactivées, les barres de nom du jeu ne provoquent plus de messages d'erreur."
 L["WN15_1_TITLE"] = "Menace"
 L["WN15_1_TEXT"] = "Le pourcentage de menace de Classic Era s'affiche désormais au-dessus des cadres de la cible et du focus en combat. La lueur rouge autour des cadres d'unité est désormais masquée par défaut ; pour la retrouver, décochez Masquer la lueur de menace dans les options (/fcui), sous Cadres d'unité."
 L["WN15_2_TITLE"] = "Mana du druide"
