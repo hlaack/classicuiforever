@@ -290,6 +290,16 @@ function UF.NameY(kind)
     return UF.NAME_TEXT_Y + (UF.Thick(kind) == "name" and NAME_ABOVE or 0)
 end
 
+-- There the threat percent's box (ThreatNumber.lua) covers the name on target and focus: while it shows, the name's
+-- foot goes 1 over the box's top, whatever the name size.
+local THREAT_KINDS = { target = true, focus = true }
+function UF.NameSpot(kind)
+    if THREAT_KINDS[kind] and UF.ThreatShown and UF.ThreatShown(kind) and UF.Thick(kind) == "name" then
+        return "BOTTOMLEFT", UF.THREAT_BOX_TOP + 1
+    end
+    return "TOPLEFT", UF.NameY(kind)
+end
+
 -- Name size (option), on the client's small font; the client re-sets it on some updates.
 ns.UNIT_NAME_MIN, ns.UNIT_NAME_MAX, ns.UNIT_NAME_SIZE = 8, 16, 10
 function UF.NameFont(name)
@@ -306,7 +316,8 @@ function UF.PlaceName(name, contextual, host, x, kind)
     name:SetParent(contextual)
     name:SetWidth(100)
     name:SetJustifyH("CENTER")
-    ns.SetPointOnce(name, "TOPLEFT", host, "TOPLEFT", x, UF.NameY(kind))
+    local point, y = UF.NameSpot(kind)
+    ns.SetPointOnce(name, point, host, "TOPLEFT", x, y)
     UF.NameFont(name)
 end
 

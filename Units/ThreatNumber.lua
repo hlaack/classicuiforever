@@ -1,7 +1,8 @@
 local _, ns = ...
 
--- Era's threat percent over the target frame (its TargetFrameNumericalThreat), as our own box: the game shows its own
--- only with threatShowNumeric on, a setting no code of ours may write at load. The game's own one fades under ours.
+-- Era's threat percent over the target frame (its TargetFrameNumericalThreat), as our own box, and the same over the
+-- focus frame: the game shows its own only with threatShowNumeric on, a setting no code of ours may write at load.
+-- The game's own ones fade under ours.
 
 local UF = ns.UF
 local IsSecret = ns.IsSecret
@@ -13,19 +14,25 @@ local GetThreatStatusColor = GetThreatStatusColor
 local BOX_W, BOX_H, FILL_W, FILL_H, FILL_Y, TEXT_Y = 49, 18, 37, 14, -3, -4
 local BOX_X, BOX_Y = -30, -26
 local BORDER_COORDS = { 0, 0.765625, 0, 0.5625 }
--- The target's threat list and the player's standing on it; a new target and the fight's end.
+local FRAMES = { target = "TargetFrame", focus = "FocusFrame" }
+-- The mobs' threat lists and the player's standing on them; a new target or focus and the fight's end.
 local UNIT_EVENTS = { "UNIT_THREAT_LIST_UPDATE", "UNIT_THREAT_SITUATION_UPDATE" }
-local EVENTS = { "PLAYER_TARGET_CHANGED", "PLAYER_REGEN_ENABLED" }
-local box, driver, live
+local EVENTS = { "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "PLAYER_REGEN_ENABLED" }
+local boxes, live, shown = {}, {}, {}
+local driver, focusDriver
 
-local function GameNumber()
-    return ns.Path(TargetFrame, "TargetFrameContent", "TargetFrameContentContextual", "NumericalThreat")
+-- Over a thick bar the name steps up while the box shows, its foot 1 over the box's top (UnitFrameCore.lua).
+UF.THREAT_BOX_TOP = BOX_Y + BOX_H
+function UF.ThreatShown(unit) return shown[unit] == true end
+
+local function GameNumber(frame)
+    return ns.Path(frame, "TargetFrameContent", "TargetFrameContentContextual", "NumericalThreat")
 end
 
-local function Build()
-    box = ns.NewFrame("Frame", nil, TargetFrame)
+local function Build(frame)
+    local box = ns.NewFrame("Frame", nil, frame)
     box:SetSize(BOX_W, BOX_H)
-    box:SetPoint("BOTTOM", TargetFrame, "TOP", BOX_X, BOX_Y)
+    box:SetPoint("BOTTOM", frame, "TOP", BOX_X, BOX_Y)
     box.fill = box:CreateTexture(nil, "BACKGROUND")
     ns.SetTex(box.fill, "statusBar")
     box.fill:SetSize(FILL_W, FILL_H)
@@ -37,15 +44,18 @@ local function Build()
     box.text = box:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     box.text:SetPoint("TOP", box, "TOP", 0, TEXT_Y)
     box:Hide()
+    return box
 end
 
 -- The game's own reading (UnitFrame_UpdateThreatIndicator): your share, or your lead over the next while tanking.
-local function Update()
+local function UpdateBox(unit)
+    local box = boxes[unit]
+    if not box then return end
     local show = false
-    if live and UnitExists("target") and not UnitIsDead("target") and UnitClassification("target") ~= "minus" then
-        local tanking, status, _, raw = UnitDetailedThreatSituation("player", "target")
+    if live[unit] and UnitExists(unit) and not UnitIsDead(unit) and UnitClassification(unit) ~= "minus" then
+        local tanking, status, _, raw = UnitDetailedThreatSituation("player", unit)
         local value = raw
-        if tanking and not IsSecret(tanking) then value = UnitThreatPercentageOfLead("player", "target") end
+        if tanking and not IsSecret(tanking) then value = UnitThreatPercentageOfLead("player", unit) end
         if value and status and not IsSecret(value) and not IsSecret(status) and value ~= 0 then
             box.text:SetFormattedText("%1.0f%%", value)
             box.fill:SetVertexColor(GetThreatStatusColor(status))
@@ -53,24 +63,43 @@ local function Update()
         end
     end
     ns.SetShownIf(box, show)
+    if shown[unit] ~= show then
+        shown[unit] = show
+        UF.PlaceTargetName(unit)
+    end
 end
 
--- On with the classic target frame and the option; called by the unit frame module and the option's switch.
+local function Update()
+    UpdateBox("target")
+    UpdateBox("focus")
+end
+
+-- Each with its classic frame and the option; called by the unit frame module and the option's switch.
 function ns.ThreatNumberSync()
-    local on = UF.active and UF.On("target") and ns.db.threatNumber ~= false
-    if on and not box then Build() end
-    if on and not driver then driver = ns.EventFrame(EVENTS, Update) end
+    local any = false
+    for unit, name in pairs(FRAMES) do
+        local frame = _G[name]
+        local on = frame ~= nil and UF.active and UF.On(unit) and ns.db.threatNumber ~= false
+        if on and not boxes[unit] then boxes[unit] = Build(frame) end
+        live[unit] = on
+        any = any or on
+        local game = frame and GameNumber(frame)
+        if game then ns.SetAlphaIf(game, on and 0 or 1) end
+    end
+    if any and not driver then
+        driver = ns.EventFrame(EVENTS, Update)
+        focusDriver = ns.EventFrame(UNIT_EVENTS, Update, "focus")
+    end
     if driver then
         driver:UnregisterAllEvents()
-        if on then
+        focusDriver:UnregisterAllEvents()
+        if any then
             ns.RegisterEvents(driver, EVENTS)
             ns.RegisterEvents(driver, UNIT_EVENTS, "player", "target")
+            ns.RegisterEvents(focusDriver, UNIT_EVENTS, "focus")
         end
     end
-    live = on
-    local game = GameNumber()
-    if game then ns.SetAlphaIf(game, on and 0 or 1) end
-    if box then Update() end
+    Update()
 end
 
 -- The options pass waits out a fight, where threat shows: the switch answers at once.

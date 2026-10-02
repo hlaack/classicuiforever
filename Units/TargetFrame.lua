@@ -174,6 +174,20 @@ local function ClientHidesLevel(unit)
     return level <= 0
 end
 
+-- The name's spot again as the threat percent shows or goes (ThreatNumber.lua). A text, not a frame: it moves in a
+-- fight too, as the keeper's level text does.
+function UF.PlaceTargetName(unit)
+    if not UF.active then return end
+    for frame, entry in pairs(UF.frames) do
+        local main = entry.unit == unit and ns.Path(frame, "TargetFrameContent", "TargetFrameContentMain")
+        local host = frame.fcui and frame.fcui.host
+        if main and main.Name and host then
+            local point, y = UF.NameSpot(unit)
+            ns.SetPointOnce(main.Name, point, host, "TOPLEFT", NAME_X, y)
+        end
+    end
+end
+
 local function SkinTarget(frame, unit)
     if Busy() then return end
     if not frame then return end
