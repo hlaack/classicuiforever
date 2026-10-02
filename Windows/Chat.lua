@@ -85,7 +85,7 @@ local hidden = {}           -- client textures we hid
 local was = {}              -- client region -> its points and size before ours
 local buttonsOff = {}       -- client button -> faded by Hide chat buttons
 local channelWas            -- the voice button's own flash atlas while dressed
-local alertsAt, primaryTop  -- the slot the friends button stands on; ChatFrame1's top button
+local sharedAt              -- the column the menu, voice and friends buttons stand on
 local primaryChat
 local knownFrames = 0
 local holder, watch
@@ -126,6 +126,17 @@ local function SetAside(frame)
     if not frame or held[frame] then return end
     Hold(frame)
     frame:SetParent(holder)
+end
+
+-- Onto a chat's button frame, layering kept: a child of a hidden chat hides with it.
+local function Carry(button, chat)
+    Hold(button)
+    local parent = chat.buttonFrame
+    if button:GetParent() == parent then return end
+    local strata, level = button:GetFrameStrata(), button:GetFrameLevel()
+    button:SetParent(parent)
+    button:SetFrameStrata(strata)
+    button:SetFrameLevel(level)
 end
 
 -- A client button over our slot. Its click stays the client's: our code writing
@@ -314,32 +325,6 @@ local function PlaceAlerts(alerts, rel)
     Place(alerts, "BOTTOM", rel, "TOP", 0, 4 - rise)
 end
 
--- Friends button follows the visible docked column (ChatFrame1's hide on other tabs), from our own frame's pass after
--- the client's tab pass, kicked by a column's show.
-local function Follow(slot)
-    if alertsAt == slot then return end
-    local chat = slot.chat
-    if chat ~= primaryChat and not chat.isDocked then return end
-    local alerts = _G.ChatAlertFrame
-    if not alerts then return end
-    alertsAt = slot
-    PlaceAlerts(alerts, chat == primaryChat and primaryTop or columns[chat].top or slot)
-end
-
-local function FollowShown()
-    for _, col in pairs(columns) do
-        if col.up:IsVisible() then Follow(col.up) end
-    end
-end
-local followJob = ns.Sched.OnFrame(CreateFrame("Frame"), { name = "chat.follow", every = math.huge, fn = FollowShown })
-
--- A column showing: the friends button may follow it, and an undocked window shown now is dressed.
-local function ColumnShown(shown)
-    if not shown or not active then return end
-    followJob:Kick()
-    WatchNextFrame()
-end
-
 local function Slot(chat, strata)
     local slot = ns.NewFrame("Frame", nil, chat.buttonFrame)
     slot:SetSize(SIZE, SIZE)
@@ -379,14 +364,75 @@ local function Stack(col)
     col.top = StackSlot(col, col.up, top, Off("scroll"))
 end
 
+-- Menu, voice and friends buttons on the docked column showing, in the 1.x order and gaps: the client hangs the
+-- first two on ChatFrame1, which hides on other tabs.
+local function StackShared(col)
+    local chat = col.chat
+    local top = col.top or col.up
+    local menu, channel = _G.ChatFrameMenuButton, _G.ChatFrameChannelButton
+    if menu then
+        Carry(menu, chat)
+        Place(menu, "BOTTOM", top, "TOP", 0, Gap(col, top))
+        if not Off("menu") then top = menu end
+    end
+    if channel then
+        Carry(channel, chat)
+        Place(channel, "BOTTOM", top, "TOP", 0, top == menu and 1 or Gap(col, top))
+        channel:SetSize(SIZE, SIZE)
+        if not Off("channels") then top = channel end
+        -- Deafen and mute beside the voice button, away from the screen edge.
+        local right = chat.buttonSide ~= "right"
+        local last = channel
+        for _, name in ipairs(VOICE_TOGGLES) do
+            local button = _G[name]
+            if button then
+                Place(button, right and "LEFT" or "RIGHT", last, right and "RIGHT" or "LEFT", right and 2 or -2, 0)
+                last = button
+            end
+        end
+    end
+    -- The friends button anchors first in ChatAlertFrame: move the container, toasts follow.
+    local alerts = _G.ChatAlertFrame
+    if alerts then
+        alerts:SetWidth(SIZE)
+        PlaceAlerts(alerts, top)
+    end
+    sharedAt = col
+end
+
+-- ChatFrame1's column, or another docked window's while its tab is picked.
+local function ShownColumn()
+    for chat, col in pairs(columns) do
+        if chat ~= primaryChat and chat.isDocked and chat:IsVisible() then return col end
+    end
+    return columns[primaryChat]
+end
+
+-- From our own frame's pass after the client's tab pass, kicked by a column's show.
+local function FollowShown()
+    if not active then return end
+    local col = ShownColumn()
+    if col and col ~= sharedAt then StackShared(col) end
+end
+local followJob = ns.Sched.OnFrame(CreateFrame("Frame"), { name = "chat.follow", every = math.huge, fn = FollowShown })
+
+-- A column showing: the shared buttons may follow it, and an undocked window shown now is dressed.
+local function ColumnShown(shown)
+    if not shown or not active then return end
+    followJob:Kick()
+    WatchNextFrame()
+end
+
 local function MakeColumn(chat)
     local menu = _G.ChatFrameMenuButton
     local strata = menu and menu:GetFrameStrata() or "MEDIUM"
-    local col = { up = Slot(chat, strata), down = Slot(chat, strata), bottom = Slot(chat, strata), base = Slot(chat, strata) }
+    local col = { chat = chat, up = Slot(chat, strata), down = Slot(chat, strata), bottom = Slot(chat, strata),
+        base = Slot(chat, strata) }
     -- Classic spacing: the button frame ends 6 above the chat's bottom edge.
     col.base:SetHeight(1)
     col.base:SetPoint("BOTTOM", chat.buttonFrame, "BOTTOM", 0, -7)
-    ns.Sched.OnVisible(col.up, "chat.follow", ColumnShown)
+    -- The bottom slot, not up: with the scroll bar kept, the arrow slots stay hidden.
+    ns.Sched.OnVisible(col.bottom, "chat.follow", ColumnShown)
     columns[chat] = col
     return col
 end
@@ -476,7 +522,7 @@ local function GuardChannel()
     end
 end
 
--- ChatFrame1's own buttons over our slots, in the 1.x order and gaps.
+-- ChatFrame1's own buttons, on the docked column showing.
 local function DressPrimary()
     local chat = primaryChat
     local channel = _G.ChatFrameChannelButton
@@ -484,38 +530,10 @@ local function DressPrimary()
         if channel then DressChannel(channel) end
         return
     end
-    local col = chat and columns[chat]
+    local col = ShownColumn()
     if not col then return end
-    local top = col.top or col.up
-    local menu = _G.ChatFrameMenuButton
-    if menu then
-        Place(menu, "BOTTOM", top, "TOP", 0, Gap(col, top))
-        if not Off("menu") then top = menu end
-    end
-    if channel then
-        Place(channel, "BOTTOM", top, "TOP", 0, top == menu and 1 or Gap(col, top))
-        channel:SetSize(SIZE, SIZE)
-        DressChannel(channel)
-        if not Off("channels") then top = channel end
-        -- Deafen and mute beside the voice button, away from the screen edge.
-        local right = chat.buttonSide ~= "right"
-        local last = channel
-        for _, name in ipairs(VOICE_TOGGLES) do
-            local button = _G[name]
-            if button then
-                Place(button, right and "LEFT" or "RIGHT", last, right and "RIGHT" or "LEFT", right and 2 or -2, 0)
-                last = button
-            end
-        end
-    end
-    primaryTop = top
-    -- The friends button anchors first in ChatAlertFrame: move the container, toasts follow.
-    local alerts = _G.ChatAlertFrame
-    if alerts then
-        alerts:SetWidth(SIZE)
-        PlaceAlerts(alerts, top)
-        alertsAt = col.up
-    end
+    if channel then DressChannel(channel) end
+    StackShared(col)
 end
 
 -- Faces are picked at dress time: a theme turn redresses, and every frame for 1 s catches
@@ -735,7 +753,7 @@ local function Restore()
         col.bottom:Hide()
         col.stripped = nil
     end
-    alertsAt, primaryTop, theme.on = nil, nil, nil
+    sharedAt, theme.on = nil, nil
     for button, own in pairs(faces) do Unface(button, own) end
     wipe(faces)
     for frame, info in pairs(held) do
