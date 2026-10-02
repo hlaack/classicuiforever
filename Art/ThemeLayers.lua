@@ -44,6 +44,8 @@ local ceiling, ceilingPiece, ceilingLayer, ceilingSub
 local function Above(region)
     if region == ceilingPiece or own[region] or not region.GetDrawLayer then return end
     local drawLayer, sub = region:GetDrawLayer()
+    -- A nameplate's pieces can answer secret (0.16.1: compared, 1381 errors a session).
+    if ns.AnySecret(drawLayer, sub) then return end
     if drawLayer == ceilingLayer and sub and sub > ceilingSub and (not ceiling or sub < ceiling) then ceiling = sub end
 end
 local function Ceiling(piece, drawLayer, sub)
@@ -72,6 +74,7 @@ local function Follow(piece, layer)
     FollowOne(layer.cells, layer.flat, shown, alpha, piece)
     if not shown then return end
     local drawLayer, sub = piece:GetDrawLayer()
+    if ns.AnySecret(drawLayer, sub) then return end
     if drawLayer ~= layer.drawLayer or sub ~= layer.sub then sub = MakeRoom(piece, drawLayer, sub) end
     if drawLayer ~= layer.drawLayer or sub ~= layer.sub then
         layer.drawLayer, layer.sub = drawLayer, sub

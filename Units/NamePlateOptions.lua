@@ -22,6 +22,7 @@ local function Paint(health, r, g, b)
         -- Ours takes the client fill's draw step and it drops one: one above would tie with the heal absorb. Saved for restore.
         if not fill.fcuiLayer then
             local layer, sub = tex:GetDrawLayer()
+            if ns.AnySecret(layer, sub) then layer, sub = nil, nil end
             fill.fcuiLayer, fill.fcuiSub = layer or "ARTWORK", sub or 0
         end
         tex:SetDrawLayer(fill.fcuiLayer, math.max(fill.fcuiSub - 1, -8))
