@@ -15,5 +15,6 @@ return {
     flatSpellbook = "same for everyone: a part of Flat colour, which is off by default",
     flatWindows = "same for everyone: a part of Flat colour, which is off by default",
     flatHideBorders = "same for everyone: an option of Flat color, which is off by default",
+    swingFlash = "same for everyone: on by default, the flash every swing timer had before",
     themeDarkness = "same for everyone: its default is the Dark theme's one shade, unchanged",
 }

@@ -193,6 +193,7 @@ return {
     swingColorMain = "cast",
     swingColorOff = "darkGold",
     swingColorRanged = "channel",
+    swingFlash = true,
     swingTimers = true,
     talents = true,
     textureSource = "builtin",

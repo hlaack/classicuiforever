@@ -76,6 +76,7 @@ ns.DB_DEFAULTS = {
     unitFrames = true,
     castBars = true,
     swingTimers = true,
+    swingFlash = true,
     resourceDisplay = true,
     damageMeter = true,
     classicStatusFont = true,

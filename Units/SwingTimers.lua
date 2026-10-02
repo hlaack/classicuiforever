@@ -211,7 +211,7 @@ local function Resized(bar)
     end
 end
 
--- While a timer shows: the bar falling back is a swing landing, which flashes as a cast finishing.
+-- While a timer shows: the bar falling back is a swing landing, which flashes as a cast finishing (unless turned off).
 local lastValue = setmetatable({}, { __mode = "k" })
 local function WatchSwing(job)
     local bar = job.bar
@@ -219,7 +219,7 @@ local function WatchSwing(job)
     local last = lastValue[bar]
     lastValue[bar] = value
     local parts = own[bar]
-    if value and last and parts and last - value >= RESET_DROP then
+    if value and last and parts and last - value >= RESET_DROP and ns.db.swingFlash ~= false then
         parts.anim:Stop()
         parts.anim:Play()
     end

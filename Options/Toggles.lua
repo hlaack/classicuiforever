@@ -98,6 +98,7 @@ ns.TOGGLES = {
     { "castBars", L["OPT_castBars"], L["OPT_castBars_TIP"] },
     { "castBarShake", L["OPT_castBarShake"], L["OPT_castBarShake_TIP"], parent = "castBars" },
     { "swingTimers", L["OPT_swingTimers"], L["OPT_swingTimers_TIP"], search = "melee ranged auto attack" },
+    { "swingFlash", L["OPT_swingFlash"], L["OPT_swingFlash_TIP"], parent = "swingTimers", search = "glow" },
     { "resourceDisplay", L["OPT_resourceDisplay"], L["OPT_resourceDisplay_TIP"], search = "prd health power under character" },
     { "comboPoints", L["OPT_comboPoints"], L["OPT_comboPoints_TIP"] },
     { "mirrorTimers", L["OPT_mirrorTimers"], L["OPT_mirrorTimers_TIP"] },
