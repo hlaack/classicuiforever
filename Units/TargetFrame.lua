@@ -24,7 +24,13 @@ local CLASSIFICATION_ART = {
     minus = { key = "targetingMinus", flashCoords = FULL, flashSize = { 256, 128 }, flashPoint = { -4, -4 }, flashKey = "targetingMinusFlash" },
     normal = { key = "targetingFrame", flashCoords = PLAIN_FLASH, flashSize = { 242, 93 }, flashPoint = { -4, -4 } },
 }
-local ART = { coords = { 0.09375, 1, 0, 0.78125 }, w = FRAME_W, h = FRAME_H, point = "TOPLEFT", x = 20, y = -4 }
+-- The art in two: the game hangs its aura row 9 under its art texture's foot, the 1.x row sits 32 under the art's foot.
+-- The game's texture ends 23 short and our strip draws the rest, so every layout of the game's lands on the 1.x spot.
+local ART_FOOT = 23
+local ART_SPLIT = (FRAME_H - ART_FOOT) / 128
+local ART = { coords = { 0.09375, 1, 0, ART_SPLIT }, w = FRAME_W, h = FRAME_H - ART_FOOT, point = "TOPLEFT", x = 20, y = -4 }
+local ART_STRIP = { own = "artFoot", layer = "BACKGROUND", sublevel = 2, coords = { 0.09375, 1, ART_SPLIT, 0.78125 },
+    w = FRAME_W, h = ART_FOOT, point = "TOPLEFT", relPoint = "BOTTOMLEFT", show = true }
 -- Under the portrait and frame art, as in 1.x: Forever draws its threat glow over them (ARTWORK 1).
 local FLASH = { point = "TOPLEFT", layer = "BACKGROUND", sublevel = 0 }
 local MASK = { w = PORTRAIT, h = PORTRAIT, point = "TOPRIGHT", x = -22, y = -16 }
@@ -51,8 +57,9 @@ local TOT_DEBUFFS = { { -23, -8 }, { -10, -8 }, { -23, -21 }, { -10, -21 } }
 local TARGET_EVENTS = { "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED" }
 local UNIT_TARGET = { "UNIT_TARGET" }
 
--- The client drops the aura row 23 below the 1.x spot on layout changes: put back on each re-lay trigger (UnitFrames.lua).
-local AURA_X, AURA_Y = 5, 32
+-- The game's own spot under the split art (ART_FOOT): kept on each re-lay trigger (UnitFrames.lua), so it only acts on
+-- drift; buffs on top still differ (the game's 6 down, ours 10).
+local AURA_X, AURA_Y = 5, 9
 -- Buffs On Top (edit mode): the row stands over the frame, its bottom this far down the art's top, growing upward.
 local AURA_TOP_X, AURA_TOP_Y = 5, -10
 local function KeepAuraRow(frame, force)
@@ -91,7 +98,9 @@ local function ApplyClassification(frame)
     classification = ForcedElite(entry.unit, classification)
     local art = CLASSIFICATION_ART[classification] or CLASSIFICATION_ART.normal
     local minus = classification == "minus"
-    Dress(container.FrameTexture, UF.ThickSheet(art.key, entry.unit), ART, frame)
+    local sheet = UF.ThickSheet(art.key, entry.unit)
+    Dress(container.FrameTexture, sheet, ART, frame)
+    DressNew(container, sheet, ART_STRIP, container.FrameTexture)
     UF.DressGlow(container.Flash, art.flashKey or "targetingFlash", FLASH, frame, art.flashPoint[1], art.flashPoint[2],
         art.flashSize[1], art.flashSize[2], art.flashCoords)
     ns.Fade(container.BossPortraitFrameTexture)
@@ -319,6 +328,8 @@ local function RestoreTargetLike(frame)
     if not frame then return end
     UF.frames[frame] = nil
     HideOwnPvp(frame)
+    local foot = frame.TargetFrameContainer and frame.TargetFrameContainer.fcui and frame.TargetFrameContainer.fcui.artFoot
+    if foot then foot:Hide() end
     ns.Unfade(ns.Path(frame, "TargetFrameContent", "TargetFrameContentContextual", "PvpIcon"))
     HideHost(frame)
     local main = ns.Path(frame, "TargetFrameContent", "TargetFrameContentMain")
