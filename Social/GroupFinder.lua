@@ -212,6 +212,33 @@ local function DressBrowse(page, first)
     if first then ns.SkinScrollBarsUnder(page, 2) end
 end
 
+-- The listing page's own fonts (headers, activities, their level ranges) at the comment box's small size.
+local ACTIVITY_FONTS = { "LFGActivityHeader", "LFGActivityEntry", "LFGActivityEntryTrivial", "LFGActivityEntryDifficult" }
+local function SmallActivityFonts()
+    local _, size = GameFontHighlightSmall:GetFont()
+    for _, name in ipairs(ACTIVITY_FONTS) do
+        local font = _G[name]
+        if font then
+            local file, _, flags = font:GetFont()
+            font:SetFont(file, size, flags)
+        end
+    end
+end
+
+-- The playstyle choice at the list's left; Show All Level Ranges at its right (the box hangs 28 past the frame); the
+-- choice takes the room between, its holder art 8 past each side.
+local STYLE_X, STYLE_Y, STYLE_GAP, RANGES_RIGHT = 10, -10, 14, -30
+local function PlaceStyleRow(activity, first)
+    local style, ranges = activity.PlayStyleDropdown, activity.LevelRangesCheckbox
+    if ranges then PointIf(ranges, "TOPRIGHT", activity, "TOPRIGHT", RANGES_RIGHT, STYLE_Y) end
+    if not style then return end
+    if first and style.Text then style.Text:SetFontObject("GameFontHighlightSmall") end
+    PointIf(style, "TOPLEFT", activity, "TOPLEFT", STYLE_X, STYLE_Y)
+    local text = ranges and ranges.Text
+    local room = LIST_W + RANGES_RIGHT - (text and text:GetStringWidth() or 0) - STYLE_GAP - STYLE_X
+    if not ns.Near(style:GetWidth(), room) then style:SetWidth(room) end
+end
+
 local function DressListing(page, first)
     EraChrome(page, LISTING_SHEETS, first)
     FootPair(page.BackButton, page.PostButton, first)
@@ -250,7 +277,11 @@ local function DressListing(page, first)
             "BOTTOMRIGHT", Origin(), "TOPLEFT", LIST_X + LIST_W, -(LIST_Y + LIST_H))
         local comment = activity.Comment
         if comment and not ns.Near(comment:GetWidth(), ACTIVITY_COMMENT_WIDTH) then comment:SetWidth(ACTIVITY_COMMENT_WIDTH) end
-        if first then ns.SkinScrollBarsUnder(activity, 2) end
+        PlaceStyleRow(activity, first)
+        if first then
+            ns.SkinScrollBarsUnder(activity, 2)
+            SmallActivityFonts()
+        end
     end
 end
 
