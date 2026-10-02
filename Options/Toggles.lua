@@ -55,7 +55,7 @@ ns.TOGGLES = {
     { "hideMicroGameMenu", L["OPT_hideMicroGameMenu"], L["OPT_hideMicroGameMenu_TIP"], parent = "hideMicroButtons" },
     { "hideMicroShop", L["OPT_hideMicroShop"], L["OPT_hideMicroShop_TIP"], parent = "hideMicroButtons" },
     { "hideStanceBar", L["OPT_hideStanceBar"], L["OPT_hideStanceBar_TIP"], parent = "classicBar", search = "forms auras shapeshift" },
-    { "classicBarSize", L["OPT_classicBarSize"], L["OPT_classicBarSize_TIP"], parent = "classicBar", search = "small size 36 45 game" },
+    { "classicBarSize", L["OPT_classicBarSize"], L["OPT_classicBarSize_TIP"], parent = "classicBar", search = "scale size 1.25 small big large buttons 36 45 game era forever" },
     { "oneBar", L["OPT_oneBar"], L["OPT_oneBar_TIP"], parent = "classicBar" },
     { "eraBagSize", L["OPT_eraBagSize"], L["OPT_eraBagSize_TIP"], parent = "classicBar", search = "bags big large 37" },
     { "reagentBagSlot", L["OPT_reagentBagSlot"], L["OPT_reagentBagSlot_TIP"], parent = "classicBar", radio = "reagentBag" },

@@ -383,11 +383,13 @@ function ns.ResetClassicLayout(reloadNow)
     if RefuseInCombat("cannot change layouts in combat") then return false end
     if not ns.ClassicLayoutActive() then return false end
     ns.QueueLayoutJob("reset", true)
-    if reloadNow then
-        ns.ReloadForLayout()
-        return true
-    end
-    ns.AskLayoutReload("The " .. LAYOUT_NAME .. " layout goes back to its defaults.")
+    ns.AskEraScale(function()
+        if reloadNow then
+            ns.ReloadForLayout()
+            return
+        end
+        ns.AskLayoutReload("The " .. LAYOUT_NAME .. " layout goes back to its defaults.")
+    end)
     return true
 end
 
@@ -570,6 +572,7 @@ function ns.RunLayoutJobsBeforePin()
         jobs.adopt = nil
         ns.AdoptBandBars()
     end
+    if jobs.eraScale then ns.EraScaleBeforePin() end
     -- A slot-count job queued before 0.11.0 (the bar size no longer trims the bars).
     jobs.fit = nil
     ns.ResetSizesNow(jobs)
@@ -584,6 +587,7 @@ function ns.RunLayoutJobsAfterPin()
     if jobs.previous and SelectNow(jobs.previous) then ns.db.previousLayout = "" end
     if jobs.classic then ClassicNow(jobs.classic) end
     if jobs.select then SelectNow(LAYOUT_NAME) end
+    if jobs.eraScale then ns.EraScaleAfterPin() end
 end
 
 -- No room for another layout. Steps, not a button: edit mode opened from our code would run its setup in our name.
@@ -610,22 +614,24 @@ function ns.CreateClassicLayout(reloadNow)
     RememberLayout()
     ns.QueueLayoutJob("classic", { counts = counts })
     ns.db.layoutPrompted = true
-    if reloadNow then
-        ns.ReloadForLayout()
-        return
-    end
-    ns.AskLayoutReload(string.format(exists and L["OPTWIN_SWITCHING_TO_LAYOUT"] or L["OPTWIN_SETTING_UP_LAYOUT"], LAYOUT_NAME))
+    ns.AskEraScale(function(sized)
+        if reloadNow then
+            ns.ReloadForLayout()
+            return
+        end
+        local key = exists and "OPTWIN_SWITCHING_TO_LAYOUT" or "OPTWIN_SETTING_UP_LAYOUT"
+        ns.AskLayoutReload(string.format(L[sized and key .. "_ERA" or key], LAYOUT_NAME))
+    end)
 end
 
 ns.Popup("FCUI_LAYOUT_PICK", {
-    text = TITLE .. "\n\nThe " .. LAYOUT_NAME .. " layout is made, but the game did not switch to it. Open edit mode and "
-        .. "pick " .. LAYOUT_NAME .. " in its Layout list.",
+    text = TITLE .. "\n\n" .. string.format(L["OPTWIN_LAYOUT_PICK"], LAYOUT_NAME, LAYOUT_NAME),
     button1 = OKAY,
 })
 
--- First login: set up the classic layout or keep the current one.
+-- First login: set up the classic layout (at Era's size) or keep the current one.
 ns.Popup("FCUI_FIRST_LOGIN", {
-    text = TITLE .. "\n\nSet up the classic layout now? This adds an edit mode layout named \"" .. LAYOUT_NAME .. "\" and switches to it. Your current layout stays in the list. The interface reloads.",
+    text = TITLE .. "\n\n" .. string.format(L["OPTWIN_FIRST_LOGIN"], LAYOUT_NAME),
     button1 = L["OPTWIN_SET_UP_AND_RELOAD"],
     button2 = L["OPTWIN_KEEP_MY_LAYOUT"],
     OnAccept = function() ns.CreateClassicLayout(true) end,
