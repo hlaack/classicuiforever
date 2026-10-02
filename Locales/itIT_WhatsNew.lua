@@ -3,6 +3,12 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN17_1_TITLE"] = "Errori delle targhette"
+L["WN17_1_TEXT"] = "Con un tema attivo, le targhette classiche non causano più messaggi di errore."
+L["WN17_2_TITLE"] = "Benefici del bersaglio"
+L["WN17_2_TEXT"] = "I benefici sotto i riquadri del bersaglio e del focus ora compaiono subito al loro posto quando cambi bersaglio, senza il breve salto."
+L["WN17_3_TITLE"] = "Mappa del mondo in combattimento"
+L["WN17_3_TEXT"] = "La mappa del mondo classica aperta in combattimento ora ha lo stesso aspetto che fuori dal combattimento."
 L["WN16_1_TITLE"] = "Icone delle azioni"
 L["WN16_1_TEXT"] = "Con un tema attivo, le icone dei pulsanti azione non si scuriscono più a caso."
 L["WN16_2_TITLE"] = "Bagliore di combattimento"

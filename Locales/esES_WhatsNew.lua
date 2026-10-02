@@ -3,6 +3,12 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
+L["WN17_1_TITLE"] = "Errores en placas de nombre"
+L["WN17_1_TEXT"] = "Con un tema activo, las placas de nombre clásicas ya no causan mensajes de error."
+L["WN17_2_TITLE"] = "Beneficios del objetivo"
+L["WN17_2_TEXT"] = "Los beneficios bajo los marcos del objetivo y del foco aparecen ahora en su sitio al cambiar de objetivo, sin el breve salto."
+L["WN17_3_TITLE"] = "Mapa del mundo en combate"
+L["WN17_3_TEXT"] = "El mapa del mundo clásico abierto en combate se ve ahora igual que fuera de combate."
 L["WN16_1_TITLE"] = "Iconos de acción"
 L["WN16_1_TEXT"] = "Con un tema activo, los iconos de los botones de acción ya no se oscurecen al azar."
 L["WN16_2_TITLE"] = "Brillo de combate"

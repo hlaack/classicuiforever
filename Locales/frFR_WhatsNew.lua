@@ -3,6 +3,12 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
+L["WN17_1_TITLE"] = "Erreurs des barres de nom"
+L["WN17_1_TEXT"] = "Avec un thème actif, les barres de nom classiques ne provoquent plus de messages d'erreur."
+L["WN17_2_TITLE"] = "Améliorations de la cible"
+L["WN17_2_TEXT"] = "Les améliorations sous les cadres de la cible et du focus apparaissent désormais à leur place quand vous changez de cible, sans le petit saut."
+L["WN17_3_TITLE"] = "Carte du monde en combat"
+L["WN17_3_TEXT"] = "La carte du monde classique ouverte en combat a désormais le même aspect que hors combat."
 L["WN16_1_TITLE"] = "Icônes d'action"
 L["WN16_1_TEXT"] = "Avec un thème actif, les icônes des boutons d'action ne s'assombrissent plus au hasard."
 L["WN16_2_TITLE"] = "Lueur de combat"

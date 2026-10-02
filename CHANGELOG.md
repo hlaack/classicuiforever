@@ -2,6 +2,13 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.16.2] - 2026-10-02
+
+### Fixed
+- With a theme on and the classic nameplates, nameplates no longer raise "attempt to compare a secret value" errors. 0.16.1 could raise them by the hundreds.
+- Buffs under the target and focus frames show in place when you change target. They appeared a little lower for a moment first.
+- The classic world map opened in a fight looks as it does out of combat. Pieces of the game's own map showed around it.
+
 ## [0.16.1] - 2026-10-02
 
 ### Changed

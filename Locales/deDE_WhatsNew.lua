@@ -3,6 +3,12 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN17_1_TITLE"] = "Fehler bei Namensplaketten"
+L["WN17_1_TEXT"] = "Mit einem Design lösen die klassischen Namensplaketten keine Fehlermeldungen mehr aus."
+L["WN17_2_TITLE"] = "Stärkungszauber des Ziels"
+L["WN17_2_TEXT"] = "Stärkungszauber unter dem Ziel- und Fokusfenster erscheinen beim Zielwechsel jetzt gleich an ihrem Platz, ohne kurzes Springen."
+L["WN17_3_TITLE"] = "Weltkarte im Kampf"
+L["WN17_3_TEXT"] = "Die klassische Weltkarte sieht im Kampf geöffnet jetzt genauso aus wie außerhalb des Kampfes."
 L["WN16_1_TITLE"] = "Aktionssymbole"
 L["WN16_1_TEXT"] = "Mit einem Design werden die Symbole der Aktionstasten nicht mehr zufällig dunkel."
 L["WN16_2_TITLE"] = "Kampfleuchten"

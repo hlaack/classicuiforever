@@ -2,6 +2,12 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN17_1_TITLE"] = "Nameplate errors"
+L["WN17_1_TEXT"] = "With a theme on, the classic nameplates no longer cause error messages."
+L["WN17_2_TITLE"] = "Target buffs"
+L["WN17_2_TEXT"] = "Buffs under the target and focus frames now appear in place when you change target, without the brief jump."
+L["WN17_3_TITLE"] = "World map in a fight"
+L["WN17_3_TEXT"] = "The classic world map opened in a fight now looks the same as out of combat."
 L["WN16_1_TITLE"] = "Action icons"
 L["WN16_1_TEXT"] = "With a theme on, action button icons no longer turn dark at random."
 L["WN16_2_TITLE"] = "Combat glow"
