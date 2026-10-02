@@ -29,6 +29,7 @@ local COLORS = {
 
 local active = false
 local skinned = {}
+local interrupted = setmetatable({}, { __mode = "k" })   -- bar -> showing an interrupt or failure
 
 -- 12.x never calls SetLook on target/focus/boss spell bars: those (with AdjustPosition) are small, the rest full size.
 local function LookOf(bar)
@@ -101,9 +102,11 @@ end
 
 local function Fill(bar)
     if not active then return end
-    local tex = bar:GetStatusBarTexture()
-    local atlas = tex and tex.GetAtlas and tex:GetAtlas()
-    local color = FillColor(atlas)
+    local color = interrupted[bar] and COLORS.red
+    if not color then
+        local tex = bar:GetStatusBarTexture()
+        color = FillColor(tex and tex.GetAtlas and tex:GetAtlas())
+    end
     bar:SetStatusBarTexture(FILL_TEXTURE)
     bar:SetStatusBarColor(color:GetRGB())
 end
@@ -178,8 +181,11 @@ local function Skin(bar)
                 ns.HookMethod(parent, "SetSmallSize", function() Position(bar) end)
             end
         end
-        -- The client re-sets the fill atlas on every start, stop and finish.
-        ns.HookMethod(bar, "UpdateBarFillTexture", Fill)
+        -- The client re-sets the fill atlas on every start, stop and finish; a start (not full) ends an interrupt.
+        ns.HookMethod(bar, "UpdateBarFillTexture", function(b, isFull)
+            if not isFull then interrupted[b] = nil end
+            Fill(b)
+        end)
         -- Spark atlas and per-type glow return on every cast.
         ns.HookMethod(bar, "ShowSpark", function(b)
             if not active then return end
@@ -193,17 +199,18 @@ local function Skin(bar)
         ns.HookMethod(bar, "PlayFinishAnim", function(b)
             if active then StopFinishAnims(b) end
         end)
-        -- Interrupt as in classic: red bar full at once (no 0.1 s spark wait), no shake unless opted in.
+        -- Interrupt as in classic: red bar full at once, no shake unless opted in. Another unit's cast keeps its
+        -- type, art and range secret: red by our own mark, full on our own 0 to 1.
         ns.HookMethod(bar, "PlayInterruptAnims", function(b)
             if not active then return end
             HideFx(b)
             local shake = b.InterruptShakeAnim
             if shake and not ns.db.castBarShake then shake:Stop() end
-            local _, max = b:GetMinMaxValues()
-            if max ~= nil and not IsSecret(max) then
-                b:SetValue(max)
-                if b.Spark then b.Spark:Hide() end
-            end
+            interrupted[b] = true
+            Fill(b)
+            b:SetMinMaxValues(0, 1)
+            b:SetValue(1)
+            if b.Spark then b.Spark:Hide() end
         end)
     end
     DressBar(bar)

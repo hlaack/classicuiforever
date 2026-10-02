@@ -123,14 +123,21 @@ local function LayChain(unitFrame, castContainer, container, health)
     ns.SetTwoPointsIf(health, "TOPLEFT", container, "TOPLEFT", 0, 0, "BOTTOMRIGHT", container, "BOTTOMRIGHT", 0, 0)
 end
 
+-- Plate -> its cast was interrupted, till the next one starts (from our event watch: plates are never hooked).
+local castCut = setmetatable({}, { __mode = "k" })
+
 -- Cast bar: same fill and border, icon to the left, text inside.
-local function LayCast(castContainer)
+local function LayCast(castContainer, unitFrame)
     local cast = castContainer.castBar
     if not cast then return end
     ns.SetTwoPointsIf(cast, "TOPLEFT", castContainer, "TOPLEFT", 0, 0, "BOTTOMRIGHT", castContainer, "BOTTOMRIGHT", CAST_EXTRA, 0)
     ShadedFill(cast)
-    -- 1.x yellow cast, green channel: the client picks colour by bar art, which is ours now.
-    if cast.channeling then
+    -- 1.x yellow cast, green channel, red and full once interrupted (on our own 0 to 1: its range is secret).
+    if castCut[unitFrame] then
+        ns.SetBarColorIf(cast, 1, 0, 0)
+        cast:SetMinMaxValues(0, 1)
+        cast:SetValue(1)
+    elseif cast.channeling then
         ns.SetBarColorIf(cast, 0, 1, 0)
     else
         ns.SetBarColorIf(cast, 1, 0.7, 0)
@@ -163,7 +170,7 @@ local function CastLayout(unitFrame)
     local container, health, castContainer = Pieces(unitFrame)
     if not container then return end
     LayChain(unitFrame, castContainer, container, health)
-    LayCast(castContainer)
+    LayCast(castContainer, unitFrame)
 end
 
 ns.PLATE_NAME_MIN, ns.PLATE_NAME_MAX = -6, 6
@@ -239,7 +246,7 @@ local function Layout(unitFrame)
         end
     end
 
-    LayCast(castContainer)
+    LayCast(castContainer, unitFrame)
 end
 
 -- From our passes, never a client hook: a pass our code joins is refused unit health for the rest of it.
@@ -385,7 +392,7 @@ end
 local ALL_EVENTS = { PLAYER_TARGET_CHANGED = true, PLAYER_FOCUS_CHANGED = true, DISPLAY_SIZE_CHANGED = true,
     UI_SCALE_CHANGED = true, CVAR_UPDATE = true }
 
-local function OnEvent(_, event, unit)
+local function OnEvent(_, event, unit, _, _, interruptedBy)
     if not NP.active then return end
     if event == "NAME_PLATE_UNIT_ADDED" then
         if MaybePlayer(unit) then SetSweeping(true) end
@@ -394,7 +401,10 @@ local function OnEvent(_, event, unit)
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
         -- The plate is recycled for another unit.
         local unitFrame = LivePlate(unit)
-        if unitFrame then NP.Unpaint(ns.Path(unitFrame, "HealthBarsContainer", "healthBar")) end
+        if unitFrame then
+            castCut[unitFrame] = nil
+            NP.Unpaint(ns.Path(unitFrame, "HealthBarsContainer", "healthBar"))
+        end
     elseif event == "UNIT_FACTION" or event == "UNIT_FLAGS" then
         local unitFrame = LivePlate(unit)
         if unitFrame then
@@ -405,9 +415,17 @@ local function OnEvent(_, event, unit)
         local unitFrame = LivePlate(unit)
         if unitFrame then UpdateLevel(unitFrame) end
     elseif CAST_EVENTS[event] then
-        -- Cast start or stop re-lays only that plate's chain and cast bar.
+        -- Cast start or stop re-lays only that plate's chain and cast bar; a channel's stop names who interrupted it.
         local unitFrame = unit and PlateFor(unit)
-        if unitFrame then QueueRelay(unitFrame, "cast") end
+        if unitFrame then
+            if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
+                castCut[unitFrame] = nil
+            elseif event == "UNIT_SPELLCAST_INTERRUPTED" or (event == "UNIT_SPELLCAST_CHANNEL_STOP"
+                and (ns.IsSecret(interruptedBy) or interruptedBy ~= nil)) then
+                castCut[unitFrame] = true
+            end
+            QueueRelay(unitFrame, "cast")
+        end
     elseif ALL_EVENTS[event] then
         if event == "CVAR_UPDATE" then plateScale = nil end
         QueueRelay()
