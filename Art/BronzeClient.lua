@@ -26,13 +26,15 @@ local FILES = {
     [130975] = "Common-Input-Border.tga",
     [130862] = "UI-Slot-Background.tga",
     [136387] = "UI-MailFrame-InvoiceLine.tga",
-    -- Page arrows (mail inbox).
+    -- Page arrows (mail inbox, vendor).
     [130864] = "UI-SpellbookIcon-NextPage-Disabled.tga",
     [130865] = "UI-SpellbookIcon-NextPage-Down.tga",
     [130866] = "UI-SpellbookIcon-NextPage-Up.tga",
     [130867] = "UI-SpellbookIcon-PrevPage-Disabled.tga",
     [130868] = "UI-SpellbookIcon-PrevPage-Down.tga",
     [130869] = "UI-SpellbookIcon-PrevPage-Up.tga",
+    -- The square behind the vendor's page arrows.
+    [130822] = "UI-PageButton-Background.tga",
     -- Trade, merchant and bank slots: ring, empty slot, name plate.
     [130841] = "UI-Quickslot2.tga",
     [130766] = "UI-EmptySlot.tga",
@@ -290,14 +292,11 @@ end)
 -- Buffs have only the icon's grey bevel, so the theme adds the thin rim as on action buttons; debuff borders stay.
 -- A rim stays and follows every toggle (ns.BronzeKeep), so only buttons made since the last pass need one.
 local EachChild = ns.EachChild
--- Dark: near black, as the action button rims.
-local AURA_RIM_SHARE = { dark = 1.28 }
-
 local function AuraRim(button)
     if button == nil then return end
     local icon = button.Icon or button.icon
     if icon and icon.IsObjectType and icon:IsObjectType("Texture") and not button.fcuiBronzeRim then
-        ns.BronzeRim(button, icon, nil, AURA_RIM_SHARE)
+        ns.BronzeRim(button, icon)
     end
 end
 

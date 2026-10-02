@@ -369,6 +369,17 @@ Test("Flat colour: a part's stone panels in the theme's colour over the art; its
     ns.UntintBronze(tex)
 end)
 
+Test("Theme rim: the theme colour as dark as the window metal, not its full colour", function()
+    ns.db.bronzeTheme, ns.db.themeDark = true, false
+    local button = CreateFrame("Button")
+    button.icon = button:CreateTexture()
+    ns.BronzeRim(button)
+    local v = button.fcuiBronzeRim._vertex
+    Check(Near(v[1], 0.9 * 0.55) and Near(v[2], 0.62 * 0.55) and Near(v[3], 0.32 * 0.55), "bronze rim shaded")
+    ns.db.bronzeTheme = false
+    ns.RepaintBronze()
+end)
+
 Test("Dress fill, keep, second point, file and raw", function()
     local frame = CreateFrame("Frame")
     local other = CreateFrame("Frame")

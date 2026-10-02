@@ -8,6 +8,7 @@ CharacterCreate-LabelFrame
 ChatFrame-Atlas
 ClockBackground
 Common-Input-Border
+CommonDropdownClassic
 HelpFrameTab-Active
 HelpFrameTab-Inactive
 MailItemBorder
@@ -119,6 +120,7 @@ UI-Minimap-ZoomOutButton-Down
 UI-Minimap-ZoomOutButton-Up
 UI-OptionsFrame-ActiveTab
 UI-OptionsFrame-InActiveTab
+UI-PageButton-Background
 UI-Panel-BiggerButton-Disabled
 UI-Panel-BiggerButton-Down
 UI-Panel-BiggerButton-Up

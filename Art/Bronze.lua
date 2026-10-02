@@ -47,16 +47,18 @@ end
 
 -- Softer share for the slots and the band; full bronze read too strong.
 ns.BRONZE_SOFT = 0.9
--- Drained and tinted to the theme (share: of its colour), or as drawn without one (silver: drained grey).
+-- Drained and tinted to the theme (share: of its colour, or by theme name; shade: times this), or as drawn without
+-- one (silver: drained grey).
 local function Paint(texture, theme, share, silver)
     if theme then
         local tint = theme.tint
-        if type(share) == "table" then share = share[ThemeName()] end
+        local shade = 1
+        if type(share) == "table" then shade, share = share.shade or 1, share[ThemeName()] end
         share = type(share) == "number" and share or 1
         texture:SetDesaturated(true)
         local max = math.max
-        local r, g, b = max(0, 1 + (tint[1] - 1) * share), max(0, 1 + (tint[2] - 1) * share),
-            max(0, 1 + (tint[3] - 1) * share)
+        local r, g, b = max(0, 1 + (tint[1] - 1) * share) * shade, max(0, 1 + (tint[2] - 1) * share) * shade,
+            max(0, 1 + (tint[3] - 1) * share) * shade
         texture:SetVertexColor(r, g, b)
         ns.PaintFlat(texture, r, g, b)
     else
@@ -129,8 +131,9 @@ function ns.BronzeKeep(region)
     PaintKeep(region)
 end
 
--- Forever's thin bronze rim over an icon's grey bevel, theme only.
--- outset puts it just past the quality border so both show.
+-- The thin theme rim over an icon's grey bevel, theme only, as dark as the window metal (its white art at full
+-- colour read tan beside it). outset puts it just past the quality border so both show.
+local RIM_SHADE = { shade = 0.55 }
 function ns.BronzeRim(button, icon, outset, share)
     if not button then return end
     outset = outset or 0
@@ -146,7 +149,7 @@ function ns.BronzeRim(button, icon, outset, share)
     rim:ClearAllPoints()
     rim:SetPoint("TOPLEFT", icon, "TOPLEFT", -outset, outset)
     rim:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", outset, -outset)
-    ns.BronzeTint(rim, share)
+    ns.BronzeTint(rim, share or RIM_SHADE)
     ns.BronzeKeep(rim)
 end
 
