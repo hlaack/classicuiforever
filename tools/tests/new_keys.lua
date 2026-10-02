@@ -23,4 +23,5 @@ return {
     englishNews = "same for everyone: opt-in, off by default; only shown on a non-English client",
     englishMessages = "same for everyone: opt-in, off by default; only shown on a non-English client",
     englishWindows = "same for everyone: opt-in, off by default; only shown on a non-English client",
+    statusBarBacking = "on for everyone: Era's half-dark backing behind the XP and reputation bars; off is the old see-through bar",
 }

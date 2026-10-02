@@ -8,8 +8,7 @@ local PIECES = B.PIECES
 local STRIP_H = 10
 -- How far the XP strip is held in from each band end.
 local STATUS_INSET = 2
--- On the band: the lower (XP) bar's top from the band's top, and the upper (reputation) bar's foot from it. The upper one's
--- art runs 2 under its fill: at -1 its bottom rail lies on the lower bar's top rail, which covers it.
+-- Band top to the XP bar's top and the rep bar's foot; at -1 the rep art's 2-row overhang lies under the XP rail.
 local LOWER_Y = -1
 local UPPER_Y = -1
 -- Reputation bar art when two bars show (rows of UI-ReputationWatchBar).
@@ -26,6 +25,8 @@ local TICK_HL = { coords = FULL, fill = true }
 local REP_TOP = { point = "TOPLEFT", show = true }
 local REP_RAIL = { tint = true, point = "TOPLEFT", show = true }
 local RUN = {}   -- a strip's coords, refilled per piece
+local backs = setmetatable({}, { __mode = "k" })   -- status bar -> Era's half-black backing
+B.statusBacks = backs   -- read by the dev addon's fight check
 
 -- Art strips over a status bar so it reads as part of the band; at least n of them.
 local function EnsureStrips(statusBar, n)
@@ -40,9 +41,7 @@ local function EnsureStrips(statusBar, n)
     return strips
 end
 
-
--- On the band: the old bar's full art stretched to band width, never cut: as many segments as keep a post nearest every
--- 51.2 of 1024, at most the sheet's 20 (a 21st had no art and left a gap), stretched to fill end to end.
+-- On the band: the old art stretched to band width in whole segments near 51.2 each, at most 20 (a 21st has no art).
 local function DrawBandStrips(status, w, isTop)
     local strips = EnsureStrips(status, 4)
     local count = math.max(1, math.min(20, math.floor(w / (1024 / 20) + 0.5)))
@@ -70,8 +69,7 @@ local function DrawBandStrips(status, w, isTop)
     return 4
 end
 
--- Moved off the band: Era's standalone art (the old reputation sheet, 13 tall, diamonds from the rested tick) in whole
--- post-to-post segments near 51.2 each, stretched alike to end at the bar's width, so no painted mark repeats.
+-- Moved off: Era's standalone art (13 tall, tick diamond caps) in whole post-to-post segments stretched to the bar's width.
 local OWN_H = 13
 local OWN_PITCH = 1024 / 20
 -- The sheet holds four copies of the bar 12 rows apart, each in rows 2 to 10 of its band; posts at 50, 101, 153, 204.
@@ -251,8 +249,7 @@ local function RelayStatus()
     if B.StatusBack then B.StatusBack() end
 end
 
--- A holder at its spot and size: a moved one is the player's (layout spot, plain strip), else on the band.
--- Nil while a client bar snapped to it locks it in a fight: the client alone moves it then, ours waits for the end.
+-- A holder at its spot and size (moved: the layout's); nil while a snapped client bar locks it in a fight.
 local function PlaceHolder(container, isTop, own)
     if InCombatLockdown() and Protected(container) then
         ns.WhenCalm("statusRelay", RelayStatus)
@@ -270,8 +267,7 @@ local function PlaceHolder(container, isTop, own)
     end
     -- Off the band it carries its own 2-row lower rail.
     local h = isTop and 7 or own and OWN_H or STRIP_H
-    -- Inside the band frame, not across it: its ends showed past a hidden gryphon. Moved off, the old bar's full width
-    -- (times its Size), never the band's, which changes as the key ring, latency bar and groups come and go.
+    -- Inside the band frame (ends showed past a hidden gryphon); moved off, the old bar's width times its Size.
     local w = (own and B.ART_W or ArtWidth()) - STATUS_INSET * 2
     if own then w = w * HolderPct(container) end
     container:SetSize(w, h)
@@ -297,8 +293,7 @@ end
 -- A holder's bars drawn in 1.x art at w x h.
 local function DressBars(container, w, h, own, isTop)
     if container.BarFrameTexture then container.BarFrameTexture:SetAlpha(0) end
-    -- The client fades one bar out and the next in (both out first on a swap), reading a holder's alpha at each fade's end
-    -- to pick the direction. Fades kept but cut to 0.02 s: a zero-length fade never ran and the swap hung on it.
+    -- Fades cut to 0.02 s, not 0: the client picks a swap's direction at each fade's end, and a 0 s fade never ran.
     if ns.Once(container, "noFade") then
         for _, key in ipairs({ "FadeInAnimation", "FadeOutAnimation" }) do
             local group = container[key]
@@ -328,8 +323,13 @@ local function DressBars(container, w, h, own, isTop)
             HookRestedState(bar, status)
             RecolorStatus(status)
             if status.Background then status.Background:SetAlpha(0) end
-            -- Rested: the paler run to the tick moves from the bar frame onto the status bar, under the strips and fill;
-            -- the tick wears the old marker.
+            -- Era's half-black backing for the client's light one: over the rested run, under the fill, sized with the bar.
+            local back = backs[status] or status:CreateTexture(nil, "BACKGROUND", nil, 1)
+            backs[status] = back
+            back:SetAllPoints(status)
+            back:SetColorTexture(0, 0, 0, 0.5)
+            back:SetShown(ns.db.statusBarBacking ~= false)
+            -- Rested: the run to the tick moves onto the status bar, under the backing and fill; the tick wears the old marker.
             local run = bar.ExhaustionLevelFillBar
             status.fcuiRun = run
             local tick = bar.ExhaustionTick
@@ -402,8 +402,7 @@ local function ShowsExperience(container)
     return false
 end
 
--- The one holder moved in edit mode is the bars' home: XP (else the lone bar) there, a second bar on it at its width and scale,
--- not in edit mode. Returns home, low, high (high nil: a lone bar moves home); mainUp/secondUp: read this tick, or nil.
+-- Out of edit mode, bars stack on the one moved holder: home, low, high (high nil: a lone bar); mainUp/secondUp or nil.
 local function StackPlan(main, second, mainUp, secondUp)
     if not (main and second) or ns.sessionEnding or EditModeLive() then return nil end
     if main.isDragging or second.isDragging then return nil end
@@ -464,8 +463,7 @@ local function StackLocked(main, second)
     return false
 end
 
--- Unstacked spots first, the band one before the moved one (either may be snapped to the other), then the stack stands
--- on the home spot read off the moved holder.
+-- Unstacked spots first (band before moved: either may snap to the other), then the stack on the moved holder's spot.
 local function LayoutStack(home, other, low, high)
     PlaceHolder(other, false, false)
     local _, w, h = PlaceHolder(home, false, true)
@@ -510,8 +508,7 @@ local function LayoutStatusBars()
         LayoutStatusBar(main, (swap and secondOn) and true or false)
         LayoutStatusBar(second, ((not swap) and mainOn) and true or false)
     end
-    -- Holder alpha is left to the client's fades and the watch: set here mid-swap, a quick watch toggle left both at 0.
-    -- The thin top bar stands in for a missing strip (moved off or stacked included).
+    -- Holder alpha is the client's (set mid-swap, both stuck at 0); the thin top bar stands in for a missing strip.
     local anyShown = (main and B.OnBand(main) and main:IsShown() and not StatusHidden(main))
         or (second and B.OnBand(second) and second:IsShown() and not StatusHidden(second))
     if main then ShowHolderBars(main) end
@@ -553,8 +550,7 @@ local function Animating()
     return false
 end
 
--- Watching or dropping a faction changes which bars are up and which stands over which: re-laid once the client
--- is done. 20 Hz while awake: the band's lane (BandWatch) runs this when barsWatch.since is due.
+-- A faction watched or dropped re-lays the bars once the client is done; 20 Hz awake, from the band's lane (BandWatch).
 local barsWatch = B.barsWatch
 function B.BarsTick()
     local watch = barsWatch
@@ -617,8 +613,7 @@ function ns.StatusBarsShowFaction()
     return false
 end
 
--- The holders go back into the band even in a fight, when the client moves them most (e.g. a target with combo
--- points); one a client bar is snapped to is locked then and waits for the fight's end (PlaceHolder).
+-- Holders go back into the band in a fight too; one locked by a snapped client bar waits for the end (PlaceHolder).
 local statusList
 local function StatusFrames()
     if statusList then return statusList end
@@ -629,8 +624,7 @@ local function StatusFrames()
     return statusList
 end
 
--- The client hands a holder its bars after login and resizes them without the holder moving; our strips and colours
--- live on them, so the sample counts them and sums their sizes (order-free).
+-- The client resizes a holder's bars without moving it: the sample counts them and sums their sizes (order-free).
 local statusMark = {}
 local function BarSums(container)
     local count, width, height = 0, 0, 0
@@ -715,8 +709,7 @@ function B.StatusBack()
     B.MarkStatus()
 end
 
--- On the band a holder is drawn at band length whatever its Width: that slider is dimmed under a note while it is.
--- Display only: alpha on the client's row and our own veil over it, never its value.
+-- On the band a holder ignores its Width: that slider is dimmed under our veil and a note (display only, never its value).
 local DIM = 0.3
 local dimmed = setmetatable({}, { __mode = "k" })
 local veil
@@ -791,9 +784,17 @@ function B.FollowStatusDialog(editing)
     if not v:IsShown() then v:Show() end
 end
 
+-- Backings follow the option at once, in a fight too; off with the band.
+local function ShowBacks()
+    local on = B.active and ns.db.statusBarBacking ~= false
+    for _, back in pairs(backs) do back:SetShown(on) end
+end
+ns.OnToggle(function(key) if key == "statusBarBacking" then ShowBacks() end end)
+
 -- Band off: nothing stacked (loose before the hand-back re-anchors), no dimmed slider; posts walked afresh next time.
 function B.StatusRestore()
     Unstack()
     wipe(fadedCount)
+    ShowBacks()
     B.FollowStatusDialog(false)
 end

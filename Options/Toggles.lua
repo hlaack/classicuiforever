@@ -65,6 +65,7 @@ ns.TOGGLES = {
     { "hideKeyRing", L["OPT_hideKeyRing"], L["OPT_hideKeyRing_TIP"], parent = "classicBar" },
     { "hideBagsArt", L["OPT_hideBagsArt"], L["OPT_hideBagsArt_TIP"], parent = "classicBar" },
     { "hideMicroArt", L["OPT_hideMicroArt"], L["OPT_hideMicroArt_TIP"], parent = "classicBar" },
+    { "statusBarBacking", L["OPT_statusBarBacking"], L["OPT_statusBarBacking_TIP"], parent = "classicBar", search = "experience rested reputation dark background transparent see-through" },
     { "gryphonsOverBars", L["OPT_gryphonsOverBars"], L["OPT_gryphonsOverBars_TIP"], parent = "classicBar" },
     { "showGryphonLeft", L["OPT_showGryphonLeft"], GRYPHON_TIP, parent = "classicBar", radio = "gryphonLeftShow", drop = true },
     { "hideGryphonLeft", L["OPT_hideGryphonLeft"], GRYPHON_TIP, parent = "classicBar", radio = "gryphonLeftShow", drop = true },

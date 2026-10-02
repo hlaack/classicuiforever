@@ -193,6 +193,7 @@ return {
     statPaneLeft = "section2",
     statPaneRight = "section3",
     statPanes = true,
+    statusBarBacking = true,
     surnamesRepaired = false,
     swingBorder = 0,
     swingColorMain = "cast",
