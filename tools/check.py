@@ -231,6 +231,7 @@ FIX = {
     "DUPFN": "keep one copy in the shared layer (Core/Util.lua, UI/...) as ns.Name, or call the twin",
     "TOC": "list every addon .lua in " + TOC_NAME + " and remove entries for files that are gone",
     "BASELINE": "run python tools/check.py --carry-renames, then git add " + BASELINE_NAME,
+    "USSPELL": "American spelling in English text: color, gray, center(ed), armor, -ize, check/checked (not tick)",
     "LOCALEKEYS": "every language file in Locales/ holds exactly the keys of Locales/enUS.lua, each with the same %s and "
                   "%d placeholders in the same order: translate a new or changed English string into every language "
                   "before committing (skill cuif-conventions, Localization)",
@@ -1473,6 +1474,36 @@ def locale_hits():
     return hits
 
 
+US_SPELL = re.compile(r"\b(colour\w*|grey\w*|centre[sd]?|centred|armour\w*|behaviour\w*|favour\w*|"
+                      r"honour\w*|flavour\w*|recognis\w+|organis\w+|customis\w+|realis(?:e|ed|es|ing)\b|optimis\w+|"
+                      r"initialis\w+|analys(?:e|ed|es|ing)\b|cancell\w+|travell\w+|labell\w+|modell\w+|licence|"
+                      r"(?:un)?tick(?:ed|ing)?(?! marker))\b", re.I)
+SPELL_DOCS = ("CHANGELOG.md", "README.md", "docs/description.md")
+
+
+def spelling_hits():
+    """British spellings in what players read in English: enUS strings, What's New, changelog, readme, description."""
+    hits = []
+    for name in sorted(os.listdir(LOCALE_DIR)) if os.path.isdir(LOCALE_DIR) else []:
+        if not (name.startswith("enUS") and name.endswith(".lua")):
+            continue
+        with open(os.path.join(LOCALE_DIR, name), encoding="utf-8") as fh:
+            for no, line in enumerate(fh, 1):
+                m = LOCALE_ROW.match(line)
+                word = m and US_SPELL.search(m.group(2))
+                if word:
+                    hits.append((LOCALE_DIR + "/" + name, no, "USSPELL", "British spelling \"%s\"" % word.group(1)))
+    for doc in SPELL_DOCS:
+        if not os.path.isfile(doc):
+            continue
+        with open(doc, encoding="utf-8") as fh:
+            for no, line in enumerate(fh, 1):
+                word = US_SPELL.search(line)
+                if word:
+                    hits.append((doc, no, "USSPELL", "British spelling \"%s\"" % word.group(1)))
+    return hits
+
+
 def toc_hits(tracked, toc_text):
     hits, listed = [], set()
     tracked_set = set(tracked)
@@ -1778,7 +1809,7 @@ def run(argv):
                 continue
         fail(path, line, rule, msg)
 
-    for path, line, rule, msg in locale_hits():
+    for path, line, rule, msg in locale_hits() + spelling_hits():
         fail(path, line, rule, msg)
 
     elapsed = time.time() - started

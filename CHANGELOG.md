@@ -5,8 +5,8 @@ All notable changes to ClassicUI Forever are documented here.
 ## [0.15.0] - 2026-10-01
 
 ### Added
-- Darkness slider under Dark: from light grey, through the Dark you know (the default, in the middle), to black. A button beside it puts it back to the default.
-- Flat colour under Custom theme: the parts you tick show their metal in one flat colour of the theme, in the same shapes. Gryphons, bar art, action buttons, unit frames and cast bars, the minimap, nameplates, the character sheet, the spellbook and other windows each have their own box. Off by default.
+- Darkness slider under Dark: from light gray, through the Dark you know (the default, in the middle), to black. A button beside it puts it back to the default.
+- Flat color under Custom theme: the parts you check show their metal in one flat color of the theme, in the same shapes. Gryphons, bar art, action buttons, unit frames and cast bars, the minimap, nameplates, the character sheet, the spellbook and other windows each have their own box. Off by default.
 - Hide micro buttons works on the game's own micro menu too, with the classic bar off, and has a Shop pick. Installs that already had the classic bar off keep every button.
 
 ### Changed
@@ -14,7 +14,7 @@ All notable changes to ClassicUI Forever are documented here.
 - With the gamepad interface on at login, the classic spellbook opens inside the game's spell window, so the controller can move through it and close it with B. A casts the selected spell and presses the tabs and page arrows, and X adds the selected spell to the first free gamepad bar slot (Y then moves it). Pages and tabs turn out of combat only.
 - With the gamepad interface on at login, the classic talents window opens inside the game's talent window the same way. A learns the selected talent and presses the tabs, Undo and Apply Changes, and Y takes back a staged point.
 - With the gamepad interface on at login, the quest log key and button open the game's own quest log, which the controller can navigate and close with B. Switching interfaces mid-session asks for a reload in chat.
-- With a theme on, the game's own versions of pieces whose classic replacement is unticked take the theme too: the minimap, unit frames, action bars and gryphons, nameplates, game windows, the pet happiness frame and the game menu's red buttons. Before, only the classic art changed colour.
+- With a theme on, the game's own versions of pieces whose classic replacement is unchecked take the theme too: the minimap, unit frames, action bars and gryphons, nameplates, game windows, the pet happiness frame and the game menu's red buttons. Before, only the classic art changed color.
 
 ### Removed
 - Hide bars 6 to 8. The game's own action bar settings decide which of those bars show.
@@ -45,16 +45,16 @@ All notable changes to ClassicUI Forever are documented here.
 - With the game's Open loot window at mouse setting on, the loot window opens with the first item under the cursor. The skull ring was under it.
 - The Raid tab shows its description of raids again when you are not in a raid. It was blank.
 - A tab's label turns white on hover, as in Classic Era. The character sheet, spellbook, professions and talent tabs stayed gold.
-- With a theme on, action button icons show whole again, as in Classic Era, with only their own border in the theme's colour. Since 0.13.1 they were cropped and looked zoomed in.
+- With a theme on, action button icons show whole again, as in Classic Era, with only their own border in the theme's color. Since 0.13.1 they were cropped and looked zoomed in.
 - Classic layout also brings back the classic micro menu and bag slots: Legacy, the group finder and collections hidden, and Era's bag slots.
 - A reload asked for during a fight waits for the fight to end instead of being refused.
-- One bag, Quest levels and Numbers without separators, changed in a fight, take effect as it ends. The change was lost and the option unticked itself.
+- One bag, Quest levels and Numbers without separators, changed in a fight, take effect as it ends. The change was lost and the option unchecked itself.
 - Small alignment fixes on the world map with the navigation bar on and on the tabs.
 
 ## [0.14.0] - 2026-09-30
 
 ### Added
-- Swing timers: the game's swing timers in the 1.x cast bar's look, with a colour per hand picked from the old bar colours and a flash as each swing lands. Border thickness is set in the options or under the swing timer in edit mode. On by default.
+- Swing timers: the game's swing timers in the 1.x cast bar's look, with a color per hand picked from the old bar colors and a flash as each swing lands. Border thickness is set in the options or under the swing timer in edit mode. On by default.
 - Thick health bars under Unit frames: a taller health bar on the player, target and focus frames, over the name or over the mana, for the frames you pick. Off by default.
 - Class colored name box and Name size under Unit frames. Classic bar text font shows the health and power numbers in Classic Era's font, on by default.
 - Damage meter: the game's damage meter windows in the 1.x tooltip rim, with classic buttons, minimize and drop-downs, a Header height setting, and a marble or talent tree background you can move with Move background art.
@@ -65,7 +65,7 @@ All notable changes to ClassicUI Forever are documented here.
 - The minimap's options button, addon buttons bag and group finder eye can be moved round the ring, sized or hidden in ClassicUI Forever Windows.
 - The classic professions book opens in the spellbook's frame at its size. Full size book under Professions book opens the two-page book instead.
 - FAQ and Support tabs in the options window. The FAQ has its own search.
-- Custom colour under Custom theme paints the metal in a colour you pick.
+- Custom color under Custom theme paints the metal in a color you pick.
 - German, French, Spanish and Italian translations.
 - Classic-sized bag slots under Classic bar: bag slots at Classic Era's size on Era's own bag art. On by default.
 - Band holds bars 2 and 3 under Hide micro buttons widens the micro menu's art so bars 2 and 3 never hang past the band's end. Off by default.
@@ -141,14 +141,14 @@ All notable changes to ClassicUI Forever are documented here.
 
 ### Changed
 - The key ring opens with no keys and always in its own window, in Classic Era's key ring art.
-- The quest log highlights only the chosen quest, in its difficulty colour with white text; pointing at another quest turns its text white, as in Classic Era.
+- The quest log highlights only the chosen quest, in its difficulty color with white text; pointing at another quest turns its text white, as in Classic Era.
 - The addon buttons bag closes on a click anywhere else, and its button starts clear of the tracking icon.
 - Shorter layout prompts.
 
 ### Fixed
-- Scroll arrows grey out when there is nothing to scroll, on the reputation, currency and friends lists and elsewhere.
+- Scroll arrows gray out when there is nothing to scroll, on the reputation, currency and friends lists and elsewhere.
 - Guild roster: Last Online sorts by how long a member has been away.
-- The guild tab stays greyed out without a guild after another social tab is picked.
+- The guild tab stays grayed out without a guild after another social tab is picked.
 - The macro window opens beside the spellbook instead of closing it.
 - Talent arrows between talents on the same row point the right way.
 - The action bar page arrows no longer show over the world map.
@@ -179,7 +179,7 @@ All notable changes to ClassicUI Forever are documented here.
 - Hide objective tracker: the tracker comes back as soon as the option is unchecked.
 - The classic layout keeps the objective tracker clear of bars 4 and 5, and bars 4 and 5 stay at the screen's right edge after a UI scale change or with the addon off.
 - The map's picture fills its frame after switching the map layout, and quest details fit the map's quest pane.
-- The settings window no longer raises an error when its list scrolls, and its highlights have the right colour.
+- The settings window no longer raises an error when its list scrolls, and its highlights have the right color.
 - Escape closes the guild charter window while its name box has focus.
 - Search and number boxes in the spellbook and profession windows no longer show a bronze border outside the Bronze theme.
 - Many windows, tabs and buttons line up with Classic Era's.
@@ -194,9 +194,9 @@ All notable changes to ClassicUI Forever are documented here.
 
 ### Fixed
 - Spells can be dragged onto Action Bar 1 and off it again.
-- The minimap's zone name is centred on its bar, wherever the calendar sits.
+- The minimap's zone name is centered on its bar, wherever the calendar sits.
 - Only the picked tab at the foot of the spellbook and the professions window has a white label.
-- In a fight the Demon page no longer greys out pet commands and stances.
+- In a fight the Demon page no longer grays out pet commands and stances.
 
 ## [0.11.6] - 2026-09-28
 
@@ -207,7 +207,7 @@ All notable changes to ClassicUI Forever are documented here.
 
 ### Changed
 - Key text on the action buttons is Classic Era's size and thick outline; on the classic bar it drew a fifth smaller than 1.x.
-- Every row of tabs at a window's foot (character sheet, talents, social and the rest) is drawn on Classic Era's tab template: the tabs meet the window's foot with no gap, the picked tab covers the frame's line, and the labels stay centred whether picked or not.
+- Every row of tabs at a window's foot (character sheet, talents, social and the rest) is drawn on Classic Era's tab template: the tabs meet the window's foot with no gap, the picked tab covers the frame's line, and the labels stay centered whether picked or not.
 
 ### Fixed
 - Reset toggles puts the one bag Columns number back to its default too.
@@ -280,7 +280,7 @@ All notable changes to ClassicUI Forever are documented here.
 - Gryphons stand on the band and draw under the first and last buttons, as 1.x drew the end caps.
 - Tabs on every window light the old blue hover glow, and the picked tab rises into the window's border and opens it, on 1.x's own tab sheets. The picked tab never glows.
 - One bar: the band ends on dark stone past the page number, with its own post; no gap and no clipping at the right gryphon.
-- Bars 2 and 3 sit centred between the gryphons as one run of slots, so a band widened by the latency bar, key ring and reagent bag no longer leaves them short on the right.
+- Bars 2 and 3 sit centered between the gryphons as one run of slots, so a band widened by the latency bar, key ring and reagent bag no longer leaves them short on the right.
 - Reset classic layout puts everything back: windows, tracker, gryphons, latency bar, key ring, reagent bag, and every piece's edit mode settings (every slot shown, bar art shown).
 - Status bars moved off the band keep whole, even segments at any width; a reputation bar over the experience bar sits on its rail.
 - Bags open on the game sheet's 32 px sockets, stack up to the screen top as in 1.x, and open in the frame they are asked for. The combined backpack has no empty row above a few slots.
@@ -288,7 +288,7 @@ All notable changes to ClassicUI Forever are documented here.
 - Character sheet tabs squeeze the widest first and never below a label; the close button has its own place and size; the window border stands still between tabs.
 - Old scroll bars on the side stats panel, the skill description, the map's quest list and details, and the equipment page.
 - Quest details on the map: parchment up to the scroll bar, the header band in the map's rock, the Back button at its old spot, the reward name box from the icon's edge.
-- Player frame: a class colour strip fills the name box.
+- Player frame: a class color strip fills the name box.
 - Nameplates take the skull from the effective level, as the target frame does.
 - The game menu keeps the 1.x look when first opened in a fight; edit dialogs close on Escape; Fade while moving sits in the map's edit dialog.
 - Options window: GitHub issues first, marked preferred, with a note that opening one needs a signed-in GitHub account.
@@ -298,10 +298,10 @@ All notable changes to ClassicUI Forever are documented here.
 - Game-sized bar keeps twelve slots on every bar; the ten and eight slot trims of 0.9.0 are gone, and Reset classic layout writes twelve.
 
 ### Fixed
-- Opening the quest log no longer throws a SetPoint error, and ticking its option off and on is clean (#46).
+- Opening the quest log no longer throws a SetPoint error, and checking its option off and on is clean (#46).
 - Bar 3 no longer lands over the experience bar and no bar flies to the top of the screen in a fight.
 - Micro buttons keep their icon and tooltip with the classic bar off (#41). The one-bar end texture is whole (#44).
-- The player frame's class colour and the tabs' blue highlight are back (#42, part).
+- The player frame's class color and the tabs' blue highlight are back (#42, part).
 - The totem bar no longer launches the cooldown viewers and extra abilities to the top of the screen.
 - The round reagent bag shows its icon, not only a blue glow.
 - Hidden bag and micro art keep the experience strip's lower border.
@@ -314,7 +314,7 @@ All notable changes to ClassicUI Forever are documented here.
 
 ### Added
 - Elite frames: new options under Unit frames put the elite dragon on the player, target and focus frames. Target and focus show it on every unit; rares get the rare elite dragon.
-- Hide this bar: select the experience or reputation bar in edit mode and tick Hide this bar under its settings. With both bars hidden, the old max level strip shows in their place.
+- Hide this bar: select the experience or reputation bar in edit mode and check Hide this bar under its settings. With both bars hidden, the old max level strip shows in their place.
 - What's New: after an update, a chat line links to a short note of what changed. New players get the welcome note instead.
 
 ### Changed
@@ -369,7 +369,7 @@ All notable changes to ClassicUI Forever are documented here.
 - In a fight, the stance bar no longer blocks clicks on action bar 2.
 - The spellbook and the professions window swap in a fight instead of overlapping.
 - Tooltips no longer stay on screen after their window closes.
-- The guild roster no longer lags with Show Offline ticked in a large guild, and no gold bar stays behind after it closes.
+- The guild roster no longer lags with Show Offline checked in a large guild, and no gold bar stays behind after it closes.
 - The Who window's Create Listing and Group Browser tabs open the group finder, in a fight too, and the finder's Who tab turns to the Who list in place. The tabs did nothing, and the finder's Who tab opened a second window.
 - Switching the character sheet's stat panes in a fight no longer brings up a blocked action message, and the panes no longer show with the classic character sheet off.
 - Turning the classic bar off no longer taints the action bars in fights.
@@ -383,7 +383,7 @@ All notable changes to ClassicUI Forever are documented here.
 ## [0.8.0] - 2026-09-22
 
 ### Added
-- A Bronze Forever theme: everything stays classic, and the metal is Forever's bronze instead of the old silver. The gryphons, the bar, the unit frame and portrait borders, the minimap and its buttons, window and menu frames and their tabs, action, bag, character and inspect slots, buffs and debuffs, the micro menu, the chat buttons, and the frames of the mail, trade, merchant, bank, quest and trainer windows all turn bronze, while icons, parchment and pictures keep their own colours. Off by default. Toggle: Bronze Forever theme.
+- A Bronze Forever theme: everything stays classic, and the metal is Forever's bronze instead of the old silver. The gryphons, the bar, the unit frame and portrait borders, the minimap and its buttons, window and menu frames and their tabs, action, bag, character and inspect slots, buffs and debuffs, the micro menu, the chat buttons, and the frames of the mail, trade, merchant, bank, quest and trainer windows all turn bronze, while icons, parchment and pictures keep their own colors. Off by default. Toggle: Bronze Forever theme.
 - A line in chat at login turns the bronze theme on or off in one click, since the beta does not keep settings between sessions.
 
 ### Fixed
@@ -503,7 +503,7 @@ All notable changes to ClassicUI Forever are documented here.
 
 ### Added
 - The trainer's window as the old one: the trainer's greeting under the title, the All tab and the Filter drop down, the list under its headers in green for what you can learn, red for what you cannot yet and gray for what you know, the chosen service below with what it needs and what it costs, and your money, Train and Exit along the foot. Toggle: Classic trainer window.
-- The spellbook carries the old Show all spell ranks box. Unticked, only the highest rank you know of each spell is listed. The same setting is in the options as Highest spell ranks only.
+- The spellbook carries the old Show all spell ranks box. Unchecked, only the highest rank you know of each spell is listed. The same setting is in the options as Highest spell ranks only.
 - No arrow beside the buffs: 1.x had no arrow next to the buff icons, so the small arrow that folds the buffs away is hidden. It still comes up under the mouse and still works, and the toggle brings it back for good.
 - The quest log shows how many of your party are on each quest, the old [2] in front of the title, with their names when you point at the row.
 - Opened bags beside the right action bars: bag windows start to the left of the action bars standing down the right edge of the screen, as they used to, and no longer cover them. A bar laid down or moved away from that edge is not counted. On by default, with a toggle.
@@ -564,7 +564,7 @@ All notable changes to ClassicUI Forever are documented here.
 ### Fixed
 - Errors in a fight that named this addon from inside the game's own damage meter, cooldown manager, action buttons and party frames. Whenever the addon wrote an edit mode layout while the game was running (setting up the classic layout, locking the bars, the bar size toggle, turning the classic bar off), the game marked every edit mode piece as the addon's for the rest of that session and then refused those pieces their combat values. No layout is written under a running game any more. Whatever you ask for is held until the interface restarts and is written in that same press, so the session that would have been marked is already over. "Later" on any of these prompts now means nothing has been written.
 - The bars are locked into your layout, and unlocked again when the classic bar is turned off, in that same press. They were also meant to be locked quietly at logout, which the game never kept.
-- A lock of the addon's is recognised by how the bar is held rather than by a saved note of it, so bars 2 and 3 and the stance bar keep following the classic bar after the game has lost the addon's saved settings.
+- A lock of the addon's is recognized by how the bar is held rather than by a saved note of it, so bars 2 and 3 and the stance bar keep following the classic bar after the game has lost the addon's saved settings.
 - Party frames no longer come apart when someone gains a level in the group, or when someone joins in the middle of a fight. The game sets its party frames up afresh at those moments; the old art is put back at once, in a fight too, and the rest the moment the fight ends.
 - The debuff row under the target and focus frames no longer drops a row and hops back.
 - The spellbook and the social window close the instant a quest giver, vendor or any other window of the game's opens, the first time as well. The talents window is left open beside them, as it used to be.
@@ -600,9 +600,9 @@ All notable changes to ClassicUI Forever are documented here.
 - The chosen category in the game's options window wears the old yellow highlight instead of a white bar.
 
 ### Added
-- The stat boxes of the 2.x character sheet, now the sheet's default: two drop downs under the model, each listing any section of the game's own character window, General, Primary Attributes, Weapons, Modifiers, Defense or Resistances. The lines, numbers and tooltips are the game's own, so they read exactly as the default window's do. Untick "Stat panes with drop downs" for the plain 1.x pair of attributes and attacks.
+- The stat boxes of the 2.x character sheet, now the sheet's default: two drop downs under the model, each listing any section of the game's own character window, General, Primary Attributes, Weapons, Modifiers, Defense or Resistances. The lines, numbers and tooltips are the game's own, so they read exactly as the default window's do. Uncheck "Stat panes with drop downs" for the plain 1.x pair of attributes and attacks.
 - One bag columns: how many slots across the one bag window is, from the old four up to sixteen. In the settings window under One bag, and under the bags dialog in edit mode.
-- Opened bags above the bag buttons is a choice, and starts off: opened bags go where the default interface puts them unless you tick it, in the settings window or under the bags dialog in edit mode. The two tick boxes are the same setting.
+- Opened bags above the bag buttons is a choice, and starts off: opened bags go where the default interface puts them unless you check it, in the settings window or under the bags dialog in edit mode. The two checkboxes are the same setting.
 
 ### Changed
 - The game menu is closer to the old one: white labels on the buttons under a gold Main Menu plate, the buttons at the old spacing, and the stack sitting up under the plate.
@@ -626,14 +626,14 @@ All notable changes to ClassicUI Forever are documented here.
 - The guild button in the micro menu is the old Social button again: it opens the friends window, with the guild as one of its tabs, and says Social. The guild key still opens the roster. The Guild tab is grayed out for a character in no guild.
 - The reagent bag is a small round button between the key ring and the last bag instead of a full slot standing in the micro menu's part of the bar.
 - The settings window is laid out afresh: the buttons that act on the toggles sit with the toggles, reports and feedback have their own corner, and the window is a little less see-through.
-- Turning the addon off hands the default interface back as you left it. Unticking it in the AddOns list, or typing /fcui off, makes your earlier edit mode layout active again and restores the game settings the addon changed. Turning only the classic bar off resets every piece of the bar in the ClassicUI Forever layout so the game's own bar is not left in a jumble.
+- Turning the addon off hands the default interface back as you left it. Unchecking it in the AddOns list, or typing /fcui off, makes your earlier edit mode layout active again and restores the game settings the addon changed. Turning only the classic bar off resets every piece of the bar in the ClassicUI Forever layout so the game's own bar is not left in a jumble.
 
 ### Fixed
 - A rogue's energy fills smoothly on the player frame instead of climbing in steps of twenty.
 - The right click menu on a guild member closes when you click anywhere else, and with the roster.
 - The experience bar's segments are whole and equal at any bar length, with no sliver of a segment at either end.
 - The bag buttons no longer wear a brown ring the old bar never had, and an empty bag slot is not see-through when the bags are off the bar.
-- A checkbox ticked in the copy of the settings inside the game's own Settings window no longer raises an error.
+- A checkbox checked in the copy of the settings inside the game's own Settings window no longer raises an error.
 - Bar 1 dragged in edit mode is not put back where it was, and dropped near the middle of the screen it centers exactly.
 - Turning the classic bar off no longer stops partway on an error from the game's own micro menu layout.
 - The settings window no longer pokes through edit mode's panels.
@@ -863,7 +863,7 @@ All notable changes to ClassicUI Forever are documented here.
 ### Added
 - The 1.x quest log in its own window, apart from the map: the book in the portrait ring, the quest count, the All tab, Track Quest, six list rows with level colors and tags over the parchment detail with objectives, description and rewards, and Abandon, Share and Exit. The quest micro button, the quest log key and quest clicks in the tracker open it.
 - The 1.x spellbook is back: the parchment book, twelve spells a page with name and rank, school tabs down the right edge, page arrows and a pet tab, on the micro button, the keybind and /spellbook. Talents keep the modern window.
-- The 1.x character sheet: the old window art, slots down the sides with the weapons underneath, the model with its rotate buttons, the attribute and armour box, the melee and ranged attack box, the five resistances and the bottom tabs. Retail's side panel and stat list stay closed.
+- The 1.x character sheet: the old window art, slots down the sides with the weapons underneath, the model with its rotate buttons, the attribute and armor box, the melee and ranged attack box, the five resistances and the bottom tabs. Retail's side panel and stat list stay closed.
 - The world map window in the old metal border with the title strip, and no portrait.
 - Quest log: the old scroll bar arrows and knob (bundled, the client's copies are stand-ins), the detail text stays inside its pane, Abandon is live whenever a quest is selected, and button labels sit centered.
 - The micro row keeps its full 1.x size on the Forever client: the buttons overlap by their clear margins, the shop button stays in the Escape menu instead of the row, and an empty reagent bag shows the dim bag eagle like the client's own bar.
