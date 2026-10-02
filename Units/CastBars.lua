@@ -29,7 +29,7 @@ local COLORS = {
 
 local active = false
 local skinned = {}
-local interrupted = setmetatable({}, { __mode = "k" })   -- bar -> showing an interrupt or failure
+local fillState = setmetatable({}, { __mode = "k" })   -- bar -> "full" (finished) or "interrupted", till the next start
 
 -- 12.x never calls SetLook on target/focus/boss spell bars: those (with AdjustPosition) are small, the rest full size.
 local function LookOf(bar)
@@ -102,10 +102,19 @@ end
 
 local function Fill(bar)
     if not active then return end
-    local color = interrupted[bar] and COLORS.red
+    local state = fillState[bar]
+    local color = state == "interrupted" and COLORS.red
     if not color then
         local tex = bar:GetStatusBarTexture()
-        color = FillColor(tex and tex.GetAtlas and tex:GetAtlas())
+        local atlas = tex and tex.GetAtlas and tex:GetAtlas()
+        if IsSecret(atlas) then
+            -- Another unit's cast hides its art: finished or channeling is green, else gold (its own flag, set by the client).
+            local channeling = bar.channeling
+            if IsSecret(channeling) then channeling = nil end
+            color = (state == "full" or channeling) and COLORS.green or COLORS.yellow
+        else
+            color = FillColor(atlas)
+        end
     end
     bar:SetStatusBarTexture(FILL_TEXTURE)
     bar:SetStatusBarColor(color:GetRGB())
@@ -181,9 +190,9 @@ local function Skin(bar)
                 ns.HookMethod(parent, "SetSmallSize", function() Position(bar) end)
             end
         end
-        -- The client re-sets the fill atlas on every start, stop and finish; a start (not full) ends an interrupt.
+        -- The client re-sets the fill atlas on every start, stop and finish; a start (not full) clears the state.
         ns.HookMethod(bar, "UpdateBarFillTexture", function(b, isFull)
-            if not isFull then interrupted[b] = nil end
+            if isFull then fillState[b] = fillState[b] or "full" else fillState[b] = nil end
             Fill(b)
         end)
         -- Spark atlas and per-type glow return on every cast.
@@ -206,7 +215,7 @@ local function Skin(bar)
             HideFx(b)
             local shake = b.InterruptShakeAnim
             if shake and not ns.db.castBarShake then shake:Stop() end
-            interrupted[b] = true
+            fillState[b] = "interrupted"
             Fill(b)
             b:SetMinMaxValues(0, 1)
             b:SetValue(1)
