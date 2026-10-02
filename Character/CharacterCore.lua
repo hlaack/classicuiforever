@@ -231,16 +231,52 @@ local function RingPiece(parent, frame, key, lift)
     ns.DressNew(over, key, RING)
     return over
 end
+-- The doll page stands 2 left and 1 up of the window: while its ring shows, the window's own is put away, or it shows
+-- along the doll ring's right and bottom edges as a seam.
 local function RingOver(frame, doll, only)
     local over = RingPiece(frame, frame, only or "charGeneralTopLeft", 1)
-    if doll and not only then over.doll = RingPiece(doll, frame, "charTabTopLeft", 2) end
+    if doll and not only then
+        local ring = RingPiece(doll, frame, "charTabTopLeft", 2)
+        over.doll = ring
+        ring:SetScript("OnShow", function() over:SetAlpha(0) end)
+        ring:SetScript("OnHide", function() over:SetAlpha(1) end)
+        over:SetAlpha(ring:IsVisible() and 0 or 1)
+    end
     return over
+end
+
+-- Era's portrait: the player's face on every tab. Forever shows the spec icon on the doll page (the pet view's too), and
+-- the swap jumped as it was fitted: ours lies over the game's, which is faded while the ring overlay shows.
+local FACE_SIZE, FACE_X, FACE_Y = 62, 9, -6
+local FACE_EVENTS = { "PORTRAITS_UPDATED", "PLAYER_ENTERING_WORLD" }
+local function Face(frame, over)
+    local holder = frame.PortraitContainer
+    local face = ns.NewFrame("Frame", nil, frame)
+    face:SetAllPoints(frame)
+    face:SetFrameLevel(holder and holder:GetFrameLevel() or frame:GetFrameLevel())
+    local tex = face:CreateTexture(nil, "ARTWORK")
+    tex:SetSize(FACE_SIZE, FACE_SIZE)
+    tex:SetPoint("TOPLEFT", frame, "TOPLEFT", FACE_X, FACE_Y)
+    local function Refresh() if face:IsVisible() then SetPortraitTexture(tex, "player") end end
+    local events = ns.EventFrame(FACE_EVENTS, Refresh)
+    ns.RegisterEvents(events, { "UNIT_PORTRAIT_UPDATE" }, "player")
+    local function Shown(on)
+        face:SetShown(on)
+        local game = holder and holder.portrait
+        if game then ns.SetAlphaIf(game, on and 0 or 1) end
+        Refresh()
+    end
+    over:HookScript("OnShow", function() Shown(true) end)
+    over:HookScript("OnHide", function() Shown(false) end)
+    Shown(over:IsShown())
+    return face
 end
 
 function T.BuildArt(frame, doll)
     T.general = ns.DressPieces(frame, GENERAL, nil, true)
     T.doll = ns.DressPieces(doll, DOLL, nil, true)
     T.ringOver = RingOver(frame, doll)
+    T.face = Face(frame, T.ringOver)
 end
 
 ----------------------------------------------------------- docking API
