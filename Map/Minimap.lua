@@ -109,6 +109,26 @@ local function PlayerCoords()
     return box and box.PlayerCoords, box
 end
 
+-- The comma under the map's middle: the game writes the line as one string, its numbers of any width, so the line
+-- slides by the difference, measured on a scratch string in its font, while it shows.
+local commaScratch, commaOn
+local function CommaShift(coords)
+    local text = coords.CoordText
+    local line = commaOn and text and text:GetText()
+    if not line or ns.IsSecret(line) then return end
+    local cut = line:find(",", 1, true)
+    local shift = 0
+    if cut then
+        commaScratch = commaScratch or UIParent:CreateFontString(nil, "OVERLAY")
+        commaScratch:SetFont(text:GetFont())
+        commaScratch:SetText(line:sub(1, cut - 1))
+        local before = commaScratch:GetStringWidth()
+        commaScratch:SetText(",")
+        shift = text:GetStringWidth() / 2 - before - commaScratch:GetStringWidth() / 2
+    end
+    ns.SetTwoPointsIf(text, "TOPLEFT", coords, "TOPLEFT", shift, 0, "BOTTOMRIGHT", coords, "BOTTOMRIGHT", shift, 0)
+end
+
 local function DrainDielRing(region)
     if region.GetAtlas and region:GetAtlas() == DIEL_RING then
         ns.DrainBronze(region)
@@ -521,6 +541,8 @@ local function Layout()
         local coordsHome = LayHome("minimapCoords", backdrop, above, 90, 10, map, "BOTTOM", 0, -23)
         if coords:GetParent() ~= coordsHome then coords:SetParent(coordsHome) end
         ns.SetPointOnce(coords, "CENTER", coordsHome, "CENTER", 0, 0)
+        commaOn = true
+        ns.Sched.Attach(coords, { name = "minimap.coordsComma", every = 0.1, fn = function() CommaShift(coords) end })
     end
     RingShown()
     if GameTimeFrame then
@@ -677,6 +699,11 @@ local function Restore()
     if coords and Minimap then
         coords:SetParent(box)
         ns.SetPointOnce(coords, "BOTTOM", Minimap, "BOTTOM", 0, -18)
+        commaOn = false
+        if coords.CoordText then
+            coords.CoordText:ClearAllPoints()
+            coords.CoordText:SetAllPoints(coords)
+        end
     end
     if MinimapCluster and MinimapCluster.BorderTop then ns.Unfade(MinimapCluster.BorderTop) end
     ThemeRingsOnGameMap()
