@@ -168,15 +168,29 @@ end
 
 ns.PLATE_NAME_MIN, ns.PLATE_NAME_MAX = -6, 6
 
--- The size the client shows plus the player's offset in points. The client's size is read off the name itself
--- (it scales plate fonts on its own): any size other than the one we last set is the client's new one.
+-- Era's plate name: Friz 10 at the plate's size, no outline, no shadow (Forever's is 17.5, outlined and shadowed).
+local ERA_NAME_SIZE = 10
+
+-- The size the client shows (Classic fonts: Era's at the plate's size) plus the player's offset in points. The client's
+-- size is read off the name itself (it scales plate fonts on its own): any other than the one we last set is its new one.
 local function NameSize(name, own)
     local file, size, flags = name:GetFont()
-    if not size then return end
+    if not size or ns.IsSecret(size) or ns.IsSecret(flags) then return end
     if not own.nameSet or math.abs(own.nameSet - size) > 0.05 then own.nameBase = size end
-    local want = math.max(6, own.nameBase + (tonumber(ns.db.plateNameSize) or 0))
-    if math.abs(size - want) > 0.05 then name:SetFont(file, want, flags) end
+    local classic = ns.ClassicFonts()
+    local base = classic and ERA_NAME_SIZE * PlateScale() or own.nameBase
+    local want = math.max(6, base + (tonumber(ns.db.plateNameSize) or 0))
+    local wantFlags = classic and (flags or ""):gsub("THICKOUTLINE", ""):gsub("OUTLINE", ""):gsub("^[,%s]+", "")
+        :gsub("[,%s]+$", ""):gsub(",%s*,", ",") or flags
+    if math.abs(size - want) > 0.05 or flags ~= wantFlags then name:SetFont(file, want, wantFlags) end
     own.nameSet = want
+end
+
+-- Plate text shadows: none in Era's look, a 1 px drop shadow otherwise.
+local function TextShadow(text)
+    local off = ns.ClassicFonts() and 0 or 1
+    text:SetShadowColor(0, 0, 0, 1)
+    text:SetShadowOffset(off, -off)
 end
 
 -- Runs after the client has anchored the unit frame.
@@ -199,8 +213,6 @@ local function Layout(unitFrame)
     if not level then
         level = health:CreateFontString(nil, "OVERLAY", "SystemFont_NamePlateLevel")
         level:SetDrawLayer("OVERLAY", 3)
-        level:SetShadowColor(0, 0, 0, 1)
-        level:SetShadowOffset(1, -1)
         own.level = level
         local skull = health:CreateTexture(nil, "OVERLAY", nil, 3)
         skull:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
@@ -208,6 +220,7 @@ local function Layout(unitFrame)
         skull:Hide()
         own.skull = skull
     end
+    TextShadow(level)
     ns.SetPointIf(level, "CENTER", border, "RIGHT", LEVEL_X, 0)
     ns.SetPointIf(own.skull, "CENTER", border, "RIGHT", LEVEL_X, 0)
     UpdateLevel(unitFrame)
@@ -218,8 +231,7 @@ local function Layout(unitFrame)
         ns.SetPointIf(name, "BOTTOM", border, "TOP", 0, NAME_GAP)
         name:SetWidth(0)
         name:SetJustifyH("CENTER")
-        name:SetShadowColor(0, 0, 0, 1)
-        name:SetShadowOffset(1, -1)
+        TextShadow(name)
         NameSize(name, own)
         local debuffs = ns.Path(unitFrame, "AurasFrame", "DebuffListFrame")
         if debuffs then
@@ -266,17 +278,28 @@ local function EachPlate(fn, withForbidden)
 end
 NP.EachPlate = EachPlate
 
+local function PlateText(unitFrame)
+    local own = unitFrame.fcui
+    if not own then return end
+    if unitFrame.name then
+        TextShadow(unitFrame.name)
+        NameSize(unitFrame.name, own)
+    end
+    if own.level then TextShadow(own.level) end
+end
+
 -- Name text size (options stepper); applies live.
 function ns.SetPlateNameSize(offset)
     offset = math.max(ns.PLATE_NAME_MIN, math.min(ns.PLATE_NAME_MAX, math.floor(tonumber(offset) or 0)))
     ns.db.plateNameSize = offset
-    if NP.active then
-        EachPlate(function(unitFrame)
-            if unitFrame.name and unitFrame.fcui then NameSize(unitFrame.name, unitFrame.fcui) end
-        end)
-    end
+    if NP.active then EachPlate(PlateText) end
     return offset
 end
+
+-- Classic fonts answers on the plates at once, in a fight too.
+ns.OnToggle(function(key)
+    if key == "classicFonts" and NP.active then EachPlate(PlateText) end
+end)
 
 -- Plates re-lay after the client's handlers for what re-anchors them (added, faction, target, focus, casts, options, scale),
 -- in this frame's pass and the next: a plate registers its events after ours. Only player plates change colour with no

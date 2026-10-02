@@ -44,6 +44,8 @@ ns.DB_DEFAULTS = {
     themeColor = "e69e52",
     themeDarkness = 50,
     themeFlat = false,
+    classicFonts = true,
+    platesOneSize = false,
     flatBars = true,
     flatCharacter = true,
     flatSpellbook = true,
@@ -204,7 +206,7 @@ ns.DB_DEFAULTS = {
 ns.MODULE_ORDER = {
     "bronzeTheme", "hideMicroButtons", "classicBar", "buttons", "castAnim", "pageArrows", "unitFrames", "hideBuffArrow",
     "castBars", "swingTimers", "resourceDisplay", "classicStatusFont", "plainNumbers", "mirrorTimers", "comboPoints", "minimap", "minimapButton", "lfgMinimapButton", "minimapCollector", "namePlates", "classColorPlates",
-    "fullPlates", "questTracker", "hideObjectiveTracker", "questLog", "questLogDual", "questLevels", "questMapPane", "panels", "worldMap", "lootWindow", "classicChat", "lootRoll",
+    "fullPlates", "classicFonts", "questTracker", "hideObjectiveTracker", "questLog", "questLogDual", "questLevels", "questMapPane", "panels", "worldMap", "lootWindow", "classicChat", "lootRoll",
     "guildRoster", "whoList", "groupFinder", "hideLastNames", "mapFade", "oneBag", "bags", "characterSheet", "statPanes",
     "spellBook", "spellBookTopRank", "spellBookSearch", "professionsBook", "tradeSkillSearch", "tradeSkill",
     "trainer", "talents", "options", "gameMenu", "tooltips", "clientMenus", "settingsPanel", "damageMeter", "gameArt",

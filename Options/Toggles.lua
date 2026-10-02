@@ -27,6 +27,7 @@ ns.TOGGLES = {
     { "squareIcons", L["OPT_squareIcons"], L["OPT_squareIcons_TIP"], parent = "buttons" },
     { "hideKeyText", L["OPT_hideKeyText"], L["OPT_hideKeyText_TIP"], parent = "buttons" },
     { "castAnim", L["OPT_castAnim"], L["OPT_castAnim_TIP"] },
+    { "classicFonts", L["OPT_classicFonts"], L["OPT_classicFonts_TIP"], search = "font text size outline shadow nameplate" },
 
     { "classicBar", L["OPT_classicBar"], L["OPT_classicBar_TIP"], group = L["GROUP_ACTION_BARS"] },
     { "microTips", L["OPT_microTips"], L["OPT_microTips_TIP"], parent = "classicBar", search = "tooltip" },
@@ -104,6 +105,7 @@ ns.TOGGLES = {
     { "namePlates", L["OPT_namePlates"], L["OPT_namePlates_TIP"], group = L["GROUP_NAMEPLATES"] },
     { "classColorPlates", L["OPT_classColorPlates"], L["OPT_classColorPlates_TIP"], parent = "namePlates" },
     { "fullPlates", L["OPT_fullPlates"], L["OPT_fullPlates_TIP"] },
+    { "platesOneSize", L["OPT_platesOneSize"], L["OPT_platesOneSize_TIP"], search = "scale distance target bigger" },
     { "hideLastNames", L["OPT_hideLastNames"], L["OPT_hideLastNames_TIP"] },
 
     { "gameMenu", L["OPT_gameMenu"], L["OPT_gameMenu_TIP"], group = L["GROUP_DIALOGS"] },

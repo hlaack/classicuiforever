@@ -7,6 +7,8 @@ return {
     plainQuestItems = "same for everyone: opt-in, off by default",
     plainNumbers = "same for everyone: mirrors the game's own setting, which only the player changes",
     hideMicroShop = "same for everyone: opt-in, off by default; the classic bar never shows the shop",
+    classicFonts = "on for everyone, as the damage meter was: a new restyle, text as Classic Era draws it",
+    platesOneSize = "same for everyone: opt-in, off by default; game settings written only on the click",
     themeFlat = "same for everyone: opt-in, off by default",
     flatBars = "same for everyone: a part of Flat colour, which is off by default",
     flatCharacter = "same for everyone: a part of Flat colour, which is off by default",

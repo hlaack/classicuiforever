@@ -139,3 +139,22 @@ local function FullPlatesRestore()
 end
 
 ns.RegisterModule("fullPlates", { apply = FullPlatesApply, restore = FullPlatesRestore })
+
+-- Same size near and far: Era's plates kept one size; Forever's shrink with distance and grow when targeted. Game
+-- settings, written only on the player's click (held in a fight); the values before come back when it goes off.
+local SCALE_CVARS = { "nameplateMinScale", "nameplateSelectedScale" }
+ns.OnToggle(function(key)
+    if key ~= "platesOneSize" then return end
+    local db = ns.db
+    if db.platesOneSize then
+        db.platesOneSizeWas = db.platesOneSizeWas or {}
+        for _, cvar in ipairs(SCALE_CVARS) do
+            if db.platesOneSizeWas[cvar] == nil then db.platesOneSizeWas[cvar] = ns.GetCVar(cvar) end
+            ns.SetCVarOrHold(cvar, "1")
+        end
+    else
+        local was = db.platesOneSizeWas or {}
+        for _, cvar in ipairs(SCALE_CVARS) do ns.SetCVarOrHold(cvar, was[cvar] or ns.GetCVarDefault(cvar)) end
+        db.platesOneSizeWas = nil
+    end
+end)
