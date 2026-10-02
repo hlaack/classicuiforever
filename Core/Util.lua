@@ -159,13 +159,18 @@ local function Askable(frame, method)
 end
 ns.Askable = Askable
 
+-- Some frames say they are not forbidden yet refuse addon code (a nameplate's piece, 0.16.0): asked once in a pcall
+-- that returns only the count, then walked outside it, so a walker's own error still shows.
+local function CountChildren(frame) return select("#", frame:GetChildren()) end
+local function CountRegions(frame) return select("#", frame:GetRegions()) end
+
 function ns.EachChild(frame, fn, a1, a2, a3, a4)
-    if not Askable(frame, "GetChildren") then return 0 end
+    if not Askable(frame, "GetChildren") or not pcall(CountChildren, frame) then return 0 end
     return Visit(fn, a1, a2, a3, a4, frame:GetChildren())
 end
 
 function ns.EachRegion(frame, fn, a1, a2, a3, a4)
-    if not Askable(frame, "GetRegions") then return 0 end
+    if not Askable(frame, "GetRegions") or not pcall(CountRegions, frame) then return 0 end
     return Visit(fn, a1, a2, a3, a4, frame:GetRegions())
 end
 
