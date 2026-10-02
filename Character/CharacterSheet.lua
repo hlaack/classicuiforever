@@ -32,7 +32,7 @@ local TAB_LABELS = {
     StatisticsFrame = "Stats",
 }
 
--- The client's pet view (its stats tab 3 swaps the gear for the pet); read only.
+-- The client's pet view (its pet side tab swaps the gear for the pet); read only.
 local function PetView()
     return PaperDollFrame and PaperDollFrame:IsShown() and CharacterStatsPanePetScrollBox ~= nil
         and PaperDollFrame.currentSideBar == CharacterStatsPanePetScrollBox or false
@@ -65,7 +65,7 @@ local TAB_TEXT_ROOM = 20
 local TAB_MIN_WIDTH = 44
 -- The first tab's left edge in the strip, and how far each tab tucks under the one before.
 local TAB_FIRST_X = 14
-local TAB_OVERLAP = 15
+local TAB_OVERLAP, HIT_INSET = 15, 7   -- tabs overlap; each click area stops halfway into it
 local labelWidth = setmetatable({}, { __mode = "k" })
 -- Both sheets are 128 x 32; the faces take the shared spot and height (Windows/Tabs.lua).
 local TAB_COORDS = { { 0, 0.15625, 0, 1 }, { 0.15625, 0.84375, 0, 1 }, { 0.84375, 1, 0, 1 } }
@@ -144,9 +144,10 @@ local function OverTab(tab, catcher, under, far)
     end
     local floor = (under or tab):GetFrameLevel()
     if catcher:GetFrameLevel() <= floor then catcher:SetFrameLevel(floor + 2) end
-    if catcher.SetHitRectInsets then
-        local l, r, t, b = catcher:GetHitRectInsets()
-        if ns.AnySecret(l, r, t, b) or l ~= 0 or r ~= 0 or t ~= 0 or b ~= 0 then catcher:SetHitRectInsets(0, 0, 0, 0) end
+    -- A short tab (Pet) lay under both neighbours' click areas.
+    local l, r, t, b = catcher:GetHitRectInsets()
+    if ns.AnySecret(l, r, t, b) or l ~= HIT_INSET or r ~= HIT_INSET or t ~= 0 or b ~= 0 then
+        catcher:SetHitRectInsets(HIT_INSET, HIT_INSET, 0, 0)
     end
     if not catcher:IsMouseEnabled() then catcher:EnableMouse(true) end
 end
@@ -229,9 +230,9 @@ local function NewTab(frame, i, mode)
     return tab
 end
 
--- 1.x's second tab while a pet is out; the client's pet tab (stats tab 3) takes its clicks.
+-- 1.x's second tab while a pet is out; the client's pet side tab takes its clicks.
 local function PlacePetTab(frame, prev, strip, pet)
-    local catcher = PaperDollSidebarTab3
+    local catcher = T.PetSideTab()
     if not catcher then return nil end
     if not T.petTab then
         T.petTab = NewTab(frame, "Pet", catcher)
@@ -255,14 +256,14 @@ local function CatchTabs()
         -- Off the doll page Pet opens the Character page, where the client's pet tab lives.
         OverTab(tab, nil, nil, i == 1 and petUp and not doll and petTab or nil)
     end
-    local tab3, tab1 = PaperDollSidebarTab3, PaperDollSidebarTab1
-    if petUp and doll and tab3 then
-        catchers[tab3] = true
-        OverTab(petTab, tab3)
-    elseif tab3 and catchers[tab3] then
+    local petSide, tab1 = T.PetSideTab(), PaperDollSidebarTab1
+    if petUp and doll and petSide then
+        catchers[petSide] = true
+        OverTab(petTab, petSide)
+    elseif petSide and catchers[petSide] then
         -- Left over the hidden Pet tab's spot it would take the next tab's clicks.
-        catchers[tab3] = nil
-        tab3:EnableMouse(false)
+        catchers[petSide] = nil
+        petSide:EnableMouse(false)
     end
     if not (tab1 and tabs[1]) then return end
     if PetView() then

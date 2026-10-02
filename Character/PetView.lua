@@ -83,18 +83,29 @@ local function DressXP(bar, doll)
     end
 end
 
+-- The client's pet side tab: the one whose pane is the pet's (4 on Forever 1.60, after Titles; 3 before it).
+function T.PetSideTab()
+    local pane = CharacterStatsPanePetScrollBox
+    if pane and GetPaperDollSideBarFrame then
+        for i = 1, 6 do
+            local tab = _G["PaperDollSidebarTab" .. i]
+            if tab and GetPaperDollSideBarFrame(i) == pane then return tab end
+        end
+    end
+    return nil
+end
+
 -- Off the Character page the client's pet tab is not there to lie under Pet: a secure pad presses the character micro
 -- button (which turns the open window to its Character page) and then that pet tab, in the client's name, one click.
 -- Pads move out of combat only, so it hides as a fight starts; then Pet opens the Character page first, as before.
-local PET_PAD_MACRO = "/click CharacterMicroButton\n/click PaperDollSidebarTab3"
 local function PetPadMacro()
-    local tab = T.petTab
-    if not (T.active and tab and tab:IsVisible()) or (PaperDollFrame and PaperDollFrame:IsShown()) then return nil end
-    return PET_PAD_MACRO
+    local tab, side = T.petTab, T.PetSideTab()
+    if not (T.active and side and tab and tab:IsVisible()) or (PaperDollFrame and PaperDollFrame:IsShown()) then return nil end
+    return "/click CharacterMicroButton\n/click " .. side:GetName()
 end
 
 function T.PetPad(tab)
-    if not (ns.MapPad and _G["CharacterMicroButton"] and PaperDollSidebarTab3) then return end
+    if not (ns.MapPad and _G["CharacterMicroButton"] and T.PetSideTab()) then return end
     ns.MapPad(tab, "HIGH", function() end, PetPadMacro)
 end
 
