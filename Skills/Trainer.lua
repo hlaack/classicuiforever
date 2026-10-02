@@ -1,7 +1,6 @@
 local _, ns = ...
 
--- The old trainer window on the skill shell, hosted in the client's: its list, filter, button and money stay under ours.
--- Only the trainer functions are called.
+-- Old trainer window on the skill shell, inside the client's; its list, button and money stay under ours.
 
 local active = false
 local panel
@@ -19,7 +18,7 @@ local KIND_COLOR = {
     used = { 0.5, 0.5, 0.5 },
 }
 
--- The client's own pieces that ours stands in for.
+-- Client pieces ours stands in for
 local CLIENT_PIECES = { "FilterDropdown", "FilterInputHint", "TrainButton", "trainingPoints", "skillStepButton",
     "bottomInset", "BG", "Inset" }
 local CLIENT_SHRUNK = { "ScrollBox", "ScrollBar" }
@@ -65,8 +64,7 @@ end
 
 local UpdateDetail
 
--- Scroll column only when the list overflows, as the old window; else the pane
--- reaches the right edge.
+-- Scroll column only when the list overflows, as Era's
 local function FitList()
     local over = math.max(0, #lines - LIST_ROWS)
     panel.bar:SetRange(over)
@@ -96,11 +94,28 @@ local function UpdateRows()
     SkillList.FoldIcon(panel, lines, collapsed)
 end
 
--- BuyTrainerService is refused to addons, and the client trains only a selection made on its own rows: a pad over our
--- Train clicks the client's hidden row for our service, then its Train. No row the client wrote, no pad.
+-- BuyTrainerService is refused to addons: a pad clicks the client's row for our pick, then its Train.
 local TRAIN_ROW, TRAIN_GO = "ClassicUIForeverTrainRow", "ClassicUIForeverTrainGo"
 local TRAIN_MACRO = "/click " .. TRAIN_ROW .. "\n/click " .. TRAIN_GO
-local trainProxies
+local trainProxies, listWrap
+
+-- Rows exist only inside the client's 330-tall list: the press stretches it in its own secure run,
+-- so the client builds our pick's row itself. Release or leave puts the height back.
+local LIST_TALL = [[
+    if not down then return nil, "back" end
+    local list, tall = control:GetFrameRef("list"), control:GetAttribute("tall")
+    if not (list and tall) or PlayerInCombat() then return end
+    if not control:GetAttribute("listh") then control:SetAttribute("listh", list:GetHeight()) end
+    list:SetHeight(tall)
+    list:GetHeight() -- measured here, so the rows are built in this run
+]]
+local LIST_BACK = [[
+    local list, h = control:GetFrameRef("list"), control:GetAttribute("listh")
+    if not (list and h) or PlayerInCombat() then return end
+    list:SetHeight(h)
+    list:GetHeight()
+    control:SetAttribute("listh", nil)
+]]
 
 local function ClientSelection()
     local frame = ClassTrainerFrame
@@ -115,12 +130,12 @@ local function MatchRow(row)
     if not foundRow and row.displayIndex == wantedRow and issecurevariable(row, "displayIndex") then foundRow = row end
 end
 
--- The client's list row for our service (its list is shrunk out of sight, not hidden, so its rows stand).
+-- The client's row for our pick (its list is shrunk, not hidden, so rows stand)
 local function ClientRow()
     local frame = ClassTrainerFrame
     local box = frame and frame.ScrollBox
     if not (selected and box and box.ForEachFrame) then return nil end
-    -- A profession's next rank (Apprentice, Journeyman) stands on the client's step button, not in its list.
+    -- A profession's next rank sits on the client's step button, not in its list.
     local step, stepIndex = frame.skillStepButton, _G.GetTrainerServiceStepIndex
     if step and stepIndex and stepIndex() == selected then
         if step:IsShown() and issecurevariable(step, "displayIndex") then return step end
@@ -136,20 +151,50 @@ local function TrainWanted()
     return active and selected ~= nil and panel ~= nil and panel.train:IsEnabled()
 end
 
--- The pad's macro, its row proxy aimed first; nil (no pad) without the row. Runs out of combat only (the pad's place).
+-- Room for every service and header at the client's row height.
+local function TallHeight()
+    return (2 * GetNumTrainerServices() + 1) * (_G.CLASS_TRAINER_SKILL_HEIGHT or 47)
+end
+
+-- Row, then Train. No clicks without the row; no pad unless our pick can train.
 local function TrainMacro()
-    local row = TrainWanted() and ClientRow()
-    local go = ClassTrainerFrame and ClassTrainerFrame.TrainButton
-    if not (row and go) then return nil end
+    if not TrainWanted() then return nil end
+    local row, go = ClientRow(), ClassTrainerFrame and ClassTrainerFrame.TrainButton
+    if not (row and go) then return "" end
     trainProxies = trainProxies or { ns.ClickProxy(TRAIN_ROW), ns.ClickProxy(TRAIN_GO) }
     ns.SetAttributeIf(trainProxies[1], "clickbutton", row)
     ns.SetAttributeIf(trainProxies[2], "clickbutton", go)
     return TRAIN_MACRO
 end
 
+-- Down: does this press need the tall list. Up: aim again, on the rows the down built.
+local function Pad_PreClick(pad, _, down)
+    if InCombatLockdown() then return end
+    if down then
+        listWrap:SetAttribute("tall", TrainWanted() and not ClientRow() and TallHeight() or false)
+    else
+        ns.SetAttributeIf(pad, "macrotext", TrainMacro() or "")
+    end
+end
+
+-- Wrapped on its first look, out of combat: a pad made after a fight exists no sooner
+local function PadMacro()
+    local pad = ns.PadOf(panel.train)
+    if pad and not listWrap then
+        listWrap = CreateFrame("Frame", nil, UIParent, "SecureHandlerBaseTemplate")
+        listWrap:SetFrameRef("list", ClassTrainerFrame.ScrollBox)
+        SecureHandlerWrapScript(pad, "OnClick", listWrap, LIST_TALL, LIST_BACK)
+        SecureHandlerWrapScript(pad, "OnLeave", listWrap, LIST_BACK)
+        pad:SetScript("PreClick", Pad_PreClick)
+    end
+    return TrainMacro()
+end
+
 -- Read by the dev addon's train probe.
 function ns.TrainerState()
-    return selected, ClientSelection(), ClientRow() ~= nil, panel and panel.train
+    local tall = listWrap and listWrap:GetAttribute("tall")
+    local held = listWrap and listWrap:GetAttribute("listh")
+    return selected, ClientSelection(), ClientRow() ~= nil, panel and panel.train, tall, held
 end
 
 local function TrainRefused()
@@ -171,7 +216,7 @@ local function Row_OnClick(self)
     PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
     if line.header then
         collapsed[line.id] = (not collapsed[line.id]) or nil
-        -- All of it again: a folded header can take the chosen service with it.
+        -- Full refresh: a folded header can take the chosen service with it.
         panel.refresh()
     else
         Select(line.index)
@@ -182,7 +227,7 @@ local function CreateRow(parent, index)
     return ns.SkillListRow(parent, index, Row_OnClick)
 end
 
--- Coins with their pictures; the old global is gone from this client.
+-- Coin text with icons; the old global is gone from this client.
 local function Coins(amount)
     if C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString then return C_CurrencyInfo.GetCoinTextureString(amount) end
     if GetCoinTextureString then return GetCoinTextureString(amount) end
@@ -192,12 +237,12 @@ end
 
 local WHITE, RED = "|cffffffff", "|cffff2020"
 
--- The client's wording without its own colours.
+-- The client's wording without its colors
 local function Plain(text)
     return (text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
 end
 
--- Old style: white text, only the number red while unmet ("Mining (50)", the 50 red).
+-- White text, only an unmet number red ("Mining (50)", the 50 red)
 local function AddNeed(parts, text, met)
     text = Plain(text)
     if not met then
@@ -222,7 +267,7 @@ local function Requirements(line)
         local okCount, count = pcall(GetTrainerServiceNumAbilityReq, line.index)
         for i = 1, (okCount and count or 0) do
             local ok, ability, has = pcall(GetTrainerServiceAbilityReq, line.index, i)
-            -- A spell needed first has no number to mark: all of it.
+            -- A needed spell has no number to mark: all of it.
             if ok and ability then
                 parts[#parts + 1] = ((has and WHITE) or RED) .. Plain(ability) .. "|r"
             end
@@ -276,8 +321,7 @@ local function Refresh()
     if not panel or not active then return end
     Collect()
     FitList()
-    -- Keep the selection while listed; else the first learnable, as the old window
-    -- opened, else the first.
+    -- Keep the pick while listed; else the first learnable, as Era opens; else the first.
     if not (selected and ServiceByIndex(selected)) then
         selected = nil
         for _, line in ipairs(lines) do
@@ -310,10 +354,10 @@ local function HideClientPieces(hide)
     ns.FadeKeys(host, CLIENT_PIECES, alpha, CHANGED)
     -- The client's rank bar, by name only; the old window had none.
     if ClassTrainerStatusBar then SetAlphaIf(ClassTrainerStatusBar, alpha) end
-    -- Our skin's inset floor showed as an empty bar between the tab and the filter.
+    -- Our skin's inset floor read as an empty bar under the tab.
     local floor = host.fcui and host.fcui.insetFloor
     if floor then SetAlphaIf(floor, alpha) end
-    -- The client's money oval and money stay, six higher, where the foot border has room.
+    -- The client's money oval stays, six higher, inside the foot border.
     moneyBg = moneyBg or _G["ClassTrainerFrameMoneyBg"]
     local oval = moneyBg
     if oval then
@@ -330,7 +374,7 @@ local function HideClientPieces(hide)
     if host.money and panel then
         SetLevelIf(host.money, panel:GetFrameLevel() + (hide and 8 or 0))
     end
-    -- The client list and bar sit above ours and relayout on every update: shrink, not move.
+    -- Client list and bar sit over ours and relayout on each update: shrink, not move.
     for _, key in ipairs(CLIENT_SHRUNK) do
         local piece = host[key]
         if piece and piece.SetScale then
@@ -357,7 +401,7 @@ local function Build()
     panel = ns.ShellPage("ClassicUIForeverTrainer", host)
     panel:EnableMouse(true)
 
-    -- Greeting on its own frame above the stone, which cut off its second line.
+    -- Greeting on its own frame: the stone cut off its second line.
     local words = ns.NewFrame("Frame", nil, panel)
     words:SetAllPoints(panel)
     words:SetFrameLevel(panel:GetFrameLevel() + 3)
@@ -369,8 +413,7 @@ local function Build()
     panel.greeting:SetJustifyV("TOP")
 
     ns.OldSkillShell(panel, { rows = LIST_ROWS, createRow = CreateRow, onScroll = UpdateRows })
-    -- Stone from the title band to the list's strip: bare, the darker backing read
-    -- as a bar from the tab to the filter.
+    -- Stone from the title band to the list: the darker backing read as a bar.
     local gap = ns.NewFrame("Frame", nil, panel)
     gap:SetFrameLevel(panel:GetFrameLevel() + 1)
     gap:SetPoint("TOPLEFT", panel, "TOPLEFT", 4, -50)
@@ -423,14 +466,14 @@ local function Build()
     -- Reached only with no pad over it: the pad hides in a fight.
     train:SetScript("OnClick", TrainRefused)
     panel.train = train
-    -- A strata over the window (MEDIUM), as the quest log's pads: at its own strata the button kept the mouse.
-    ns.MapPad(train, "HIGH", NoOp, TrainMacro, TrainWanted)
+    -- HIGH, a strata over the window: at the window's strata the button kept the mouse.
+    ns.MapPad(train, "HIGH", NoOp, PadMacro, TrainWanted)
     -- The money's border, clear of its oval all the way round.
     local moneyBox = ns.SkillInsetBox(panel, 16, true)
     moneyBox:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", 1, 4)
     moneyBox:SetPoint("RIGHT", train, "LEFT", 1, 0)
     moneyBox:SetHeight(32)
-    -- Train and Exit in the same thin border, as tall as the money's and level with it.
+    -- Train and Exit in the same thin border, level with the money's.
     for _, button in ipairs({ train, exit }) do
         local box = ns.SkillInsetBox(panel, 16, true)
         box:SetPoint("TOP", moneyBox, "TOP", 0, 0)
@@ -439,15 +482,14 @@ local function Build()
         box:SetPoint("RIGHT", button, "RIGHT", 4, 0)
         box:SetFrameLevel(math.max(0, button:GetFrameLevel() - 1))
     end
-    -- Our own gold oval: the client's lies under the window's silver and came out
-    -- dull. It stays unseen, as wide as ours, for its money to hang from.
+    -- Our own gold oval; the client's, dull under the silver, stays unseen for its money to hang from.
     local oval = panel:CreateTexture(nil, "ARTWORK")
     oval:SetTexture("Interface\\MoneyFrame\\UI-MoneyFrame-Border")
     oval:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", 4, -3)
     oval:SetPoint("RIGHT", train, "LEFT", -5, 0)
     oval:SetHeight(34)
     panel.oval = oval
-    -- The detail pane's bottom edge runs under the foot's top one; side by side they read double.
+    -- Detail pane's bottom edge under the foot's top: side by side they read double.
     panel.detailBox:ClearAllPoints()
     panel.detailBox:SetPoint("TOPLEFT", panel.listBox, "BOTTOMLEFT", 0, 12)
     panel.detailBox:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", 0, 25)
@@ -460,7 +502,7 @@ local function Build()
 
     panel.bar.hideWhenIdle = true
     panel.refresh = Refresh
-    -- Some client pieces appear after opening (the inset floor as a dark bar by the tab); never slept: the panel has regions.
+    -- Client pieces appear after opening (the inset floor); never slept: the panel has regions.
     ns.Sched.OnFrame(panel, { name = "trainer.panel", every = 0.2, fn = RehideTick })
     panel:SetScript("OnShow", Refresh)
     return panel
