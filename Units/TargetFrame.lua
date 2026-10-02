@@ -28,6 +28,17 @@ local ART = { coords = { 0.09375, 1, 0, 0.78125 }, w = FRAME_W, h = FRAME_H, poi
 -- Under the portrait and frame art, as in 1.x: Forever draws its threat glow over them (ARTWORK 1).
 local FLASH = { point = "TOPLEFT", layer = "BACKGROUND", sublevel = 0 }
 local MASK = { w = PORTRAIT, h = PORTRAIT, point = "TOPRIGHT", x = -22, y = -16 }
+
+-- A foe's level in Era's colours (same level: yellow, not the client's gold); the client rewrites it each update.
+local function EraLevel(text, unit)
+    if not (UnitExists(unit) and C_PlayerInfo and C_PlayerInfo.GetContentDifficultyCreatureForPlayer) then return end
+    local foe = UnitCanAttack("player", unit)
+    if IsSecret(foe) or not foe then return end
+    local difficulty = C_PlayerInfo.GetContentDifficultyCreatureForPlayer(unit)
+    if difficulty == nil or IsSecret(difficulty) then return end
+    local color = ns.EraLevelColor(GetDifficultyColor(difficulty))
+    if color then ns.SetVertexColorIf(text, color.r, color.g, color.b) end
+end
 local REPUTATION = { coords = FULL, w = BAR_W, h = 19, point = "TOPRIGHT", x = -86, y = -26 }
 local SKULL = { coords = FULL, w = 16, h = 16, point = "CENTER", relPoint = "TOPLEFT", x = 199, y = -70 }
 local LEADER = { coords = FULL, w = 16, h = 16, point = "TOPRIGHT", x = -24, y = -14 }
@@ -236,6 +247,7 @@ local function SkinTarget(frame, unit)
                 SetShownIf(main.LevelText, not skull)
                 if contextual.HighLevelTexture then SetShownIf(contextual.HighLevelTexture, skull) end
             end
+            if main.LevelText:IsShown() then EraLevel(main.LevelText, who) end
         end
         -- On the beat the aura job puts the row back.
         if not beat then KeepAuraRow(frame, true) end

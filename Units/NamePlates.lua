@@ -106,6 +106,7 @@ local function UpdateLevel(unitFrame)
             if ok and difficulty then color = GetDifficultyColor(difficulty) end
         end
         if not color and GetCreatureDifficultyColor then color = GetCreatureDifficultyColor(lvl) end
+        color = ns.EraLevelColor(color)
     end
     if color then level:SetTextColor(color.r, color.g, color.b) else level:SetTextColor(1, 0.82, 0) end
 end

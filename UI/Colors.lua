@@ -10,6 +10,13 @@ local QUEST_COLOURS = {
     impossible = { 1, 0.1, 0.1 }, verydifficult = { 1, 0.5, 0.25 }, difficult = { 1, 0.92, 0 },
     standard = { 0.25, 0.75, 0.25 }, trivial = { 0.5, 0.5, 0.5 },
 }
+-- A level's difficulty colour as Era drew it: the same-level yellow is pure yellow there, gold in Forever's table.
+local ERA_FAIR = { r = 1, g = 1, b = 0 }
+function ns.EraLevelColor(color)
+    local fair = QuestDifficultyColors and QuestDifficultyColors.difficult
+    if color and fair and color.r == fair.r and color.g == fair.g and color.b == fair.b then return ERA_FAIR end
+    return color
+end
 -- Quest log labels (All, the count) use the same yellow.
 function ns.QuestYellow()
     local c = QUEST_COLOURS.difficult
