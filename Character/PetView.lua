@@ -112,6 +112,7 @@ end
 -- The pet tab's own lower half over the shared one (where that one stands on this page), with its footer: training points
 -- at the left, Close at the right. Shown in the pet view only.
 local footer
+local PET_ART_SUBLEVEL = 2
 local function TrainingPoints()
     local get = _G["GetPetTrainingPoints"]
     if type(get) ~= "function" then return nil end
@@ -127,11 +128,12 @@ end
 local function Footer(doll)
     if footer then return footer end
     footer = {}
-    footer.left = ns.OwnTexture(doll, "petBotLeft", "BACKGROUND", -1)
+    -- Over the shared lower half's theme layers too (its flat panel drew over this footer box).
+    footer.left = ns.OwnTexture(doll, "petBotLeft", "BACKGROUND", PET_ART_SUBLEVEL)
     ns.SetTex(footer.left, "petBotLeft")
     footer.left:SetSize(256, 256)
     ns.SetPointOnce(footer.left, "TOPLEFT", doll, "TOPLEFT", 2, -257)
-    footer.right = ns.OwnTexture(doll, "petBotRight", "BACKGROUND", -1)
+    footer.right = ns.OwnTexture(doll, "petBotRight", "BACKGROUND", PET_ART_SUBLEVEL)
     ns.SetTex(footer.right, "petBotRight")
     footer.right:SetSize(128, 256)
     ns.SetPointOnce(footer.right, "TOPLEFT", doll, "TOPLEFT", 258, -257)

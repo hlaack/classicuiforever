@@ -48,6 +48,7 @@ return {
     eraBagSize = true,
     flatBars = true,
     flatCharacter = true,
+    flatHideBorders = false,
     flatSpellbook = true,
     flatWindows = true,
     fullPlates = true,

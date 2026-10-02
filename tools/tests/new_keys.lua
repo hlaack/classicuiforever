@@ -14,5 +14,6 @@ return {
     flatCharacter = "same for everyone: a part of Flat colour, which is off by default",
     flatSpellbook = "same for everyone: a part of Flat colour, which is off by default",
     flatWindows = "same for everyone: a part of Flat colour, which is off by default",
+    flatHideBorders = "same for everyone: an option of Flat color, which is off by default",
     themeDarkness = "same for everyone: its default is the Dark theme's one shade, unchanged",
 }

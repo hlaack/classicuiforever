@@ -105,6 +105,7 @@ local function Shape(piece, layer)
     if flat then
         layer.cells = layer.cells or NewTex(piece)
         layer.cells:SetTexture(flat, unpack(wrap, 1, 3))
+        layer.file = flat
         Tiles(layer.cells, piece)
     end
     layer.on, layer.drawLayer = true, nil
@@ -146,6 +147,7 @@ function ns.PaintFlat(piece, r, g, b)
         flats[piece] = layer
     end
     layer.cells:SetTexture(flat)
+    layer.file = flat
     Tiles(layer.cells, piece)
     layer.cells:SetVertexColor(r, g, b)
     layer.on, layer.flat, layer.drawLayer = true, true, nil
@@ -191,14 +193,18 @@ function ns.ThemeLayerSample(most)
     return on, out
 end
 
+-- Read by the dev addon: flat layers shown, and how many draw the Hide inner borders copies.
 function ns.FlatLayersShown()
-    local count = 0
+    local count, all = 0, 0
     for _, list in ipairs(LISTS) do
         for _, layer in pairs(list) do
-            if layer.on and layer.flat and layer.cells:IsShown() then count = count + 1 end
+            if layer.on and layer.flat and layer.cells:IsShown() then
+                count = count + 1
+                if layer.file and layer.file:find("custom-flat-all", 1, true) then all = all + 1 end
+            end
         end
     end
-    return count
+    return count, all
 end
 
 local function Recolour()

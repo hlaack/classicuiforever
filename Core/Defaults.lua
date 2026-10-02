@@ -50,6 +50,7 @@ ns.DB_DEFAULTS = {
     flatCharacter = true,
     flatSpellbook = true,
     flatWindows = true,
+    flatHideBorders = false,
     castAnim = true,
     professionsBook = true,
     tradeSkill = true,
