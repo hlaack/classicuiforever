@@ -2,6 +2,40 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.16.0] - 2026-10-02
+
+### Added
+- Threat percent on target and focus under Unit frames: Classic Era's threat percent box over the target and focus frames in a fight. With thick health bars over the name, the name steps up above the box while it shows. On by default.
+- Druid mana in forms under Unit frames: in bear and cat form, a small mana bar under the power bar, its numbers following the Status Text setting. On by default.
+- By reaction for Enemy health under Thick health bars: neutral enemies yellow, hostile ones red, and a neutral one turns red once it fights you.
+- English text under Other, on a game client in another language: the add-on's own text in English, part by part (settings, What's New and welcome, chat messages and popups, windows, bars and edit mode). The game's own text stays in your language. Off by default; takes effect after a reload.
+- Hide inner borders under Flat color: Flat color, which paints the art in one solid color instead of textured metal, also paints the thin lines inside windows, such as the borders around lists, footers, dividers and scroll tracks. The window's outer frame stays. Off by default.
+- Flash as a swing lands under Swing timers: uncheck it to keep the swing timers without the flash. On by default.
+- Classic fonts: nameplate names, pet bar numbers and small counts as Classic Era draws them. On by default.
+- Same size near and far under Nameplates: plates keep one size, as in Classic Era. It changes the game's own settings. Off by default.
+- The Who list's column arrow has the game's class, race and zone filters, with Sort By and Column.
+
+### Changed
+- The red threat glow around the unit frames is hidden by default on every install. Uncheck Hide threat glow under Unit frames to bring it back.
+- Flat color draws the window stone in one crisp tone, and keeps the thin lines inside windows unless Hide inner borders is checked.
+- The quest and gossip windows, the vendor's goods and money box, and the quest log list show Classic Era's thin inset border.
+- With a theme on, the rims of slot and buff icons match the window metal, and drop-down lists, menus and their buttons take the theme.
+- The character window shows your character's face in the portrait on every tab, as in Classic Era, instead of a class icon.
+- Same-level enemies show Classic Era's yellow level on the target, focus and nameplates.
+- The group finder's listing page puts the playstyle box beside Show All Level Ranges, with smaller text, so everything fits.
+- Dragging the theme color is smooth: only the colors change until you stop.
+- The options use American spelling: color, gray, checked.
+
+### Fixed
+- A Who search with one or two results shows them in the Who list. They went to chat.
+- With Flat color, the stray marks around the bag icon, the experience bar brackets, the action bar arrows, the latency bar, the key ring and the character portrait are gone, and the pet tab's footer box shows again.
+- With a theme on, portrait rings take its color whole, and the squares behind the vendor's page arrows follow it. The ring color stopped unevenly, and the squares stayed gray.
+- The character portrait no longer twitches when you click the tabs, and the seam beside its ring on the Character tab is gone.
+- The character window's tabs click where they are drawn, and Pet opens the pet. A click on Pet could land on a neighboring tab.
+- Sliders stay silver under every theme. A dark theme tinted them nearly out of sight.
+- No error from the theme on a nameplate whose art the game keeps hidden.
+- Small alignment fixes on the pet frame's numbers and the minimap coordinates.
+
 ## [0.15.0] - 2026-10-01
 
 ### Added
