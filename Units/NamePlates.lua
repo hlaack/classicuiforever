@@ -451,7 +451,10 @@ local function Restore()
     NP.RestoreStyleChoice()
     for unitFrame in pairs(skinned) do
         if unitFrame.fcui then
-            for _, region in pairs(unitFrame.fcui) do region:Hide() end
+            -- Regions only: the table also keeps the name's sizes.
+            for _, region in pairs(unitFrame.fcui) do
+                if type(region) == "table" and region.Hide then region:Hide() end
+            end
         end
         if unitFrame.HealthBarsContainer then unitFrame.HealthBarsContainer:SetScale(1) end
         if unitFrame.CastBarsContainer then unitFrame.CastBarsContainer:SetScale(1) end
