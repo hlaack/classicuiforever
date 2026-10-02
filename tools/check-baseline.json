@@ -10,9 +10,6 @@
       "Units/LastNames.lua": 2,
       "Units/NamePlateOptions.lua": 1
     },
-    "REGISTRY": {
-      "Skills/ProfessionsWindow.lua": 1
-    },
     "HOOK": {
       "Bar/BarSkins.lua": 6,
       "Character/CharacterLists.lua": 4,

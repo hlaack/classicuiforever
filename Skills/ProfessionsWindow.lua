@@ -275,8 +275,12 @@ local function RefreshSize()
     sizeWrap:SetFrameRef("prof", frame)
     sizeWrap:SetAttribute("scale", ns.WindowScale and ns.WindowScale("professions") or 1)
 end
+-- Our book openers (key, micro button, spellbook tab): the window recasts the profession picked last as it shows, inside
+-- the click, so a trade skill opening in it is that recast (TRADE_SKILL_SHOW below).
+local function MarkBookAsked() T.bookAskedAt = GetTime() end
 function ns.ProfessionsSizeWrap(button)
     if not button then return end
+    button:HookScript("PreClick", MarkBookAsked)
     sizeWrap = sizeWrap or CreateFrame("Frame", nil, UIParent, "SecureHandlerBaseTemplate")
     SecureHandlerWrapScript(button, "OnClick", sizeWrap, [[ if not down then return nil, "size" end ]], [[
         local f = control:GetFrameRef("prof")
@@ -373,23 +377,6 @@ local function ToCraft()
     return true
 end
 
--- Each client profession tab casts its profession on ProfessionsFrame.Show: the window opened on the last one (in combat at book size,
--- every tab lit). Unregistered: reopening a page isn't needed, as a shut window returns to the book and spells and tabs open trade skills.
-local tabsQuieted = false
-local function QuietTabs()
-    local frame = ProfessionsFrame
-    if tabsQuieted or not frame or not (EventRegistry and EventRegistry.UnregisterCallback) then return end
-    local tabs = {}
-    for _, tab in ipairs(frame.rightProfessionTabs or EMPTY) do tabs[#tabs + 1] = tab end
-    if frame.ProfessionsOverviewTab then tabs[#tabs + 1] = frame.ProfessionsOverviewTab end
-    if #tabs == 0 then return end
-    tabsQuieted = true
-    for _, tab in ipairs(tabs) do
-        pcall(EventRegistry.UnregisterCallback, EventRegistry, "ProfessionsFrame.Show", tab)
-    end
-    ns.Persist("professions: " .. #tabs .. " tabs taken off the show list")
-end
-
 -- Opened from the spellbook's tab via ShowUIPanel so it shows in the client's
 -- name; refused to addons in combat.
 function ns.OpenProfessionsBook()
@@ -400,17 +387,17 @@ function ns.OpenProfessionsBook()
     end
     local frame = ProfessionsFrame
     if not frame then return false end
-    if active then
-        QuietTabs()
-        -- Book size before it shows: a shut window waits at trade skill size.
-        FitWindow(BookW(), BookH())
-    end
+    -- Book size before it shows: a shut window waits at trade skill size.
+    if active then FitWindow(BookW(), BookH()) end
     BackToBook()
-    if not frame:IsShown() then ns.ShowPanel(frame) end
+    if not frame:IsShown() then
+        MarkBookAsked()
+        ns.ShowPanel(frame)
+    end
     return true
 end
 
--- ADDON_LOADED: the client loaded the window itself (asked early, or a session begun in combat); tabs quieted before it shows.
+-- ADDON_LOADED: the client loaded the window itself (asked early, or a session begun in combat): the watch takes it.
 local WATCH_EVENTS = { "SKILL_LINES_CHANGED", "SPELLS_CHANGED", "PLAYER_REGEN_ENABLED", "TRADE_SKILL_SHOW", "ADDON_LOADED" }
 
 -- Watched from a frame of our own, never hooked into the client's page.
@@ -455,6 +442,8 @@ end
 
 -- Every frame the watch is awake: whether the window is shut, on which face, and the turns that follow.
 local function FaceTick(self, now)
+    -- First, so the face read below is the book before this frame draws.
+    if self.restoreBook and BackToBook() then self.restoreBook = false end
     -- Every frame: whether the window is shut, and on which face.
     local shut = ProfessionsFrame and not ProfessionsFrame:IsShown()
     local book = Page()
@@ -466,7 +455,6 @@ local function FaceTick(self, now)
         SetPending(true)
     end
     if shut then
-        self.shutAt = now
         -- A never-opened window opens on the book, though its page starts hidden.
         local castNow = (now - (self.ownCastAt or 0)) < 3
         local wasBook = self.bookWhenShut
@@ -493,7 +481,6 @@ local function FaceTick(self, now)
         SetPending(true)
     end
     self.wasShut = shut and true or false
-    if self.restoreBook and BackToBook() then self.restoreBook = false end
     -- A profession just asked for, turned to if the client has not.
     if self.wantCraft then
         if now - self.wantCraft > 3 then
@@ -543,10 +530,7 @@ local function WatchTick(self, elapsed)
         return
     end
     EnsureOpenHost(frame)
-    if active then
-        QuietTabs()
-        FillTabIcons()
-    end
+    if active then FillTabIcons() end
     TabToggle()
     SizeButton(active and page:IsVisible())
     T.SmallFrame(active and page:IsVisible() and not T.Big())
@@ -601,21 +585,17 @@ local function StartWatch()
     watch = CreateFrame("Frame")
     T.watch = watch
     ns.RegisterEvents(watch, WATCH_EVENTS)
-    -- Opened by micro button or key, the window may turn itself to a profession (the tabs' show casts): a trade skill opening
-    -- just after the book showed, no tab pressed, gets the book back. One opened while shut is the player's cast and stays.
+    -- Opened by micro button, key or our spellbook tab, the window recasts the profession picked last as it shows: that trade
+    -- skill gets the book back. Any other is the player's cast and stays.
     watch:SetScript("OnEvent", function(self, event)
         self:Show()
-        if event == "ADDON_LOADED" then
-            if active and ProfessionsFrame then QuietTabs() end
-            return
-        end
+        if event == "ADDON_LOADED" then return end
         if event == "TRADE_SKILL_SHOW" then
             local frame = ProfessionsFrame
             local now = GetTime()
-            -- With the tabs unregistered every trade skill that opens is the player's; only
-            -- a window shown before QuietTabs still self-casts, and goes back to the book.
-            if not tabsQuieted and frame and frame:IsShown() and active and self.bookWhenShut
-                and now - (self.shutAt or 0) < 0.5 then
+            -- Opened inside our book opener's click: the window's own recast. Out of combat, where the book can turn.
+            local recast = now - (T.bookAskedAt or 0) < 0.1
+            if recast and active and frame and frame:IsShown() and not InCombatLockdown() then
                 self.restoreBook = true
             else
                 self.ownCastAt = now
