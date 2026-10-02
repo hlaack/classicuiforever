@@ -19,8 +19,10 @@ local PARTY_LEADER = { coords = FULL, w = 16, h = 16, point = "TOPLEFT", y = -8 
 -- Pet and party bars are 7 to 10 tall: their numbers in the small bar font (Units/StatusFont.lua).
 local SMALL_FONT = "ForeverClassicUISmallBarText"
 local SMALL_TEXTS = { { "CENTER", 0, 0 }, { "LEFT", 3, 0 }, { "RIGHT", -3, 0 }, font = SMALL_FONT }
--- Classic fonts: the pet's numbers in Era's bar font (Arial Narrow 14), as the player's.
-local ERA_PET_TEXTS = { { "CENTER", 0, 0 }, { "LEFT", 3, 0 }, { "RIGHT", -3, 0 }, font = "TextStatusBarText" }
+-- Classic fonts: the pet's numbers in Era's bar font (Arial Narrow 14) at Era's spots (PetFrame.xml): health on its
+-- bar, the resource line 5 lower than its bar's middle; the side numbers 1 past the left edge, 3 inside the right.
+local ERA_PET_HEALTH = { { "CENTER", 0, 0 }, { "LEFT", -1, 0 }, { "RIGHT", -3, 0 }, font = "TextStatusBarText" }
+local ERA_PET_POWER = { { "CENTER", 0, -5 }, { "LEFT", -1, -5 }, { "RIGHT", -3, -5 }, font = "TextStatusBarText" }
 -- Power slot starts 4 left of health (portrait curve): its text sits 4 further in to align the columns.
 local PARTY_POWER_TEXTS = { { "CENTER", 2, 0 }, { "LEFT", 7, 0 }, { "RIGHT", -3, 0 }, font = SMALL_FONT }
 local PARTY_CLIENT_BARS = { "HealthBarContainer", "ManaBar" }
@@ -71,7 +73,8 @@ local function SkinPet()
             bar:SetSize(w, h)
             ns.SetPointOnce(bar, "TOPLEFT", frame, "TOPLEFT", x, y)
             if mask then ns.Fade(mask) end
-            BarTexts(frame, nil, bar, texts, ns.ClassicFonts() and ERA_PET_TEXTS or SMALL_TEXTS, bar, nil, "pet", b[8])
+            local era = ns.ClassicFonts() and (b[8] and ERA_PET_POWER or ERA_PET_HEALTH)
+            BarTexts(frame, nil, bar, texts, era or SMALL_TEXTS, bar, nil, "pet", b[8])
         end
     end
     KeepBar(PetFrameHealthBar, "health")
