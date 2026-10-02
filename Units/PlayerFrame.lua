@@ -48,6 +48,51 @@ local CLASS_BAND_X, CLASS_BAND_Y = 75, -25
 -- skin moves a region off it, so the count alone reads the same once the strip is added).
 local nameBg, classBand, bandLookedAt, bandLastSeen
 
+-- Thick health over the name: the game's status glow (gold resting, red in a fight) would light the bar in the name
+-- box, so ours rings the whole frame in its color and pulse, and the game's draws nothing.
+local RING = { own = "statusRing", coords = FLASH.coords, w = FLASH.w, h = FLASH.h, point = "TOPLEFT", x = FLASH.x,
+    y = FLASH.y, layer = "BACKGROUND", sublevel = 1, show = false }
+local ELITE_RING = { own = "statusRing", coords = ELITE_FLASH.coords, w = ELITE_FLASH.w, h = ELITE_FLASH.h, point = "TOPLEFT",
+    x = ELITE_FLASH.x, y = ELITE_FLASH.y, layer = "BACKGROUND", sublevel = 1, show = false }
+local ringOn = false
+-- Its watcher hangs off UIParent: one under the protected frame could not wake in a fight.
+local ringWatch = ns.NewFrame("Frame", nil, UIParent)
+
+local function MirrorRing(job)
+    local main = ns.Path(PlayerFrame, "PlayerFrameContent", "PlayerFrameContentMain")
+    local status = main and main.StatusTexture
+    local ring = PlayerFrame.fcui and PlayerFrame.fcui.statusRing
+    local shown = ringOn and UF.active and status ~= nil and ring ~= nil and status:IsShown()
+    if shown then
+        local alpha = status:GetAlpha()
+        local r, g, b = status:GetVertexColor()
+        if not ns.AnySecret(alpha, r, g, b) then
+            ring:SetVertexColor(r, g, b)
+            ns.SetAlphaIf(ring, alpha)
+        end
+    end
+    if ring then ns.SetShownIf(ring, shown) end
+    if not shown then job:Sleep() end
+end
+local ringJob = ns.Sched.OnFrame(ringWatch, { name = "player.statusRing", every = 0, awake = false, fn = MirrorRing })
+
+local function DressStatus(status, frame)
+    if not status then return end
+    Dress(status, "playerStatus", STATUS, frame)
+    ringOn = UF.Thick("player") == "name"
+    local ring = frame.fcui and frame.fcui.statusRing
+    if ringOn then
+        status:SetTexture(nil)
+        local elite = ns.db and ns.db.eliteFrames == true and ns.db.eliteFramePlayer ~= false
+        ring = ns.DressNew(frame, "targetingFlash", elite and ELITE_RING or RING, frame)
+        ring:SetDesaturated(true)
+        ring:SetBlendMode("ADD")
+        ringJob:Wake()
+    elseif ring then
+        ring:Hide()
+    end
+end
+
 -- The client re-sets its atlas on art changes (combat, low health); textures are unprotected, so ours returns mid fight.
 local function PlayerArt()
     local frame = PlayerFrame
@@ -60,7 +105,7 @@ local function PlayerArt()
     Dress(container.AlternatePowerFrameTexture, sheet, ALT_ART, frame)
     UF.DressGlow(container.FrameFlash, "targetingFlash", elite and ELITE_FLASH or FLASH, frame)
     local main = ns.Path(frame, "PlayerFrameContent", "PlayerFrameContentMain")
-    Dress(main and main.StatusTexture, "playerStatus", STATUS, frame)
+    DressStatus(main and main.StatusTexture, frame)
     -- Modern circles return with the art; 1.x had none.
     local contextual = ns.Path(frame, "PlayerFrameContent", "PlayerFrameContentContextual")
     if contextual then
@@ -215,7 +260,7 @@ local function SkinPlayer()
     -- Rest and combat icons from the old state sheet.
     if main.StatusTexture then
         main.StatusTexture:SetParent(contextual)
-        Dress(main.StatusTexture, "playerStatus", STATUS, frame)
+        DressStatus(main.StatusTexture, frame)
     end
     local rest = DressNew(contextual, "stateIcon", REST, frame)
     local attack = DressNew(contextual, "stateIcon", ATTACK, frame)
@@ -230,6 +275,7 @@ local function SkinPlayer()
         SetShownIf(attack, showAttack)
         -- The zzz and swords sit on the level circle: hide the number, as 1.x did.
         if PlayerLevelText then SetShownIf(PlayerLevelText, not showRest and not showAttack) end
+        if ringOn then ringJob:Wake() end
     end
     Keeper("player.status", UpdateStatus)
 
