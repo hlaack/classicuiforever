@@ -19,14 +19,9 @@ local Dress, SetAlphaIf = ns.Dress, ns.SetAlphaIf
 local StatusHidden, ShowHolderBars = B.StatusHidden, B.ShowHolderBars
 local EditModeLive = ns.EditMode.Live
 
-local FULL = { 0, 1, 0, 1 }
-local TICK = { coords = FULL, fill = true, tint = true }
-local TICK_HL = { coords = FULL, fill = true }
 local REP_TOP = { point = "TOPLEFT", show = true }
 local REP_RAIL = { tint = true, point = "TOPLEFT", show = true }
 local RUN = {}   -- a strip's coords, refilled per piece
-local backs = setmetatable({}, { __mode = "k" })   -- status bar -> Era's half-black backing
-B.statusBacks = backs   -- read by the dev addon's fight check
 
 -- Art strips over a status bar so it reads as part of the band; at least n of them.
 local function EnsureStrips(statusBar, n)
@@ -293,22 +288,12 @@ end
 -- A holder's bars drawn in 1.x art at w x h.
 local function DressBars(container, w, h, own, isTop)
     if container.BarFrameTexture then container.BarFrameTexture:SetAlpha(0) end
-    -- Fades cut to 0.02 s, not 0: the client picks a swap's direction at each fade's end, and a 0 s fade never ran.
-    if ns.Once(container, "noFade") then
-        for _, key in ipairs({ "FadeInAnimation", "FadeOutAnimation" }) do
-            local group = container[key]
-            if group and group.GetAnimations then
-                for _, anim in ipairs({ group:GetAnimations() }) do
-                    if anim.SetDuration then anim:SetDuration(0.02) end
-                    if anim.SetStartDelay then anim:SetStartDelay(0) end
-                end
-            end
-        end
-    end
+    B.CutStatusFades(container)
     OnDividers(container)
     ns.HookMethod(container, "UpdateDividers", OnDividers)
     for _, bar in pairs(container.bars or {}) do
-        -- Kept for the hand-back: the holder goes back to its own size, so its bars must too.
+        -- Kept for the hand-back: the holder goes back to its own size, so its bars must too; the run and tick their look.
+        B.KeepStatusLook(bar)
         Remember(bar)
         ns.SetPointOnce(bar, "TOPLEFT", container, "TOPLEFT", 0, 0)
         bar:SetSize(w, h)
@@ -322,13 +307,7 @@ local function DressBars(container, w, h, own, isTop)
             ns.HookMethod(status, "SetBarTexture", RecolorStatus)
             HookRestedState(bar, status)
             RecolorStatus(status)
-            if status.Background then status.Background:SetAlpha(0) end
-            -- Era's half-black backing for the client's light one: over the rested run, under the fill, sized with the bar.
-            local back = backs[status] or status:CreateTexture(nil, "BACKGROUND", nil, 1)
-            backs[status] = back
-            back:SetAllPoints(status)
-            back:SetColorTexture(0, 0, 0, 0.5)
-            back:SetShown(ns.db.statusBarBacking ~= false)
+            B.StatusBacking(status)
             -- Rested: the run to the tick moves onto the status bar, under the backing and fill; the tick wears the old marker.
             local run = bar.ExhaustionLevelFillBar
             status.fcuiRun = run
@@ -345,11 +324,7 @@ local function DressBars(container, w, h, own, isTop)
                 ns.SetPointOnce(run, "BOTTOMLEFT", status, "BOTTOMLEFT", 0, 0)
                 run:SetHeight(h)
             end
-            if tick and ns.Once(tick, "tickSkinned") then
-                tick:SetSize(32, 32)
-                Dress(tick.Normal, "exhaustionTick", TICK, tick)
-                Dress(tick.Highlight, "exhaustionTickHighlight", TICK_HL, tick)
-            end
+            if tick then B.SkinTick(tick) end
             local used = own and DrawOwnStrips(status, w) or DrawBandStrips(status, w, isTop)
             local strips = status.fcuiStrips
             for k = used + 1, #strips do strips[k]:Hide() end
@@ -784,17 +759,9 @@ function B.FollowStatusDialog(editing)
     if not v:IsShown() then v:Show() end
 end
 
--- Backings follow the option at once, in a fight too; off with the band.
-local function ShowBacks()
-    local on = B.active and ns.db.statusBarBacking ~= false
-    for _, back in pairs(backs) do back:SetShown(on) end
-end
-ns.OnToggle(function(key) if key == "statusBarBacking" then ShowBacks() end end)
-
 -- Band off: nothing stacked (loose before the hand-back re-anchors), no dimmed slider; posts walked afresh next time.
 function B.StatusRestore()
     Unstack()
     wipe(fadedCount)
-    ShowBacks()
     B.FollowStatusDialog(false)
 end
