@@ -220,6 +220,11 @@ local function Skin(bar)
             b:SetMinMaxValues(0, 1)
             b:SetValue(1)
             if b.Spark then b.Spark:Hide() end
+            -- Just Interrupted, as in classic, unless the player wants the name; a failed cast keeps its Failed.
+            if b.Text and not ns.db.castBarInterrupter then
+                local text = b.Text:GetText()
+                if IsSecret(text) or text ~= FAILED then b.Text:SetText(INTERRUPTED) end
+            end
         end)
     end
     DressBar(bar)

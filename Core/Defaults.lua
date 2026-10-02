@@ -81,6 +81,7 @@ ns.DB_DEFAULTS = {
     damageMeter = true,
     classicStatusFont = true,
     castBarShake = false,
+    castBarInterrupter = false,
     mirrorTimers = true,
     comboPoints = true,
     hideLastNames = false,

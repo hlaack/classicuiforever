@@ -23,6 +23,7 @@ return {
     calendarRing = false,
     calendarZone = true,
     castAnim = true,
+    castBarInterrupter = false,
     castBarShake = false,
     castBars = true,
     characterSheet = true,

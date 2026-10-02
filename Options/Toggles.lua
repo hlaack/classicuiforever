@@ -100,6 +100,8 @@ ns.TOGGLES = {
     { "plainNumbers", L["OPT_plainNumbers"], L["OPT_plainNumbers_TIP"], search = "commas thousands separators digits large" },
     { "castBars", L["OPT_castBars"], L["OPT_castBars_TIP"] },
     { "castBarShake", L["OPT_castBarShake"], L["OPT_castBarShake_TIP"], parent = "castBars" },
+    { "castBarInterrupter", L["OPT_castBarInterrupter"], L["OPT_castBarInterrupter_TIP"], parent = "castBars",
+        search = "interrupted interrupt kick name who player text" },
     { "swingTimers", L["OPT_swingTimers"], L["OPT_swingTimers_TIP"], search = "melee ranged auto attack" },
     { "swingFlash", L["OPT_swingFlash"], L["OPT_swingFlash_TIP"], parent = "swingTimers", search = "glow" },
     { "resourceDisplay", L["OPT_resourceDisplay"], L["OPT_resourceDisplay_TIP"], search = "prd health power under character" },

@@ -138,6 +138,7 @@ local function LayCast(castContainer, unitFrame)
         ns.SetBarColorIf(cast, 1, 0, 0)
         cast:SetMinMaxValues(0, 1)
         cast:SetValue(1)
+        if cast.Text and not ns.db.castBarInterrupter then cast.Text:SetText(INTERRUPTED) end
     elseif cast.channeling then
         ns.SetBarColorIf(cast, 0, 1, 0)
     else
