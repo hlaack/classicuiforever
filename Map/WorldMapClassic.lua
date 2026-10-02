@@ -150,9 +150,16 @@ local function PointIs(region, i, point, rel, relPoint, x, y)
     return p == point and r == rel and rp == relPoint and Near(px, x) and Near(py, y)
 end
 
-local function Laid(t)
+-- The picture's box alone: a fight leaves it as laid, while the game may re-size the frame as it opens.
+local function PictureLaid(t)
     local map = Map()
     local canvas = map.ScrollContainer
+    return canvas:GetNumPoints() == 2 and PointIs(canvas, 1, "TOPLEFT", map, "TOPLEFT", t.l, t.t)
+        and PointIs(canvas, 2, "BOTTOMRIGHT", map, t.rp, t.r, t.b)
+end
+
+local function Laid(t)
+    local map = Map()
     if t.w and not (Near(map:GetWidth(), t.w) and Near(map:GetHeight(), t.h)) then return false end
     local pane = map.QuestLog
     local details = pane and pane.DetailsFrame
@@ -166,8 +173,7 @@ local function Laid(t)
         and PointIs(pane, 2, "BOTTOMRIGHT", map, t.qr, t.qx2, t.qy2)) then
         return false
     end
-    return canvas:GetNumPoints() == 2 and PointIs(canvas, 1, "TOPLEFT", map, "TOPLEFT", t.l, t.t)
-        and PointIs(canvas, 2, "BOTTOMRIGHT", map, t.rp, t.r, t.b)
+    return PictureLaid(t)
 end
 
 local PANE_KEYS = { "qp", "qx1", "qy1", "qr", "qx2", "qy2", "dh", "dtx", "dty", "dth" }
@@ -392,6 +398,69 @@ local function QuestButton(map)
     end
 end
 
+-- Opened in a fight, the game sizes the frame its own way (702 x 534) and Era's size waits for the fight's end: what
+-- of the frame's own lies outside Era's art (its border, portrait ring, buttons placed for its size) fades till then.
+local SLACK = 2
+local faded = {}     -- client piece -> its alpha before
+local fadedFor       -- the frame and art sizes the fade was worked out for
+local keep = setmetatable({}, { __mode = "k" })   -- whole trees that stay: ours, the picture, the pane, the X
+local rect = {}
+
+local function Bounds(region)
+    local l, t, r, b = region:GetLeft(), region:GetTop(), region:GetRight(), region:GetBottom()
+    if not l or ns.AnySecret(l, t, r, b) then return nil end
+    return l, t, r, b
+end
+
+local function Inside(region)
+    local l, t, r, b = Bounds(region)
+    return not l or (l >= rect[1] - SLACK and r <= rect[3] + SLACK and t <= rect[2] + SLACK and b >= rect[4] - SLACK)
+end
+
+local function Overlaps(region)
+    local l, t, r, b = Bounds(region)
+    return not l or (l < rect[3] and r > rect[1] and t > rect[4] and b < rect[2])
+end
+
+local function FadeOut(piece)
+    if faded[piece] == nil then faded[piece] = piece:GetAlpha() end
+    piece:SetAlpha(0)
+end
+
+local FadeTree
+local function FadeRegion(region)
+    if region:IsShown() and not Inside(region) then FadeOut(region) end
+end
+local function FadeChild(child, depth)
+    if keep[child] or not child:IsShown() or Inside(child) then return end
+    if Overlaps(child) then FadeTree(child, depth) else FadeOut(child) end
+end
+FadeTree = function(frame, depth)
+    ns.EachRegion(frame, FadeRegion)
+    if depth < 4 then ns.EachChild(frame, FadeChild, depth + 1) end
+end
+
+local function FadeOutside(map)
+    local a = Art()
+    local key = string.format("%.0fx%.0f/%.0f", map:GetWidth(), map:GetHeight(), a:GetWidth())
+    if fadedFor == key then return end
+    fadedFor = key
+    rect[1], rect[2], rect[3], rect[4] = Bounds(a)
+    if not rect[1] then return end
+    local border = map.BorderFrame
+    for _, piece in ipairs({ a, a.titleHost, map.ScrollContainer, map.QuestLog, border.CloseButton,
+        border.MaximizeMinimizeFrame }) do
+        if piece then keep[piece] = true end
+    end
+    FadeTree(map, 0)
+end
+
+local function Unfade()
+    fadedFor = nil
+    for piece, alpha in pairs(faded) do piece:SetAlpha(alpha) end
+    wipe(faded)
+end
+
 local function Pass()
     local map = Map()
     if not map then return end
@@ -400,8 +469,18 @@ local function Pass()
         touched = true
         local t = Target(true)
         Lay(t)
-        if Laid(t) then DressEra() else DressForever() end
+        if Laid(t) then
+            DressEra()
+            Unfade()
+        elseif InCombatLockdown() and PictureLaid(t) then
+            DressEra()
+            FadeOutside(map)
+        else
+            Unfade()
+            DressForever()
+        end
     elseif touched then
+        Unfade()
         DressForever()
         Lay(Target(false))
     end
