@@ -1,81 +1,55 @@
 local _, ns = ...
 
 -- Colour themes in two layers: a piece's copy as drawn (custom/) under its metal alone (custom-metal/) in the theme's
--- colour; flat colour cuts one colour to that metal (a mask), or to a tinted piece's own art. A layer follows its
--- piece's shown state, alpha, crop and draw layer each frame while on, so button states carry it too.
+-- colour. Flat colour adds the piece's stone panels (custom-flat/, one tone between the frame's lines) on top, in the
+-- theme's colour. Each layer follows its piece's shown state, alpha, crop and draw layer.
 
 local B = ns.bronze
 local THEMES = B.THEMES
-local METAL_FROM, METAL_TO = "\\custom\\", "\\custom-metal\\"
 
 local weak = { __mode = "k" }
-local layers = setmetatable({}, weak)   -- copy piece -> { tex, on, metal, wrap, mask, masked, drawLayer, sub }
-local flats = setmetatable({}, weak)    -- tinted piece -> { tex, on, mask, masked, atlas, file, drawLayer, sub }
+local layers = setmetatable({}, weak)   -- copy piece -> { tex, cells, on, metal, flat, copy, wrap, drawLayer, sub }
+local flats = setmetatable({}, weak)    -- tinted piece -> { cells, on, flat, drawLayer, sub }
 local LISTS = { layers, flats }
+local own = setmetatable({}, weak)       -- our layer textures
 local job
 
-local function Custom()
-    local theme = THEMES[ns.ThemeName() or ""]
-    return theme and theme.colorCopies and theme or nil
+local function Theme()
+    return THEMES[ns.ThemeName() or ""]
 end
 
-local function Mask(piece, layer)
-    local mask = layer.mask
-    if not mask then
-        mask = piece:GetParent():CreateMaskTexture()
-        mask:SetAllPoints(piece)
-        layer.mask = mask
-    end
-    if not layer.masked then
-        layer.tex:AddMaskTexture(mask)
-        layer.masked = true
-    end
-    if piece.GetHorizTile then
-        mask:SetHorizTile(piece:GetHorizTile())
-        mask:SetVertTile(piece:GetVertTile())
-    end
-    return mask
+-- The metal-only copy of a theme copy, whatever theme folder the copy is in.
+local function MetalPath(copyPath)
+    return (copyPath:gsub("\\[^\\]+\\([^\\]+)$", "\\custom-metal\\%1"))
 end
 
-local function Unmask(layer)
-    if not layer.masked then return end
-    layer.tex:RemoveMaskTexture(layer.mask)
-    layer.masked = false
+local function NewTex(piece)
+    local tex = piece:GetParent():CreateTexture(nil, "ARTWORK")
+    own[tex] = true
+    tex:SetAllPoints(piece)
+    return tex
 end
 
--- A flat layer's shape follows the piece's own art: its atlas, else its file. False: nothing to cut it to.
-local function OwnShape(piece, layer)
-    local atlas = piece:GetAtlas()
-    if ns.IsSecret(atlas) then return layer.atlas ~= nil or layer.file ~= nil end
-    if atlas then
-        if atlas ~= layer.atlas then
-            layer.atlas, layer.file = atlas, nil
-            layer.mask:SetAtlas(atlas)
-        end
-        return true
-    end
-    local file = piece:GetTexture()
-    if ns.IsSecret(file) then return layer.file ~= nil end
-    if not file then return false end
-    if file ~= layer.file or layer.atlas then
-        layer.atlas, layer.file = nil, file
-        layer.mask:SetTexture(file, piece:GetHorizTile() and "REPEAT" or "CLAMP", piece:GetVertTile() and "REPEAT" or "CLAMP")
-    end
-    return true
+local function FollowOne(tex, on, shown, alpha, piece)
+    if not tex then return end
+    ns.SetShownIf(tex, on and shown)
+    if not (on and shown) then return end
+    if alpha then ns.SetAlphaIf(tex, alpha) end
+    tex:SetTexCoord(piece:GetTexCoord())
 end
 
 local function Follow(piece, layer)
-    local tex = layer.tex
-    local shown = piece:IsShown() and (not layer.own or OwnShape(piece, layer))
-    ns.SetShownIf(tex, shown)
-    if not shown or not piece:IsVisible() then return end
-    local alpha = piece:GetAlpha()
-    if not ns.IsSecret(alpha) then ns.SetAlphaIf(tex, alpha) end
-    if not layer.atlas then (layer.masked and layer.mask or tex):SetTexCoord(piece:GetTexCoord()) end
+    local shown = piece:IsShown() and piece:IsVisible()
+    local alpha = shown and piece:GetAlpha() or nil
+    if ns.IsSecret(alpha) then alpha = nil end
+    FollowOne(layer.tex, layer.metal, shown, alpha, piece)
+    FollowOne(layer.cells, layer.flat, shown, alpha, piece)
+    if not shown then return end
     local drawLayer, sub = piece:GetDrawLayer()
     if drawLayer ~= layer.drawLayer or sub ~= layer.sub then
         layer.drawLayer, layer.sub = drawLayer, sub
-        tex:SetDrawLayer(drawLayer, math.min(7, (sub or 0) + 1))
+        if layer.tex then layer.tex:SetDrawLayer(drawLayer, math.min(7, (sub or 0) + 1)) end
+        if layer.cells then layer.cells:SetDrawLayer(drawLayer, math.min(7, (sub or 0) + 2)) end
     end
 end
 
@@ -93,92 +67,135 @@ local function FollowAll()
 end
 job = ns.Sched.Job({ name = "theme.layers", every = 0, awake = false, fn = FollowAll })
 
+local function Hide(layer)
+    if not (layer and layer.on) then return end
+    layer.on = false
+    if layer.tex then layer.tex:Hide() end
+    if layer.cells then layer.cells:Hide() end
+end
+
+local function Tiles(tex, piece)
+    if not piece.GetHorizTile then return end
+    tex:SetHorizTile(piece:GetHorizTile())
+    tex:SetVertTile(piece:GetVertTile())
+end
+
 local function Tint(layer, theme)
-    layer.tex:SetVertexColor(theme.tint[1], theme.tint[2], theme.tint[3])
+    local t = theme.tint
+    if layer.tex then layer.tex:SetVertexColor(t[1], t[2], t[3]) end
+    if layer.cells then layer.cells:SetVertexColor(t[1], t[2], t[3]) end
 end
 
--- The metal layer as drawn, or flat: one colour cut to the metal's shape.
+-- The metal layer under colour themes; the stone panels on top while the piece's part is flat.
 local function Shape(piece, layer)
-    local tex = layer.tex
-    if ns.FlatOn(piece) then
-        tex:SetColorTexture(1, 1, 1)
-        Mask(piece, layer):SetTexture(layer.metal, unpack(layer.wrap, 1, 3))
-    else
-        Unmask(layer)
-        tex:SetTexture(layer.metal, unpack(layer.wrap, 1, 3))
+    local theme = Theme()
+    local flat = theme and ns.FlatOn(piece) and ns.FlatCopy(layer.copy)
+    layer.metal, layer.flat = theme and theme.colorCopies or nil, flat and true or nil
+    if not (layer.metal or layer.flat) then
+        Hide(layer)
+        return
     end
+    local wrap = layer.wrap
+    if layer.metal then
+        layer.tex = layer.tex or NewTex(piece)
+        layer.tex:SetTexture(MetalPath(layer.copy), unpack(wrap, 1, 3))
+        layer.tex:SetBlendMode(piece:GetBlendMode())
+        Tiles(layer.tex, piece)
+    end
+    if flat then
+        layer.cells = layer.cells or NewTex(piece)
+        layer.cells:SetTexture(flat, unpack(wrap, 1, 3))
+        Tiles(layer.cells, piece)
+    end
+    layer.on, layer.drawLayer = true, nil
+    Tint(layer, theme)
 end
 
--- copyPath: the custom copy the piece now shows (extra args as its SetTexture had), or nil for none.
+-- copyPath: the theme copy the piece now shows (extra args as its SetTexture had), or nil for none.
 function ns.PaintCopy(piece, copyPath, ...)
     if not (piece and piece.GetParent) then return end
     local layer = layers[piece]
-    local theme = copyPath and Custom()
-    if not theme then
-        if layer and layer.on then
-            layer.on = false
-            layer.tex:Hide()
-        end
+    local theme = copyPath and Theme()
+    if not (theme and (theme.colorCopies or ns.FlatOn(piece))) then
+        Hide(layer)
         return
     end
     if not layer then
-        layer = { tex = piece:GetParent():CreateTexture(nil, "ARTWORK"), wrap = {} }
+        layer = { wrap = {} }
         layers[piece] = layer
     end
-    local tex = layer.tex
-    layer.metal = copyPath:gsub(METAL_FROM, METAL_TO)
     local wrap = layer.wrap
-    wrap[1], wrap[2], wrap[3] = ...
+    layer.copy, wrap[1], wrap[2], wrap[3] = copyPath, ...
     Shape(piece, layer)
-    tex:SetAllPoints(piece)
-    tex:SetBlendMode(piece:GetBlendMode())
-    if piece.GetHorizTile then
-        tex:SetHorizTile(piece:GetHorizTile())
-        tex:SetVertTile(piece:GetVertTile())
-    end
-    layer.drawLayer, layer.on = nil, true
-    Tint(layer, theme)
+    if not layer.on then return end
     Follow(piece, layer)
     job:Wake()
 end
 
--- A tinted piece in one flat colour (r, g, b: its tint) cut to its own art while its part is flat; nil r: none.
+-- A tinted piece's stone panels (r, g, b: its tint) while its part is flat and its art has them; nil r: none.
 function ns.PaintFlat(piece, r, g, b)
     local layer = flats[piece]
-    if not (r and piece.GetAtlas and ns.FlatOn(piece)) then
-        if layer and layer.on then
-            layer.on = false
-            layer.tex:Hide()
-        end
+    local key = r and B.artKey[piece]
+    local flat = key and ns.FlatOn(piece) and ns.FlatCopy((select(2, ns.TexPaths(key))))
+    if not flat then
+        Hide(layer)
         return
     end
     if not layer then
-        layer = { tex = piece:GetParent():CreateTexture(nil, "ARTWORK"), own = true }
-        layer.tex:SetAllPoints(piece)
-        layer.tex:SetColorTexture(1, 1, 1)
+        layer = { cells = NewTex(piece) }
         flats[piece] = layer
-        Mask(piece, layer)
     end
-    layer.tex:SetVertexColor(r, g, b)
-    layer.on, layer.drawLayer, layer.atlas, layer.file = true, nil, nil, nil
+    layer.cells:SetTexture(flat)
+    Tiles(layer.cells, piece)
+    layer.cells:SetVertexColor(r, g, b)
+    layer.on, layer.flat, layer.drawLayer = true, true, nil
     Follow(piece, layer)
     job:Wake()
 end
 
--- A flat row or the theme changed: copy layers cut again; a flat row repaints the tinted pieces now, even in a fight.
+-- A flat row or the theme changed: copy layers shaped again; a flat row repaints the tinted pieces now, even in a fight.
 ns.OnToggle(function(key)
     if not B.THEME_KEYS[key] then return end
     for piece, layer in pairs(layers) do
-        if layer.on then Shape(piece, layer) end
+        if layer.copy then
+            Shape(piece, layer)
+            if layer.on then Follow(piece, layer) end
+        end
     end
+    job:Wake()
     if key == "themeFlat" or key:find("^flat") then ns.RepaintTints() end
 end)
+
+-- Read by the dev addon's themedump probe: how the theme's layers hold a texture.
+function ns.FlatState(texture)
+    if own[texture] then return "our layer" end
+    local layer = layers[texture]
+    if layer then return layer.on and (layer.flat and "copy flat" or "copy metal") or "copy off" end
+    layer = flats[texture]
+    if layer then return layer.on and "tint flat" or "tint off" end
+    return nil
+end
+
+-- Read by the dev addon's colour probes: how many copy layers are on, and a few seen ones as { file, r, g, b, shown }.
+function ns.ThemeLayerSample(most)
+    local on, out = 0, {}
+    for _, layer in pairs(layers) do
+        if layer.on and layer.tex then
+            on = on + 1
+            if #out < (most or 3) and layer.tex:IsVisible() then
+                local r, g, b = layer.tex:GetVertexColor()
+                out[#out + 1] = { file = layer.tex:GetTexture(), r = r, g = g, b = b, shown = layer.tex:IsShown() }
+            end
+        end
+    end
+    return on, out
+end
 
 function ns.FlatLayersShown()
     local count = 0
     for _, list in ipairs(LISTS) do
         for _, layer in pairs(list) do
-            if layer.on and layer.masked and layer.tex:IsShown() then count = count + 1 end
+            if layer.on and layer.flat and layer.cells:IsShown() then count = count + 1 end
         end
     end
     return count
@@ -186,8 +203,7 @@ end
 
 -- Every layer and tinted piece repainted in the theme's colour now.
 local function Retint()
-    ns.ThemeName()
-    local theme = Custom()
+    local theme = Theme()
     if theme then
         for _, layer in pairs(layers) do
             if layer.on then Tint(layer, theme) end

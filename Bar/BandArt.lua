@@ -58,7 +58,6 @@ function B.BuildArt()
         art.capHomes[key] = home
         art[texKey] = capLayer:CreateTexture(nil, "OVERLAY", nil, 5)
         art[texKey]:SetAllPoints(home)
-        ns.FlatTag(art[texKey], "flatGryphons")
     end
     -- Their saved places and sizes, now that the named frames exist.
     ns.PlaceSavedWindows()

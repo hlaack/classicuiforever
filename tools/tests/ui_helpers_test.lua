@@ -350,24 +350,22 @@ Test("Themes: dark tint, a copy folder per theme, the look rule", function()
     Check(ns.BronzeCopy(BORDER) ~= nil, "off still answers whether a copy exists")
 end)
 
-Test("Flat colour: a part in one colour cut to its own art, its row off brings the art back", function()
-    ns.db.bronzeTheme, ns.db.themeDark, ns.db.themeFlat, ns.db.flatGryphons = true, true, true, true
+Test("Flat colour: a part's stone panels in the theme's colour over the art; its row off takes them away", function()
+    ns.db.bronzeTheme, ns.db.themeDark, ns.db.themeFlat, ns.db.flatWindows = true, true, true, true
     local frame = CreateFrame("Frame")
     local tex = frame:CreateTexture()
-    tex:SetTexture("Interface/Test/Gryphon")
-    ns.FlatTag(tex, "flatGryphons")
-    ns.BronzeTint(tex)
-    local layer
+    ns.Dress(tex, "barBody", { tint = true })
+    local cells
     for _, region in ipairs(frame._regions) do
-        if region._mask then layer = region end
+        if region ~= tex and type(region._tex) == "string" and region._tex:find("custom-flat", 1, true) then cells = region end
     end
-    Check(layer ~= nil and layer._shown == true, "flat layer shown")
-    Check(layer and layer._mask._tex == "Interface/Test/Gryphon", "cut to the piece's own art")
-    Check(layer and Near(layer._vertex[1], 0.38) and layer._color[1] == 1, "one colour: the theme's")
-    ns.db.flatGryphons = false
+    Check(cells ~= nil and cells._shown == true, "stone panels shown")
+    Check(cells and cells._tex:find("UI-MainMenuBar-Dwarf", 1, true) ~= nil, "the piece's own panels")
+    Check(cells and Near(cells._vertex[1], 0.38), "in the theme's colour")
+    ns.db.flatWindows = false
     ns.RepaintBronze()
-    Check(layer and layer._shown == false, "row off: no flat layer")
-    ns.db.themeFlat, ns.db.flatGryphons, ns.db.themeDark, ns.db.bronzeTheme = nil, nil, false, false
+    Check(cells and cells._shown == false, "row off: no panels")
+    ns.db.themeFlat, ns.db.flatWindows, ns.db.themeDark, ns.db.bronzeTheme = nil, nil, false, false
     ns.UntintBronze(tex)
 end)
 

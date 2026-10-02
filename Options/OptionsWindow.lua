@@ -453,7 +453,7 @@ local function Build(canvas)
                 ns.KEY_TEXT_MIN or 8, ns.KEY_TEXT_MAX or 20, ns.SetKeyTextSize, "keybind font hotkey")
         end
         if entry[1] == "themeDark" then
-            local dark = O.DarknessRow(child, LIST_W / COLUMNS - 2 * INDENT)
+            local dark = O.DarknessRow(child, LIST_W / COLUMNS - 2 * INDENT - 14)
             Grouped(dark)
             Add(dark, "themeDark")
         end

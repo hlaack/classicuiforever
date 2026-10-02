@@ -420,6 +420,10 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         ns.db.lastOutput = nil   -- stale keys from old saves
         ns.db.meterPanArt = nil
         ns.db.hideExtraBars = nil
+        -- Flat colour parts with no stone background, gone after 0.15.0.
+        for _, key in ipairs({ "flatGryphons", "flatButtons", "flatUnitFrames", "flatMinimap", "flatNameplates" }) do
+            ns.db[key] = nil
+        end
         ns.db.capHeldLeft, ns.db.capHeldRight = nil, nil
         ns.KeepGameMicroButtons(saved)
         ns.LoadProfile()

@@ -132,7 +132,7 @@ DEV_NAMES = frozenset((
     "DressLootRoll", "ToggleSpellBook", "CombatNumbersInfo", "ClassicBarActive", "hookFns", "MODULE_ORDER", "modules",
     "BronzeOn", "DrainBronze", "UndrainBronze", "band", "Sched", "DB_DEFAULTS", "OpenGuildRoster", "sheet",
     "ClassBandState", "PadOf", "TrainerState", "ActiveLayoutInfo", "LayoutWritable", "BandPinsWanted",
-    "WindowLockButtons", "GameArtTinted", "FlatLayersShown",
+    "WindowLockButtons", "GameArtTinted", "FlatLayersShown", "FlatState", "FlatPartOf", "ThemeLayerSample",
 ))
 # Shared API kept without a reader yet (plan section 5); never reported by DEADNS.
 KEPT_API = frozenset((

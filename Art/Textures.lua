@@ -7,6 +7,8 @@ local BronzeCopy = ns.BronzeCopy
 
 -- Last SetTexture result per key, for /fcui debug.
 ns.texStatus = {}
+-- texture -> the TEX key it shows (flat colour finds its copy by it)
+B.artKey = setmetatable({}, { __mode = "k" })
 
 -- A key's client path, our copy's path and whether a theme copy exists (our copy's path, else false), made on first use.
 local builtinOf, bundledOf, bronzeOf = {}, {}, {}
@@ -65,6 +67,7 @@ function ns.SetTex(texture, key, ...)
     else
         ns.texStatus[key] = "ok"
     end
+    B.artKey[texture] = key
     -- Sheets with a bronze copy swap with the theme.
     local swapped = B.swapped
     if ns.TEX[key] and select(3, TexPaths(key)) then
@@ -85,6 +88,7 @@ end
 -- By file; swaps to its bronze copy with the theme.
 function ns.SetFile(texture, path, ...)
     if not texture or not path then return end
+    B.artKey[texture] = nil
     local copy = BronzeCopy(path)
     B.swapped[texture] = copy and path or nil
     B.swapArgs[texture] = (copy and select("#", ...) > 0) and { ... } or nil

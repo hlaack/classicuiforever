@@ -286,8 +286,7 @@ local THEMES = {
 B.THEMES = THEMES
 -- Toggles that change the theme.
 B.THEME_KEYS = { bronzeTheme = true, themeBronze = true, themeDark = true, themeCustom = true, themeFlat = true,
-    flatGryphons = true, flatBars = true, flatButtons = true, flatUnitFrames = true, flatMinimap = true,
-    flatNameplates = true, flatCharacter = true, flatSpellbook = true, flatWindows = true }
+    flatBars = true, flatCharacter = true, flatSpellbook = true, flatWindows = true }
 
 -- "rrggbb" to 0-1 channels, or nil.
 function ns.HexColor(hex)
@@ -326,12 +325,26 @@ end
 
 local ART = "\n" .. (ns.THEME_ART or "")
 local ART_LOWER = ART:lower()
-local function Lookup(path, dir)
+local FLAT = "\n" .. (ns.FLAT_ART or "")
+local FLAT_LOWER = FLAT:lower()
+local function Lookup(path, dir, list, lower)
     local base = path:match("([^\\/]+)$")
     if not base then return false end
     local key = "\n" .. base:gsub("%.[%a]+$", ""):lower() .. "\n"
-    local at = ART_LOWER:find(key, 1, true)
-    return at and (dir .. ART:sub(at + 1, at + #key - 2) .. ".tga") or false
+    local at = (lower or ART_LOWER):find(key, 1, true)
+    return at and (dir .. (list or ART):sub(at + 1, at + #key - 2) .. ".tga") or false
+end
+
+-- A file's flat colour copy (white where the colour fills), or nil; memoized.
+local flatCopies = {}
+function ns.FlatCopy(path)
+    if type(path) ~= "string" then return nil end
+    local copy = flatCopies[path]
+    if copy == nil then
+        copy = Lookup(path, BUNDLED .. "custom-flat\\", FLAT, FLAT_LOWER)
+        flatCopies[path] = copy
+    end
+    return copy or nil
 end
 
 -- A file's copy in the theme on (bronze while off, for callers asking whether one exists), memoized per theme.
