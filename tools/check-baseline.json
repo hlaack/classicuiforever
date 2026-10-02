@@ -16,9 +16,7 @@
     "HOOK": {
       "Bar/BarSkins.lua": 6,
       "Character/CharacterLists.lua": 4,
-      "Options/SettingsPanel.lua": 2,
       "Social/SocialWindow.lua": 2,
-      "UI/Controls.lua": 1,
       "UI/ScrollBars.lua": 2,
       "Windows/Bags.lua": 2,
       "Windows/Bank.lua": 3,
@@ -40,7 +38,6 @@
     "THROTTLEFRAME": {
       "Character/CharacterLists.lua": 1,
       "Character/ReputationDetail.lua": 1,
-      "Options/SettingsPanel.lua": 1,
       "Quest/QuestLogWindow.lua": 1,
       "Skills/Talents.lua": 1,
       "Skills/Trainer.lua": 1,
@@ -86,7 +83,7 @@
       "Units/UnitFrames.lua": 1
     },
     "POINTONCE": {
-      "Spells/SpellBook.lua": 3
+      "Spells/SpellBook.lua": 2
     },
     "SETIF": {
       "Bar/BandStatus.lua": 1,
@@ -105,7 +102,6 @@
       "Social/GroupFinder.lua": 1,
       "Social/GuildOpeners.lua": 2,
       "Spells/SpellBook.lua": 2,
-      "UI/Controls.lua": 1,
       "UI/ScrollBars.lua": 3,
       "Windows/Bank.lua": 3,
       "Windows/NpcWindows.lua": 1,
@@ -115,7 +111,7 @@
       "Art/Bronze.lua": 1,
       "Bar/BandArt.lua": 1,
       "Bar/BandStatus.lua": 8,
-      "Bar/Buttons.lua": 9,
+      "Bar/Buttons.lua": 8,
       "Character/CharacterLists.lua": 7,
       "Character/CharacterModel.lua": 2,
       "Character/CharacterSheet.lua": 13,
@@ -124,7 +120,6 @@
       "Character/StatPanes.lua": 2,
       "Map/Minimap.lua": 1,
       "Map/MinimapEye.lua": 1,
-      "Options/SettingsPanel.lua": 1,
       "Quest/QuestMapPane.lua": 1,
       "Quest/QuestTracker.lua": 2,
       "Skills/Talents.lua": 1,
@@ -133,7 +128,6 @@
       "Social/GuildOpeners.lua": 3,
       "Social/SocialWindow.lua": 1,
       "Spells/SpellBook.lua": 4,
-      "UI/Controls.lua": 1,
       "UI/Dialogs.lua": 2,
       "UI/Escape.lua": 2,
       "UI/FriendsWindow.lua": 3,
@@ -143,7 +137,7 @@
       "Units/NamePlateOptions.lua": 2,
       "Units/NamePlates.lua": 1,
       "Windows/Bank.lua": 3,
-      "Windows/Loot.lua": 2,
+      "Windows/Loot.lua": 1,
       "Windows/NpcWindows.lua": 1,
       "Windows/PanelAfters.lua": 1,
       "Windows/Tabs.lua": 4,
@@ -154,6 +148,16 @@
     },
     "SHAREDART": {
       "Spells/SpellBook.lua": 2
+    },
+    "SECRETLAYER": {
+      "Character/CharacterCore.lua": 1,
+      "Options/Diagnostics.lua": 1,
+      "Options/SettingsPanel.lua": 1,
+      "Quest/QuestMapPane.lua": 1,
+      "Skills/ProfessionsWindow.lua": 1,
+      "UI/ListPieces.lua": 1,
+      "Windows/PanelAfters.lua": 1,
+      "Windows/Tabs.lua": 1
     },
     "FILESIZE": {
       "Spells/SpellBook.lua": 1

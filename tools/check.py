@@ -39,7 +39,7 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
@@ -47,7 +47,7 @@ LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
               "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX",
-              "FADEDPIECE", "PCALLMANY", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME")
+              "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -152,6 +152,7 @@ FIX = {
              "clicks the button; a snippet's SetBindingClick names that proxy (name .. \"Key\")",
     "FADEDPIECE": "hide the client's cap in a hidden frame of ours (StashCap in Bar/BandArt.lua): edit mode snaps other "
                   "pieces only to what is visible, and a snap to an unnamed cap is saved at the screen's top",
+    "SECRETLAYER": "test it with ns.AnySecret(layer, sub) before any compare or math, and skip that region when secret",
     "PCALLMANY": "pcall a function of ours that walks them and returns one value (ns.EachChildProtected, "
                  "ns.EachRegionProtected in Core/Util.lua), never the getter itself",
     "SELFBOX": "anchor an edit mode Selection to its own frame (offsets for a wider box): the client sets the frame's "
@@ -378,6 +379,7 @@ MESSAGES = {
     "SELFBOX": "an edit mode Selection anchored to another frame than its own (the bars launched to the screen top)",
     "FADEDPIECE": "a client end cap faded or laid on the band as a handle (bars snapped to it, saved at the screen top)",
     "PCALLMANY": "a pcall straight around GetChildren/GetRegions/GetAnimations: 22 or more results abort the beta client",
+    "SECRETLAYER": "a draw layer read with no secret test beside it (a nameplate's pieces answer secret: 0.16.1, 1381 errors)",
     "ERASPOT": "Era's old-frame shift on a window Era leaves on 16, -116 (the social window flush on the screen edge)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",
@@ -1077,6 +1079,20 @@ SELECTION_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=\s*(?:[\w.]+\s+and\s+)?([\w.]+
 SELECTION_ANCHOR = re.compile(r"([\w.]+)\s*:\s*(SetPoint|SetAllPoints)\s*\(([^)]*)")
 
 
+SECRET_LAYER_READ = re.compile(r":\s*GetDrawLayer\s*\(")
+SECRET_TEST = re.compile(r"(?:IsSecret|AnySecret)")
+
+
+def secret_layer_hits(lx):
+    """A GetDrawLayer read with no IsSecret/AnySecret on its line or the next two."""
+    found = set()
+    lines = lx.blank
+    for i, line in enumerate(lines):
+        if SECRET_LAYER_READ.search(line) and not SECRET_TEST.search(" ".join(lines[i:i + 3])):
+            found.add(("SECRETLAYER", i + 1))
+    return found
+
+
 def self_box_hits(lx):
     """A client Selection (frame.Selection, or a local holding one) anchored to anything but its own frame."""
     found = set()
@@ -1202,6 +1218,7 @@ def pattern_hits(path, lx, funcs):
     found |= check_label_hits(lx)
     found |= mouse_order_hits(lx)
     found |= self_box_hits(lx)
+    found |= secret_layer_hits(lx)
     found |= cvar_login_hits(lx, funcs)
     found |= held_cvar_hits(lx, funcs)
     if not allowed("THROTTLEFRAME", path):
