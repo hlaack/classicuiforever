@@ -195,7 +195,13 @@ end
 
 -- Client trim bronze where 1.x was silver (input boxes, macro text, slider arrows, guild detail border): drained to
 -- the old metal (tint: its grey) when off, as drawn with a theme showing client art, drained and tinted with another.
+local SILVER = { 1, 1, 1, plain = true }
 local function PaintDrain(region, tint)
+    if tint == SILVER then
+        region:SetDesaturated(true)
+        if region.SetVertexColor then region:SetVertexColor(1, 1, 1) end
+        return
+    end
     local theme = Theme()
     if theme and theme.client then
         region:SetDesaturated(false)
@@ -215,6 +221,13 @@ local function PaintDrain(region, tint)
         ns.PaintFlat(region)
     end
     region:SetVertexColor(r, g, b)
+end
+
+-- Drained grey under every theme (sliders: tinted, they vanished at full darkness and recoloured under the hand).
+function ns.DrainSilver(region)
+    if not region or not region.SetDesaturated then return end
+    drained[region] = SILVER
+    PaintDrain(region, SILVER)
 end
 
 function ns.DrainBronze(region, r, g, b)

@@ -36,11 +36,16 @@ function Chrome:Header(header, host)
     if PaintNow(self) then ns.OldDialogHeader(header, host, true) end
 end
 
+-- grey "silver": silver under every theme (sliders).
+local function DrainAs(region, grey)
+    if grey == "silver" then ns.DrainSilver(region) else ns.DrainBronze(region, grey or nil) end
+end
+
 -- Client bronze trim; true when region is new here.
 function Chrome:Drain(region, grey)
     if not region or not region.SetDesaturated or self.drained[region] ~= nil then return false end
     self.drained[region] = grey or false
-    if PaintNow(self) then ns.DrainBronze(region, grey) end
+    if PaintNow(self) then DrainAs(region, grey) end
     return true
 end
 
@@ -54,7 +59,7 @@ end
 function Chrome:On()
     for border, info in pairs(self.borders) do ns.OldDialogBorder(border, true, info or nil) end
     for header, host in pairs(self.plates) do ns.OldDialogHeader(header, host, true) end
-    for region, grey in pairs(self.drained) do ns.DrainBronze(region, grey or nil) end
+    for region, grey in pairs(self.drained) do DrainAs(region, grey) end
     for region in pairs(self.faded) do region:SetAlpha(0) end
 end
 
@@ -125,16 +130,29 @@ local function Dropdown(dropdown)
     Piece(dropdown.Arrow, nil, dropdown)
 end
 
--- MinimalSliderWithSteppersTemplate.
+local function SilverPiece(region, button) Piece(region, "silver", button) end
+local function Resilver(region)
+    if chrome.drained[region] == "silver" then ns.DrainSilver(region) end
+end
+
+-- The template re-saturates its steppers on every value change and fill (DesaturateHierarchy): silver again after it.
+function ns.SilverSlider(steppers)
+    for _, stepper in ipairs({ steppers.Back, steppers.Forward }) do
+        if stepper then ns.EachTexture(stepper, Resilver) end
+    end
+end
+
+-- MinimalSliderWithSteppersTemplate, silver under every theme.
 local function Slider(steppers)
     if not steppers then return end
     local slider = steppers.Slider
     if slider then
-        ns.EachKey(slider, KEYS.LRM, Piece)
-        if slider.GetThumbTexture then Piece(slider:GetThumbTexture()) end
+        ns.EachKey(slider, KEYS.LRM, SilverPiece)
+        if slider.GetThumbTexture then SilverPiece(slider:GetThumbTexture()) end
     end
-    EachTex(steppers.Back, steppers.Back)
-    EachTex(steppers.Forward, steppers.Forward)
+    for _, stepper in ipairs({ steppers.Back, steppers.Forward }) do
+        if stepper then ns.EachTexture(stepper, SilverPiece, stepper) end
+    end
 end
 
 -- MinimalScrollBar.
@@ -301,8 +319,8 @@ local function Hold()
     local drained = chrome.drained
     for region in pairs(held) do
         if not region:IsDesaturated() then
-            if not asDrawn then
-                ns.DrainBronze(region, drained[region] or nil)
+            if not asDrawn or drained[region] == "silver" then
+                DrainAs(region, drained[region])
             elseif Disabled(region) then
                 region:SetDesaturated(true)
             end

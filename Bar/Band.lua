@@ -438,6 +438,7 @@ function B.StepperSlider(parent, width, anchor, x, format)
     slider:SetSize(width, 32)
     slider:SetPoint("LEFT", anchor, "RIGHT", x, 0)
     ns.EditModeSlider(slider)
+    B.OnSliderValue(slider, function() ns.SilverSlider(slider) end, slider)
     local formatters
     if CreateMinimalSliderFormatter and MinimalSliderWithSteppersMixin and MinimalSliderWithSteppersMixin.Label then
         local right = MinimalSliderWithSteppersMixin.Label.Right
@@ -466,6 +467,7 @@ function B.GuardedSlider(slider, init, onChange, opts)
         filling = true
         local value, low, high, steps = init()
         slider:Init(value, low, high, steps, formatters)
+        ns.SilverSlider(slider)
         filling = false
         if not enabled then return end
         local on = enabled()
