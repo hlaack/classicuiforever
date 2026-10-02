@@ -13,6 +13,7 @@ HelpFrameTab-Active
 HelpFrameTab-Inactive
 MailItemBorder
 Nameplate-Border
+NumericThreatBorder
 PetHappinessFaces
 QuickJoin-Atlas
 RedButtonCaps

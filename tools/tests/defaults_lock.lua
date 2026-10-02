@@ -210,6 +210,7 @@ return {
     thickHealthName = true,
     thickHealthPlayer = true,
     thickHealthTarget = true,
+    threatNumber = true,
     tradeSkill = true,
     tradeSkillSearch = true,
     trainer = true,

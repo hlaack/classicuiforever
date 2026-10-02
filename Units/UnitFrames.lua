@@ -331,6 +331,7 @@ local function Apply()
     end
     if On("player") then SkinPlayer() else RestorePlayer() end
     if On("target") then SkinTarget(TargetFrame, "target") else RestoreTargetLike(TargetFrame) end
+    ns.ThreatNumberSync()
     if On("focus") then SkinTarget(FocusFrame, "focus") else RestoreTargetLike(FocusFrame) end
     if On("pet") then SkinPet() end
     if On("party") then SkinParty() else RestoreParty() end
@@ -350,6 +351,7 @@ local function Restore()
     LayoutRaidManager()
     RestorePlayer()
     RestoreTargetLike(TargetFrame)
+    ns.ThreatNumberSync()
     RestoreTargetLike(FocusFrame)
     RestoreParty()
     ns.needsReload = true

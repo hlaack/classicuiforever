@@ -101,6 +101,7 @@ ns.DB_DEFAULTS = {
     eliteFrameTarget = true,
     eliteFrameFocus = true,
     hideThreatGlow = false,
+    threatNumber = true,
     plainQuestItems = false,
     plainNumbers = false,
     hideStatusMain = false,

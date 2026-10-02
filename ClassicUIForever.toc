@@ -83,6 +83,7 @@ Units\UnitFrameCore.lua
 Units\HoverNumbers.lua
 Units\PlayerFrame.lua
 Units\TargetFrame.lua
+Units\ThreatNumber.lua
 Units\PartyPetFrames.lua
 Units\RaidManager.lua
 Units\UnitFrames.lua

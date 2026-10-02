@@ -18,6 +18,7 @@ ns.TEX = {
     statusBarFlat = "!UI-StatusBar-Flat.tga",
     repBar = "PaperDollInfoFrame\\UI-ReputationWatchBar",
     maxLevel = "MainMenuBar\\UI-MainMenuBar-MaxLevel",
+    threatBorder = "TargetingFrame\\NumericThreatBorder",
     slotEmpty = "Buttons\\UI-Quickslot",
     slotNormal = "Buttons\\UI-Quickslot2",
     slotPushed = "Buttons\\UI-Quickslot-Depress",
