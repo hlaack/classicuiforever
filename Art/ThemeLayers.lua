@@ -201,16 +201,29 @@ function ns.FlatLayersShown()
     return count
 end
 
--- Every layer and tinted piece repainted in the theme's colour now.
-local function Retint()
+local function Recolour()
     local theme = Theme()
     if theme then
         for _, layer in pairs(layers) do
             if layer.on then Tint(layer, theme) end
         end
     end
+    ns.RepaintColours()
+end
+
+-- Each step of a drag only recolours; the full repaint and apply pass run once the control rests (they lagged a drag).
+local SETTLE = 0.4
+local movedAt = 0
+local function Settle()
+    if GetTime() - movedAt < SETTLE - 0.01 then return end
     ns.RepaintBronze()
     if ns.QueueApply then ns.QueueApply() end
+end
+
+local function Retint()
+    Recolour()
+    movedAt = GetTime()
+    ns.Sched.AfterPerFrame("theme.settle", SETTLE, Settle)
 end
 
 -- The picked custom colour, saved and painted.

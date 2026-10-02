@@ -287,6 +287,12 @@ function ns.RepaintTints()
     end
 end
 
+-- The theme's colour moved (a slider or picker drag): tints and borders only, no file swaps.
+function ns.RepaintColours()
+    ns.RepaintTints()
+    for frame in pairs(bordered) do ns.BronzeBackdrop(frame) end
+end
+
 -- Repaint every remembered piece for the current theme.
 function ns.RepaintBronze()
     ns.RepaintTints()
