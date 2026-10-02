@@ -3,6 +3,7 @@ local _, ns = ...
 -- The 1.x Who tab. Takes /who results over from the client's own window while on.
 
 local S = ns.social
+local L = ns.L
 local IsSecret, Safe = ns.IsSecret, ns.Safe
 
 local active = false
@@ -206,7 +207,38 @@ end
 
 ---------------------------------------------------------------- the panel
 
--- The Zone, Guild or Race arrow on the second column's plate.
+local function SortRow(label, field)
+    return { label, radio = function() return sort.field == field end,
+        pick = function() sort.field = field Refresh() end }
+end
+
+local function OrderRow(label, reverse)
+    return { label, radio = function() return sort.reverse == reverse end,
+        pick = function() sort.reverse = reverse Refresh() end }
+end
+
+-- The game's Who filters (class, race, zone, sort), then which field the second column shows.
+local function FilterEntries(header)
+    local entries = S.WhoFilterEntries()
+    entries[#entries + 1] = { WHO_SORT_LABEL or "Sort By", sub = {
+        SortRow(NAME or "Name", "name"), SortRow(CLASS or "Class", "class"), SortRow(LEVEL or "Level", "level"),
+        { divider = true },
+        OrderRow(WHO_SORT_ASCENDING_LABEL or "Ascending", false), OrderRow(WHO_SORT_DESCENDING_LABEL or "Descending", true),
+    } }
+    local columns = {}
+    for _, field in ipairs(WHO_FIELDS) do
+        columns[#columns + 1] = { field.label, radio = function() return WhoField() == field end, pick = function()
+            ns.db.whoColumn = field.key
+            if header.Text then header.Text:SetText(field.label) end
+            sort.field, sort.reverse = "zone", false
+            Refresh()
+        end }
+    end
+    entries[#entries + 1] = { L["WHO_COLUMN"], sub = columns }
+    return entries
+end
+
+-- The filter arrow on the second column's plate.
 local function FieldArrow(header, column)
     if column.key ~= "zone" then return end
     if header.Text then header.Text:SetText(WhoField().label) end
@@ -221,19 +253,10 @@ local function FieldArrow(header, column)
     arrow:SetSize(22, 22)
     arrow:SetPoint("RIGHT", header, "RIGHT", 1, 0)
     ns.DressStates(arrow, SCROLL_DOWN .. "Up", SCROLL_DOWN .. "Down", nil, ns.ART.HILIGHT, FIELD_ARROW)
-    local entries = {}
-    for _, field in ipairs(WHO_FIELDS) do
-        entries[#entries + 1] = { field.label, function()
-            ns.db.whoColumn = field.key
-            if header.Text then header.Text:SetText(field.label) end
-            sort.field, sort.reverse = "zone", false
-            Refresh()
-        end, function() return WhoField() == field end }
-    end
     local menu
     arrow:SetScript("OnClick", function()
         if not menu then
-            menu = ns.DropList(entries)
+            menu = ns.TreeMenu(FilterEntries(header))
             menu:Follow(panel)
         end
         menu:Toggle(header)
@@ -258,9 +281,7 @@ local function Build()
     panel.refresh = ns.PanelButton(panel, REFRESH or "Refresh", WHO_REFRESH_BUTTON_WIDTH)
     panel.refresh:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", WHO_REFRESH_BUTTON_X, WHO_BUTTONS_Y)
     panel.refresh:SetScript("OnClick", function()
-        if C_FriendList and C_FriendList.SendWho then
-            pcall(C_FriendList.SendWho, panel.query and panel.query:GetText() or "")
-        end
+        S.SendWho(panel.query and panel.query:GetText())
     end)
 
     panel.add:SetScript("OnClick", function()
@@ -313,7 +334,7 @@ local function Build()
     query:SetMaxLetters(60)
     query:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
     query:SetScript("OnEnterPressed", function(self)
-        if C_FriendList and C_FriendList.SendWho then pcall(C_FriendList.SendWho, self:GetText() or "") end
+        S.SendWho(self:GetText())
         self:ClearFocus()
     end)
 

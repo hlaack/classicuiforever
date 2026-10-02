@@ -125,6 +125,7 @@ Social\GuildData.lua
 Social\GuildRoster.lua
 Social\GuildNoteBridge.lua
 Social\GuildOpeners.lua
+Social\WhoFilters.lua
 Social\WhoList.lua
 Social\FinderTabs.lua
 Social\GroupFinder.lua

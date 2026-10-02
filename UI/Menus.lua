@@ -260,3 +260,177 @@ function ns.RowMenu(entries)
     end
     return menu
 end
+
+------------------------------------------------------------ drop lists with submenus
+
+-- Blizzard_Menu Vanilla's rows on the iron list. Entries: { text, check = isOn, toggle = fn } (its gold tick only when
+-- on), { text, radio = isOn, pick = fn }, { text, click = fn }, { divider = true }, { text, sub = entries or a function
+-- giving them }. A pick keeps the menu open and redraws the marks; a submenu opens beside its row on hover.
+local CHECK_MARK, CHECK_SIZE = { 211, 1, 243, 33 }, 20      -- common-dropdown-icon-checkmark-yellow-classic-2
+local EXPAND_ARROW, EXPAND_SIZE, EXPAND_GAP = "Interface\\ChatFrame\\ChatFrameExpandArrow", 16, 4
+local SUB_GAP = 4
+
+local NewLevel, OpenSub
+
+-- The row's mark; returns how far its label stands in.
+local function Mark(row, entry)
+    local mark, label = row.mark, row.label
+    if not (entry.radio or entry.check) then
+        mark:Hide()
+        ns.SetPointOnce(label, "LEFT", row, "LEFT", 0, 0)
+        return 0
+    end
+    local size = entry.radio and RADIO_SIZE or CHECK_SIZE
+    mark:SetSize(size, size)
+    if entry.radio then
+        Coords(mark, entry.radio() and RADIO_ON or RADIO_OFF)
+        mark:SetAlpha(1)
+    else
+        Coords(mark, CHECK_MARK)
+        mark:SetAlpha(entry.check() and 1 or 0)
+    end
+    mark:Show()
+    ns.SetPointOnce(label, "LEFT", mark, "RIGHT", RADIO_GAP, 0)
+    return size + RADIO_GAP
+end
+
+local function CloseBelow(level)
+    if level.child then level.child:Hide() end
+end
+
+local function Redraw(level)
+    while level and level:IsShown() do
+        level:Layout()
+        level = level.child
+    end
+end
+
+local function RowEnter(row)
+    local level = row:GetParent()
+    if row.entry and row.entry.sub then OpenSub(level, row) else CloseBelow(level) end
+end
+
+local function RowClick(row)
+    local entry = row.entry
+    if not entry then return end
+    if entry.sub then
+        OpenSub(row:GetParent(), row)
+        return
+    end
+    PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
+    local act = entry.toggle or entry.pick or entry.click
+    if act then act() end
+    Redraw(row:GetParent().root)
+end
+
+local function Row(level, i)
+    local row = level.rows[i]
+    if row then return row end
+    row = ns.NewFrame("Button", nil, level)
+    row:SetHeight(MENU_ROW)
+    row.mark = row:CreateTexture(nil, "ARTWORK")
+    ns.SetTex(row.mark, "dropdownClassic")
+    row.mark:SetPoint("LEFT", row, "LEFT", 0, 0)
+    row.label = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    row.arrow = row:CreateTexture(nil, "ARTWORK")
+    row.arrow:SetTexture(EXPAND_ARROW)
+    row.arrow:SetSize(EXPAND_SIZE, EXPAND_SIZE)
+    row.arrow:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+    Highlight(row)
+    row:SetScript("OnEnter", RowEnter)
+    row:SetScript("OnClick", RowClick)
+    level.rows[i] = row
+    return row
+end
+
+local function Divider(level, i)
+    local line = level.lines[i]
+    if not line then
+        line = level:CreateTexture(nil, "ARTWORK")
+        line:SetTexture(DIVIDER_FILE)
+        line:SetHeight(MENU_DIVIDER)
+        level.lines[i] = line
+    end
+    return line
+end
+
+-- Rows and dividers down from the top inset, the list as wide as its widest row.
+local function Layout(level)
+    local y, widest, rows, lines = IRON_INSET[2], 0, 0, 0
+    for _, entry in ipairs(level.entries) do
+        local piece, height
+        if entry.divider then
+            lines = lines + 1
+            piece, height = Divider(level, lines), MENU_DIVIDER
+        else
+            rows = rows + 1
+            piece, height = Row(level, rows), MENU_ROW
+            piece.entry = entry
+            piece.label:SetText(entry[1])
+            piece.arrow:SetShown(entry.sub ~= nil)
+            local width = Mark(piece, entry) + (piece.label:GetStringWidth() or 0)
+            if entry.sub then width = width + EXPAND_GAP + EXPAND_SIZE end
+            widest = math.max(widest, width)
+        end
+        piece:ClearAllPoints()
+        piece:SetPoint("TOPLEFT", level, "TOPLEFT", IRON_INSET[1], -y)
+        piece:SetPoint("TOPRIGHT", level, "TOPRIGHT", -IRON_INSET[3], -y)
+        piece:Show()
+        y = y + height
+    end
+    for i = rows + 1, #level.rows do level.rows[i]:Hide() end
+    for i = lines + 1, #level.lines do level.lines[i]:Hide() end
+    level:SetSize(math.ceil(widest) + IRON_INSET[1] + IRON_INSET[3], y + IRON_INSET[4])
+end
+
+function OpenSub(level, row)
+    local child = level.child or NewLevel(level.root)
+    level.child = child
+    if child:IsShown() and child.from == row then return end
+    child:Hide()
+    child.from = row
+    local sub = row.entry.sub
+    child.entries = type(sub) == "function" and sub() or sub
+    Layout(child)
+    ns.SetPointOnce(child, "TOPLEFT", row, "TOPRIGHT", IRON_INSET[3] + SUB_GAP, IRON_INSET[2])
+    child:Show()
+    child:Raise()
+end
+
+function NewLevel(root)
+    local level = NewMenu("FULLSCREEN_DIALOG")
+    Dress(level, IRON_BOX, IRON_MARGIN, IRON_OUT, IRON_FILL)
+    level.rows, level.lines, level.root = {}, {}, root or level
+    level.Layout = Layout
+    level:SetScript("OnHide", CloseBelow)
+    return level
+end
+
+function ns.TreeMenu(entries)
+    local root = NewLevel()
+    root.entries = entries
+    ns.RegisterEvents(root, MOUSE_DOWN)
+    root:SetScript("OnEvent", function(self)
+        if not self:IsShown() then return end
+        local level = self
+        while level and level:IsShown() do
+            if level:IsMouseOver() then return end
+            level = level.child
+        end
+        -- Leave a press on the owner to the owner, or the list reopens at once.
+        if self.owner and self.owner:IsMouseOver() then return end
+        self:Hide()
+    end)
+    root.Follow = Follow
+
+    function root:Toggle(owner)
+        if self:IsShown() then self:Hide() return end
+        self.owner = owner
+        Layout(self)
+        ns.SetPointOnce(self, "TOPLEFT", owner, "BOTTOMLEFT", DROP_LIST_X, DROP_LIST_Y)
+        self:Show()
+        self:Raise()
+    end
+    ns.CloseOnEscape(root)
+    return root
+end
