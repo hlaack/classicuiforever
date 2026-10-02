@@ -231,6 +231,7 @@ FIX = {
     "DUPFN": "keep one copy in the shared layer (Core/Util.lua, UI/...) as ns.Name, or call the twin",
     "TOC": "list every addon .lua in " + TOC_NAME + " and remove entries for files that are gone",
     "BASELINE": "run python tools/check.py --carry-renames, then git add " + BASELINE_NAME,
+    "NEWSOPTIN": "a What's New entry naming an off-by-default option says to turn it on in the options, and where",
     "USSPELL": "American spelling in English text: color, gray, center(ed), armor, -ize, check/checked (not tick)",
     "LOCALEKEYS": "every language file in Locales/ holds exactly the keys of Locales/enUS.lua, each with the same %s and "
                   "%d placeholders in the same order: translate a new or changed English string into every language "
@@ -1449,12 +1450,17 @@ def locale_hits():
         if name.startswith("enUS") and name.endswith(".lua"):
             with open(os.path.join(LOCALE_DIR, name), encoding="utf-8") as fh:
                 base.update(LOCALE_ROW.findall(fh.read()))
+    # A language may span its file and siblings (deDE_WhatsNew.lua) too: checked as one, reported on the main file.
+    langs = {}
     for name in sorted(os.listdir(LOCALE_DIR)):
-        if not name.endswith(".lua") or name.startswith("enUS"):
-            continue
-        path = LOCALE_DIR + "/" + name
-        with open(os.path.join(LOCALE_DIR, name), encoding="utf-8") as fh:
-            text = fh.read()
+        if name.endswith(".lua") and not name.startswith("enUS"):
+            langs.setdefault(name[:-4].split("_")[0], []).append(name)
+    for lang, names in sorted(langs.items()):
+        path = LOCALE_DIR + "/" + lang + ".lua"
+        text = ""
+        for name in names:
+            with open(os.path.join(LOCALE_DIR, name), encoding="utf-8") as fh:
+                text += fh.read() + "\n"
         rows = LOCALE_ROW.findall(text)
         # A language that shares another's table (esMX from esES) holds no rows of its own.
         if not rows and "LocaleFrom" in text:
@@ -1479,6 +1485,51 @@ US_SPELL = re.compile(r"\b(colour\w*|grey\w*|centre[sd]?|centred|armour\w*|behav
                       r"initialis\w+|analys(?:e|ed|es|ing)\b|cancell\w+|travell\w+|labell\w+|modell\w+|licence|"
                       r"(?:un)?tick(?:ed|ing)?(?! marker))\b", re.I)
 SPELL_DOCS = ("CHANGELOG.md", "README.md", "docs/description.md")
+
+
+NEWS_TURN_ON = re.compile(r"\bturn (?:it |them )?on\b", re.I)
+
+
+def news_hits():
+    """The newest What's New: an entry naming an off-by-default option says to turn it on in the options."""
+    hits = []
+    welcome, defaults, toggles = "Options/Welcome.lua", "Core/Defaults.lua", "Options/Toggles.lua"
+    if not all(os.path.isfile(f) for f in (welcome, defaults, toggles)):
+        return hits
+    with open(welcome, encoding="utf-8") as fh:
+        newest = re.search(r'WHATSNEW = \{\s*\{ id = (\d+), version = "([\d.]+)"', fh.read())
+    # A shipped version's text stays as players saw it.
+    if newest and subprocess.run(["git", "tag", "-l", "v" + newest.group(2)], capture_output=True, text=True).stdout.strip():
+        return hits
+    with open(defaults, encoding="utf-8") as fh:
+        block = fh.read().split("ns.DB_DEFAULTS = {", 1)[-1].split("\n}", 1)[0]
+    with open(toggles, encoding="utf-8") as fh:
+        toggle_keys = set(re.findall(r'^\s*\{ "(\w+)", L\[', fh.read(), re.M))
+    off = {k for k in re.findall(r"^\s*(\w+) = false,", block, re.M) if k in toggle_keys}
+    english = {}
+    for name in sorted(os.listdir(LOCALE_DIR)):
+        if name.startswith("enUS") and name.endswith(".lua"):
+            with open(os.path.join(LOCALE_DIR, name), encoding="utf-8") as fh:
+                english.update(LOCALE_ROW.findall(fh.read()))
+    if not newest:
+        return hits
+    # A check list row reads "Group: item": its group names it too.
+    labels = {}
+    for key in off:
+        label = english.get("OPT_" + key)
+        if label:
+            for name in {label, label.split(":")[0]}:
+                if len(name) >= 6:
+                    labels[name] = key
+    prefix = "WN%s_" % newest.group(1)
+    for key, text in english.items():
+        if not (key.startswith(prefix) and key.endswith("_TEXT")):
+            continue
+        named = sorted(n for n in labels if re.search(r"(?<!\w)" + re.escape(n) + r"(?!\w)", text))
+        if named and not (NEWS_TURN_ON.search(text) and "options" in text.lower()):
+            hits.append((LOCALE_DIR + "/enUS_WhatsNew.lua", 1, "NEWSOPTIN",
+                         "%s names %s, off by default, without saying to turn it on in the options" % (key, named[0])))
+    return hits
 
 
 def spelling_hits():
@@ -1809,7 +1860,7 @@ def run(argv):
                 continue
         fail(path, line, rule, msg)
 
-    for path, line, rule, msg in locale_hits() + spelling_hits():
+    for path, line, rule, msg in locale_hits() + spelling_hits() + news_hits():
         fail(path, line, rule, msg)
 
     elapsed = time.time() - started
