@@ -479,6 +479,8 @@ L["UI_DARK_GOLD"] = "Dark gold"
 L["UI_FOCUS_ORANGE"] = "Focus orange"
 L["UI_ENERGY_YELLOW"] = "Energy yellow"
 L["UI_MANA_BLUE"] = "Mana blue"
+L["UI_BY_REACTION"] = "By reaction"
+L["UI_BY_REACTION_TIP"] = "Yellow while the enemy is neutral, red once it is hostile or fighting you."
 
 -- UI/WindowHandles.lua
 L["UI_CHARACTER"] = "Character"

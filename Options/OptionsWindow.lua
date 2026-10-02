@@ -256,7 +256,12 @@ local function DropCheckRow(parent, group)
     return row
 end
 
--- A setting holding one of a list's keys (choices: { key, label }); apply(key, pick) saves and shows it.
+local function ChoiceTip(tip, choice)
+    GameTooltip_SetTitle(tip, choice.label)
+    GameTooltip_AddNormalLine(tip, choice.tip, true)
+end
+
+-- A setting holding one of a list's keys (choices: { key, label, tip }); apply(key, pick) saves and shows it.
 -- preview(key) shows a choice while it is hovered, preview(nil) the setting again once the menu shuts.
 local function ValueDropRow(parent, key, label, tooltip, choices, apply, preview)
     local row, shut
@@ -273,9 +278,12 @@ local function ValueDropRow(parent, key, label, tooltip, choices, apply, preview
         for _, choice in ipairs(choices) do
             local item = root:CreateRadio(choice.label, function(pick) return ns.db[key] == pick end,
                 function(pick) apply(key, pick) end, choice.key)
-            if preview and item and item.SetOnEnter then
-                item:SetOnEnter(function() Hover(choice.key) end)
-                item:SetOnLeave(function() preview(nil) end)
+            if (preview or choice.tip) and item and item.SetOnEnter then
+                item:SetOnEnter(function(button)
+                    if preview then Hover(choice.key) end
+                    if choice.tip then MenuUtil.ShowTooltipEx(button, item:GetTooltipFrame(), ChoiceTip, choice) end
+                end)
+                if preview then item:SetOnLeave(function() preview(nil) end) end
             end
         end
     end)
@@ -479,7 +487,7 @@ local function Build(canvas)
         end
         if entry[1] == "thickHealthMana" and ns.ENEMY_HEALTH_COLORS then
             ExtraDrop("thickHealth", "thickEnemyColor", L["OPTWIN_ENEMY_HEALTH"], L["OPTWIN_THE_COLOUR_OF_AN_ENEMY"],
-                ns.ENEMY_HEALTH_COLORS, ns.SetEnemyHealthColor, "colour color hostile red", 2)
+                ns.ENEMY_HEALTH_COLORS, ns.SetEnemyHealthColor, "colour color hostile red neutral yellow reaction aggro", 2)
         end
         if entry[1] == "unitFrames" and ns.SetUnitNameSize then
             ExtraStep("unitFrames", "unitNameSize", L["OPTWIN_NAME_SIZE"], L["OPTWIN_TEXT_SIZE_OF_THE_PLAYER"],

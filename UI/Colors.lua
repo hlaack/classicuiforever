@@ -147,15 +147,29 @@ ns.ENEMY_HEALTH_COLORS = {
     { key = "focus", label = L["UI_FOCUS_ORANGE"], rgb = { 1, 0.5, 0.25 } },
     { key = "energy", label = L["UI_ENERGY_YELLOW"], rgb = { 1, 1, 0 } },
     { key = "mana", label = L["UI_MANA_BLUE"], rgb = { 0, 0, 1 } },
+    { key = "reaction", label = L["UI_BY_REACTION"], tip = L["UI_BY_REACTION_TIP"] },
 }
 local ENEMY_RGB = {}
 for _, color in ipairs(ns.ENEMY_HEALTH_COLORS) do ENEMY_RGB[color.key] = color.rgb end
+-- By reaction: neutral yellow, hostile red, a neutral one with the player on its threat list red too.
+local HOSTILE_RGB, NEUTRAL_RGB, NEUTRAL = { 1, 0, 0 }, { 1, 1, 0 }, 4
+
+local function ReactionColor(unit)
+    local reaction = UnitReaction(unit, "player")
+    if IsSecret(reaction) or not reaction or reaction > NEUTRAL then return nil end
+    if reaction < NEUTRAL then return HOSTILE_RGB end
+    local fighting = UnitThreatSituation("player", unit)
+    if not IsSecret(fighting) and fighting then return HOSTILE_RGB end
+    return NEUTRAL_RGB
+end
 
 local function EnemyColor(unit)
-    local pick = ns.db and ENEMY_RGB[ns.db.thickEnemyColor]
-    if not pick or ns.db.thickEnemyColor == "green" or not (ns.UF and ns.UF.Thick(unit)) then return nil end
+    local key = ns.db and ns.db.thickEnemyColor
+    local pick = ENEMY_RGB[key]
+    if not (pick or key == "reaction") or key == "green" or not (ns.UF and ns.UF.Thick(unit)) then return nil end
     local hostile = UnitCanAttack("player", unit)
     if IsSecret(hostile) or not hostile then return nil end
+    if key == "reaction" then return ReactionColor(unit) end
     return pick
 end
 

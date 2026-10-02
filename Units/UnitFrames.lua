@@ -48,6 +48,8 @@ local POWER_FREQUENT = { "UNIT_POWER_FREQUENT" }
 -- threat when the threat number shows or hides (its OnShow/OnHide, TargetFrame.lua 1220-1221).
 local AURA_EVENTS = { "UNIT_AURA", "UNIT_TARGET", "UNIT_THREAT_SITUATION_UPDATE", "UNIT_THREAT_LIST_UPDATE" }
 local TARGET_EVENTS = { "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED" }
+-- A neutral mob turning on the player goes red (enemy health color by reaction).
+local THREAT_EVENTS = { UNIT_THREAT_SITUATION_UPDATE = true, UNIT_THREAT_LIST_UPDATE = true }
 -- The pet frame's UnitFrame_Update paints its mana bar white on these (UnitFrame.lua OnEvent, the vehicle data).
 local PET_EVENTS = { "UNIT_NAME_UPDATE", "PLAYER_GAINS_VEHICLE_DATA", "PLAYER_LOSES_VEHICLE_DATA" }
 local SNAP_FRAMES = { "PlayerFrame", "TargetFrame", "FocusFrame", "PetFrame" }
@@ -100,6 +102,12 @@ end
 
 local function SoonAfter()
     ns.Sched.NextFrame("unitFrames.after", AfterTrigger)
+end
+
+local function Recolor(unit)
+    for _, entry in pairs(UF.frames) do
+        if entry.unit == unit then Update(entry, "health") end
+    end
 end
 
 local function KeepAgain()
@@ -314,8 +322,9 @@ local function Apply()
         local auraKick = CreateFrame("Frame")
         ns.RegisterEvents(auraKick, AURA_EVENTS, "target", "focus")
         ns.RegisterEvents(auraKick, TARGET_EVENTS)
-        auraKick:SetScript("OnEvent", function()
+        auraKick:SetScript("OnEvent", function(_, event, unit)
             if not UF.active then return end
+            if THREAT_EVENTS[event] and ns.db.thickEnemyColor == "reaction" then Recolor(unit) end
             SetAuraLive()
             KeepAuras(true)
             AuraHot()
