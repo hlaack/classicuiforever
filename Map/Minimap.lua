@@ -709,6 +709,7 @@ end
 -- These hooks run inside the client's edit mode layout passes: add no work to them.
 local function Apply()
     SetActive(true)
+    MM.taken = true
     if not MinimapCluster then ns.MissingPiece("MinimapCluster") return end
     BuildRing()
     Layout()
@@ -730,9 +731,13 @@ local function Apply()
     end
 end
 
--- Runs on every ApplyAll while off; OwnTexture never re-shows, so the ring needs a reload.
+-- Runs on every ApplyAll while off: only what Apply took this session goes back, the game's pieces are not ours to
+-- place otherwise. OwnTexture never re-shows, so the ring needs a reload.
 local function Restore()
     SetActive(false)
+    ThemeRingsOnGameMap()
+    if not MM.taken then return end
+    MM.taken = false
     HideOwn(MinimapCluster)
     HideOwn(MinimapBackdrop)
     MM.HideCalendar()
@@ -756,7 +761,6 @@ local function Restore()
         end
     end
     if MinimapCluster and MinimapCluster.BorderTop then ns.Unfade(MinimapCluster.BorderTop) end
-    ThemeRingsOnGameMap()
     ns.needsReload = true
 end
 
