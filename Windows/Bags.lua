@@ -25,6 +25,11 @@ local BACKPACK_BASE_H = 240
 local BACKPACK_FIRST_Y = -211    -- the first backpack slot's bottom, from the top, with four rows
 local BACKPACK_MIDDLE_TOP = 215 / 512   -- backpack extra rows start lower on the sheet than a bag's
 local MONEY_Y = -215
+-- Close button, its top right from the frame's: the backpack (and the one bag), then every other bag and the key ring.
+local BACKPACK_CLOSE_BUTTON_X = 0
+local BACKPACK_CLOSE_BUTTON_Y = -1
+local BAG_CLOSE_BUTTON_X = 0
+local BAG_CLOSE_BUTTON_Y = 0
 -- The money strip on the backpack sheet (its top line to its bottom line) and the rim under it; a watched
 -- currency row gets a second strip cut the same, and the window grows by one strip.
 local STRIP_TOP, STRIP_END = 209, 232
@@ -407,8 +412,9 @@ local function Skin(frame)
     local close = frame.CloseButton
     if close then
         ns.SkinCloseButton(close, true)
-        -- Era's container template, every bag and the backpack: 0, -1 from the frame's top right, where the art is pinned.
-        ns.SetPointOnce(close, "TOPRIGHT", frame, "TOPRIGHT", 0, -1)
+        local main = combined or (frame.IsBackpack and frame:IsBackpack())
+        ns.SetPointOnce(close, "TOPRIGHT", frame, "TOPRIGHT", main and BACKPACK_CLOSE_BUTTON_X or BAG_CLOSE_BUTTON_X,
+            main and BACKPACK_CLOSE_BUTTON_Y or BAG_CLOSE_BUTTON_Y)
     end
     -- Money on the sheet's own strip; the client's pill goes.
     if frame.MoneyFrame and extra then
