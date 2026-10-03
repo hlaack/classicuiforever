@@ -432,6 +432,7 @@ local function Refresh()
     end
     local title = ProfessionsFrame and ProfessionsFrame.TitleContainer and ProfessionsFrame.TitleContainer.TitleText
     if title and prof and prof.professionName and (title:GetText() or "") == "" then title:SetText(prof.professionName) end
+    ns.PlaceTradeSkillLink(panel.link, title)
     if prof then
         local rank, maxRank = prof.skillLevel or 0, prof.maxSkillLevel or 0
         panel.rank:SetMinMaxValues(0, math.max(1, maxRank))
@@ -569,6 +570,9 @@ local function Build()
         end
         panel.filterList:Toggle(self)
     end)
+
+    -- Beside the title, placed each Refresh (Skills/TradeSkillExtras.lua).
+    panel.link = ns.TradeSkillLink(panel)
 
     -- Search box between the All tab and the filter (the old window had none), in
     -- the count's thin border.
