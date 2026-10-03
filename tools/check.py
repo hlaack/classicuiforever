@@ -156,8 +156,8 @@ FIX = {
     "SECRETLAYER": "test it with ns.AnySecret(layer, sub) before any compare or math, and skip that region when secret",
     "PCALLMANY": "pcall a function of ours that walks them and returns one value (ns.EachChildProtected, "
                  "ns.EachRegionProtected in Core/Util.lua), never the getter itself",
-    "PADLIST": "change the trainer list's size only in the Train pad's secure snippet (LIST_TALL / LIST_BACK in "
-               "Skills/Trainer.lua), which measures it there too; our Lua never sizes, places or measures that list",
+    "PADLIST": "change the list's size only in a secure snippet that measures it there too (LIST_TALL / LIST_BACK in "
+               "Skills/Trainer.lua, GROW in Social/GuildNoteBridge.lua); our Lua never sizes, places or measures that list",
     "SELFBOX": "anchor an edit mode Selection to its own frame (offsets for a wider box): the client sets the frame's "
                "clamp and snap offsets from the gap between them, so a box hung elsewhere shoves the frame off its anchor",
     "MOUSEORDER": "set OnEnter/OnLeave/OnMouse* first, then SetMouseClickEnabled(false) (the hover sensor over the "
@@ -380,8 +380,8 @@ MESSAGES = {
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "MOUSEORDER": "a mouse script set after the frame's clicks were switched off (setting it turns clicks back on)",
     "SELFBOX": "an edit mode Selection anchored to another frame than its own (the bars launched to the screen top)",
-    "PADLIST": "the trainer's client list sized, placed or measured in our Lua (rows it rebuilds in our name are "
-               "refused by Train's pad: a 6000-tall list left Train dead for every service)",
+    "PADLIST": "a pad-clicked client list sized, placed or measured in our Lua (rows it rebuilds in our name are "
+               "refused by Train's pad and fail a guild note save)",
     "FADEDPIECE": "a client end cap faded or laid on the band as a handle (bars snapped to it, saved at the screen top)",
     "PCALLMANY": "a pcall straight around GetChildren/GetRegions/GetAnimations: 22 or more results abort the beta client",
     "SECRETLAYER": "a draw layer read with no secret test beside it (a nameplate's pieces answer secret: 0.16.1, 1381 errors)",
@@ -1118,7 +1118,7 @@ def self_box_hits(lx):
 
 
 # Lists whose rows a secure pad clicks; only the pad's snippet may size them.
-PADLIST_FILES = ("Skills/Trainer.lua",)
+PADLIST_FILES = ("Skills/Trainer.lua", "Social/GuildNoteBridge.lua")
 PADLIST_ANY_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=")
 PADLIST_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=\s*(?:[\w.]+\s+and\s+)?[\w.]+\.Scroll(?:Box|Bar)\b")
 PADLIST_CALL = re.compile(r"([\w.]+)\s*:\s*(?:Set(?:Height|Width|Size|Point|AllPoints)|ClearAllPoints"
