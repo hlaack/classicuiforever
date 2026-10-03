@@ -25,27 +25,6 @@ local function RepIndexOf(factionID)
     end
 end
 
-local function RepCheck(parent, label, r, g, b)
-    local check = ns.NewFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
-    check:SetSize(24, 24)
-    ns.SkinCheckbox(check)
-    local text = check.Text or check.text
-    if not text then
-        text = check:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-        text:SetPoint("LEFT", check, "RIGHT", 0, 1)
-    end
-    text:SetFontObject("GameFontNormalSmall")
-    text:SetText(label)
-    text:SetTextColor(r, g, b)
-    check.label = text
-    check:SetHitRectInsets(0, -math.min(120, (text:GetStringWidth() or 60)), 0, 0)
-    return check
-end
-
-local function CheckSound(check)
-    PlaySound(check:GetChecked() and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-end
-
 local function RefreshRepDetail()
     if not repDetail or not repDetail:IsShown() then return end
     local index, data = RepIndexOf(repFactionID)
@@ -184,24 +163,24 @@ local function BuildRepDetail()
     if repDetail then return repDetail end
     local box, content = T.NewDetailBox("ClassicUIForeverReputationDetail", CharacterFrame)
 
-    box.war = RepCheck(content, AT_WAR or "At War", 1, 0.1, 0.1)
+    box.war = ns.SmallCheck(content, AT_WAR or "At War", 1, 0.1, 0.1)
     box.war:SetPoint("TOPLEFT", box, "TOPLEFT", 14, -143)
     box.war:SetScript("OnClick", function(self)
-        CheckSound(self)
+        ns.CheckSound(self)
         if box.index and C_Reputation.ToggleFactionAtWar then C_Reputation.ToggleFactionAtWar(box.index) end
         C_Timer.After(1, RefreshRepDetail)
     end)
-    box.inactive = RepCheck(content, MOVE_TO_INACTIVE or "Move to Inactive", 1, 0.82, 0)
+    box.inactive = ns.SmallCheck(content, MOVE_TO_INACTIVE or "Move to Inactive", 1, 0.82, 0)
     box.inactive:SetPoint("LEFT", box.war, "RIGHT", 52, 0)
     box.inactive:SetScript("OnClick", function(self)
-        CheckSound(self)
+        ns.CheckSound(self)
         if box.index and C_Reputation.SetFactionActive then C_Reputation.SetFactionActive(box.index, not self:GetChecked()) end
         C_Timer.After(1, RefreshRepDetail)
     end)
-    box.watch = RepCheck(content, SHOW_FACTION_ON_MAINSCREEN or "Show as Experience Bar", 1, 0.82, 0)
+    box.watch = ns.SmallCheck(content, SHOW_FACTION_ON_MAINSCREEN or "Show as Experience Bar", 1, 0.82, 0)
     box.watch:SetPoint("TOPLEFT", box.war, "BOTTOMLEFT", 0, 0)
     box.watch:SetScript("OnClick", function(self)
-        CheckSound(self)
+        ns.CheckSound(self)
         if C_Reputation.SetWatchedFactionByIndex then C_Reputation.SetWatchedFactionByIndex(self:GetChecked() and box.index or 0) end
         -- The bars cross-fade; a click mid-fade stacked a second change, so rest greyed until settled.
         box.watchHeldAt = GetTime()

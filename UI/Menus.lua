@@ -263,9 +263,9 @@ end
 
 ------------------------------------------------------------ drop lists with submenus
 
--- Blizzard_Menu Vanilla's rows on the iron list. Entries: { text, check = isOn, toggle = fn } (its gold tick only when
--- on), { text, radio = isOn, pick = fn }, { text, click = fn }, { divider = true }, { text, sub = entries or a function
--- giving them }. A pick keeps the menu open and redraws the marks; a submenu opens beside its row on hover.
+-- Blizzard_Menu Vanilla's rows on the iron list. Entries, or a function giving them per open: { text, check = isOn, toggle = fn }
+-- (gold tick when on), { text, radio = isOn, pick = fn }, { text, click = fn }, { divider = true }, { text, sub = entries or
+-- a function }. A pick keeps the menu open and redraws the marks; a submenu opens beside its row on hover.
 local CHECK_MARK, CHECK_SIZE = { 211, 1, 243, 33 }, 20      -- common-dropdown-icon-checkmark-yellow-classic-2
 local EXPAND_ARROW, EXPAND_SIZE, EXPAND_GAP = "Interface\\ChatFrame\\ChatFrameExpandArrow", 16, 4
 local SUB_GAP = 4
@@ -408,7 +408,7 @@ end
 
 function ns.TreeMenu(entries)
     local root = NewLevel()
-    root.entries = entries
+    root.entries = type(entries) == "table" and entries or {}
     ns.RegisterEvents(root, MOUSE_DOWN)
     root:SetScript("OnEvent", function(self)
         if not self:IsShown() then return end
@@ -426,6 +426,7 @@ function ns.TreeMenu(entries)
     function root:Toggle(owner)
         if self:IsShown() then self:Hide() return end
         self.owner = owner
+        if type(entries) == "function" then self.entries = entries() end
         Layout(self)
         ns.SetPointOnce(self, "TOPLEFT", owner, "BOTTOMLEFT", DROP_LIST_X, DROP_LIST_Y)
         self:Show()

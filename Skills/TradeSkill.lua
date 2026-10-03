@@ -278,6 +278,17 @@ UpdateDetail = function()
     detail.made:SetText(made and made > 1 and made or "")
     detail.name:SetText(name)
 
+    -- Track Recipe, as on the client's page: the tracker lists its reagents. Not on a linked or guild list.
+    local track = detail.track
+    if track then
+        local tracked = api.IsRecipeTracked(info.recipeID, false) and true or false
+        track:SetChecked(tracked)
+        local foreign = (api.IsTradeSkillLinked and api.IsTradeSkillLinked())
+            or (api.IsTradeSkillGuild and api.IsTradeSkillGuild())
+        track:SetEnabled(not foreign)
+        if foreign then track.label:SetTextColor(0.5, 0.5, 0.5) else track.label:SetTextColor(1, 0.82, 0) end
+    end
+
     -- What it needs beside the reagents: tools, a forge, an anvil.
     local needs = {}
     local requirements = api.GetRecipeRequirements and api.GetRecipeRequirements(info.recipeID)
@@ -421,6 +432,7 @@ local function Refresh()
     end
     local title = ProfessionsFrame and ProfessionsFrame.TitleContainer and ProfessionsFrame.TitleContainer.TitleText
     if title and prof and prof.professionName and (title:GetText() or "") == "" then title:SetText(prof.professionName) end
+    ns.PlaceTradeSkillLink(panel.link, title)
     if prof then
         local rank, maxRank = prof.skillLevel or 0, prof.maxSkillLevel or 0
         panel.rank:SetMinMaxValues(0, math.max(1, maxRank))
@@ -506,7 +518,7 @@ local PREV, NEXT = ns.ART.PAGE_PREV, ns.ART.PAGE_NEXT
 local PAGE_ARROW = { set = "file", highlightSet = "raw", add = true }
 local TRADE_EVENTS = { "TRADE_SKILL_SHOW", "TRADE_SKILL_LIST_UPDATE", "TRADE_SKILL_DATA_SOURCE_CHANGED",
     "TRADE_SKILL_DETAILS_UPDATE", "BAG_UPDATE_DELAYED", "GET_ITEM_INFO_RECEIVED", "SKILL_LINES_CHANGED",
-    "UPDATE_TRADESKILL_CAST_STOPPED", "TRADE_SKILL_ITEM_CRAFTED_RESULT" }
+    "UPDATE_TRADESKILL_CAST_STOPPED", "TRADE_SKILL_ITEM_CRAFTED_RESULT", "TRACKED_RECIPE_UPDATE" }
 
 -- One pass per event burst, next frame; item data alone only touches the detail plates.
 local detailOnly = true
@@ -553,19 +565,14 @@ local function Build()
     end)
     filter:SetScript("OnClick", function(self)
         if not panel.filterList then
-            local api = C_TradeSkillUI
-            panel.filterList = ns.DropList({
-                { CRAFT_IS_MAKEABLE or "Have Materials", function()
-                    api.SetOnlyShowMakeableRecipes(not api.GetOnlyShowMakeableRecipes())
-                end, function() return api.GetOnlyShowMakeableRecipes() end },
-                { TRADESKILL_FILTER_HAS_SKILL_UP or "Has Skill Up", function()
-                    api.SetOnlyShowSkillUpRecipes(not api.GetOnlyShowSkillUpRecipes())
-                end, function() return api.GetOnlyShowSkillUpRecipes() end },
-            })
+            panel.filterList = ns.TreeMenu(ns.TradeSkillFilterEntries)
             panel.filterList:Follow(panel)
         end
         panel.filterList:Toggle(self)
     end)
+
+    -- Beside the title, placed each Refresh (Skills/TradeSkillExtras.lua).
+    panel.link = ns.TradeSkillLink(panel)
 
     -- Search box between the All tab and the filter (the old window had none), in
     -- the count's thin border.
@@ -615,6 +622,17 @@ local function Build()
         if link and HandleModifiedItemClick then HandleModifiedItemClick(link) end
     end)
     detail.name:SetPoint("RIGHT", detail, "RIGHT", -14, 0)
+    -- Top right of the detail, its label ending at the inset's edge; the name stops short of it.
+    if C_TradeSkillUI.SetRecipeTracked and C_TradeSkillUI.IsRecipeTracked then
+        local track = ns.SmallCheck(detail, PROFESSIONS_TRACK_RECIPE or TRACK_RECIPE or "Track Recipe", 1, 0.82, 0)
+        track:SetPoint("TOPRIGHT", detail, "TOPRIGHT", -14 - math.ceil(track.label:GetStringWidth() or 60), -16)
+        track:SetScript("OnClick", function(self)
+            ns.CheckSound(self)
+            if selected then C_TradeSkillUI.SetRecipeTracked(selected, self:GetChecked() and true or false, false) end
+        end)
+        detail.track = track
+        detail.name:SetPoint("RIGHT", track, "LEFT", -4, 0)
+    end
     detail.cooldown = detail:CreateFontString(nil, "ARTWORK", "GameFontRedSmall")
     detail.cooldown:SetPoint("TOPLEFT", detail.requires, "BOTTOMLEFT", 0, -2)
     detail.reagentLabel = detail:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")

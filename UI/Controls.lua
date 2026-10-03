@@ -75,6 +75,28 @@ function ns.SkinCheckbox(check)
     DressStates(check, CHECK .. "Up", CHECK .. "Down", nil, CHECK .. "Highlight", BOX)
 end
 
+-- Our own small old checkbox with a coloured label at its right; the label is clickable too.
+function ns.SmallCheck(parent, label, r, g, b)
+    local check = ns.NewFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
+    check:SetSize(24, 24)
+    ns.SkinCheckbox(check)
+    local text = check.Text or check.text
+    if not text then
+        text = check:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+        text:SetPoint("LEFT", check, "RIGHT", 0, 1)
+    end
+    text:SetFontObject("GameFontNormalSmall")
+    text:SetText(label)
+    text:SetTextColor(r, g, b)
+    check.label = text
+    check:SetHitRectInsets(0, -math.min(120, (text:GetStringWidth() or 60)), 0, 0)
+    return check
+end
+
+function ns.CheckSound(check)
+    PlaySound(check:GetChecked() and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+end
+
 -- A page-arrow toggle on a window; the global name is kept.
 function ns.PanelToggle(parent, name, size, point, rel, relPoint, x, y, level, onClick, tip)
     local button = ns.NewFrame("Button", name, parent)
