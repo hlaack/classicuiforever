@@ -7,9 +7,10 @@ local L = ns.L
 -- PAD clears the dialog border.
 local COLS, CELL, PAD = 5, 34, 16
 local BAG_ICON = "Interface\\Icons\\INV_Misc_Bag_08"
--- Named map buttons that are no addon's (ours join by name below).
-local NOT_ADDONS = { ExpansionLandingPageMinimapButton = true, GarrisonLandingPageMinimapButton = true,
-    ForeverClassicUIMinimapButton = true, ForeverClassicUIMinimapCollector = true }
+-- Named map buttons that are no addon's. Ours stay on the ring (the micro icons, this button); only the options button
+-- joins, by name below.
+local NOT_ADDONS = { ExpansionLandingPageMinimapButton = true, GarrisonLandingPageMinimapButton = true }
+local OUR_PREFIX = "^ForeverClassicUI"
 local OURS = "ForeverClassicUIMinimapButton"
 -- Over the pop-out's backing, which is a frame at the pop-out's own level.
 local ABOVE_BACKING = 5
@@ -66,7 +67,8 @@ end
 
 local function TakeNamed(child)
     local name = child.GetName and child:GetName()
-    if not name or NOT_ADDONS[name] or name:find("^[Mm]ini[Mm]ap") or not name:lower():find("minimap", 1, true) then return end
+    if not name or NOT_ADDONS[name] or name:find(OUR_PREFIX) or name:find("^[Mm]ini[Mm]ap") then return end
+    if not name:lower():find("minimap", 1, true) then return end
     if child:IsObjectType("Button") and child:IsShown() then Take(child) end
 end
 

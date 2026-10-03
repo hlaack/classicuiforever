@@ -16,22 +16,39 @@ function Frame:GetEffectiveScale() return 1 end
 function Frame:GetWidth() return 140 end
 function Frame:GetFrameLevel() return 2 end
 function Frame:CreateTexture() return setmetatable({}, Frame) end
+function Frame:CreateFontString() return setmetatable({}, Frame) end
+function Frame:IsObjectType() return true end
+function Frame:IsShown() return true end
+function Frame:GetName() return self.name end
+function Frame:SetParent(parent) self.parent = parent end
+function Frame:GetNumPoints() return 0 end
 function CreateFrame(_, _, parent) return setmetatable({ parent = parent }, Frame) end
 Minimap = setmetatable({}, Frame)
 function IsShiftKeyDown() return false end
 function InCombatLockdown() return false end
+function GetTime() return 0 end
 
 local noop = function() end
 local showOptions
-local bag
+local bag, bagApply
+-- The minimap's named children as the addon bag's sweep meets them: one of another addon, one micro icon of ours.
+local theirs = setmetatable({ name = "SomeAddonMinimapButton", parent = Minimap, fadeOut = false }, Frame)
+local ourIcon = setmetatable({ name = "ForeverClassicUIMinimapLegacyButton", parent = Minimap, fadeOut = false }, Frame)
 local ns = {
+    EachChild = function(_, fn) fn(theirs) fn(ourIcon) end,
+    DialogBacking = noop, CloseOnEscape = noop, RegisterEvents = noop, SetStrataIf = noop, SetLevelIf = noop, SetScaleIf = noop,
+    SetAlphaIf = noop, ThemeAddonRing = noop, SetPointOnce = noop,
     L = setmetatable({}, { __index = function(_, key) return key end }),
     db = {},
-    Sched = { OnFrame = function() return { Wake = noop, Sleep = noop } end },
+    Sched = { OnFrame = function() return { Wake = noop, Sleep = noop } end, Attach = noop,
+        Job = function() return { Wake = noop, Sleep = noop } end },
     RingPoint = function(frame, degrees) frame.angle = degrees end,
     DressNew = noop, RoundIcon = noop, MinimapButtonBorder = noop, DressStates = noop, AttachTip = noop, MinimapShow = noop,
     HookMethod = noop, OnToggle = noop, Dress = noop, PlaceSavedWindows = noop,
-    RegisterModule = function(key, spec) if key == "minimapButton" then showOptions = spec.apply end end,
+    RegisterModule = function(key, spec)
+        if key == "minimapButton" then showOptions = spec.apply end
+        if key == "minimapCollector" then bagApply = spec.apply end
+    end,
 }
 assert(loadfile(ROOT .. "/Map/MinimapButton.lua"))("ClassicUIForever", ns)
 -- The addon bag's own ring button, as its file registers it.
@@ -114,6 +131,11 @@ for _, a in ipairs(shown) do
     local deg = a.button.angle
     Check(not ((deg >= 60 and deg <= 120) or (deg >= 246 and deg <= 294)), a.name .. " is off the zone bar and the clock")
 end
+
+-- The bag takes other addons' buttons off the map, never our own micro icons.
+bagApply()
+Check(theirs.parent ~= Minimap, "another addon's minimap button goes in the bag")
+Check(ourIcon.parent == Minimap, "our micro icon stays on the ring")
 
 -- A place the player dragged it to is kept, clear or not.
 ns.db.draggedAngle = 190
