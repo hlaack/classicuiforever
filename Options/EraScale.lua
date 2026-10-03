@@ -21,6 +21,14 @@ local function SizeOff()
     return target ~= nil and type(now) == "number" and math.abs(now - target) > 0.005
 end
 
+-- Reset toggles: every box at its default and, as the classic layout pairs them, the 36 px bar at Era's interface size.
+function ns.ResetToggles()
+    for _, entry in ipairs(ns.TOGGLES) do
+        ns.db[entry[1]] = ns.DB_DEFAULTS[entry[1]]
+    end
+    if EraScale() ~= nil and not SizeOff() then ns.db.classicBarSize = true end
+end
+
 local function QueueEraScale()
     ns.QueueLayoutJob("eraScale", true)
 end

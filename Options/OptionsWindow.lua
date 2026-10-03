@@ -637,9 +637,7 @@ local function Build(canvas)
     local defaults = ns.PanelButton(frame, L["OPTWIN_RESET_TOGGLES"], 100)
     defaults:SetPoint("TOPLEFT", search, "BOTTOM", 3, -6)
     defaults:SetScript("OnClick", function()
-        for _, entry in ipairs(ns.TOGGLES) do
-            ns.db[entry[1]] = ns.DB_DEFAULTS[entry[1]]
-        end
+        ns.ResetToggles()
         -- The number rows too, through their setters so they apply live.
         if ns.SetKeyTextSize then ns.SetKeyTextSize(ns.DB_DEFAULTS.keyTextSize) end
         if ns.SetOneBagColumns then ns.SetOneBagColumns(ns.DB_DEFAULTS.oneBagColumns) end
