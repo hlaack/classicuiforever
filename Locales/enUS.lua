@@ -691,7 +691,7 @@ L["OPTWIN_THIS_CHARACTER"] = "This character"
 -- Quest/QuestLogShare.lua
 L["QUEST_YOU_ARE_NOT_IN_A"] = "You are not in a party."
 L["QUEST_CLOSE_THE_WORLD_MAP_THEN"] = "Close the world map, then share again."
-L["QUEST_OPEN_THE_WORLD_MAP_THEN"] = "Open the world map, then share again."
+L["QUEST_SHARE_FROM_THE_MAP"] = "This quest could not be shared from here. Share it from the world map."
 
 -- Skills/Talents.lua
 L["SKILL_REQUIRES_N_POINT_IN_X"] = "Requires %d point in %s"
