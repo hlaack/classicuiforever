@@ -19,7 +19,7 @@ local FRAMES = { target = "TargetFrame", focus = "FocusFrame" }
 local UNIT_EVENTS = { "UNIT_THREAT_LIST_UPDATE", "UNIT_THREAT_SITUATION_UPDATE" }
 local EVENTS = { "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "PLAYER_REGEN_ENABLED", "GROUP_ROSTER_UPDATE",
     "PLAYER_ENTERING_WORLD" }
-local boxes, live, shown = {}, {}, {}
+local boxes, live, shown, faded = {}, {}, {}, {}
 local driver, focusDriver
 
 -- Over a thick bar the name steps up while the box shows, its foot 1 over the box's top (UnitFrameCore.lua).
@@ -90,7 +90,11 @@ function ns.ThreatNumberSync()
         live[unit] = on
         any = any or on
         local game = frame and GameNumber(frame)
-        if game then ns.SetAlphaIf(game, on and 0 or 1) end
+        -- The game's number back only where ours stood in for it.
+        if game and (on or faded[unit]) then
+            faded[unit] = on or nil
+            ns.SetAlphaIf(game, on and 0 or 1)
+        end
     end
     if any and not driver then
         driver = ns.EventFrame(EVENTS, Update)

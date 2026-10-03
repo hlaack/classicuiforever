@@ -146,6 +146,7 @@ local function Apply()
 end
 
 local function Restore()
+    if not active then return end
     active = false
     if frame then frame:Hide() end
     ns.Unfade(ComboPointPlayerFrame)

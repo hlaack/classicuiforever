@@ -344,7 +344,7 @@ local function SkinPlayer()
 end
 
 local function RestorePlayer()
-    if not PlayerFrame then return end
+    if not PlayerFrame or not UF.frames.player then return end
     UF.frames.player = nil
     HideOwnPvp(PlayerFrame)
     if classBand then classBand:SetAlpha(1) end

@@ -9,6 +9,7 @@ local UF = {
     -- Set when combat refused a pass; PLAYER_REGEN_ENABLED re-applies.
     combatPending = false,
     frames = {},    -- key -> { unit, frame, health, power[, bg] }
+    taken = {},     -- party, raidManager -> true while our skin holds the game's parts (handed back once)
     keepers = {},   -- name -> fn(beat)
     FRAME_W = 232, FRAME_H = 100,
     BAR_W = 119, BAR_H = 12,

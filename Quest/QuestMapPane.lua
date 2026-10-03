@@ -403,6 +403,7 @@ local function Apply()
 end
 
 local function Restore()
+    if not active then return end
     active = false
     if floorTex then floorTex:Hide() end
     if parchmentTex then parchmentTex:Hide() end

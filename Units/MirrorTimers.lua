@@ -81,6 +81,7 @@ local function Apply()
 end
 
 local function Restore()
+    if not active then return end
     active = false
     local container = MirrorTimerContainer
     if not container or not container.GetChildren then return end
