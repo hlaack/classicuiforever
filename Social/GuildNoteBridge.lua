@@ -120,7 +120,8 @@ end
 
 local function PlaceGhost(frame)
     local _, _, _, x = frame:GetPoint(1)
-    if frame:GetNumPoints() ~= 1 or x ~= GHOST_X then
+    -- Near, not equal: a scaled window hands its offset back a hair off, and it was anchored again every frame.
+    if frame:GetNumPoints() ~= 1 or not ns.Near(x, GHOST_X, 1) then
         ns.SetPointOnce(frame, "TOPLEFT", UIParent, "TOPRIGHT", GHOST_X, 0)
     end
 end
