@@ -3,8 +3,16 @@
 
 # Developer-only tooling and notes. Never shipped or pushed.
 dev/
-.claude/
 debug.log
+
+# Claude Code files (settings, memory, notes, MCP config). Never committed.
+.claude/
+.claude*
+CLAUDE.md
+CLAUDE.local.md
+**/CLAUDE.md
+**/CLAUDE.local.md
+.mcp.json
 
 # OS files
 Thumbs.db
