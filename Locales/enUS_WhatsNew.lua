@@ -2,6 +2,18 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN19_1_TITLE"] = "Minimap icons"
+L["WN19_1_TEXT"] = "Any micro button can now sit on the minimap as an icon: check it under Micro buttons on the minimap in the options (/fcui). Legacy and the group finder are on by default, so Legacy has a way in again. Hold Shift and drag to move our minimap buttons around the ring."
+L["WN19_2_TITLE"] = "Quest watch"
+L["WN19_2_TEXT"] = "The objective tracker can be Classic Era's plain quest watch. Off by default; to turn it on, set Objective tracker to Classic Era watch in the options (/fcui), under Quests. Click a title to open the quest, shift-click to untrack it, right-click for more."
+L["WN19_3_TITLE"] = "Options window"
+L["WN19_3_TEXT"] = "The options window is larger, and its long lists are now drop-downs, so there is less to scroll."
+L["WN19_4_TITLE"] = "Threat percent"
+L["WN19_4_TEXT"] = "The threat percent can show only in a group or dungeon: turn on Only in a group or dungeon in the options (/fcui), under Unit frames. Off by default."
+L["WN19_5_TITLE"] = "Classic Era touches"
+L["WN19_5_TEXT"] = "The game menu button's tooltip has Classic Era's descriptions, drop-down menus use Classic Era's iron frame, and micro buttons no longer turn gray while the game menu is open."
+L["WN19_6_TITLE"] = "Fixes"
+L["WN19_6_TEXT"] = "Reset toggles keeps the classic-sized bars, custom themes color the options tabs fully, the classic bar's art stays shown on the ClassicUI Forever layout, the options button no longer overlaps the tracking magnifier, and with Minimap unchecked, minimap icons hidden by another addon stay hidden."
 L["WN18_1_TITLE"] = "Professions"
 L["WN18_1_TEXT"] = "The trade skill window can now track a recipe (its reagents show in the objective tracker), filter by gear slot, and link your profession in chat with the chain link beside its title. The professions key opens the professions book again."
 L["WN18_2_TITLE"] = "Elite dragons"

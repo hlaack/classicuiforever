@@ -3,6 +3,18 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN19_1_TITLE"] = "Icone della minimappa"
+L["WN19_1_TEXT"] = "Qualsiasi pulsante del micromenu può ora stare sulla minimappa come icona: selezionalo in Pulsanti del micromenu sulla minimappa, nelle opzioni (/fcui). Eredità e la ricerca gruppi sono attivi di base, così Eredità ha di nuovo un accesso. Tieni premuto Maiusc e trascina per spostare i nostri pulsanti della minimappa intorno all'anello."
+L["WN19_2_TITLE"] = "Tracciamento missioni"
+L["WN19_2_TEXT"] = "Il tracciamento degli obiettivi può essere il semplice tracciamento missioni di Classic Era. Disattivato di base; per attivarlo, imposta Tracciamento degli obiettivi su quello di Classic Era nelle opzioni (/fcui), in Missioni. Clic su un titolo per aprire la missione, Maiusc-clic per non seguirla più, clic destro per altro."
+L["WN19_3_TITLE"] = "Finestra delle opzioni"
+L["WN19_3_TEXT"] = "La finestra delle opzioni è più grande e i suoi lunghi elenchi sono ora menu a tendina, così c'è meno da scorrere."
+L["WN19_4_TITLE"] = "Percentuale di minaccia"
+L["WN19_4_TEXT"] = "La percentuale di minaccia può comparire solo in gruppo o spedizione: attiva Solo in gruppo o spedizione nelle opzioni (/fcui), in Riquadri delle unità. Disattivato di base."
+L["WN19_5_TITLE"] = "Dettagli di Classic Era"
+L["WN19_5_TEXT"] = "Il suggerimento del pulsante del menu di gioco ha le descrizioni di Classic Era, i menu a tendina usano la cornice di ferro di Classic Era e i pulsanti del micromenu non diventano più grigi con il menu di gioco aperto."
+L["WN19_6_TITLE"] = "Correzioni"
+L["WN19_6_TEXT"] = "Ripristina opzioni mantiene le barre di dimensione classica, i temi personalizzati colorano per intero le schede delle opzioni, la grafica della barra classica resta visibile nella disposizione ClassicUI Forever, il pulsante delle opzioni non copre più la lente del tracciamento e, con Minimappa deselezionata, le icone della minimappa nascoste da un altro addon restano nascoste."
 L["WN18_1_TITLE"] = "Professioni"
 L["WN18_1_TEXT"] = "La finestra della professione ora può seguire una ricetta (i suoi reagenti compaiono nel tracciamento degli obiettivi), filtrare per slot dell'equipaggiamento e collegare la tua professione in chat con l'anello di catena accanto al titolo. Il tasto delle professioni apre di nuovo il libro delle professioni."
 L["WN18_2_TITLE"] = "Draghi élite"

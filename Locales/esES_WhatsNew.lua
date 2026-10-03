@@ -3,6 +3,18 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
+L["WN19_1_TITLE"] = "Iconos del minimapa"
+L["WN19_1_TEXT"] = "Cualquier botón del micromenú puede ir ahora en el minimapa como icono: márcalo en Botones del micromenú en el minimapa, en las opciones (/fcui). Legado y el buscador de grupos están activados por defecto, así Legado vuelve a tener acceso. Mantén Mayús y arrastra para mover nuestros botones del minimapa por el anillo."
+L["WN19_2_TITLE"] = "Seguimiento de misiones"
+L["WN19_2_TEXT"] = "El seguimiento de objetivos puede ser el seguimiento de misiones sencillo de Classic Era. Desactivado por defecto; para activarlo, pon Seguimiento de objetivos en el de Classic Era en las opciones (/fcui), en Misiones. Clic en un título para abrir la misión, Mayús-clic para dejar de seguirla, clic derecho para más."
+L["WN19_3_TITLE"] = "Ventana de opciones"
+L["WN19_3_TEXT"] = "La ventana de opciones es más grande y sus listas largas son ahora desplegables, así hay menos que desplazar."
+L["WN19_4_TITLE"] = "Porcentaje de amenaza"
+L["WN19_4_TEXT"] = "El porcentaje de amenaza puede mostrarse solo en grupo o mazmorra: activa Solo en grupo o mazmorra en las opciones (/fcui), en Marcos de unidad. Desactivado por defecto."
+L["WN19_5_TITLE"] = "Detalles de Classic Era"
+L["WN19_5_TEXT"] = "La descripción emergente del botón del menú del juego tiene las descripciones de Classic Era, los menús desplegables usan el marco de hierro de Classic Era y los botones del micromenú ya no se vuelven grises con el menú del juego abierto."
+L["WN19_6_TITLE"] = "Correcciones"
+L["WN19_6_TEXT"] = "Restablecer opciones mantiene las barras de tamaño clásico, los temas personalizados colorean por completo las pestañas de las opciones, el arte de la barra clásica sigue visible en el diseño ClassicUI Forever, el botón de opciones ya no tapa la lupa de rastreo y, con Minimapa desmarcado, los iconos del minimapa ocultados por otro addon siguen ocultos."
 L["WN18_1_TITLE"] = "Profesiones"
 L["WN18_1_TEXT"] = "La ventana de profesión ahora puede seguir una receta (sus componentes aparecen en el rastreador de objetivos), filtrar por ranura de equipo y enlazar tu profesión en el chat con el eslabón junto a su título. La tecla de profesiones vuelve a abrir el libro de profesiones."
 L["WN18_2_TITLE"] = "Dragones de élite"

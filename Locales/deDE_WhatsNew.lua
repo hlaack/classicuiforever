@@ -3,6 +3,18 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN19_1_TITLE"] = "Minikartensymbole"
+L["WN19_1_TEXT"] = "Jede Mikrotaste kann jetzt als Symbol an der Minikarte sitzen: Hake sie in den Optionen (/fcui) unter Mikrotasten an der Minikarte an. Vermächtnis und die Gruppensuche sind standardmäßig an, so ist Vermächtnis wieder erreichbar. Mit gedrückter Umschalttaste ziehst du unsere Minikartentasten um den Ring."
+L["WN19_2_TITLE"] = "Questverfolgung"
+L["WN19_2_TEXT"] = "Die Zielverfolgung kann die schlichte Questverfolgung aus Classic Era sein. Standardmäßig aus; zum Einschalten stelle in den Optionen (/fcui) unter Quests die Zielverfolgung auf Verfolgung aus Classic Era. Klick auf einen Titel öffnet die Quest, Umschalt-Klick beendet die Verfolgung, Rechtsklick zeigt mehr."
+L["WN19_3_TITLE"] = "Optionsfenster"
+L["WN19_3_TEXT"] = "Das Optionsfenster ist größer, und seine langen Listen sind jetzt Dropdowns, so gibt es weniger zu scrollen."
+L["WN19_4_TITLE"] = "Bedrohung in Prozent"
+L["WN19_4_TEXT"] = "Die Bedrohung in Prozent kann nur in Gruppe oder Dungeon erscheinen: Schalte in den Optionen (/fcui) unter Einheitenfenster Nur in Gruppe oder Dungeon ein. Standardmäßig aus."
+L["WN19_5_TITLE"] = "Details aus Classic Era"
+L["WN19_5_TEXT"] = "Der Tooltip der Spielmenütaste hat die Beschreibungen aus Classic Era, Dropdown-Menüs haben den Eisenrahmen aus Classic Era, und Mikrotasten werden bei geöffnetem Spielmenü nicht mehr grau."
+L["WN19_6_TITLE"] = "Fehlerbehebungen"
+L["WN19_6_TEXT"] = "Optionen zurücksetzen behält die klassisch großen Leisten, eigene Designs färben die Reiter der Optionen ganz, die Grafik der klassischen Leiste bleibt im Layout ClassicUI Forever sichtbar, die Optionstaste überdeckt die Verfolgungslupe nicht mehr, und ist Minikarte abgewählt, bleiben von einem anderen Addon ausgeblendete Minikartensymbole ausgeblendet."
 L["WN18_1_TITLE"] = "Berufe"
 L["WN18_1_TEXT"] = "Im Berufsfenster kannst du jetzt ein Rezept verfolgen (seine Reagenzien stehen in der Zielverfolgung), nach Ausrüstungsplatz filtern und deinen Beruf mit dem Kettenglied neben dem Titel im Chat verlinken. Die Berufetaste öffnet wieder das Berufsbuch."
 L["WN18_2_TITLE"] = "Elitedrachen"

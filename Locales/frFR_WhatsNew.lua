@@ -3,6 +3,18 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
+L["WN19_1_TITLE"] = "Icônes de la minicarte"
+L["WN19_1_TEXT"] = "N'importe quel bouton du micro-menu peut maintenant aller sur la minicarte en icône : cochez-le sous Boutons du micro-menu sur la minicarte dans les options (/fcui). Héritage et la recherche de groupe sont activés par défaut, Héritage est donc de nouveau accessible. Maintenez Maj et faites glisser pour déplacer nos boutons de minicarte autour de l'anneau."
+L["WN19_2_TITLE"] = "Suivi de quêtes"
+L["WN19_2_TEXT"] = "Le suivi des objectifs peut être le suivi de quêtes simple de Classic Era. Désactivé par défaut ; pour l'activer, réglez Suivi des objectifs sur celui de Classic Era dans les options (/fcui), sous Quêtes. Clic sur un titre pour ouvrir la quête, Maj-clic pour ne plus la suivre, clic droit pour plus."
+L["WN19_3_TITLE"] = "Fenêtre des options"
+L["WN19_3_TEXT"] = "La fenêtre des options est plus grande et ses longues listes sont maintenant des menus déroulants, il y a donc moins à faire défiler."
+L["WN19_4_TITLE"] = "Pourcentage de menace"
+L["WN19_4_TEXT"] = "Le pourcentage de menace peut ne s'afficher qu'en groupe ou en donjon : activez Seulement en groupe ou en donjon dans les options (/fcui), sous Cadres d'unité. Désactivé par défaut."
+L["WN19_5_TITLE"] = "Touches de Classic Era"
+L["WN19_5_TEXT"] = "L'infobulle du bouton du menu du jeu a les descriptions de Classic Era, les menus déroulants utilisent le cadre de fer de Classic Era, et les boutons du micro-menu ne deviennent plus gris quand le menu du jeu est ouvert."
+L["WN19_6_TITLE"] = "Corrections"
+L["WN19_6_TEXT"] = "Réinitialiser les options garde les barres de taille classique, les thèmes personnalisés colorent entièrement les onglets des options, le décor de la barre classique reste affiché dans la disposition ClassicUI Forever, le bouton des options ne recouvre plus la loupe de suivi, et avec Minicarte décochée, les icônes de la minicarte masquées par un autre addon restent masquées."
 L["WN18_1_TITLE"] = "Métiers"
 L["WN18_1_TEXT"] = "La fenêtre de métier peut maintenant suivre une recette (ses composants s'affichent dans le suivi des objectifs), filtrer par emplacement d'équipement et lier votre métier dans la discussion avec le maillon à côté de son titre. La touche des métiers ouvre de nouveau le livre des métiers."
 L["WN18_2_TITLE"] = "Dragons d'élite"
