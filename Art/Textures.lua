@@ -85,6 +85,21 @@ function ns.SetTex(texture, key, ...)
     return ok ~= false
 end
 
+-- A texture showing more of a themed piece's file (a tab's body and rim under its face): in the theme's repaints as the
+-- piece is, or in the piece's own color. After its coords are set (the color copy takes its shape).
+function ns.ThemeAs(texture, piece)
+    local key, share, swap = B.artKey[piece], B.tinted[piece], B.swapped[piece]
+    B.swapped[texture] = swap
+    if share then
+        ns.BronzeTint(texture, share ~= true and share or nil)
+    else
+        if B.tinted[texture] then ns.UntintBronze(texture) end
+        texture:SetVertexColor(piece:GetVertexColor())
+        texture:SetDesaturated(piece:IsDesaturated())
+    end
+    ns.PaintCopy(texture, key and swap ~= nil and ns.BronzeOn() and (ns.TexPath(key)) or nil)
+end
+
 -- By file; swaps to its bronze copy with the theme.
 function ns.SetFile(texture, path, ...)
     if not texture or not path then return end
