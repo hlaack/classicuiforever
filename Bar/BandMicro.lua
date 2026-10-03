@@ -187,6 +187,7 @@ local function SeatHidden(button)
         seatHidden[button] = nil
     end
 end
+function ns.MicroSeatHidden(button) return seatHidden[button] == true end
 
 -- 1.x's gold line under each button's name, from the client's own strings.
 local MICRO_TIPS = {
