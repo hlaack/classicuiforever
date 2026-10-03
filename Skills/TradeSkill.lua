@@ -564,15 +564,7 @@ local function Build()
     end)
     filter:SetScript("OnClick", function(self)
         if not panel.filterList then
-            local api = C_TradeSkillUI
-            panel.filterList = ns.DropList({
-                { CRAFT_IS_MAKEABLE or "Have Materials", function()
-                    api.SetOnlyShowMakeableRecipes(not api.GetOnlyShowMakeableRecipes())
-                end, function() return api.GetOnlyShowMakeableRecipes() end },
-                { TRADESKILL_FILTER_HAS_SKILL_UP or "Has Skill Up", function()
-                    api.SetOnlyShowSkillUpRecipes(not api.GetOnlyShowSkillUpRecipes())
-                end, function() return api.GetOnlyShowSkillUpRecipes() end },
-            })
+            panel.filterList = ns.TreeMenu(ns.TradeSkillFilterEntries)
             panel.filterList:Follow(panel)
         end
         panel.filterList:Toggle(self)

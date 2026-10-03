@@ -160,6 +160,7 @@ Skills\ProfessionsBook.lua
 Skills\ProfessionsBookFrame.lua
 Skills\ProfessionsFootTabs.lua
 Skills\ProfessionsWindow.lua
+Skills\TradeSkillExtras.lua
 Skills\TradeSkill.lua
 Skills\Trainer.lua
 Skills\Talents.lua
