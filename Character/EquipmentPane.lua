@@ -79,9 +79,10 @@ local function Manager()
     return PaperDollFrame and PaperDollFrame.EquipmentManagerPane
 end
 
--- Read by the sheet: how far past its art the open panel reaches.
+-- Read by the sheet: how far past its art the open panel reaches (this one, or the PvP tab's).
 function ns.EquipmentPaneExtent()
     if active and open and seen then return SIDE_PANEL_WIDTH end
+    if ns.PvPPaneSeen and ns.PvPPaneSeen() then return SIDE_PANEL_WIDTH end
     return 0
 end
 
@@ -274,28 +275,57 @@ end
 
 ----------------------------------------------------------------- the art
 
--- Columns a..384 of a 256+128 sheet pair, rows sy..sy+h, drawn 1:1 at doll x, y.
-local function SpanPart(key, base, width, a, sy, h, x, y)
+-- Columns a..384 of a 256+128 sheet pair, rows sy..sy+h, drawn 1:1 at doll x, y on a panel.
+local function SpanPart(on, key, base, width, a, sy, h, x, y)
     local from, stop = math.max(a, base), base + width
     if from < stop then
-        local tex = pane:CreateTexture(nil, "BACKGROUND")
+        local tex = on:CreateTexture(nil, "BACKGROUND")
         ns.SetTex(tex, key)
         tex:SetTexCoord((from - base) / width, 1, sy / 256, (sy + h) / 256)
         tex:SetSize(stop - from, h)
-        tex:SetPoint("TOPLEFT", pane, "TOPLEFT", x + from - a - LOW_CUT, -y)
+        tex:SetPoint("TOPLEFT", on, "TOPLEFT", x + from - a - LOW_CUT, -y)
     end
 end
 
-local function Span(leftKey, rightKey, a, sy, h, x, y)
-    SpanPart(leftKey, 0, 256, a, sy, h, x, y)
-    SpanPart(rightKey, 256, 128, a, sy, h, x, y)
+local function Span(on, leftKey, rightKey, a, sy, h, x, y)
+    SpanPart(on, leftKey, 0, 256, a, sy, h, x, y)
+    SpanPart(on, rightKey, 256, 128, a, sy, h, x, y)
 end
 
-local function BuildArt()
-    Span("charTabTopLeft", "charTabTopRight", TOP_CUT - SIDE_PANEL_WIDTH, 0, TOP_H, TOP_CUT, 0)
+local function BuildArt(on)
+    Span(on, "charTabTopLeft", "charTabTopRight", TOP_CUT - SIDE_PANEL_WIDTH, 0, TOP_H, TOP_CUT, 0)
     local from = LOW_CUT - SIDE_PANEL_WIDTH - LOW_SHIFT
-    Span("charGeneralTopLeft", "charGeneralTopRight", from, UPPER_SRC, UPPER_H, LOW_CUT, UPPER_AT)
-    Span("charGeneralBotLeft", "charGeneralBotRight", from, 0, LOWER_H, LOW_CUT, LOWER_AT)
+    Span(on, "charGeneralTopLeft", "charGeneralTopRight", from, UPPER_SRC, UPPER_H, LOW_CUT, UPPER_AT)
+    Span(on, "charGeneralBotLeft", "charGeneralBotRight", from, 0, LOWER_H, LOW_CUT, LOWER_AT)
+end
+
+-- A side panel of the same art and place on another tab of the sheet (the PvP tab's), hidden.
+function ns.SidePanel(name, tab)
+    local panel = ns.NewFrame("Frame", name, tab)
+    panel:SetSize(SIDE_PANEL_WIDTH + 3, PANE_H)
+    -- On the doll page's spot, which stands off the window: the sheet's title and close button are placed for it.
+    panel:SetPoint("TOPLEFT", PaperDollFrame, "TOPLEFT", LOW_CUT, 0)
+    panel:SetFrameLevel(tab:GetFrameLevel() + 1)
+    panel:EnableMouse(true)
+    panel:SetHitRectInsets(0, 1, 14, 2)
+    panel:Hide()
+    BuildArt(panel)
+    return panel, INNER_W, INNER_TOP, INNER_BOTTOM
+end
+
+-- A panel's arrow on its tab: IsOpen() and Flip() are the panel's own.
+function ns.SidePanelArrow(tab, name, level, IsOpen, Flip)
+    local tip = { text = function()
+        if IsOpen() then return _G.CHARACTER_FRAME_HIDE_DETAILS_TOOLTIP or "Hide Character Details" end
+        return _G.CHARACTER_FRAME_SHOW_DETAILS_TOOLTIP or "Show Character Details"
+    end }
+    return ns.PanelToggle(tab, name, ARROW_SIZE, "CENTER", PaperDollFrame, "TOPLEFT", ARROW_X, ARROW_Y, level, function(self)
+        Flip()
+        if GameTooltip:GetOwner() == self then ns.ShowTip(self) end
+    end, tip)
+end
+function ns.SidePanelArrowFace(arrow, isOpen)
+    ns.PanelToggleFace(arrow, isOpen, ARROW_FILES)
 end
 
 -------------------------------------------------------------------- tabs
@@ -391,17 +421,6 @@ local function SetOpen(state)
     ns.SignalSheetLaid()
 end
 
-local function ArrowText()
-    if open then return _G.CHARACTER_FRAME_HIDE_DETAILS_TOOLTIP or "Hide Character Details" end
-    return _G.CHARACTER_FRAME_SHOW_DETAILS_TOOLTIP or "Show Character Details"
-end
-local ARROW_TIP = { text = ArrowText }
-
-local function ToggleClick(self)
-    SetOpen(not open)
-    if GameTooltip:GetOwner() == self then ns.ShowTip(self) end
-end
-
 local function QuickClick()
     current = EQUIPMENT
     SetOpen(true)
@@ -453,7 +472,7 @@ local function Build()
     pane:EnableMouse(true)
     pane:SetHitRectInsets(0, 1, 14, 2)
     pane:Hide()
-    BuildArt()
+    BuildArt(pane)
 
     tabs = { Tab(STATS), Tab(EQUIPMENT) }
     tabs[STATS]:SetPoint("TOPRIGHT", pane, "TOPLEFT", LIST_MID - TAB_GAP / 2, TABS_Y)
@@ -474,8 +493,8 @@ local function Build()
     pane:SetScript("OnHide", function() Seen(false) end)
 
     local over = CharacterModelScene and CharacterModelScene:GetFrameLevel() or PaperDollFrame:GetFrameLevel()
-    toggle = ns.PanelToggle(PaperDollFrame, "ForeverClassicUIEquipmentToggle", ARROW_SIZE, "CENTER", PaperDollFrame,
-        "TOPLEFT", ARROW_X, ARROW_Y, over + 10, ToggleClick, ARROW_TIP)
+    toggle = ns.SidePanelArrow(PaperDollFrame, "ForeverClassicUIEquipmentToggle", over + 10,
+        function() return open end, function() SetOpen(not open) end)
     ns.PanelToggleFace(toggle, open, ARROW_FILES)
     BuildQuick(over + 10)
 end
