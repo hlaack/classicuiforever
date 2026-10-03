@@ -185,8 +185,29 @@ end
 
 ns.RegisterModule(KEY, { apply = Apply, restore = Restore })
 
--- Seen at once in a fight; the game's tracker follows when it ends.
+-- Any pick of the tracker's choice is seen at once in a fight; the game's tracker follows when it ends.
 ns.OnToggle(function(key)
-    if key ~= KEY or not home then return end
-    if ns.db.questWatch then Apply() else Restore() end
+    local group = ns.TOGGLE_RADIO[KEY]
+    if not group or ns.TOGGLE_RADIO[key] ~= group then return end
+    if ns.db.questWatch then Apply() elseif home then Restore() end
 end)
+
+-- The tracker's three boxes became one choice: an install from before keeps what it showed (the watch over hidden, hidden
+-- over the look), in the account and every profile. Runs before the defaults fill.
+function ns.OneTrackerChoice()
+    local db = ns.db
+    local function Keep(t)
+        if t.questWatch == true then
+            t.questTracker, t.hideObjectiveTracker = false, false
+        elseif t.hideObjectiveTracker == true then
+            t.questTracker = false
+        elseif t.questTracker == false then
+            t.gameObjectiveTracker = true
+        end
+    end
+    Keep(db)
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" then Keep(shot) end
+    end
+    db.dbVersion = 11
+end

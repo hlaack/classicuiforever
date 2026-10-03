@@ -2,7 +2,7 @@ local _, ns = ...
 local L = ns.L
 
 ns.DB_DEFAULTS = {
-    dbVersion = 10,
+    dbVersion = 11,
     classicBar = true,
     oneBar = false,
     classicBarSize = false,
@@ -149,6 +149,7 @@ ns.DB_DEFAULTS = {
     fullPlates = true,
     questTracker = true,
     hideObjectiveTracker = false,
+    gameObjectiveTracker = false,
     questWatch = false,
     questLog = true,
     questLogDual = false,

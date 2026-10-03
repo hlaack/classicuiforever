@@ -36,6 +36,7 @@ local PREFERRED_TIP = { text = L["OPTWIN_WHY_GITHUB"], r = 1, g = 1, b = 1, line
 -- Not part of the classic look, so Toggle none leaves them (the minimap button leads back here), nor the radio picks.
 local NOT_IN_NONE = { minimapButton = true, welcomeNote = true, questLevels = true }
 local function InNone(key) return not NOT_IN_NONE[key] and not ns.TOGGLE_RADIO[key] end
+local NONE_PICKS = { "gameObjectiveTracker" }
 
 local window
 
@@ -212,23 +213,44 @@ end
 
 local function ToggleOn(key) return ns.db[key] == true end
 
--- A drop radio group ("Label: item" rows) as one row.
-local function DropRow(parent, group)
+local function ChoiceTip(tip, choice)
+    GameTooltip_SetTitle(tip, choice.label)
+    GameTooltip_AddNormalLine(tip, choice.tip, true)
+end
+
+-- A drop group's rows, label and tooltip. A row's "Label: item" names the group and the item; the first entry's dropLabel
+-- and dropTip name and describe a group of plain labels. An item with words of its own shows them as its tooltip.
+local function DropGroup(field, group)
     local rows, words, first = {}, {}, nil
     for _, entry in ipairs(ns.TOGGLES) do
-        if entry.radio == group then
+        if entry[field] == group then
             first = first or entry
             local item = entry[2]:match(":%s*(.+)$") or entry[2]
-            rows[#rows + 1] = { key = entry[1], text = (item:gsub("^%l", string.upper)) }
+            rows[#rows + 1] = { key = entry[1], label = (item:gsub("^%l", string.upper)), tip = entry[3] }
             words[#words + 1] = item .. " " .. (entry.search or "")
         end
     end
-    local label = first and first[2]:match("^(.-):") or group
+    local label = first and (first.dropLabel or first[2]:match("^(.-):")) or group
+    local tip = first and (first.dropTip or first[3])
+    for _, choice in ipairs(rows) do
+        if choice.tip == tip then choice.tip = nil end
+    end
+    return rows, label, tip, table.concat(words, " "):lower()
+end
+
+local function ItemTip(item, choice)
+    if not (choice.tip and item and item.SetOnEnter) then return end
+    item:SetOnEnter(function(button) MenuUtil.ShowTooltipEx(button, item:GetTooltipFrame(), ChoiceTip, choice) end)
+end
+
+-- A drop radio group as one row.
+local function DropRow(parent, group)
+    local rows, label, tip, words = DropGroup("radio", group)
     local row = DropShell(parent, label, function(root)
-        for _, choice in ipairs(rows) do root:CreateRadio(choice.text, ToggleOn, PickToggle, choice.key) end
+        for _, choice in ipairs(rows) do ItemTip(root:CreateRadio(choice.label, ToggleOn, PickToggle, choice.key), choice) end
     end)
-    Describe(row, group, label, first and first[3])
-    row.keyLow = row.keyLow .. " " .. table.concat(words, " "):lower()
+    Describe(row, group, label, tip)
+    row.keyLow = row.keyLow .. " " .. words
     return row
 end
 
@@ -239,27 +261,13 @@ end
 
 -- Several toggles picked in one drop down, as checks (entries with checks = group).
 local function DropCheckRow(parent, group)
-    local rows, words, first = {}, {}, nil
-    for _, entry in ipairs(ns.TOGGLES) do
-        if entry.checks == group then
-            first = first or entry
-            local item = entry[2]:match(":%s*(.+)$") or entry[2]
-            rows[#rows + 1] = { key = entry[1], text = item }
-            words[#words + 1] = item .. " " .. (entry.search or "")
-        end
-    end
-    local label = first and first[2]:match("^(.-):") or group
+    local rows, label, tip, words = DropGroup("checks", group)
     local row = DropShell(parent, label, function(root)
-        for _, choice in ipairs(rows) do root:CreateCheckbox(choice.text, ToggleOn, FlipToggle, choice.key) end
+        for _, choice in ipairs(rows) do ItemTip(root:CreateCheckbox(choice.label, ToggleOn, FlipToggle, choice.key), choice) end
     end)
-    Describe(row, group, label, first and first[3])
-    row.keyLow = row.keyLow .. " " .. table.concat(words, " "):lower()
+    Describe(row, group, label, tip)
+    row.keyLow = row.keyLow .. " " .. words
     return row
-end
-
-local function ChoiceTip(tip, choice)
-    GameTooltip_SetTitle(tip, choice.label)
-    GameTooltip_AddNormalLine(tip, choice.tip, true)
 end
 
 -- A setting holding one of a list's keys (choices: { key, label, tip }); apply(key, pick) saves and shows it.
@@ -626,6 +634,10 @@ local function Build(canvas)
     none:SetScript("OnClick", function()
         for _, entry in ipairs(ns.TOGGLES) do
             if InNone(entry[1]) then ns.db[entry[1]] = false end
+        end
+        -- A radio pick that is a classic piece: the game's own choice instead.
+        for _, key in ipairs(NONE_PICKS) do
+            for _, other in ipairs(ns.TOGGLE_RADIO[key] or {}) do ns.db[other] = other == key end
         end
         ns.ApplyAll()
         ns.AskReloadIfNeeded()

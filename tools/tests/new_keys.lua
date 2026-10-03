@@ -27,6 +27,7 @@ return {
     castBarInterrupter = "opt-in, off by default: every install now shows the plain 1.x Interrupted; on brings the name back",
     hideCombatGlow = "same for everyone: opt-in, off by default; the red combat glow shows as before",
     questWatch = "same for everyone: opt-in, off by default; the game's objective tracker stays as before",
+    gameObjectiveTracker = "kept as before: the tracker's boxes became one choice; a dbVersion 11 migration (ns.OneTrackerChoice) picks this where the classic look was off",
     microMinimapButtons = "on for everyone: the block's own switch; only Legacy and the group finder are on under it",
     legacyMinimapButton = "on where the Legacy micro button is hidden (it had no other way in); off where that button shows (dbVersion 10, ns.KeepLegacyIcon)",
     characterMinimapButton = "same for everyone: opt-in, off by default; no icon as before",

@@ -75,6 +75,7 @@ local ns = {
     EventFrame = function() return NewFrame() end,
     IsSecret = function() return false end,
     RegisterModule = function(_, spec) apply = spec.apply end,
+    TOGGLE_RADIO = {},
     Sched = { OnVisible = noop },
 }
 assert(loadfile(ROOT .. "/Quest/QuestWatch.lua"))("ClassicUIForever", ns)
@@ -106,6 +107,23 @@ Check(shown[4].width == 280 and shown[4].height == 26, "a long line wraps at Era
 Check(shown[2].height == 13, "a short line is one line of 13")
 Check(shown[5].rgb == DIM and shown[6].text == " - Amulet: 1/1" and shown[7].text == " - Other Amulet: 0/1",
     "one objective left keeps the title dim")
+
+-- The tracker's three boxes as one choice: an install from before keeps what it showed.
+ns.db = {
+    questTracker = false, dbVersion = 10,
+    profiles = {
+        watch = { questWatch = true, hideObjectiveTracker = true },
+        hidden = { hideObjectiveTracker = true },
+        look = {},
+    },
+}
+ns.OneTrackerChoice()
+Check(ns.db.gameObjectiveTracker == true, "the classic look off before: the game's own tracker picked")
+local watch, hidden, look = ns.db.profiles.watch, ns.db.profiles.hidden, ns.db.profiles.look
+Check(watch.questWatch == true and watch.questTracker == false and watch.hideObjectiveTracker == false, "the watch stays the pick")
+Check(hidden.hideObjectiveTracker == true and hidden.questTracker == false, "hidden stays the pick")
+Check(next(look) == nil, "the default look is left alone")
+Check(ns.db.dbVersion == 11, "writes dbVersion 11")
 
 if failures > 0 then
     print(string.format("quest watch: %d failed", failures))
