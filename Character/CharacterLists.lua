@@ -434,6 +434,7 @@ local function SkinPvP()
     main:ClearAllPoints()
     main:SetPoint("TOPLEFT", CharacterFrame, "TOPLEFT", 6, -70)
     main:SetPoint("BOTTOMRIGHT", CharacterFrame, "TOPRIGHT", -6, -205)
+    if T.PvPPane then T.PvPPane() end
 end
 
 local LIST_TABS = { { "SkillsFrame", "SkillsBar" }, { "TokenFrame" }, { "StatisticsFrame" } }
@@ -461,6 +462,7 @@ end
 local GIVE_BACK = { "ReputationFrame", "SkillsFrame", "TokenFrame", "StatisticsFrame" }
 local function Undress(row) row.fcuiDressedFor = nil end
 function T.ListsGiveBack()
+    if T.PvPPaneOff then T.PvPPaneOff() end
     for _, name in ipairs(GIVE_BACK) do
         local list = _G[name]
         KnobSeen(list and list.ScrollBar, false)

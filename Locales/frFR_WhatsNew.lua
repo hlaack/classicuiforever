@@ -3,6 +3,12 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
+L["WN20_1_TITLE"] = "Détails du rang JcJ"
+L["WN20_1_TEXT"] = "L'onglet JcJ de la fenêtre du personnage peut afficher les détails de votre rang et les récompenses du rang suivant. Cliquez sur la flèche en bas à droite de l'onglet pour ouvrir le panneau latéral."
+L["WN20_2_TITLE"] = "Sac des boutons d'addons"
+L["WN20_2_TEXT"] = "Sa place par défaut est désormais à gauche de l'horloge, à l'écart de l'œil de la recherche de groupe, et il laisse sur la minicarte nos propres icônes, comme Héritage. Le bouton Disposition classique remet aussi en place les boutons de la minicarte que vous avez déplacés."
+L["WN20_3_TITLE"] = "Autres addons"
+L["WN20_3_TEXT"] = "Les parties de ClassicUI Forever que vous désactivez ne touchent plus aux cadres du jeu : les addons qui les modifient gardent leur apparence."
 L["WN19_1_TITLE"] = "Icônes de la minicarte"
 L["WN19_1_TEXT"] = "N'importe quel bouton du micro-menu peut maintenant aller sur la minicarte en icône : cochez-le sous Boutons du micro-menu sur la minicarte dans les options (/fcui). Héritage et la recherche de groupe sont activés par défaut, Héritage est donc de nouveau accessible. Maintenez Maj et faites glisser pour déplacer nos boutons de minicarte autour de l'anneau."
 L["WN19_2_TITLE"] = "Suivi de quêtes"

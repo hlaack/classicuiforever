@@ -3,6 +3,12 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN20_1_TITLE"] = "Dettagli del grado PvP"
+L["WN20_1_TEXT"] = "La scheda PvP della finestra del personaggio può mostrare i dettagli del tuo grado e le ricompense del grado successivo. Fai clic sulla freccia in basso a destra della scheda per aprire il pannello laterale."
+L["WN20_2_TITLE"] = "Borsa dei pulsanti degli addon"
+L["WN20_2_TEXT"] = "La sua posizione predefinita è ora a sinistra dell'orologio, lontano dall'occhio della ricerca gruppi, e lascia sulla minimappa le nostre icone, come Eredità. Il pulsante Disposizione classica rimette a posto anche i pulsanti della minimappa che hai spostato."
+L["WN20_3_TITLE"] = "Altri addon"
+L["WN20_3_TEXT"] = "Le parti di ClassicUI Forever che disattivi ora lasciano stare i riquadri del gioco, così gli addon che li modificano mantengono il loro aspetto."
 L["WN19_1_TITLE"] = "Icone della minimappa"
 L["WN19_1_TEXT"] = "Qualsiasi pulsante del micromenu può ora stare sulla minimappa come icona: selezionalo in Pulsanti del micromenu sulla minimappa, nelle opzioni (/fcui). Eredità e la ricerca gruppi sono attivi di base, così Eredità ha di nuovo un accesso. Tieni premuto Maiusc e trascina per spostare i nostri pulsanti della minimappa intorno all'anello."
 L["WN19_2_TITLE"] = "Tracciamento missioni"

@@ -81,6 +81,7 @@ ns.RegisterModule("hideBuffArrow", {
         SetBuffArrow(true)
     end,
     restore = function()
+        if not arrowHidden then return end
         SetArrowHidden(false)
         SetBuffArrow(false)
     end,

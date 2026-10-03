@@ -396,6 +396,7 @@ local function Apply()
 end
 
 local function Restore()
+    if not G.active then return end
     G.active = false
     ns.UpdateGuildBinding()
     HideGuild()

@@ -237,6 +237,7 @@ end
 
 -- Only the main header is restored; module headers need a reload.
 local function Restore()
+    if not active then return end
     active = false
     ns.WhenCalm("questTimer.look", PaintTimerBox)
     local header = ObjectiveTrackerFrame and ObjectiveTrackerFrame.Header

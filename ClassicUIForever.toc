@@ -2,7 +2,7 @@
 ## Title: ClassicUI Forever
 ## Notes: The original Classic look on WoW Forever: the gryphon bar, square buttons, 1.x unit frames, cast bars, minimap, nameplates, quest tracker and window frames, each one a toggle.
 ## Author: justawower
-## Version: 0.18.0
+## Version: 0.19.0
 ## X-Curse-Project-ID: 1700043
 ## IconTexture: Interface\MainMenuBar\UI-MainMenuBar-EndCap-Dwarf
 ## Category: UI
@@ -15,6 +15,7 @@
 Core\Localization.lua
 Locales\enUS.lua
 Locales\enUS_WhatsNew.lua
+Locales\enUS_Help.lua
 Locales\enUS_Legacy.lua
 Locales\deDE.lua
 Locales\deDE_WhatsNew.lua
@@ -161,6 +162,7 @@ Character\CharacterSheet.lua
 Character\PetView.lua
 Character\StatPanes.lua
 Character\EquipmentPane.lua
+Character\PvPDetail.lua
 Spells\SpellBook.lua
 Spells\SpellsHost.lua
 Skills\SkillShell.lua

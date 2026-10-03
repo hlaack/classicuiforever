@@ -87,6 +87,21 @@ ns.PlaceClassicSpots()
 Check(Spot(layout.systems[1]) == "TOPRIGHT UIParent TOPRIGHT -51.5,-96 default false", "a 200% doll: " .. Spot(layout.systems[1]))
 durabilityScale = 1
 
+-- Reset classic layout: a piece dragged round the minimap ring goes back to its own spot, with the placed windows.
+local classicActive = ns.ClassicLayoutActive
+ns.ClassicLayoutActive = function() return true end
+function InCombatLockdown() return false end
+ns.DB_DEFAULTS = {}
+ns.WINDOW_LIST = { { key = "minimapAddonBag", ringKey = "minimapCollectorAngle" }, { key = "character" } }
+ns.db = { layoutJobs = { reset = true }, minimapCollectorAngle = 7.4, windowPos = { character = {} } }
+-- The rest of the reset is other files' work.
+setmetatable(ns, { __index = function() return noop end })
+ns.RunLayoutJobsBeforePin()
+setmetatable(ns, nil)
+ns.ClassicLayoutActive = classicActive
+Check(ns.db.minimapCollectorAngle == nil and ns.db.windowPos == nil, "the reset clears ring spots and window places")
+ns.db = {}
+
 -- Another layout, or outside the session's end write: nothing.
 layout = { layoutName = "Mine", systems = Preset() }
 Check(ns.PlaceClassicSpots() == false and layout.systems[1].isInDefaultPosition == true, "a player's own layout is never touched")

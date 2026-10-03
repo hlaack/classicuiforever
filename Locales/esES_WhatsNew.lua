@@ -3,6 +3,12 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
+L["WN20_1_TITLE"] = "Detalles de rango JcJ"
+L["WN20_1_TEXT"] = "La pestaña JcJ de la ventana del personaje puede mostrar los detalles de tu rango y las recompensas del siguiente. Haz clic en la flecha de abajo a la derecha de la pestaña para abrir el panel lateral."
+L["WN20_2_TITLE"] = "Bolsa de botones de addons"
+L["WN20_2_TEXT"] = "Su lugar por defecto está ahora a la izquierda del reloj, lejos del ojo del buscador de grupos, y deja en el minimapa nuestros propios iconos, como Legado. El botón Diseño clásico también devuelve a su sitio los botones del minimapa que hayas movido."
+L["WN20_3_TITLE"] = "Otros addons"
+L["WN20_3_TEXT"] = "Las partes de ClassicUI Forever que desactivas ya no tocan los marcos del juego, así que los addons que los cambian conservan su aspecto."
 L["WN19_1_TITLE"] = "Iconos del minimapa"
 L["WN19_1_TEXT"] = "Cualquier botón del micromenú puede ir ahora en el minimapa como icono: márcalo en Botones del micromenú en el minimapa, en las opciones (/fcui). Legado y el buscador de grupos están activados por defecto, así Legado vuelve a tener acceso. Mantén Mayús y arrastra para mover nuestros botones del minimapa por el anillo."
 L["WN19_2_TITLE"] = "Seguimiento de misiones"

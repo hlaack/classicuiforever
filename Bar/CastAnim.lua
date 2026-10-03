@@ -92,6 +92,7 @@ local function Apply()
 end
 
 local function Restore()
+    if not active then return end
     active = false
     wipe(playing)
     StripAll()

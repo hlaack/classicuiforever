@@ -2,7 +2,7 @@ local _, ns = ...
 local L = ns.L
 
 ns.DB_DEFAULTS = {
-    dbVersion = 12,
+    dbVersion = 13,
     classicBar = true,
     oneBar = false,
     classicBarSize = false,
@@ -143,7 +143,6 @@ ns.DB_DEFAULTS = {
     -- The game's own Hidden on a gryphon (its edit mode dialog, before ours) read into the choice once.
     gryphonHiddenCarried = false,
     mapUnlocked = false,
-    minimapCollectorAngle = 132,
     minimapButtonAngle = 213,
     namePlates = true,
     fullPlates = true,

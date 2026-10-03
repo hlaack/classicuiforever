@@ -136,13 +136,15 @@ local function LayoutRaidManager()
     if not manager then return end
     local arrow = manager.toggleButtonForward
     if UF.active then
+        UF.taken.raidManager = true
         if manager.Background then manager.Background:SetAlpha(manager.collapsed and 0 or 1) end
         if arrow then
             ns.SetPointOnce(arrow, "TOPRIGHT", manager, "TOPRIGHT", -7, 0)
             MirrorTab(arrow, TAB_FORWARD)
         end
         if manager.toggleButtonBack then MirrorTab(manager.toggleButtonBack, TAB_BACK) end
-    else
+    elseif UF.taken.raidManager then
+        UF.taken.raidManager = nil
         if manager.Background then manager.Background:SetAlpha(1) end
         if arrow then
             ns.SetPointOnce(arrow, "RIGHT", manager, "RIGHT", -7, 0)

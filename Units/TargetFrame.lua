@@ -325,7 +325,7 @@ local function SkinTarget(frame, unit)
 end
 
 local function RestoreTargetLike(frame)
-    if not frame then return end
+    if not frame or not UF.frames[frame] then return end
     UF.frames[frame] = nil
     HideOwnPvp(frame)
     local foot = frame.TargetFrameContainer and frame.TargetFrameContainer.fcui and frame.TargetFrameContainer.fcui.artFoot

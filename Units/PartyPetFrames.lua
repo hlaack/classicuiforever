@@ -94,6 +94,7 @@ end
 
 local function SkinPartyMember(frame)
     if Busy() then return end
+    UF.taken.party = true
     DrainPartyTrim(frame)
     Dress(frame.Texture, "partyFrame", PARTY_ART_LAYERED, frame)
     if frame.Portrait then ns.SetPointOnce(frame.Portrait, "TOPLEFT", frame, "TOPLEFT", 7, -14) end
@@ -195,7 +196,8 @@ end
 
 local function RestoreParty()
     local pool = PartyFrame and PartyFrame.PartyMemberFramePool
-    if not pool then return end
+    if not pool or not UF.taken.party then return end
+    UF.taken.party = nil
     for frame in pool:EnumerateActive() do
         UF.frames[frame] = nil
         DrainPartyTrim(frame, true)

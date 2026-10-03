@@ -398,6 +398,10 @@ local function ResetNow()
     -- Windows and gryphons placed or sized in the windows edit mode (the map included) back to their own; Movable
     -- anytime is kept.
     ns.db.windowPos, ns.db.windowScale = nil, nil
+    -- Pieces dragged round the minimap ring too.
+    for _, entry in ipairs(ns.WINDOW_LIST or {}) do
+        if entry.ringKey then ns.db[entry.ringKey] = nil end
+    end
     if ns.SettleWindowEdits then ns.SettleWindowEdits() end
     ns.db.barDragged, ns.db.barOffsetX, ns.db.barOffsetY = false, nil, nil
     local names = { "MainActionBar", "MainMenuBar", "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight",

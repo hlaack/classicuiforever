@@ -7,9 +7,10 @@ local L = ns.L
 -- PAD clears the dialog border.
 local COLS, CELL, PAD = 5, 34, 16
 local BAG_ICON = "Interface\\Icons\\INV_Misc_Bag_08"
--- Named map buttons that are no addon's (ours join by name below).
-local NOT_ADDONS = { ExpansionLandingPageMinimapButton = true, GarrisonLandingPageMinimapButton = true,
-    ForeverClassicUIMinimapButton = true, ForeverClassicUIMinimapCollector = true }
+-- Named map buttons that are no addon's. Ours stay on the ring (the micro icons, this button); only the options button
+-- joins, by name below.
+local NOT_ADDONS = { ExpansionLandingPageMinimapButton = true, GarrisonLandingPageMinimapButton = true }
+local OUR_PREFIX = "^ForeverClassicUI"
 local OURS = "ForeverClassicUIMinimapButton"
 -- Over the pop-out's backing, which is a frame at the pop-out's own level.
 local ABOVE_BACKING = 5
@@ -66,7 +67,8 @@ end
 
 local function TakeNamed(child)
     local name = child.GetName and child:GetName()
-    if not name or NOT_ADDONS[name] or name:find("^[Mm]ini[Mm]ap") or not name:lower():find("minimap", 1, true) then return end
+    if not name or NOT_ADDONS[name] or name:find(OUR_PREFIX) or name:find("^[Mm]ini[Mm]ap") then return end
+    if not name:lower():find("minimap", 1, true) then return end
     if child:IsObjectType("Button") and child:IsShown() then Take(child) end
 end
 
@@ -140,7 +142,8 @@ local ShowRing, HideRing = ns.RingButton({
     name = "ForeverClassicUIMinimapCollector",
     key = "minimapAddonBag",
     angleKey = "minimapCollectorAngle",
-    angle = 110,   -- clear of the group finder eye (137), the tracking spell (159) and the zone text
+    angle = 238,   -- left of the clock; the nearest clear spot when a button stands there
+    free = true,
     show = "AddonBag",
     face = function(icon)
         icon:SetTexture(BAG_ICON)
@@ -230,3 +233,14 @@ local function Restore()
 end
 
 ns.RegisterModule("minimapCollector", { apply = Apply, restore = Restore })
+
+-- The saved default (132) stood on the group finder eye: one never dragged takes a clear spot, in the account and
+-- every profile. Runs before the defaults fill.
+function ns.FreeAddonBag()
+    local db = ns.db
+    if db.minimapCollectorAngle == 132 then db.minimapCollectorAngle = nil end
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" and shot.minimapCollectorAngle == 132 then shot.minimapCollectorAngle = nil end
+    end
+    db.dbVersion = 13
+end

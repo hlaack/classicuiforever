@@ -53,6 +53,11 @@ local function Apart(a, b)
     return d > 180 and 360 - d or d
 end
 
+-- A button in the addon bag leaves its ring spot empty.
+local function OnMap(ring)
+    return not ring.button or ring.button:GetParent() == Minimap
+end
+
 -- How far the nearest piece or button is from a spot; nil on a covered arc.
 local function Room(degrees, self)
     for _, arc in ipairs(COVERED) do
@@ -61,15 +66,16 @@ local function Room(degrees, self)
     local room = 360
     for _, taken in ipairs(TAKEN) do room = math.min(room, Apart(degrees, taken)) end
     for _, other in ipairs(rings) do
-        if other ~= self and other.active then room = math.min(room, Apart(degrees, Angle(other))) end
+        if other ~= self and other.active and OnMap(other) then room = math.min(room, Apart(degrees, Angle(other))) end
     end
     return room
 end
 
--- A button with no place of its own (spec.free): the nearest clear spot to its own, for the session; on a full ring the
--- roomiest spot.
+-- A button with no place of its own (spec.free): the nearest clear spot to its own, kept while it stays clear; on a full
+-- ring the roomiest spot.
 local function FreeSpot(ring)
-    if not ring.free or ring.freeAngle or (ns.db and ns.db[ring.angleKey]) then return end
+    if not ring.free or (ns.db and ns.db[ring.angleKey]) then return end
+    if ring.freeAngle and (Room(ring.freeAngle, ring) or 0) >= APART then return end
     local best, bestRoom = ring.angle, -1
     for step = 0, 180 do
         for sign = 1, -1, -2 do
