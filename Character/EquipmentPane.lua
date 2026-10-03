@@ -277,27 +277,34 @@ end
 ----------------------------------------------------------------- the art
 
 -- Columns a..384 of a 256+128 sheet pair, rows sy..sy+h, drawn 1:1 at doll x, y on a panel.
-local function SpanPart(on, key, base, width, a, sy, h, x, y)
+-- under / beside: the part it continues, hung edge on edge; placed by its own offsets it left a see-through line at some sizes.
+local function SpanPart(on, key, base, width, a, sy, h, x, y, under, beside)
     local from, stop = math.max(a, base), base + width
-    if from < stop then
-        local tex = on:CreateTexture(nil, "BACKGROUND")
-        ns.SetTex(tex, key)
-        tex:SetTexCoord((from - base) / width, 1, sy / 256, (sy + h) / 256)
-        tex:SetSize(stop - from, h)
+    if from >= stop then return nil end
+    local tex = on:CreateTexture(nil, "BACKGROUND")
+    ns.SetTex(tex, key)
+    tex:SetTexCoord((from - base) / width, 1, sy / 256, (sy + h) / 256)
+    tex:SetSize(stop - from, h)
+    if under then
+        tex:SetPoint("TOPLEFT", under, "BOTTOMLEFT", 0, 0)
+    elseif beside then
+        tex:SetPoint("TOPLEFT", beside, "TOPRIGHT", 0, 0)
+    else
         tex:SetPoint("TOPLEFT", on, "TOPLEFT", x + from - a - LOW_CUT, -y)
     end
+    return tex
 end
 
-local function Span(on, leftKey, rightKey, a, sy, h, x, y)
-    SpanPart(on, leftKey, 0, 256, a, sy, h, x, y)
-    SpanPart(on, rightKey, 256, 128, a, sy, h, x, y)
+local function Span(on, leftKey, rightKey, a, sy, h, x, y, underLeft, underRight)
+    local left = SpanPart(on, leftKey, 0, 256, a, sy, h, x, y, underLeft)
+    return left, SpanPart(on, rightKey, 256, 128, a, sy, h, x, y, underRight, left)
 end
 
 local function BuildArt(on)
     Span(on, "charTabTopLeft", "charTabTopRight", TOP_CUT - SIDE_PANEL_WIDTH, 0, TOP_H, TOP_CUT, 0)
     local from = LOW_CUT - SIDE_PANEL_WIDTH - LOW_SHIFT
-    Span(on, "charGeneralTopLeft", "charGeneralTopRight", from, UPPER_SRC, UPPER_H, LOW_CUT, UPPER_AT)
-    Span(on, "charGeneralBotLeft", "charGeneralBotRight", from, 0, LOWER_H, LOW_CUT, LOWER_AT)
+    local left, right = Span(on, "charGeneralTopLeft", "charGeneralTopRight", from, UPPER_SRC, UPPER_H, LOW_CUT, UPPER_AT)
+    Span(on, "charGeneralBotLeft", "charGeneralBotRight", from, 0, LOWER_H, LOW_CUT, LOWER_AT, left, right)
 end
 
 -- A side panel of the same art and place on another tab of the sheet (the PvP tab's), hidden.
