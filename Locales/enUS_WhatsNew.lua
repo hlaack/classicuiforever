@@ -2,6 +2,12 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN20_1_TITLE"] = "PvP rank details"
+L["WN20_1_TEXT"] = "The PvP tab of the character window can show your rank details and the next rank's rewards. Click the arrow at the bottom right of the tab to open the side panel."
+L["WN20_2_TITLE"] = "Addon button bag"
+L["WN20_2_TEXT"] = "Its default spot is now left of the clock, clear of the group finder eye, and it leaves our own minimap icons such as Legacy on the minimap. The Classic layout button also puts dragged minimap buttons back."
+L["WN20_3_TITLE"] = "Other addons"
+L["WN20_3_TEXT"] = "Parts of ClassicUI Forever that you turn off now leave the game's frames alone, so addons that restyle them keep their look."
 L["WN19_1_TITLE"] = "Minimap icons"
 L["WN19_1_TEXT"] = "Any micro button can now sit on the minimap as an icon: check it under Micro buttons on the minimap in the options (/fcui). Legacy and the group finder are on by default, so Legacy has a way in again. Hold Shift and drag to move our minimap buttons around the ring."
 L["WN19_2_TITLE"] = "Quest watch"

@@ -2,6 +2,20 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.19.0] - 2026-10-03
+
+### Added
+- The PvP tab of the classic character window has a side panel. The arrow at the bottom right widens the window, as on the Character tab, and lists your rank, the season's rank points and cap, and the next rank's rewards with where to buy them.
+
+### Changed
+- The addon button bag's default spot on the minimap is left of the clock, clear of the group finder eye. One you dragged stays where you put it.
+- Classic layout, in the options, also puts buttons dragged around the minimap back on their own spots.
+
+### Fixed
+- The addon button bag leaves our own minimap icons, such as Legacy, on the minimap. It took them in with the other addons' buttons.
+- A part of ClassicUI Forever that is turned off leaves the game's frames alone, so another addon that restyles them keeps its look. Cast animations, combo points, breath bars, the buff arrow, the quest tracker, the map's quest pane, the guild tab and the unit frames were set back to the game's look each time settings were applied.
+- Small alignment fix on the bag windows' close buttons.
+
 ## [0.18.0] - 2026-10-03
 
 ### Added

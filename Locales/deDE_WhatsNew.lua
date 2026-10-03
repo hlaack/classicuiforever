@@ -3,6 +3,12 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN20_1_TITLE"] = "PvP-Rangdetails"
+L["WN20_1_TEXT"] = "Der PvP-Reiter des Charakterfensters kann deine Rangdetails und die Belohnungen des nächsten Rangs zeigen. Klicke auf den Pfeil unten rechts im Reiter, um die Seitenleiste zu öffnen."
+L["WN20_2_TITLE"] = "Addon-Tasche"
+L["WN20_2_TEXT"] = "Ihr Standardplatz liegt jetzt links neben der Uhr, frei vom Auge der Gruppensuche, und sie lässt unsere eigenen Minikartensymbole wie Vermächtnis auf der Minikarte. Die Schaltfläche Klassisches Layout stellt auch verschobene Minikartenknöpfe zurück."
+L["WN20_3_TITLE"] = "Andere Addons"
+L["WN20_3_TEXT"] = "Teile von ClassicUI Forever, die du ausschaltest, lassen die Fenster des Spiels jetzt in Ruhe, sodass Addons, die sie umgestalten, ihr Aussehen behalten."
 L["WN19_1_TITLE"] = "Minikartensymbole"
 L["WN19_1_TEXT"] = "Jede Mikrotaste kann jetzt als Symbol an der Minikarte sitzen: Hake sie in den Optionen (/fcui) unter Mikrotasten an der Minikarte an. Vermächtnis und die Gruppensuche sind standardmäßig an, so ist Vermächtnis wieder erreichbar. Mit gedrückter Umschalttaste ziehst du unsere Minikartentasten um den Ring."
 L["WN19_2_TITLE"] = "Questverfolgung"
