@@ -13,34 +13,35 @@ local SHEET = { layer = "ARTWORK", coords = { 5 / 32, 27 / 32, 32 / 64, 54 / 64 
     relPoint = "TOPLEFT", x = FACE.x, y = FACE.y }
 
 -- Each icon: its toggle, the micro button it presses (none: the zone name, which opens the map), its face, frame name,
--- edit mode entry, ring angle, name, and the game rule that takes the button away. Names match UI/WindowList.lua.
+-- edit mode entry, ring angle (free: the nearest clear spot to it; Legacy's is under the mail icon), name, and the game
+-- rule that takes the button away. Names match UI/WindowList.lua.
 local MICROS = {
-    { toggle = "characterMinimapButton", micro = "CharacterMicroButton", face = "portrait", id = "Character", angle = 222,
+    { toggle = "characterMinimapButton", micro = "CharacterMicroButton", face = "portrait", id = "Character", angle = 232, free = true,
         label = L["OPT_hideMicroCharacter"], rule = "CharacterPanelDisabled" },
-    { toggle = "spellbookMinimapButton", micro = "SpellbookMicroButton", face = "Spellbook", id = "Spellbook", angle = 244,
+    { toggle = "spellbookMinimapButton", micro = "SpellbookMicroButton", face = "Spellbook", id = "Spellbook", angle = 232, free = true,
         label = L["OPT_hideMicroSpellbook"] },
-    { toggle = "talentsMinimapButton", micro = "TalentMicroButton", face = "Talents", id = "Talents", angle = 266,
+    { toggle = "talentsMinimapButton", micro = "TalentMicroButton", face = "Talents", id = "Talents", angle = 232, free = true,
         label = L["OPT_hideMicroTalents"] },
-    { toggle = "professionsMinimapButton", micro = "ProfessionMicroButton", face = "Professions", id = "Professions", angle = 288,
+    { toggle = "professionsMinimapButton", micro = "ProfessionMicroButton", face = "Professions", id = "Professions", angle = 232, free = true,
         label = L["OPT_hideProfessionsButton"], rule = "ProfessionsPanelDisabled" },
-    { toggle = "questLogMinimapButton", micro = "QuestLogMicroButton", face = "Quest", id = "QuestLog", angle = 344,
+    { toggle = "questLogMinimapButton", micro = "QuestLogMicroButton", face = "Quest", id = "QuestLog", angle = 232, free = true,
         label = L["OPT_hideMicroQuestLog"], rule = "QuestLogMicrobuttonDisabled" },
-    { toggle = "legacyMinimapButton", micro = "LegacyMicroButton", face = "Achievement", id = "Legacy", angle = 180,
+    { toggle = "legacyMinimapButton", micro = "LegacyMicroButton", face = "Achievement", id = "Legacy", angle = 347, free = true,
         label = L["OPT_hideMicroLegacy"] },
-    { toggle = "worldMapMinimapButton", face = "World", id = "WorldMap", angle = 6, label = L["OPT_hideMicroWorldMap"] },
-    { toggle = "guildMinimapButton", micro = "GuildMicroButton", face = "Socials", id = "Guild", angle = 28,
+    { toggle = "worldMapMinimapButton", face = "World", id = "WorldMap", angle = 232, free = true, label = L["OPT_hideMicroWorldMap"] },
+    { toggle = "guildMinimapButton", micro = "GuildMicroButton", face = "Socials", id = "Guild", angle = 232, free = true,
         label = L["OPT_hideMicroGuild"], rule = "CommunitiesPanelDisabled" },
     -- Era's LFG eye spot (backdrop top left +25, -28); its frame and entry keep their first names.
     { toggle = "lfgMinimapButton", micro = "LFDMicroButton", face = "eye", id = "GroupFinder", angle = 137,
         name = "ForeverClassicUIGroupFinderButton", entry = "minimapGroupFinder", angleKey = "lfgButtonAngle",
         label = L["OPT_hideMicroGroupFinder"], rule = "FinderPanelDisabled" },
-    { toggle = "collectionsMinimapButton", micro = "CollectionsMicroButton", face = "Mounts", id = "Collections", angle = 50,
+    { toggle = "collectionsMinimapButton", micro = "CollectionsMicroButton", face = "Mounts", id = "Collections", angle = 232, free = true,
         label = L["OPT_hideMicroCollections"], rule = "CollectionsPanelDisabled" },
-    { toggle = "helpMinimapButton", micro = "HelpMicroButton", face = "Help", id = "Help", angle = 72,
+    { toggle = "helpMinimapButton", micro = "HelpMicroButton", face = "Help", id = "Help", angle = 232, free = true,
         label = L["OPT_hideMicroHelp"], rule = "HelpPanelDisabled" },
-    { toggle = "gameMenuMinimapButton", micro = "MainMenuMicroButton", face = "MainMenu", id = "GameMenu", angle = 94,
+    { toggle = "gameMenuMinimapButton", micro = "MainMenuMicroButton", face = "MainMenu", id = "GameMenu", angle = 232, free = true,
         label = L["OPT_hideMicroGameMenu"] },
-    { toggle = "shopMinimapButton", micro = "StoreMicroButton", face = "BStore", id = "Shop", angle = 116,
+    { toggle = "shopMinimapButton", micro = "StoreMicroButton", face = "BStore", id = "Shop", angle = 232, free = true,
         label = L["OPT_hideMicroShop"], rule = "StoreDisabled" },
 }
 local byToggle = {}
@@ -85,9 +86,11 @@ for _, spec in ipairs(MICROS) do
         key = spec.entry or ("minimap" .. spec.id),
         angleKey = spec.angleKey or ("minimap" .. spec.id .. "Angle"),
         angle = spec.angle,
+        free = spec.free,
         show = "GroupFinderButton",
         face = function(icon) Face(spec, icon) end,
-        tip = { anchor = "ANCHOR_LEFT", text = function() return TipText(spec) end, r = 1, g = 1, b = 1 },
+        tip = { anchor = "ANCHOR_LEFT", text = function() return TipText(spec) end, r = 1, g = 1, b = 1,
+            lines = { { L["MAP_DRAG_TO_MOVE_AROUND_THE"], 0.8, 0.8, 0.8 } } },
     })
     spec.frame = spec.name or ("ForeverClassicUIMinimap" .. spec.id .. "Button")
 end

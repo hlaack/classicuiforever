@@ -92,6 +92,16 @@ MapPad = function(button, strata, after, target, when, editMode)
         if leave then leave(button) end
         GameTooltip:Hide()
     end)
+    -- A drag belongs to the button under the pad (a minimap ring button's shift-drag).
+    mapPad:RegisterForDrag("LeftButton")
+    mapPad:SetScript("OnDragStart", function()
+        local start = button:GetScript("OnDragStart")
+        if start then start(button) end
+    end)
+    mapPad:SetScript("OnDragStop", function()
+        local stop = button:GetScript("OnDragStop")
+        if stop then stop(button) end
+    end)
     local function HidePad()
         if mapPad:IsShown() then mapPad:Hide() end
     end

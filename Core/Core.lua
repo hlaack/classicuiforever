@@ -421,6 +421,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         if saved and saved < 9 then ns.KeepBarArt() end
         if saved and saved < 10 then ns.KeepLegacyIcon() end
         if saved and saved < 11 then ns.OneTrackerChoice() end
+        if saved and saved < 12 then ns.FreeOptionsButton() end
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
         ns.BarSizeKey()

@@ -40,6 +40,7 @@ function ns.LayPiece(key, anyway)
     if ns.PlaceRingButton then ns.PlaceRingButton(key) end
     if ns.LayGryphon then ns.LayGryphon(key, anyway) end
     if ns.LayQuestWatch then ns.LayQuestWatch(key) end
+    if ns.LayTrackingIcon then ns.LayTrackingIcon(key) end
 end
 
 -- Picking a spot (options or its edit mode dropdown) puts it there: a place dragged in edit mode goes.

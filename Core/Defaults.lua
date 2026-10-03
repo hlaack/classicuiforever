@@ -2,7 +2,7 @@ local _, ns = ...
 local L = ns.L
 
 ns.DB_DEFAULTS = {
-    dbVersion = 11,
+    dbVersion = 12,
     classicBar = true,
     oneBar = false,
     classicBarSize = false,
@@ -144,7 +144,7 @@ ns.DB_DEFAULTS = {
     gryphonHiddenCarried = false,
     mapUnlocked = false,
     minimapCollectorAngle = 132,
-    minimapButtonAngle = 200,
+    minimapButtonAngle = 213,
     namePlates = true,
     fullPlates = true,
     questTracker = true,

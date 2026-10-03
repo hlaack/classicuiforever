@@ -317,15 +317,41 @@ local function TrackingEnter(self)
     GameTooltip:Show()
 end
 
--- Era's rim spot, in our backdrop's coordinates.
+-- Era's rim spot, in our backdrop's coordinates, until it is dragged round the ring (shift-drag, or edit mode): then at
+-- its angle, as far from the map's middle as Era's spot is.
+local TRACK_KEY, TRACK_ANGLE, TRACK_R = "minimapTrackingIcon", "trackingIconAngle", 83.6
+local function PlaceTracking()
+    local frame = trackFrame
+    if not frame then return end
+    local degrees = ns.db and ns.db[TRACK_ANGLE]
+    if degrees then
+        ns.RingPoint(frame, degrees, TRACK_R, frame:GetEffectiveScale() / Minimap:GetEffectiveScale())
+    else
+        ns.SetPointOnce(frame, "TOPLEFT", frame:GetParent(), "TOPLEFT", 11, -26)
+    end
+end
+function ns.LayTrackingIcon(key)
+    if key == TRACK_KEY then PlaceTracking() end
+end
+
 local function TrackingFrame(backdrop, level)
     local frame = trackFrame
     if not frame then
-        frame = CreateFrame("Frame", nil, backdrop)
+        frame = CreateFrame("Frame", "ForeverClassicUIMinimapTrackingIcon", backdrop)
         trackFrame = frame
         frame:Hide()
         frame:SetSize(32, 32)
         frame:EnableMouse(true)
+        -- Shift-drag round the ring, as our ring buttons move.
+        frame:RegisterForDrag("LeftButton")
+        local drag = ns.Sched.OnFrame(CreateFrame("Frame", nil, frame), { name = "minimap.trackingDrag", every = 0,
+            awake = false, fn = function()
+                ns.db[TRACK_ANGLE] = ns.MinimapCursorAngle()
+                PlaceTracking()
+            end })
+        frame:SetScript("OnDragStart", function() if IsShiftKeyDown() then drag:Wake() end end)
+        frame:SetScript("OnDragStop", function() drag:Sleep() end)
+        if ns.PlaceSavedWindows then ns.PlaceSavedWindows() end
         local border = ns.DressNew(frame, "trackingBorder", TRACK_BORDER)
         ns.MinimapButtonBorder(border)
         -- Round, slightly wider than the hole so its edge hides under the ring.
@@ -342,7 +368,7 @@ local function TrackingFrame(backdrop, level)
         UpdateTracking()
     end
     frame:SetFrameLevel(level)
-    ns.SetPointOnce(frame, "TOPLEFT", backdrop, "TOPLEFT", 11, -26)
+    PlaceTracking()
 end
 
 ----------------------------------------------------- the tracking glass

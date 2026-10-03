@@ -25,6 +25,9 @@ ns.WINDOW_LIST = {
         section = L["UI_MINIMAP"], piece = true, choice = "minimapZoneShow", choiceLabel = L["UI_SHOW"] },
     { key = "minimapTracking", label = L["UI_TRACKING"], name = "ForeverClassicUIMinimapTrackingHome", w = 32, h = 32,
         section = L["UI_MINIMAP"], piece = true, choice = "minimapTrackingShow", choiceLabel = L["UI_SHOW"] },
+    -- The tracking spell's icon: Era's spot until dragged round the ring (Map/Minimap.lua).
+    { key = "minimapTrackingIcon", label = L["OPT_classicTracking"], name = "ForeverClassicUIMinimapTrackingIcon", w = 32,
+        h = 32, section = L["UI_MINIMAP"], piece = true, ringKey = "trackingIconAngle" },
     { key = "minimapMail", label = L["UI_MAIL"], name = "ForeverClassicUIMinimapMailHome", w = 33, h = 33,
         section = L["UI_MINIMAP"], piece = true, choice = "minimapMailShow", choiceLabel = L["UI_SHOW"] },
     { key = "minimapZoomIn", label = L["UI_ZOOM_IN"], name = "ForeverClassicUIMinimapZoomInHome", w = 32, h = 32,
