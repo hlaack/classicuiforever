@@ -19,6 +19,7 @@ local backs = setmetatable({}, weak)   -- menu frame -> its background texture l
 local rims = setmetatable({}, weak)    -- menu frame -> our rim
 local irons = setmetatable({}, weak)   -- menu frame -> Era's drop down art
 local reclamped = setmetatable({}, weak)   -- menu frame -> clamped again this open (secret-placed)
+local placed = setmetatable({}, weak)  -- menu frame -> { anchor frame, x, y } as we last put it
 
 local active = false
 local theme = {}             -- ThemeTurned state
@@ -32,7 +33,7 @@ local function Manager()
     return Menu and Menu.GetManager and Menu.GetManager()
 end
 
--- rawget only: an open menu's metatable caches any key read through it.
+-- rawget only: an open menu's metatable copies any key of the frame's own that is read through it.
 local function IsMenuFrame(f)
     local mixin = _G.MenuProxyMixin
     return mixin and type(f) == "table" and f.IsForbidden and not f:IsForbidden()
@@ -113,6 +114,13 @@ local function MakeRim(frame)
     return rim
 end
 
+local function Place(frame, point, rel, relPoint, x, y)
+    frame:SetPoint(point, rel, relPoint, x, y)
+    local at = placed[frame] or {}
+    at[1], at[2], at[3] = rel, x, y
+    placed[frame] = at
+end
+
 -- The client clamped the menu as it opened, before our rim; new insets don't re-clamp, so shift it by what sticks out.
 local function OnScreen(frame, rim)
     local left, right, top, bottom = rim:GetLeft(), rim:GetRight(), rim:GetTop(), rim:GetBottom()
@@ -135,18 +143,33 @@ local function OnScreen(frame, rim)
     local point, rel, relPoint, x, y = frame:GetPoint(1)
     if not point or ns.AnySecret(x, y) then return end
     local f = UIParent:GetEffectiveScale() / frame:GetEffectiveScale()
-    frame:SetPoint(point, rel, relPoint, (x or 0) + dx * f, (y or 0) + dy * f)
+    Place(frame, point, rel, relPoint, (x or 0) + dx * f, (y or 0) + dy * f)
 end
 
 -- Opened from a drop down button: Era draws those in its iron style, right-click menus in the rim (#69).
 local function FromDropdown(root)
-    local owner = rawget(root, "ownerRegion")
+    -- Written after the menu opened, so it is in the metatable's side table: rawget misses it, a plain read copies nothing.
+    local owner = root.ownerRegion
     local mixin = _G.DropdownButtonMixin
     return type(owner) == "table" and mixin ~= nil and not ns.IsForbidden(owner)
         and rawget(owner, "GenerateMenu") == mixin.GenerateMenu
 end
 
-local function Dress(frame, iron)
+-- A drop down's menu moved for the iron to sit against its button as Era's did. Every pass: one still where we put it
+-- stays, so it moves once per place the game gives it.
+local function Settle(frame)
+    local point, rel, relPoint, x, y = frame:GetPoint(1)
+    if not point or ns.AnySecret(point, rel, x, y) then return end
+    x, y = x or 0, y or 0
+    local at = placed[frame]
+    if at and at[1] == rel and ns.Near(x, at[2], 0.01) and ns.Near(y, at[3], 0.01) then return end
+    local shift = ns.IRON_SHIFT
+    local dx = point:find("LEFT") and shift.LEFT or point:find("RIGHT") and shift.RIGHT or 0
+    local dy = point:find("TOP") and shift.TOP or point:find("BOTTOM") and shift.BOTTOM or 0
+    Place(frame, point, rel, relPoint, x + dx, y + dy)
+end
+
+local function Dress(frame, iron, isRoot)
     local bg = Back(frame)
     local rim, art = rims[frame], irons[frame]
     -- Other menu styles (the barber shop's) stay as drawn.
@@ -177,6 +200,7 @@ local function Dress(frame, iron)
         pcall(frame.SetClampRectInsets, frame, wl, wr, wt, wb)
         reclamped[frame] = nil   -- a new open
     end
+    if iron and isRoot then Settle(frame) end
     OnScreen(frame, shown)
 end
 
@@ -213,7 +237,7 @@ local function Tick()
     if not (caught and swept) then UnderMouse() end
     -- One menu tree opens at a time: its submenus wear the root's style.
     for frame in pairs(known) do
-        if frame:IsShown() then Dress(frame, iron) end
+        if frame:IsShown() then Dress(frame, iron, frame == root) end
     end
 end
 
