@@ -108,10 +108,15 @@ local function BronzeClient(texture, off)
     if off or not ns.BronzeOn() then
         if was then
             clientWas[texture] = nil
-            -- Clear first: SetAtlas of the atlas a texture still names is a no-op and draws nothing.
-            texture:SetTexture(nil)
-            texture:SetTexCoord(0, 1, 0, 1)
-            if was.atlas then texture:SetAtlas(was.atlas) else texture:SetTexture(was.file) end
+            if was.atlas then
+                -- Clear first: SetAtlas of the atlas a texture still names is a no-op and draws nothing.
+                texture:SetTexture(nil)
+                texture:SetTexCoord(0, 1, 0, 1)
+                texture:SetAtlas(was.atlas)
+            else
+                -- A file keeps its crop: the client's (a red panel button's three slices), never changed under our copy.
+                texture:SetTexture(was.file)
+            end
             ns.PaintCopy(texture, nil)
         end
         return
