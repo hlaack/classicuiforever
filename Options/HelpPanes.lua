@@ -22,6 +22,8 @@ end
 local FAQ = {
     { "FAQ_LFG_Q", "FAQ_LFG_A",
         function() return KeyOf("TOGGLEGROUPFINDER"), L["OPT_hideMicroGroupFinder"], L["OPT_hideMicroButtons"] end },
+    { "FAQ_LEGACY_Q", "FAQ_LEGACY_A",
+        function() return L["OPT_hideMicroLegacy"], L["OPT_hideMicroButtons"], L["OPT_microMinimapButtons"] end },
     { "FAQ_PROFESSIONS_Q", "FAQ_PROFESSIONS_A",
         function() return KeyOf("TOGGLEPROFESSIONBOOK"), L["OPT_hideProfessionsButton"], L["OPT_hideMicroButtons"] end },
     { "FAQ_COLLECTIONS_Q", "FAQ_COLLECTIONS_A",

@@ -11,6 +11,7 @@ O.TITLE = "ClassicUI Forever"
 -- Order drives the options list, /fcui help and the reload prompt (Core ToggleTree); Status reads it. Kids follow their parent.
 local SHOW_TIP = L["OPT_TIP_SHOW_HOVER_HIDE"]
 local GRYPHON_TIP = L["OPT_TIP_GRYPHON"]
+local MICRO_ICON_TIP = L["OPT_microMinimapButton_TIP"]
 ns.TOGGLES = {
     { "bronzeTheme", L["OPT_bronzeTheme"], L["OPT_bronzeTheme_TIP"], group = L["GROUP_LOOK"], search = "custom skin color dark mode" },
     { "themeBronze", L["OPT_themeBronze"], L["OPT_themeBronze_TIP"], parent = "bronzeTheme", radio = "theme" },
@@ -204,9 +205,23 @@ ns.TOGGLES = {
     { "minimapButton", L["OPT_minimapButton"], L["OPT_minimapButton_TIP"] },
     { "showOptionsButton", L["OPT_showOptionsButton"], L["OPT_showOptionsButton_TIP"], parent = "minimapButton", radio = "optionsButtonShow", drop = true },
     { "hoverOptionsButton", L["OPT_hoverOptionsButton"], L["OPT_hoverOptionsButton_TIP"], parent = "minimapButton", radio = "optionsButtonShow", drop = true },
-    { "lfgMinimapButton", L["OPT_lfgMinimapButton"], L["OPT_lfgMinimapButton_TIP"], search = "lfg eye dungeon micro" },
-    { "showGroupFinderButton", L["OPT_showGroupFinderButton"], L["OPT_showGroupFinderButton_TIP"], parent = "lfgMinimapButton", radio = "groupFinderButtonShow", drop = true },
-    { "hoverGroupFinderButton", L["OPT_hoverGroupFinderButton"], L["OPT_hoverGroupFinderButton_TIP"], parent = "lfgMinimapButton", radio = "groupFinderButtonShow", drop = true },
+    { "microMinimapButtons", L["OPT_microMinimapButtons"], L["OPT_microMinimapButtons_TIP"],
+        search = "icon micro menu hidden legacy lfg eye dungeon" },
+    { "characterMinimapButton", L["OPT_hideMicroCharacter"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "spellbookMinimapButton", L["OPT_hideMicroSpellbook"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "talentsMinimapButton", L["OPT_hideMicroTalents"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "professionsMinimapButton", L["OPT_hideProfessionsButton"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "questLogMinimapButton", L["OPT_hideMicroQuestLog"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "legacyMinimapButton", L["OPT_hideMicroLegacy"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "worldMapMinimapButton", L["OPT_hideMicroWorldMap"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "guildMinimapButton", L["OPT_hideMicroGuild"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "lfgMinimapButton", L["OPT_hideMicroGroupFinder"], MICRO_ICON_TIP, parent = "microMinimapButtons", search = "lfg eye dungeon" },
+    { "collectionsMinimapButton", L["OPT_hideMicroCollections"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "helpMinimapButton", L["OPT_hideMicroHelp"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "gameMenuMinimapButton", L["OPT_hideMicroGameMenu"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "shopMinimapButton", L["OPT_hideMicroShop"], MICRO_ICON_TIP, parent = "microMinimapButtons" },
+    { "showGroupFinderButton", L["OPT_showGroupFinderButton"], L["OPT_showGroupFinderButton_TIP"], parent = "microMinimapButtons", radio = "groupFinderButtonShow", drop = true },
+    { "hoverGroupFinderButton", L["OPT_hoverGroupFinderButton"], L["OPT_hoverGroupFinderButton_TIP"], parent = "microMinimapButtons", radio = "groupFinderButtonShow", drop = true },
     { "minimapCollector", L["OPT_minimapCollector"], L["OPT_minimapCollector_TIP"], search = "minimap icons bag" },
     { "showAddonBag", L["OPT_showAddonBag"], L["OPT_showAddonBag_TIP"], parent = "minimapCollector", radio = "addonBagShow", drop = true },
     { "hoverAddonBag", L["OPT_hoverAddonBag"], L["OPT_hoverAddonBag_TIP"], parent = "minimapCollector", radio = "addonBagShow", drop = true },

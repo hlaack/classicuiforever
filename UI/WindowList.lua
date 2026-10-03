@@ -64,6 +64,18 @@ ns.WINDOW_LIST = {
         follows = "questGiver", followX = 0, followY = 0, followSize = true },
 }
 
+-- The other micro buttons on the minimap ring: Map/MinimapMicro.lua names its frames and angles the same way.
+for _, micro in ipairs({ { "Character", L["OPT_hideMicroCharacter"] }, { "Spellbook", L["OPT_hideMicroSpellbook"] },
+    { "Talents", L["OPT_hideMicroTalents"] }, { "Professions", L["OPT_hideProfessionsButton"] },
+    { "QuestLog", L["OPT_hideMicroQuestLog"] }, { "Legacy", L["OPT_hideMicroLegacy"] },
+    { "WorldMap", L["OPT_hideMicroWorldMap"] }, { "Guild", L["OPT_hideMicroGuild"] },
+    { "Collections", L["OPT_hideMicroCollections"] }, { "Help", L["OPT_hideMicroHelp"] },
+    { "GameMenu", L["OPT_hideMicroGameMenu"] }, { "Shop", L["OPT_hideMicroShop"] } }) do
+    ns.WINDOW_LIST[#ns.WINDOW_LIST + 1] = { key = "minimap" .. micro[1], label = micro[2],
+        name = "ForeverClassicUIMinimap" .. micro[1] .. "Button", w = 32, h = 32, section = L["UI_MINIMAP"], piece = true,
+        ringKey = "minimap" .. micro[1] .. "Angle", choice = "groupFinderButtonShow", choiceLabel = L["UI_SHOW"] }
+end
+
 -- An entry's window; none for a padHost one inside the game's spell window (gamepad on at login), which places it.
 function ns.WindowFrame(entry)
     if entry.padHost and ns.padSession then return nil end

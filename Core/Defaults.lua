@@ -2,7 +2,7 @@ local _, ns = ...
 local L = ns.L
 
 ns.DB_DEFAULTS = {
-    dbVersion = 9,
+    dbVersion = 10,
     classicBar = true,
     oneBar = false,
     classicBarSize = false,
@@ -191,7 +191,12 @@ ns.DB_DEFAULTS = {
     hideMinimapBorder = false, hideMinimapHeader = false, hideButtonBorders = false,
     showOptionsButton = true, hoverOptionsButton = false,
     showAddonBag = true, hoverAddonBag = false,
-    lfgMinimapButton = true, showGroupFinderButton = true, hoverGroupFinderButton = false,
+    microMinimapButtons = true, lfgMinimapButton = true, legacyMinimapButton = true,
+    showGroupFinderButton = true, hoverGroupFinderButton = false,
+    characterMinimapButton = false, spellbookMinimapButton = false, talentsMinimapButton = false,
+    professionsMinimapButton = false, questLogMinimapButton = false, worldMapMinimapButton = false,
+    guildMinimapButton = false, collectionsMinimapButton = false, helpMinimapButton = false,
+    gameMenuMinimapButton = false, shopMinimapButton = false,
     hideMapQuestButton = false,
     lootWindow = true,
     gameMenu = true,
@@ -224,7 +229,7 @@ ns.DB_DEFAULTS = {
 -- Matches the registration order.
 ns.MODULE_ORDER = {
     "bronzeTheme", "hideMicroButtons", "classicBar", "buttons", "castAnim", "pageArrows", "unitFrames", "hideBuffArrow",
-    "castBars", "swingTimers", "resourceDisplay", "classicStatusFont", "plainNumbers", "mirrorTimers", "comboPoints", "minimap", "minimapButton", "lfgMinimapButton", "minimapCollector", "namePlates", "classColorPlates",
+    "castBars", "swingTimers", "resourceDisplay", "classicStatusFont", "plainNumbers", "mirrorTimers", "comboPoints", "minimap", "minimapButton", "microMinimapButtons", "minimapCollector", "namePlates", "classColorPlates",
     "fullPlates", "classicFonts", "questTracker", "hideObjectiveTracker", "questWatch", "questLog", "questLogDual", "questLevels", "questMapPane", "panels", "worldMap", "lootWindow", "classicChat", "lootRoll",
     "guildRoster", "whoList", "groupFinder", "hideLastNames", "mapFade", "oneBag", "bags", "characterSheet", "statPanes",
     "spellBook", "spellBookTopRank", "spellBookSearch", "professionsBook", "tradeSkillSearch", "tradeSkill",

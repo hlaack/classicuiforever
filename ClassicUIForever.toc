@@ -107,7 +107,7 @@ Map\MinimapCalendar.lua
 Map\TrackingBuff.lua
 Map\MinimapEye.lua
 Map\MinimapButton.lua
-Map\MinimapGroupFinder.lua
+Map\MinimapMicro.lua
 Map\MinimapCollector.lua
 UI\ClassicFonts.lua
 Units\NamePlates.lua
