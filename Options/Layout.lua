@@ -311,14 +311,59 @@ local function PlaceTracker(system)
     return true
 end
 
--- The classic layout's tracker placed beside the side bars as they stand now, in the session's end write.
-function ns.PlaceClassicTracker()
-    if not ns.sessionEnding or not ns.ClassicLayoutActive() then return false end
-    local active = ns.ActiveLayoutInfo()
-    for _, system in ipairs(active and active.systems or {}) do
-        if system.system == Enum.EditModeSystem.ObjectiveTracker then return PlaceTracker(system) end
+-- Era's own Classic preset: buffs and debuffs (Forever's sit 68 further left); durability in its right-side container,
+-- 5 in from the side bars and 192 down. Forever's container sits 260 down, and at the screen edge once the bars are pinned.
+local ERA_AURAS = Enum.EditModeAuraFrameSystemIndices and {
+    [Enum.EditModeAuraFrameSystemIndices.BuffFrame] = { -187, -13 },
+    [Enum.EditModeAuraFrameSystemIndices.DebuffFrame] = { -202, -152 },
+} or {}
+local DURABILITY_GAP, DURABILITY_Y = 5, -192
+
+-- A piece at its default takes our spot; ours follows the side bars (rowOnly); one the player placed stays.
+local function TakeSpot(system, x, y, rowOnly)
+    local info = system.anchorInfo
+    if type(info) ~= "table" then return false end
+    local ours = info.point == "TOPRIGHT" and info.relativePoint == "TOPRIGHT" and (info.relativeTo or "UIParent") == "UIParent"
+        and math.abs((info.offsetY or 0) - y) < 0.5 and (rowOnly or math.abs((info.offsetX or 0) - x) < 0.5)
+    if system.isInDefaultPosition == false and not ours then return false end
+    if ours and system.isInDefaultPosition == false and math.abs((info.offsetX or 0) - x) < 0.5 then return false end
+    system.anchorInfo = { point = "TOPRIGHT", relativeTo = "UIParent", relativePoint = "TOPRIGHT", offsetX = x, offsetY = y }
+    system.anchorInfo2 = nil
+    system.isInDefaultPosition = false
+    return true
+end
+
+-- Offsets are in the doll's scale (its Size setting).
+local function PlaceEraSpot(system, durabilityScale)
+    if system.system == Enum.EditModeSystem.DurabilityFrame then
+        local side = ns.band and ns.band.SideColumnsWidth and ns.band.SideColumnsWidth() or 0
+        return TakeSpot(system, -(side + DURABILITY_GAP) / durabilityScale, DURABILITY_Y / durabilityScale, true)
+    elseif system.system == Enum.EditModeSystem.AuraFrame then
+        local spot = ERA_AURAS[system.systemIndex]
+        return spot ~= nil and TakeSpot(system, spot[1], spot[2])
     end
     return false
+end
+
+local function DurabilityScale()
+    local scale = DurabilityFrame and DurabilityFrame:GetScale()
+    return (scale and scale > 0) and scale or 1
+end
+
+-- The classic layout's tracker and durability beside the side bars as they stand now, buffs at Era's spots, in the
+-- session's end write.
+function ns.PlaceClassicSpots()
+    if not ns.sessionEnding or not ns.ClassicLayoutActive() then return false end
+    local active = ns.ActiveLayoutInfo()
+    local scale, changed = DurabilityScale(), false
+    for _, system in ipairs(active and active.systems or {}) do
+        if system.system == Enum.EditModeSystem.ObjectiveTracker then
+            if PlaceTracker(system) then changed = true end
+        elseif PlaceEraSpot(system, scale) then
+            changed = true
+        end
+    end
+    return changed
 end
 
 local function FitTracker(system)
@@ -356,7 +401,8 @@ local function ResetNow()
     ns.db.barDragged, ns.db.barOffsetX, ns.db.barOffsetY = false, nil, nil
     local names = { "MainActionBar", "MainMenuBar", "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight",
         "MultiBarLeft", "StanceBar", "PetActionBar", "PossessActionBar", "MainStatusTrackingBarContainer",
-        "SecondaryStatusTrackingBarContainer", "BagsBar", "MicroMenuContainer", "ObjectiveTrackerFrame" }
+        "SecondaryStatusTrackingBarContainer", "BagsBar", "MicroMenuContainer", "ObjectiveTrackerFrame", "DurabilityFrame",
+        "BuffFrame", "DebuffFrame" }
     for _, name in ipairs(names) do
         local frame = _G[name]
         if frame and frame.system and type(frame.IsInDefaultPosition) == "function" and type(frame.ResetToDefaultPosition) == "function" then
@@ -366,8 +412,9 @@ local function ResetNow()
     end
     if ns.db.barPins then ns.db.barPins[LAYOUT_NAME] = nil end
     local active = ns.ActiveLayoutInfo()
+    local scale = DurabilityScale()
     for _, system in ipairs(active and active.systems or {}) do
-        if system.system == Enum.EditModeSystem.ObjectiveTracker then PlaceTracker(system) end
+        if system.system == Enum.EditModeSystem.ObjectiveTracker then PlaceTracker(system) else PlaceEraSpot(system, scale) end
     end
     -- Settings too (Hide Bar Art, slot counts and the rest).
     ns.ResetLayoutSettingsNow()
@@ -440,6 +487,8 @@ local function DressLayoutData(layout, counts, pins, fresh)
             FitTracker(system)
             PlaceTracker(system)
         end
+        -- The preset's doll is at 100%.
+        if fresh then PlaceEraSpot(system, 1) end
         -- Chat above the bars and pet row as in 1.x.
         if fresh and system.system == Enum.EditModeSystem.ChatFrame and type(system.anchorInfo) == "table" then
             local info = system.anchorInfo

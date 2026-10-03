@@ -279,7 +279,7 @@ function ns.PinBandBars()
         end
     end
     if WidthsToBand(mgr) then changed = true end
-    if ns.PlaceClassicTracker and ns.PlaceClassicTracker() then changed = true end
+    if ns.PlaceClassicSpots and ns.PlaceClassicSpots() then changed = true end
     B.applying = false
     if ResetEndCaps() then changed = true end
     if changed then pcall(mgr.SaveLayouts, mgr) end
