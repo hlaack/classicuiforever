@@ -244,6 +244,16 @@ function ns.ResetLayoutSettingsNow()
     return changed
 end
 
+-- Bar 1's art hidden in our layout's data though the player never ticked it (Bar/BandBare.lua): shown again there.
+local function ArtBackInLayout()
+    B.WatchArtTick(false)
+    if not ns.ClassicLayoutActive() or ns.db.barArtHidden or ns.db.barArtKeep then return false end
+    local entry = B.LayoutArtEntry()
+    if not (entry and entry.value == 1) then return false end
+    entry.value = 0
+    return true
+end
+
 -- Write band bars into the active layout at band spots, on any layout (the client re-lays a "default" bar mid-fight
 -- on any layout); player-placed bars are left alone; presets can't be written. Called from ns.ReloadForLayout
 -- (the reload press), never at logout: edit mode is shut then and keeps nothing.
@@ -282,6 +292,7 @@ function ns.PinBandBars()
     if ns.PlaceClassicSpots and ns.PlaceClassicSpots() then changed = true end
     B.applying = false
     if ResetEndCaps() then changed = true end
+    if ArtBackInLayout() then changed = true end
     if changed then pcall(mgr.SaveLayouts, mgr) end
     return changed
 end

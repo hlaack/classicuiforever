@@ -65,6 +65,7 @@ UI\SecurePad.lua
 Bar\BarSkins.lua
 Bar\Band.lua
 Bar\BandShape.lua
+Bar\BandBare.lua
 Bar\BandArt.lua
 Bar\BandBars.lua
 Bar\BandBags.lua

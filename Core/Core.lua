@@ -418,6 +418,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         if saved and saved < 6 then ns.HideThreatGlowNow() end
         if saved and saved < 7 then ns.MarkEraScaleOffer() end
         if saved and saved < 8 then ns.KeepGroupFinderEye() end
+        if saved and saved < 9 then ns.KeepBarArt() end
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
         ns.BarSizeKey()

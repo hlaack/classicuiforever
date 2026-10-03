@@ -90,7 +90,7 @@ function B.PaintArt()
     -- Hide Bar Art on Action Bar 1 drops its runs and the gryphons like the client's art; the micro menu's and the bags'
     -- runs go by their own Hide Bar Art. Buttons and the xp bar stay.
     local main = ns.GetMainBar()
-    local bare = main and main.hideBarArt == true
+    local bare = B.BarBare(main)
     ARTLESS.bar, ARTLESS.micro, ARTLESS.bags = bare, ns.db.hideMicroArt == true, ns.db.hideBagsArt == true
     for i, tex in ipairs(art.pieces) do
         local seg = segments[i]
@@ -167,7 +167,7 @@ local function CarryHiddenCaps(bar)
 end
 
 local function GryphonShown(bar, key)
-    return not (bar and bar.hideBarArt == true) and not ns.db[GRYPHON_HIDE[key]]
+    return not B.BarBare(bar) and not ns.db[GRYPHON_HIDE[key]]
 end
 
 -- A cap's bottom-centre offset from the band's, the same on both ends.
@@ -306,7 +306,7 @@ end
 -- Band width, and gryphons hidden with Hide Bar Art (as the client's end caps go).
 local function ApplyArtShape(bar)
     local art = B.art
-    local hide = bar and bar.hideBarArt == true
+    local hide = B.BarBare(bar)
     local w = ArtWidth()
     art:SetSize(w, ART_H)
     art.artHidden = hide
@@ -355,5 +355,5 @@ function B.KeepBarShape()
         local tex = art and art[CAP_TEX[key]]
         if tex then ns.SetShownIf(tex, GryphonShown(bar, key)) end
     end
-    if art and (bar.hideBarArt == true) ~= (art.artHidden == true) then ApplyArtShape(bar) end
+    if art and B.BarBare(bar) ~= (art.artHidden == true) then ApplyArtShape(bar) end
 end

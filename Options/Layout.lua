@@ -385,6 +385,7 @@ local function ResetNow()
     if not ns.ClassicLayoutActive() then return false end
     ns.db.microPos, ns.db.microScale = nil, nil
     ns.db.hideMicroArt, ns.db.hideBagsArt = false, false
+    ns.db.barArtHidden, ns.db.barArtKeep = false, nil
     -- The band's own pieces back on it at their defaults: latency bar, key ring, the reagent bag in its full slot.
     ns.db.hideLatencyBar, ns.db.hideKeyRing = false, false
     ns.db.latencyPos, ns.db.keyRingPos = nil, nil
@@ -582,6 +583,7 @@ local function ClassicNow(job)
         local base = presets and (presets[classicIndex] or presets[1])
         if not base then return false end
         DressLayoutData(base, counts, pins, true)
+        ns.db.barArtHidden, ns.db.barArtKeep = false, nil
         base.layoutType = Enum.EditModeLayoutType.Account
         base.layoutName = LAYOUT_NAME
         -- After the account's last layout, where the client puts a new one.

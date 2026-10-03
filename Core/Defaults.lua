@@ -2,7 +2,7 @@ local _, ns = ...
 local L = ns.L
 
 ns.DB_DEFAULTS = {
-    dbVersion = 8,
+    dbVersion = 9,
     classicBar = true,
     oneBar = false,
     classicBarSize = false,
@@ -135,6 +135,8 @@ ns.DB_DEFAULTS = {
     hideKeyRing = false,
     hideBagsArt = false,
     hideMicroArt = false,
+    -- Bar 1's Hide Bar Art as the player ticked it on our layout (Bar/BandBare.lua).
+    barArtHidden = false,
     statusBarBacking = true,
     gryphonsOverBars = false,
     showGryphonLeft = true, hideGryphonLeft = false, showGryphonRight = true, hideGryphonRight = false,
