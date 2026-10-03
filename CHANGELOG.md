@@ -2,6 +2,37 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.17.0] - 2026-10-02
+
+### Added
+- Track Recipe in the trade skill window lists the recipe's reagents in the objective tracker, and a chain link beside the window's title puts a link to your profession in chat, as in Wrath of the Lich King.
+- The trade skill window's Filter is Classic Era's checkbox menu, with a Slots submenu for professions that make gear.
+- Elite dragons under Nameplates: a gold dragon around the level of elite enemies, silver for rares. Off by default.
+- Ignore theme for elite frames and Ignore theme for nameplate dragons under Custom theme: the gold and silver dragons keep their own colors with a theme on. Off by default.
+- Hide combat glow under Unit frames: no red pulse on the player frame while you attack. The gold resting glow stays. Off by default.
+- Name who interrupted under Cast bars: interrupted cast bars say just Interrupted, as in Classic Era; check this to also see who interrupted. Off by default.
+- Instance difficulty under Minimap: the flag the game puts on the minimap in dungeons and raids can be shown, shown on hover or hidden. Hidden by default.
+- Shaded XP and reputation bars under Classic bar: the empty part of the bars is half dark, as in Classic Era, instead of showing the world through. On by default.
+- Shift-click a talent in the talent window to link it in chat.
+- Setting up, switching to or resetting the classic layout offers Classic Era's interface size when yours is different. Players updating on the game's default size are offered it once.
+
+### Changed
+- Right-click and drop-down menus have Classic Era's black background instead of a bright navy.
+- Nameplates match Classic Era's size: the health bar sits where Classic Era puts it, and the game's default nameplate size draws Classic Era's default.
+- On the classic layout, buffs and debuffs sit at Classic Era's spots beside the minimap. Buffs you moved in Edit Mode stay where you put them.
+
+### Fixed
+- Train works for spells and recipes far down a trainer's list, such as recipes that need more than 30 skill. Pressing it did nothing for them.
+- The professions key, the micro button and the spellbook's Professions tab open the professions book again. They opened the last profession you used.
+- The chat menu and voice chat buttons stay beside the chat on every docked tab. Two of the six buttons vanished on other tabs.
+- On the classic layout, the durability figure sits under the minimap, left of the side action bars. It was hidden behind them.
+- Interrupted casts on the target, focus and nameplates turn red and fill the bar, and other units' channels and finished casts show green. They stayed gold.
+- The classic world map opened in a fight no longer catches clicks around it.
+- Turning the theme off or switching themes no longer breaks red buttons such as Edit Mode's Save and Revert All Changes.
+- Turning the classic bar off gives the XP and reputation bars the game's own look back at once.
+- Turning the classic nameplates off no longer raises an error.
+- Small alignment fix on the bag close buttons.
+
 ## [0.16.2] - 2026-10-02
 
 ### Fixed

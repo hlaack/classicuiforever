@@ -2,6 +2,22 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN18_1_TITLE"] = "Professions"
+L["WN18_1_TEXT"] = "The trade skill window can now track a recipe (its reagents show in the objective tracker), filter by gear slot, and link your profession in chat with the chain link beside its title. The professions key opens the professions book again."
+L["WN18_2_TITLE"] = "Elite dragons"
+L["WN18_2_TEXT"] = "Elite enemies can show a gold dragon around their level on the nameplate, rares a silver one: turn on Elite dragons in the options (/fcui), under Nameplates. With a custom theme on, Ignore theme for elite frames and Ignore theme for nameplate dragons, under Custom theme, keep the dragons gold and silver. All off by default."
+L["WN18_3_TITLE"] = "Combat glow"
+L["WN18_3_TEXT"] = "To stop the player frame's red pulse while you attack, turn on Hide combat glow in the options (/fcui), under Unit frames. Off by default."
+L["WN18_4_TITLE"] = "Cast bars"
+L["WN18_4_TEXT"] = "Interrupted casts on the target, focus and nameplates now turn red and say just Interrupted, as in Classic Era. To see who interrupted, turn on Name who interrupted in the options (/fcui), under Cast bars. Channels show green."
+L["WN18_5_TITLE"] = "Instance difficulty"
+L["WN18_5_TEXT"] = "The difficulty flag the game shows on the minimap in dungeons and raids is now hidden. To bring it back, pick shown or on hover under Minimap in the options (/fcui)."
+L["WN18_6_TITLE"] = "Classic layout"
+L["WN18_6_TEXT"] = "The durability figure no longer hides behind the side bars, and buffs sit at Classic Era's spots beside the minimap. The layout also offers Classic Era's interface size when yours is different."
+L["WN18_7_TITLE"] = "Look"
+L["WN18_7_TEXT"] = "Menus have Classic Era's black background, and nameplates match Classic Era's size. The empty part of the XP and reputation bars is shaded as in Classic Era; to turn the shade off, uncheck Shaded XP and reputation bars under Classic bar."
+L["WN18_8_TITLE"] = "Fixes"
+L["WN18_8_TEXT"] = "Train works for recipes far down a trainer's list. The chat buttons stay on every chat tab, and shift-click links a talent in chat. The world map opened in a fight no longer catches clicks, and Edit Mode's red buttons stay whole when you change theme."
 L["WN17_1_TITLE"] = "Nameplate errors"
 L["WN17_1_TEXT"] = "With a theme on, the classic nameplates no longer cause error messages."
 L["WN17_2_TITLE"] = "Target buffs"

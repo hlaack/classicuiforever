@@ -3,6 +3,22 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN18_1_TITLE"] = "Berufe"
+L["WN18_1_TEXT"] = "Im Berufsfenster kannst du jetzt ein Rezept verfolgen (seine Reagenzien stehen in der Zielverfolgung), nach Ausrüstungsplatz filtern und deinen Beruf mit dem Kettenglied neben dem Titel im Chat verlinken. Die Berufetaste öffnet wieder das Berufsbuch."
+L["WN18_2_TITLE"] = "Elitedrachen"
+L["WN18_2_TEXT"] = "Elitegegner können auf der Namensplakette einen goldenen Drachen um ihre Stufe zeigen, seltene einen silbernen: Schalte in den Optionen (/fcui) unter Namensplaketten Elitedrachen ein. Mit einem eigenen Design halten Design für Elitefenster ignorieren und Design für Plakettendrachen ignorieren unter Eigenes Design die Drachen golden und silbern. Alles standardmäßig aus."
+L["WN18_3_TITLE"] = "Kampfleuchten"
+L["WN18_3_TEXT"] = "Um das rote Pulsieren des Spielerfensters beim Angreifen abzustellen, schalte in den Optionen (/fcui) unter Einheitenfenster Kampfleuchten ausblenden ein. Standardmäßig aus."
+L["WN18_4_TITLE"] = "Zauberleisten"
+L["WN18_4_TEXT"] = "Unterbrochene Zauber bei Ziel, Fokus und Namensplaketten werden jetzt rot und zeigen nur Unterbrochen, wie in Classic Era. Um zu sehen, wer unterbrochen hat, schalte in den Optionen (/fcui) unter Zauberleisten Unterbrecher nennen ein. Kanalisierte Zauber erscheinen grün."
+L["WN18_5_TITLE"] = "Instanzschwierigkeit"
+L["WN18_5_TEXT"] = "Die Schwierigkeitsflagge, die das Spiel in Dungeons und Schlachtzügen an der Minikarte zeigt, ist jetzt ausgeblendet. Um sie zurückzuholen, wähle in den Optionen (/fcui) unter Minikarte angezeigt oder beim Überfahren."
+L["WN18_6_TITLE"] = "Klassisches Layout"
+L["WN18_6_TEXT"] = "Die Haltbarkeitsfigur versteckt sich nicht mehr hinter den seitlichen Leisten, und Stärkungszauber sitzen an den Stellen aus Classic Era neben der Minikarte. Das Layout bietet außerdem die Interfacegröße aus Classic Era an, wenn deine abweicht."
+L["WN18_7_TITLE"] = "Aussehen"
+L["WN18_7_TEXT"] = "Menüs haben den schwarzen Hintergrund aus Classic Era, und Namensplaketten haben die Größe aus Classic Era. Der leere Teil der EP- und Rufleisten ist wie in Classic Era abgedunkelt; um das abzuschalten, entferne unter Klassische Leiste das Häkchen bei Abgedunkelte EP- und Rufleisten."
+L["WN18_8_TITLE"] = "Fehlerbehebungen"
+L["WN18_8_TEXT"] = "Erlernen funktioniert auch für Rezepte weit unten in der Liste eines Lehrers. Die Chatknöpfe bleiben auf jedem Chatreiter, und Umschalt-Klick verlinkt ein Talent im Chat. Die im Kampf geöffnete Weltkarte fängt keine Klicks mehr ab, und die roten Knöpfe des Bearbeitungsmodus bleiben beim Designwechsel ganz."
 L["WN17_1_TITLE"] = "Fehler bei Namensplaketten"
 L["WN17_1_TEXT"] = "Mit einem Design lösen die klassischen Namensplaketten keine Fehlermeldungen mehr aus."
 L["WN17_2_TITLE"] = "Stärkungszauber des Ziels"

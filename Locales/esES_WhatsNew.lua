@@ -3,6 +3,22 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
+L["WN18_1_TITLE"] = "Profesiones"
+L["WN18_1_TEXT"] = "La ventana de profesión ahora puede seguir una receta (sus componentes aparecen en el rastreador de objetivos), filtrar por ranura de equipo y enlazar tu profesión en el chat con el eslabón junto a su título. La tecla de profesiones vuelve a abrir el libro de profesiones."
+L["WN18_2_TITLE"] = "Dragones de élite"
+L["WN18_2_TEXT"] = "Los enemigos de élite pueden mostrar un dragón dorado alrededor de su nivel en la placa de nombre, y los raros uno plateado: activa Dragones de élite en las opciones (/fcui), en Placas de nombre. Con un tema personalizado, Ignorar el tema en los marcos de élite e Ignorar el tema en los dragones de las placas, en Tema personalizado, mantienen los dragones dorados y plateados. Todo desactivado por defecto."
+L["WN18_3_TITLE"] = "Brillo de combate"
+L["WN18_3_TEXT"] = "Para quitar el pulso rojo del marco del jugador mientras atacas, activa Ocultar brillo de combate en las opciones (/fcui), en Marcos de unidad. Desactivado por defecto."
+L["WN18_4_TITLE"] = "Barras de lanzamiento"
+L["WN18_4_TEXT"] = "Los hechizos interrumpidos del objetivo, el foco y las placas de nombre ahora se vuelven rojos y solo dicen Interrumpido, como en Classic Era. Para ver quién interrumpió, activa Nombrar a quien interrumpe en las opciones (/fcui), en Barras de lanzamiento. Las canalizaciones se ven en verde."
+L["WN18_5_TITLE"] = "Dificultad de instancia"
+L["WN18_5_TEXT"] = "La bandera de dificultad que el juego muestra en el minimapa en mazmorras y bandas ahora está oculta. Para recuperarla, elige visible o al pasar el ratón en Minimapa, en las opciones (/fcui)."
+L["WN18_6_TITLE"] = "Diseño clásico"
+L["WN18_6_TEXT"] = "La figura de durabilidad ya no queda oculta tras las barras laterales, y los beneficios se colocan en los sitios de Classic Era junto al minimapa. El diseño también ofrece el tamaño de interfaz de Classic Era cuando el tuyo es distinto."
+L["WN18_7_TITLE"] = "Aspecto"
+L["WN18_7_TEXT"] = "Los menús tienen el fondo negro de Classic Era, y las placas de nombre tienen el tamaño de Classic Era. La parte vacía de las barras de experiencia y reputación está sombreada como en Classic Era; para quitar la sombra, desmarca Barras de experiencia y reputación sombreadas en Barra clásica."
+L["WN18_8_TITLE"] = "Correcciones"
+L["WN18_8_TEXT"] = "Entrenar funciona con recetas muy abajo en la lista de un instructor. Los botones del chat se quedan en todas las pestañas del chat, y Mayús-clic enlaza un talento en el chat. El mapa del mundo abierto en combate ya no captura clics, y los botones rojos del modo de edición se mantienen enteros al cambiar de tema."
 L["WN17_1_TITLE"] = "Errores en placas de nombre"
 L["WN17_1_TEXT"] = "Con un tema activo, las placas de nombre clásicas ya no causan mensajes de error."
 L["WN17_2_TITLE"] = "Beneficios del objetivo"

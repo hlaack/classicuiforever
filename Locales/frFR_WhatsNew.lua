@@ -3,6 +3,22 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
+L["WN18_1_TITLE"] = "Métiers"
+L["WN18_1_TEXT"] = "La fenêtre de métier peut maintenant suivre une recette (ses composants s'affichent dans le suivi des objectifs), filtrer par emplacement d'équipement et lier votre métier dans la discussion avec le maillon à côté de son titre. La touche des métiers ouvre de nouveau le livre des métiers."
+L["WN18_2_TITLE"] = "Dragons d'élite"
+L["WN18_2_TEXT"] = "Les ennemis d'élite peuvent afficher un dragon doré autour de leur niveau sur la barre de nom, les rares un dragon argenté : activez Dragons d'élite dans les options (/fcui), sous Barres de nom. Avec un thème personnalisé, Ignorer le thème pour les cadres d'élite et Ignorer le thème pour les dragons des barres, sous Thème personnalisé, gardent les dragons dorés et argentés. Tout est désactivé par défaut."
+L["WN18_3_TITLE"] = "Lueur de combat"
+L["WN18_3_TEXT"] = "Pour arrêter la pulsation rouge du cadre du joueur pendant que vous attaquez, activez Masquer la lueur de combat dans les options (/fcui), sous Cadres d'unité. Désactivé par défaut."
+L["WN18_4_TITLE"] = "Barres d'incantation"
+L["WN18_4_TEXT"] = "Les sorts interrompus de la cible, du focus et des barres de nom deviennent maintenant rouges et indiquent seulement Interrompu, comme dans Classic Era. Pour voir qui a interrompu, activez Nommer qui interrompt dans les options (/fcui), sous Barres d'incantation. Les canalisations s'affichent en vert."
+L["WN18_5_TITLE"] = "Difficulté d'instance"
+L["WN18_5_TEXT"] = "Le drapeau de difficulté que le jeu affiche sur la minicarte en donjon et en raid est maintenant masqué. Pour le retrouver, choisissez affichée ou au survol sous Minicarte, dans les options (/fcui)."
+L["WN18_6_TITLE"] = "Disposition classique"
+L["WN18_6_TEXT"] = "La silhouette de durabilité ne se cache plus derrière les barres latérales, et les améliorations se placent aux emplacements de Classic Era à côté de la minicarte. La disposition propose aussi la taille d'interface de Classic Era quand la vôtre est différente."
+L["WN18_7_TITLE"] = "Apparence"
+L["WN18_7_TEXT"] = "Les menus ont le fond noir de Classic Era, et les barres de nom ont la taille de Classic Era. La partie vide des barres d'expérience et de réputation est ombrée comme dans Classic Era ; pour retirer l'ombre, décochez Barres d'expérience et de réputation ombrées sous Barre classique."
+L["WN18_8_TITLE"] = "Corrections"
+L["WN18_8_TEXT"] = "Former fonctionne pour les recettes loin dans la liste d'un maître. Les boutons de discussion restent sur chaque onglet, et Maj-clic lie un talent dans la discussion. La carte du monde ouverte en combat n'intercepte plus les clics, et les boutons rouges du mode Édition restent entiers quand vous changez de thème."
 L["WN17_1_TITLE"] = "Erreurs des barres de nom"
 L["WN17_1_TEXT"] = "Avec un thème actif, les barres de nom classiques ne provoquent plus de messages d'erreur."
 L["WN17_2_TITLE"] = "Améliorations de la cible"

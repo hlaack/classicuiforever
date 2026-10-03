@@ -3,6 +3,22 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN18_1_TITLE"] = "Professioni"
+L["WN18_1_TEXT"] = "La finestra della professione ora può seguire una ricetta (i suoi reagenti compaiono nel tracciamento degli obiettivi), filtrare per slot dell'equipaggiamento e collegare la tua professione in chat con l'anello di catena accanto al titolo. Il tasto delle professioni apre di nuovo il libro delle professioni."
+L["WN18_2_TITLE"] = "Draghi élite"
+L["WN18_2_TEXT"] = "I nemici élite possono mostrare un drago dorato intorno al livello sulla targhetta, i rari uno argentato: attiva Draghi élite nelle opzioni (/fcui), in Targhette. Con un tema personalizzato, Ignora il tema per i riquadri élite e Ignora il tema per i draghi delle targhette, in Tema personalizzato, mantengono i draghi dorati e argentati. Tutto disattivato di base."
+L["WN18_3_TITLE"] = "Bagliore di combattimento"
+L["WN18_3_TEXT"] = "Per fermare la pulsazione rossa del riquadro del giocatore mentre attacchi, attiva Nascondi bagliore di combattimento nelle opzioni (/fcui), in Riquadri delle unità. Disattivato di base."
+L["WN18_4_TITLE"] = "Barre di lancio"
+L["WN18_4_TEXT"] = "I lanci interrotti di bersaglio, focus e targhette ora diventano rossi e dicono solo Interrotto, come in Classic Era. Per vedere chi ha interrotto, attiva Nomina chi interrompe nelle opzioni (/fcui), in Barre di lancio. Le canalizzazioni appaiono in verde."
+L["WN18_5_TITLE"] = "Difficoltà dell'istanza"
+L["WN18_5_TEXT"] = "La bandiera di difficoltà che il gioco mostra sulla minimappa in spedizioni e incursioni ora è nascosta. Per riaverla, scegli visibile o al passaggio in Minimappa, nelle opzioni (/fcui)."
+L["WN18_6_TITLE"] = "Disposizione classica"
+L["WN18_6_TEXT"] = "La figura della durabilità non si nasconde più dietro le barre laterali, e i benefici stanno nei punti di Classic Era accanto alla minimappa. La disposizione offre anche la dimensione dell'interfaccia di Classic Era quando la tua è diversa."
+L["WN18_7_TITLE"] = "Aspetto"
+L["WN18_7_TEXT"] = "I menu hanno lo sfondo nero di Classic Era, e le targhette hanno la dimensione di Classic Era. La parte vuota delle barre di esperienza e reputazione è ombreggiata come in Classic Era; per togliere l'ombra, deseleziona Barre di esperienza e reputazione ombreggiate in Barra classica."
+L["WN18_8_TITLE"] = "Correzioni"
+L["WN18_8_TEXT"] = "Addestra funziona per le ricette in fondo alla lista di un istruttore. I pulsanti della chat restano su ogni scheda, e Maiusc-clic collega un talento in chat. La mappa del mondo aperta in combattimento non cattura più i clic, e i pulsanti rossi della modalità modifica restano interi quando cambi tema."
 L["WN17_1_TITLE"] = "Errori delle targhette"
 L["WN17_1_TEXT"] = "Con un tema attivo, le targhette classiche non causano più messaggi di errore."
 L["WN17_2_TITLE"] = "Benefici del bersaglio"

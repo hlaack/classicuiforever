@@ -128,6 +128,16 @@ end
 -- What's New: each version's changelog in short, most important first, similar fixes grouped. A player gets the chat
 -- line once per new version, and the box shows only the versions since the one they saw last.
 local WHATSNEW = {
+    { id = 18, version = "0.17.0",
+        { L["WN18_1_TITLE"], L["WN18_1_TEXT"] },
+        { L["WN18_2_TITLE"], L["WN18_2_TEXT"] },
+        { L["WN18_3_TITLE"], L["WN18_3_TEXT"] },
+        { L["WN18_4_TITLE"], L["WN18_4_TEXT"] },
+        { L["WN18_5_TITLE"], L["WN18_5_TEXT"] },
+        { L["WN18_6_TITLE"], L["WN18_6_TEXT"] },
+        { L["WN18_7_TITLE"], L["WN18_7_TEXT"] },
+        { L["WN18_8_TITLE"], L["WN18_8_TEXT"] },
+    },
     { id = 17, version = "0.16.2",
         { L["WN17_1_TITLE"], L["WN17_1_TEXT"] },
         { L["WN17_2_TITLE"], L["WN17_2_TEXT"] },
