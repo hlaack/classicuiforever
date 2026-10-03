@@ -18,6 +18,63 @@ function LG.Text(global, key)
     return L[key]
 end
 
+-- A page in place of the tree, inside the window's metal down to the foot, on stone over the talent art's painted tree
+-- and foot under the trainer's divider bar, Close at its foot. Hidden; the page shows it.
+-- Right to the border's inner edge (340, as the talent window's foot): past it the page covered the border.
+local PANEL_LEFT, PANEL_TOP, PANEL_RIGHT, PANEL_BOTTOM = 14, -24, 340, -440
+-- The bar's metal: its upper 8 rows of 16 (the damage meter's divider measures it the same way).
+local METAL_H = 8
+-- The divider's metal foot 55 down the page (79 down the window); the stone starts under its metal (75 down the window,
+-- under the portrait ring's foot at about 71, measured in game), which hides where the stone meets the window's art.
+local METAL_FOOT = -55
+LG.METAL_FOOT = METAL_FOOT
+local STONE_TOP = METAL_FOOT + METAL_H / 2
+-- The bar over a page's own frames (the trade skill shell's All tab and its stone strips stand 3 to 6 over the page),
+-- under its filter button (12 over).
+local BAR_LEVEL = 8
+LG.PANEL_W = PANEL_RIGHT - PANEL_LEFT
+
+function LG.Panel(frame)
+    local panel = ns.NewFrame("Frame", nil, frame)
+    panel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANEL_LEFT, PANEL_TOP)
+    panel:SetPoint("BOTTOMRIGHT", frame, "TOPLEFT", PANEL_RIGHT, PANEL_BOTTOM)
+    local stone = panel:CreateTexture(nil, "BACKGROUND")
+    stone:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, STONE_TOP)
+    stone:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", 0, 0)
+    ns.TileTex(stone, "rockBg")
+    local bar = ns.NewFrame("Frame", nil, panel)
+    bar:SetAllPoints(panel)
+    bar:SetFrameLevel(panel:GetFrameLevel() + BAR_LEVEL)
+    local barRun, barEnd = ns.DividerBar(bar)
+    barEnd:SetPoint("TOPRIGHT", panel, "TOPRIGHT", 0, METAL_FOOT + METAL_H)
+    barRun:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, METAL_FOOT + METAL_H)
+    barRun:SetPoint("TOPRIGHT", barEnd, "TOPLEFT")
+    local close = ns.PanelButton(panel, CLOSE or "Close", 84)
+    close:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -8, 11)
+    close:SetScript("OnClick", function() frame:Hide() end)
+    panel:Hide()
+    return panel
+end
+
+local LegacyConsts = Constants and Constants.LegacyConsts or ns.EMPTY
+LG.POINTS_CURRENCY = LegacyConsts.LEGACY_POINTS_TRAIT_CURRENCY_ID or 4225
+LG.TRACK_FACTION = LegacyConsts.LEGACY_REWARD_TRACK_FACTION_ID or 2802
+
+-- The account's Legacy Points earned so far (its reward track level); nil when the client cannot say.
+function LG.Earned()
+    local get = C_MajorFactions and C_MajorFactions.GetCurrentRenownLevel
+    local earned = get and get(LG.TRACK_FACTION)
+    return type(earned) == "number" and earned or nil
+end
+
+-- The window's points bar: earned, out of all the challenges give.
+function LG.ShowEarned(frame)
+    local earned = LG.Earned()
+    local most = C_Traits.GetMaxAvailableTraitCurrency and C_Traits.GetMaxAvailableTraitCurrency(LG.POINTS_CURRENCY, false)
+    frame.spent:SetText(earned and type(most) == "number"
+        and string.format(L["LEGACY_EARNED"], "|cffffffff" .. earned .. "|r", "|cffffffff" .. most .. "|r") or "")
+end
+
 -- page: { key, icon, tip = { global, key }, title = { global, key }, events, build(frame), shown(frame, on),
 -- refresh(frame), learn(tree) }. Pages show in the order added.
 function LG.AddPage(page)

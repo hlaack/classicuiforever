@@ -362,16 +362,26 @@ local function BuildShell(name, spec)
     return frame
 end
 
--- A dark bar with the skill bars' old round-ended grey rim and a label in its middle (bar.text); width and place are the caller's.
-function ns.RimBar(parent, height)
+-- A dark bar with the skill bars' old round-ended grey rim and a label in its middle (bar.text); width and place are the
+-- caller's. color { r, g, b }: a status bar fills it (bar.fill), the label over the fill.
+function ns.RimBar(parent, height, color)
     local bar = ns.NewFrame("Frame", nil, parent)
     bar:SetHeight(height or 13)
-    local fill = bar:CreateTexture(nil, "BACKGROUND")
-    fill:SetColorTexture(0, 0, 0, 0.6)
-    fill:SetPoint("TOPLEFT", bar, "TOPLEFT", 1, 0)
-    fill:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -1, 0)
+    local back = bar:CreateTexture(nil, "BACKGROUND")
+    back:SetColorTexture(0, 0, 0, 0.6)
+    back:SetPoint("TOPLEFT", bar, "TOPLEFT", 1, 0)
+    back:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -1, 0)
     ns.ThreeSlice(bar, nil, RIM)
-    bar.text = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    local host = bar
+    if color then
+        local fill = ns.NewFrame("StatusBar", nil, bar)
+        fill:SetPoint("TOPLEFT", bar, "TOPLEFT", 1, -1)
+        fill:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -1, 1)
+        ns.SetBarFill(fill)
+        fill:SetStatusBarColor(color[1], color[2], color[3])
+        bar.fill, host = fill, fill
+    end
+    bar.text = host:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     bar.text:SetPoint("CENTER", bar, "CENTER", 0, 0)
     return bar
 end

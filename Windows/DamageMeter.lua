@@ -22,9 +22,8 @@ end
 
 local KNOB_IN = 3       -- the divider's ends inside the side rails
 local DIVIDER_Y = -28   -- the divider bar's middle, at the foot of the meter's 32 px header
--- The trainer's bar sheet: a 256 px run with its left knob, then a 76 px right end, each 16 rows round an 8 px bar.
-local BAR_FILE = "Interface\\ClassTrainerFrame\\UI-ClassTrainer-HorizontalBar"
-local BAR_H, BAR_END_W = 16, 76
+-- The trainer's divider bar (UI/DividerBar.lua), 16 rows round an 8 px bar.
+local BAR_H = 16
 local MARBLE_TILE, MARBLE = { coords = { 0, 1, 0, 1 } }, 1.35
 local CLIENT_BACK = "damagemeters-background"
 -- The list's scroll bar pieces (+ right, + up; the bar's own scale, 0.8 by default).
@@ -154,14 +153,6 @@ local function DressButtons(window)
     if kind and kind.TypeName and kind.TypeName.SetWordWrap then kind.TypeName:SetWordWrap(false) end
 end
 
-local function BarPiece(box, u1, v0, v1)
-    local tex = box:CreateTexture(nil, "OVERLAY")
-    ns.SetFile(tex, BAR_FILE)
-    tex:SetTexCoord(0, u1, v0, v1)
-    tex:SetHeight(BAR_H)
-    return tex
-end
-
 -- Under the meter's rows and buttons: one level below the window.
 local function Boxes(window)
     local pair = boxes[window]
@@ -173,10 +164,8 @@ local function Boxes(window)
     stone:SetPoint("TOPLEFT", box, "TOPLEFT", INSET, -INSET)
     stone:SetPoint("BOTTOMRIGHT", window, "TOPRIGHT", OUT - INSET, DIVIDER_Y)
     -- The divider across the whole box, its knobs on the side rails as on the trainer.
-    local barEnd = BarPiece(box, BAR_END_W / 256, 0.25, 0.5)
-    barEnd:SetWidth(BAR_END_W)
+    local barRun, barEnd = ns.DividerBar(box)
     barEnd:SetPoint("TOPRIGHT", window, "TOPRIGHT", OUT - KNOB_IN, DIVIDER_Y + BAR_H / 2)
-    local barRun = BarPiece(box, 1, 0, 0.25)
     barRun:SetPoint("TOPLEFT", window, "TOPLEFT", -OUT + KNOB_IN, DIVIDER_Y + BAR_H / 2)
     barRun:SetPoint("TOPRIGHT", barEnd, "TOPLEFT")
     -- The body in the container the meter hides when minimized: marble, and the tree art clipped over it.

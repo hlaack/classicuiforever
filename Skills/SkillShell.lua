@@ -307,6 +307,8 @@ local function RimStones(panel, listBox)
     -- As far down as the list's strip, or a square of bare metal shows in the angle.
     besideTab:SetPoint("BOTTOMRIGHT", panel.allTab, "BOTTOMRIGHT", 0, -8)
     besideTab:SetWidth(8)
+    -- A page that lays its own edge over the tab (the Legacy window's divider) moves these.
+    panel.tabStones = { overTab = overTab, besideTab = besideTab }
 end
 
 -- Detail pane over the list's bottom edge so the borders read as one heavy line (metal 4 to 11 px in at this weight).

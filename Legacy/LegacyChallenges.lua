@@ -9,19 +9,25 @@ local LG = ns.legacy
 local Text = LG.Text
 local SkillList = ns.SkillList
 
-local LegacyConsts = Constants and Constants.LegacyConsts or ns.EMPTY
-local POINTS_CURRENCY = LegacyConsts.LEGACY_POINTS_TRAIT_CURRENCY_ID or 4225
-local TRACK_FACTION = LegacyConsts.LEGACY_REWARD_TRACK_FACTION_ID or 2802
--- The page inside the window's metal, from under its title band to the foot.
-local PANEL_LEFT, PANEL_TOP, PANEL_RIGHT, PANEL_BOTTOM = 14, -12, 346, -440
-local STONE_TOP = -50
+local POINTS_CURRENCY = LG.POINTS_CURRENCY
 local LIST_ROWS = 10
+-- The All tab's height over the shell's list; how far its top stands over the divider's metal foot, so its own top
+-- border lies under the divider (which draws over it); the filter's clear top edge and its place from the right.
+-- Measured in game.
+local ALL_TAB_H, TAB_STONE, FILTER_EDGE, FILTER_X = 22, 6, 5, -9
+-- The filter's box this far under the divider's metal, so its top border shows whole (touching, the two lines merged).
+local FILTER_GAP = 3
+-- The shell's All button over the list, as the shell lays it (its list 75 down the page, the button 68).
+local ALL_BUTTON_OVER = 7
+-- The list raised so the All tab's metal meets the divider's, which hides where the page's stone starts.
+local LIST_TOP = LG.METAL_FOOT - ALL_TAB_H + TAB_STONE
 local CRITERIA_LINE = 13
 -- The detail pane's text width: the page less the pane's scroll column.
-local CONTENT_W = PANEL_RIGHT - PANEL_LEFT - 26
+local CONTENT_W = LG.PANEL_W - 26
 local DONE_COLOR = { 0.5, 0.5, 0.5 }
 local OPEN_COLOR = { 1, 1, 1 }
 local HEADER_COLOR = { 1, 0.82, 0 }
+local PROGRESS_COLOR = { 0, 0.6, 0.1 }
 
 local panel, detail
 local lines, collapsed = {}, {}
@@ -230,15 +236,8 @@ local function BuildDetail()
     detail.text:SetPoint("TOPLEFT", content, "TOPLEFT", 21, -62)
     detail.text:SetPoint("RIGHT", content, "RIGHT", -16, 0)
     detail.text:SetJustifyH("LEFT")
-    detail.progress = ns.RimBar(content, 15)
+    detail.progress = ns.RimBar(content, 15, PROGRESS_COLOR)
     detail.progress:SetWidth(CONTENT_W - 44)
-    local fill = ns.NewFrame("StatusBar", nil, detail.progress)
-    fill:SetPoint("TOPLEFT", detail.progress, "TOPLEFT", 1, -1)
-    fill:SetPoint("BOTTOMRIGHT", detail.progress, "BOTTOMRIGHT", -1, 1)
-    ns.SetBarFill(fill)
-    fill:SetStatusBarColor(0, 0.6, 0.1)
-    detail.progress.fill = fill
-    detail.progress.text:SetParent(fill)
     detail.progress:Hide()
     detail.bar = ns.ClassicScrollBar(box, scroll, function(value) scroll:SetVerticalScroll(value or 0) end)
     ns.ScrollColumnOn(detail.bar)
@@ -254,11 +253,7 @@ local function Refresh(frame)
     Collect()
     UpdateRows()
     UpdateDetail()
-    -- The window's points bar: earned, out of all the challenges give.
-    local earned = C_MajorFactions and C_MajorFactions.GetCurrentRenownLevel and C_MajorFactions.GetCurrentRenownLevel(TRACK_FACTION)
-    local most = C_Traits.GetMaxAvailableTraitCurrency and C_Traits.GetMaxAvailableTraitCurrency(POINTS_CURRENCY, false)
-    frame.spent:SetText(type(earned) == "number" and type(most) == "number"
-        and string.format(L["LEGACY_EARNED"], "|cffffffff" .. earned .. "|r", "|cffffffff" .. most .. "|r") or "")
+    LG.ShowEarned(frame)
 end
 
 local function FilterItem(key, global, fallback)
@@ -282,15 +277,17 @@ local function BuildFilter()
 end
 
 local function Build(frame)
-    panel = ns.NewFrame("Frame", nil, frame)
-    panel:SetPoint("TOPLEFT", frame, "TOPLEFT", PANEL_LEFT, PANEL_TOP)
-    panel:SetPoint("BOTTOMRIGHT", frame, "TOPLEFT", PANEL_RIGHT, PANEL_BOTTOM)
-    -- Stone from under the points bar to the foot, over the talent art's painted tree and foot.
-    local stone = panel:CreateTexture(nil, "BACKGROUND")
-    stone:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, STONE_TOP)
-    stone:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", 0, 0)
-    ns.TileTex(stone, "rockBg")
+    panel = LG.Panel(frame)
     ns.OldSkillShell(panel, { rows = LIST_ROWS, createRow = CreateRow, onScroll = UpdateRows })
+    -- The shell's list stands 2 left of its page, under a trainer's border; this window's border is under the page. The
+    -- list, its All button and the filter's box rise to just under the divider.
+    panel.listBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, LIST_TOP)
+    panel.collapseAll:SetPoint("TOPLEFT", panel, "TOPLEFT", 17, LIST_TOP + ALL_BUTTON_OVER)
+    panel.filter:SetPoint("TOPRIGHT", panel, "TOPRIGHT", FILTER_X, LG.METAL_FOOT + FILTER_EDGE - FILTER_GAP)
+    -- The shell's stone strips over the tab's top rose past the divider: the divider is the tab's top edge now, and the
+    -- strip beside the tab starts under it.
+    panel.tabStones.overTab:Hide()
+    panel.tabStones.besideTab:SetPoint("TOPRIGHT", panel.allTab, "TOPRIGHT", 0, -TAB_STONE)
     panel.bar.hideWhenIdle = true
     panel.collapseAll:SetScript("OnClick", function()
         SkillList.FoldAll(lines, collapsed)
@@ -301,10 +298,6 @@ local function Build(frame)
     panel.none:SetPoint("CENTER", panel.list, "CENTER", 0, 0)
     panel.none:SetText(L["LEGACY_NO_CHALLENGES"])
     BuildDetail()
-    local close = ns.PanelButton(panel, CLOSE or "Close", 84)
-    close:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -8, 11)
-    close:SetScript("OnClick", function() frame:Hide() end)
-    panel:Hide()
 end
 
 local function Shown(_, on)
