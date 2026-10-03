@@ -131,11 +131,11 @@ function ns.SetButtonTex(button, which, key)
     return tex
 end
 
--- Ignore theme for elite frames turns at once, in a fight too (the options pass waits one out): every dragon sheet drawn.
+-- Ignore theme for elite frames or nameplate dragons turns at once, in a fight too (the options pass waits one out).
 ns.OnToggle(function(key)
-    if key ~= "themeIgnoreElite" then return end
+    if key ~= "themeIgnoreElite" and key ~= "themeIgnorePlateDragon" then return end
     for texture, art in pairs(B.artKey) do
-        if B.ELITE[art] then
+        if B.AS_DRAWN[art] == key then
             if B.EliteAsDrawn(art) then ns.UntintBronze(texture) else ns.BronzeTint(texture, SHARE[art]) end
         end
     end

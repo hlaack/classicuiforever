@@ -112,6 +112,27 @@ local function UpdateLevel(unitFrame)
     if color then level:SetTextColor(color.r, color.g, color.b) else level:SetTextColor(1, 0.82, 0) end
 end
 
+-- Elite dragons (an option, as Mists of Pandaria drew them): gold round an elite's level, silver round a rare's, under
+-- the border. The 64x32 art (drawn 37x27 from its top left) hugs the level box's right end; its top left from the level's centre.
+local DRAGON_X = -12.5
+local DRAGON_Y = 12
+local DRAGON_WIDTH = 57.5
+local DRAGON_HEIGHT = 29
+local DRAGON = { own = "dragon", layer = "OVERLAY", sublevel = 1, w = DRAGON_WIDTH, h = DRAGON_HEIGHT, coords = FULL,
+    point = "TOPLEFT", relPoint = "RIGHT", x = LEVEL_X + DRAGON_X, y = DRAGON_Y }
+local DRAGON_KEY = { elite = "plateElite", worldboss = "plateElite", rare = "plateRare", rareelite = "plateRare" }
+
+local function UpdateDragon(unitFrame, health)
+    local own = health.fcui
+    local border = own and own.border
+    if not border then return end
+    local kind = ns.db and ns.db.plateDragons == true and unitFrame.unit and UnitClassification(unitFrame.unit)
+    if IsSecret(kind) then kind = nil end
+    local key = kind and DRAGON_KEY[kind]
+    if key then DressNew(health, key, DRAGON, border) end
+    if own.dragon then ns.SetShownIf(own.dragon, key ~= nil) end
+end
+
 -- The client's bottom-up chain at 1.x sizes, bars scaled by Size; name and auras keep the client's sizing.
 local function LayChain(unitFrame, castContainer, container, health)
     local scale = PlateScale()
@@ -233,6 +254,7 @@ local function Layout(unitFrame)
     ns.SetPointIf(level, "CENTER", border, "RIGHT", LEVEL_X, 0)
     ns.SetPointIf(own.skull, "CENTER", border, "RIGHT", LEVEL_X, 0)
     UpdateLevel(unitFrame)
+    UpdateDragon(unitFrame, health)
 
     -- Name centred above the border, sized to its text; debuffs above it.
     local name = unitFrame.name
@@ -476,3 +498,12 @@ local function Restore()
 end
 
 ns.RegisterModule("namePlates", { apply = Apply, restore = Restore })
+
+-- Elite dragons turn at once, in a fight too.
+ns.OnToggle(function(key)
+    if key ~= "plateDragons" or not NP.active then return end
+    EachPlate(function(unitFrame)
+        local _, health = Pieces(unitFrame)
+        if health then UpdateDragon(unitFrame, health) end
+    end)
+end)

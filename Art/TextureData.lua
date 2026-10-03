@@ -40,6 +40,8 @@ ns.TEX = {
     targetingRare = "TargetingFrame\\UI-TargetingFrame-Rare",
     targetingRareElite = "TargetingFrame\\UI-TargetingFrame-Rare-Elite",
     targetingMinus = "TargetingFrame\\UI-TargetingFrame-Minus",
+    plateElite = "Tooltips\\EliteNameplateIcon",
+    plateRare = "Tooltips\\RareEliteNameplateIcon",
     targetingFlash = "TargetingFrame\\UI-TargetingFrame-Flash",
     targetingMinusFlash = "TargetingFrame\\UI-TargetingFrame-Minus-Flash",
     levelBackground = "TargetingFrame\\UI-TargetingFrame-LevelBackground",
@@ -388,13 +390,19 @@ local METAL = {
     tabActive = true, tabInactive = true,
     slotNormal = true,
     maxLevel = true, repBar = true, groupIndicator = true,
+    plateElite = true, plateRare = true,
 }
 B.METAL = METAL
 
--- The dragon sheets (elite gold, rare silver): as drawn under a theme with Ignore theme for elite frames.
-B.ELITE = {
-    targetingElite = true, targetingRare = true, targetingRareElite = true,
-    targetingEliteThickMana = true, targetingEliteThickName = true, targetingRareThickMana = true,
-    targetingRareThickName = true, targetingRareEliteThickMana = true, targetingRareEliteThickName = true,
+-- The dragons (elite gold, rare silver) and the option that keeps each as drawn under a theme.
+B.AS_DRAWN = {
+    targetingElite = "themeIgnoreElite", targetingRare = "themeIgnoreElite", targetingRareElite = "themeIgnoreElite",
+    targetingEliteThickMana = "themeIgnoreElite", targetingEliteThickName = "themeIgnoreElite",
+    targetingRareThickMana = "themeIgnoreElite", targetingRareThickName = "themeIgnoreElite",
+    targetingRareEliteThickMana = "themeIgnoreElite", targetingRareEliteThickName = "themeIgnoreElite",
+    plateElite = "themeIgnorePlateDragon", plateRare = "themeIgnorePlateDragon",
 }
-function B.EliteAsDrawn(key) return B.ELITE[key] == true and ns.db ~= nil and ns.db.themeIgnoreElite == true end
+function B.EliteAsDrawn(key)
+    local option = B.AS_DRAWN[key]
+    return option ~= nil and ns.db ~= nil and ns.db[option] == true
+end
