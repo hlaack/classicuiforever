@@ -113,6 +113,7 @@ Units\NamePlates.lua
 Units\NamePlateOptions.lua
 Units\NamePlateAuras.lua
 Quest\QuestTracker.lua
+Quest\QuestWatch.lua
 Quest\QuestLogData.lua
 Quest\QuestLogShare.lua
 Quest\QuestLogWindow.lua

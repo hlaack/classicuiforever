@@ -172,6 +172,7 @@ return {
     questLogDual = false,
     questMapPane = true,
     questTracker = true,
+    questWatch = false,
     reagentBagHover = true,
     reagentBagRound = false,
     reagentBagSlot = false,

@@ -147,6 +147,7 @@ ns.DB_DEFAULTS = {
     fullPlates = true,
     questTracker = true,
     hideObjectiveTracker = false,
+    questWatch = false,
     questLog = true,
     questLogDual = false,
     unitFramePlayer = true,
@@ -222,7 +223,7 @@ ns.DB_DEFAULTS = {
 ns.MODULE_ORDER = {
     "bronzeTheme", "hideMicroButtons", "classicBar", "buttons", "castAnim", "pageArrows", "unitFrames", "hideBuffArrow",
     "castBars", "swingTimers", "resourceDisplay", "classicStatusFont", "plainNumbers", "mirrorTimers", "comboPoints", "minimap", "minimapButton", "lfgMinimapButton", "minimapCollector", "namePlates", "classColorPlates",
-    "fullPlates", "classicFonts", "questTracker", "hideObjectiveTracker", "questLog", "questLogDual", "questLevels", "questMapPane", "panels", "worldMap", "lootWindow", "classicChat", "lootRoll",
+    "fullPlates", "classicFonts", "questTracker", "hideObjectiveTracker", "questWatch", "questLog", "questLogDual", "questLevels", "questMapPane", "panels", "worldMap", "lootWindow", "classicChat", "lootRoll",
     "guildRoster", "whoList", "groupFinder", "hideLastNames", "mapFade", "oneBag", "bags", "characterSheet", "statPanes",
     "spellBook", "spellBookTopRank", "spellBookSearch", "professionsBook", "tradeSkillSearch", "tradeSkill",
     "trainer", "talents", "options", "gameMenu", "tooltips", "clientMenus", "settingsPanel", "damageMeter", "gameArt",

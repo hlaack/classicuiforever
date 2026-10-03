@@ -146,6 +146,7 @@ ns.TOGGLES = {
     { "questLevels", L["OPT_questLevels"], L["OPT_questLevels_TIP"], search = "level map filter" },
     { "questTracker", L["OPT_questTracker"], L["OPT_questTracker_TIP"] },
     { "hideObjectiveTracker", L["OPT_hideObjectiveTracker"], L["OPT_hideObjectiveTracker_TIP"], search = "quest watch objectives" },
+    { "questWatch", L["OPT_questWatch"], L["OPT_questWatch_TIP"], search = "quest tracker watch objectives era vanilla" },
     { "worldMap", L["OPT_worldMap"], L["OPT_worldMap_TIP"], group = L["GROUP_MAP"] },
     { "mapNavBar", L["OPT_mapNavBar"], L["OPT_mapNavBar_TIP"], parent = "worldMap" },
     { "hideMapQuestButton", L["OPT_hideMapQuestButton"], L["OPT_hideMapQuestButton_TIP"], search = "quest list toggle side panel expand" },

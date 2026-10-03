@@ -46,6 +46,9 @@ ns.WINDOW_LIST = {
     { key = "minimapGroupFinder", label = L["OPT_groupFinder"], name = "ForeverClassicUIGroupFinderButton", w = 32, h = 32,
         section = L["UI_MINIMAP"], piece = true, ringKey = "lfgButtonAngle", choice = "groupFinderButtonShow",
         choiceLabel = L["UI_SHOW"] },
+    -- Era's quest watch (Quest/QuestWatch.lua), under the minimap until placed.
+    { key = "questWatch", label = L["UI_QUEST_WATCH"], name = "ForeverClassicUIQuestWatch", w = 200, h = 80, piece = true,
+        section = L["UI_QUEST_WATCH"] },
     -- The classic bar's gryphons (Bar/BandArt.lua), on the band ends until placed.
     { key = "gryphonLeft", label = L["UI_GRYPHON_LEFT"], name = "ForeverClassicUIGryphonLeft", w = 128, h = 128,
         piece = true, gameEdit = true, choice = "gryphonLeftShow", choiceLabel = L["UI_SHOW"] },
