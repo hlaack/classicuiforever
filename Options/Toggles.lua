@@ -22,6 +22,8 @@ ns.TOGGLES = {
     { "flatSpellbook", L["OPT_flatSpellbook"], nil, parent = "themeFlat" },
     { "flatWindows", L["OPT_flatWindows"], nil, parent = "themeFlat" },
     { "flatHideBorders", L["OPT_flatHideBorders"], L["OPT_flatHideBorders_TIP"], parent = "themeFlat" },
+    { "themeIgnoreElite", L["OPT_themeIgnoreElite"], L["OPT_themeIgnoreElite_TIP"], parent = "bronzeTheme",
+        search = "elite rare dragon gold silver unit frame" },
     { "panels", L["OPT_panels"], L["OPT_panels_TIP"] },
     { "windowLocksAlways", L["OPT_windowLocksAlways"], L["OPT_windowLocksAlways_TIP"], search = "lock move drag title" },
     { "buttons", L["OPT_buttons"], L["OPT_buttons_TIP"] },

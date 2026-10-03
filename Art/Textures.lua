@@ -75,10 +75,10 @@ function ns.SetTex(texture, key, ...)
     elseif swapped[texture] then
         swapped[texture] = nil
     end
-    if B.METAL[key] then
+    if B.METAL[key] and not B.EliteAsDrawn(key) then
         ns.BronzeTint(texture, SHARE[key])
     elseif B.tinted[texture] then
-        -- Texture reused for non-metal art: clear the tint.
+        -- Non-metal art, or a dragon kept as drawn: clear the tint.
         ns.UntintBronze(texture)
     end
     ns.PaintCopy(texture, swapped[texture] ~= nil and ns.BronzeOn() and primary or nil)
@@ -130,3 +130,13 @@ function ns.SetButtonTex(button, which, key)
     ns.SetTex(tex, key)
     return tex
 end
+
+-- Ignore theme for elite frames turns at once, in a fight too (the options pass waits one out): every dragon sheet drawn.
+ns.OnToggle(function(key)
+    if key ~= "themeIgnoreElite" then return end
+    for texture, art in pairs(B.artKey) do
+        if B.ELITE[art] then
+            if B.EliteAsDrawn(art) then ns.UntintBronze(texture) else ns.BronzeTint(texture, SHARE[art]) end
+        end
+    end
+end)

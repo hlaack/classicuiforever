@@ -390,3 +390,11 @@ local METAL = {
     maxLevel = true, repBar = true, groupIndicator = true,
 }
 B.METAL = METAL
+
+-- The dragon sheets (elite gold, rare silver): as drawn under a theme with Ignore theme for elite frames.
+B.ELITE = {
+    targetingElite = true, targetingRare = true, targetingRareElite = true,
+    targetingEliteThickMana = true, targetingEliteThickName = true, targetingRareThickMana = true,
+    targetingRareThickName = true, targetingRareEliteThickMana = true, targetingRareEliteThickName = true,
+}
+function B.EliteAsDrawn(key) return B.ELITE[key] == true and ns.db ~= nil and ns.db.themeIgnoreElite == true end

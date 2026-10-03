@@ -51,6 +51,7 @@ ns.DB_DEFAULTS = {
     flatSpellbook = true,
     flatWindows = true,
     flatHideBorders = false,
+    themeIgnoreElite = false,
     castAnim = true,
     professionsBook = true,
     tradeSkill = true,

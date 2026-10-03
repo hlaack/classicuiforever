@@ -211,6 +211,7 @@ return {
     themeDark = false,
     themeDarkness = 50,
     themeFlat = false,
+    themeIgnoreElite = false,
     thickEnemyColor = "green",
     thickHealth = false,
     thickHealthFocus = true,
