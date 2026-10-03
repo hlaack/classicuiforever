@@ -65,6 +65,16 @@ local function Dress(menu, box, margin, out, fill)
     black:SetColorTexture(0, 0, 0, FILL_ALPHA)
     black:SetPoint("TOPLEFT", art, "TOPLEFT", fill[1], fill[2])
     black:SetPoint("BOTTOMRIGHT", art, "BOTTOMRIGHT", fill[3], fill[4])
+    return art
+end
+
+-- Era's drop down look on a client menu (UI/ClientMenus.lua); its reach past the menu's edges for the clamp.
+ns.IRON_REACH = IRON_OUT
+function ns.IronMenuArt(menu)
+    local art = Dress(menu, IRON_BOX, IRON_MARGIN, IRON_OUT, IRON_FILL)
+    -- The client's pooled menus change level per open.
+    if art.SetUsingParentLevel then art:SetUsingParentLevel(true) end
+    return art
 end
 
 local function NewMenu(strata)

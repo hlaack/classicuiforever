@@ -17,6 +17,7 @@ local weak = { __mode = "k" }
 local known = setmetatable({}, weak)   -- menu frame -> true
 local backs = setmetatable({}, weak)   -- menu frame -> its background texture last seen
 local rims = setmetatable({}, weak)    -- menu frame -> our rim
+local irons = setmetatable({}, weak)   -- menu frame -> Era's drop down art
 local reclamped = setmetatable({}, weak)   -- menu frame -> clamped again this open (secret-placed)
 
 local active = false
@@ -137,33 +138,55 @@ local function OnScreen(frame, rim)
     frame:SetPoint(point, rel, relPoint, (x or 0) + dx * f, (y or 0) + dy * f)
 end
 
-local function Dress(frame)
+-- Opened from a drop down button: Era draws those in its iron style, right-click menus in the rim (#69).
+local function FromDropdown(root)
+    local owner = rawget(root, "ownerRegion")
+    local mixin = _G.DropdownButtonMixin
+    return type(owner) == "table" and mixin ~= nil and not ns.IsForbidden(owner)
+        and rawget(owner, "GenerateMenu") == mixin.GenerateMenu
+end
+
+local function Dress(frame, iron)
     local bg = Back(frame)
-    local rim = rims[frame]
+    local rim, art = rims[frame], irons[frame]
     -- Other menu styles (the barber shop's) stay as drawn.
     if not bg then
         if rim and rim:IsShown() then rim:Hide() end
+        if art and art:IsShown() then art:Hide() end
         return
     end
     -- Exact: Undress restores only an alpha of exactly 0.
     ns.SetAlphaIf(bg, 0, 0)
-    rim = rim or MakeRim(frame)
-    if not rim:IsShown() then rim:Show() end
-    -- The client clamps the menu frame and resets its insets per open; our rim hangs out, so the clamp counts it.
+    local shown, hidden
+    if iron then
+        art = art or ns.IronMenuArt(frame)
+        irons[frame] = art
+        shown, hidden = art, rim
+    else
+        rim = rim or MakeRim(frame)
+        shown, hidden = rim, art
+    end
+    if hidden and hidden:IsShown() then hidden:Hide() end
+    if not shown:IsShown() then shown:Show() end
+    -- The client clamps the menu frame and resets its insets per open; our art hangs out, so the clamp counts it.
+    local reach = ns.IRON_REACH
+    local wl, wr, wt, wb = -7, 7, 6, -1
+    if iron then wl, wr, wt, wb = reach[1], reach[3], reach[2], reach[4] end
     local ok, l, r, t, b = pcall(frame.GetClampRectInsets, frame)
-    if not ok or ns.AnySecret(l, r, t, b) or l ~= -7 or r ~= 7 or t ~= 6 or b ~= -1 then
-        pcall(frame.SetClampRectInsets, frame, -7, 7, 6, -1)
+    if not ok or ns.AnySecret(l, r, t, b) or l ~= wl or r ~= wr or t ~= wt or b ~= wb then
+        pcall(frame.SetClampRectInsets, frame, wl, wr, wt, wb)
         reclamped[frame] = nil   -- a new open
     end
-    OnScreen(frame, rim)
+    OnScreen(frame, shown)
 end
 
 local function Undress(frame)
     local bg = Back(frame)
     if bg and bg:GetAlpha() == 0 then bg:SetAlpha(BG_ALPHA) end
-    local rim = rims[frame]
-    if rim and rim:IsShown() then
-        rim:Hide()
+    local rim, art = rims[frame], irons[frame]
+    if (rim and rim:IsShown()) or (art and art:IsShown()) then
+        if rim then rim:Hide() end
+        if art then art:Hide() end
         pcall(frame.SetClampRectInsets, frame, 0, 0, 0, 0)
     end
 end
@@ -181,11 +204,16 @@ local function Tick()
     end
     grace = GRACE
     local root = m:GetOpenMenu()
-    if IsMenuFrame(root) then Learn(root) end
+    local iron = false
+    if IsMenuFrame(root) then
+        Learn(root)
+        iron = FromDropdown(root)
+    end
     Scan()
     if not (caught and swept) then UnderMouse() end
+    -- One menu tree opens at a time: its submenus wear the root's style.
     for frame in pairs(known) do
-        if frame:IsShown() then Dress(frame) end
+        if frame:IsShown() then Dress(frame, iron) end
     end
 end
 
