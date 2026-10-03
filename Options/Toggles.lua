@@ -99,6 +99,8 @@ ns.TOGGLES = {
     { "hideCombatGlow", L["OPT_hideCombatGlow"], L["OPT_hideCombatGlow_TIP"], parent = "unitFrames",
         search = "attack attacked red flash pulse health bar name" },
     { "threatNumber", L["OPT_threatNumber"], L["OPT_threatNumber_TIP"], parent = "unitFrames", search = "aggro threat percent focus" },
+    { "threatNumberGrouped", L["OPT_threatNumberGrouped"], L["OPT_threatNumberGrouped_TIP"], parent = "threatNumber",
+        search = "party raid dungeon instance solo" },
     { "druidMana", L["OPT_druidMana"], L["OPT_druidMana_TIP"], parent = "unitFrames", search = "bear cat form mana" },
     { "plainNumbers", L["OPT_plainNumbers"], L["OPT_plainNumbers_TIP"], search = "commas thousands separators digits large" },
     { "castBars", L["OPT_castBars"], L["OPT_castBars_TIP"] },

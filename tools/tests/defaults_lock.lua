@@ -225,6 +225,7 @@ return {
     thickHealthPlayer = true,
     thickHealthTarget = true,
     threatNumber = true,
+    threatNumberGrouped = false,
     tradeSkill = true,
     tradeSkillSearch = true,
     trainer = true,

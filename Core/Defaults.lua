@@ -106,6 +106,7 @@ ns.DB_DEFAULTS = {
     hideThreatGlow = true,
     hideCombatGlow = false,
     threatNumber = true,
+    threatNumberGrouped = false,
     druidMana = true,
     englishSettings = false,
     englishNews = false,

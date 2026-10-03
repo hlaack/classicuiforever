@@ -26,6 +26,7 @@ return {
     statusBarBacking = "on for everyone: Era's half-dark backing behind the XP and reputation bars; off is the old see-through bar",
     castBarInterrupter = "opt-in, off by default: every install now shows the plain 1.x Interrupted; on brings the name back",
     hideCombatGlow = "same for everyone: opt-in, off by default; the red combat glow shows as before",
+    threatNumberGrouped = "same for everyone: opt-in, off by default; the threat percent shows solo too, as before",
     themeIgnoreElite = "same for everyone: opt-in, off by default; dragons take the theme as before",
     plateDragons = "same for everyone: opt-in, off by default; nameplates show no dragon as before",
     themeIgnorePlateDragon = "same for everyone: opt-in, off by default; only seen with Elite dragons on",
