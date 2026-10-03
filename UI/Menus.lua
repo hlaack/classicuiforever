@@ -3,11 +3,6 @@ local _, ns = ...
 -- Drop down lists and row right-click menus, on Classic Era's menu art and numbers (Blizzard_Menu Classic).
 
 local MOUSE_DOWN = { "GLOBAL_MOUSE_DOWN" }
--- The client's own right-click menus wear the tooltip's thin rim and fill (UI/ClientMenus.lua).
-local TIP_FILL = _G.TOOLTIP_DEFAULT_BACKGROUND_COLOR
-ns.MENU_LOOK = { bronze = false, border = { 1, 1, 1, 1 },
-    bg = TIP_FILL and { TIP_FILL.r, TIP_FILL.g, TIP_FILL.b, 1 } or { 0.09, 0.09, 0.19, 1 } }
-
 -- Era's menu sheet (256 square): each box as left, top, right, bottom px.
 local SHEET = 256
 local IRON_BOX, IRON_MARGIN = { 1, 1, 97, 97 }, 32          -- common-dropdown-classic-bg: drop down lists
@@ -18,6 +13,8 @@ local RADIO_OFF = { 226, 127, 242, 143 }                    -- common-dropdown-t
 local IRON_OUT, IRON_FILL, IRON_INSET = { -3, 3, 3, -4 }, { 6, -6, -6, 6 }, { 16, 10, 16, 10 }
 local RIM_OUT, RIM_FILL, RIM_INSET = { -3, 1, 3, -4 }, { 7, -4, -8, 8 }, { 14, 14, 14, 14 }
 local FILL_ALPHA = 0.8
+-- The client's own right-click menus: the tooltip's thin rim over Era's menu fill (UI/ClientMenus.lua).
+ns.MENU_LOOK = { bg = { 0, 0, 0, FILL_ALPHA } }
 local MENU_ROW = 20             -- every text row
 local MENU_DIVIDER = 13         -- divider row
 local RADIO_SIZE, RADIO_GAP = 16, 2
