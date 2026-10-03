@@ -140,7 +140,8 @@ local ShowRing, HideRing = ns.RingButton({
     name = "ForeverClassicUIMinimapCollector",
     key = "minimapAddonBag",
     angleKey = "minimapCollectorAngle",
-    angle = 110,   -- clear of the group finder eye (137), the tracking spell (159) and the zone text
+    angle = 238,   -- left of the clock; the nearest clear spot when a button stands there
+    free = true,
     show = "AddonBag",
     face = function(icon)
         icon:SetTexture(BAG_ICON)
@@ -230,3 +231,14 @@ local function Restore()
 end
 
 ns.RegisterModule("minimapCollector", { apply = Apply, restore = Restore })
+
+-- The saved default (132) stood on the group finder eye: one never dragged takes a clear spot, in the account and
+-- every profile. Runs before the defaults fill.
+function ns.FreeAddonBag()
+    local db = ns.db
+    if db.minimapCollectorAngle == 132 then db.minimapCollectorAngle = nil end
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" and shot.minimapCollectorAngle == 132 then shot.minimapCollectorAngle = nil end
+    end
+    db.dbVersion = 13
+end

@@ -23,6 +23,7 @@ function InCombatLockdown() return false end
 
 local noop = function() end
 local showOptions
+local bag
 local ns = {
     L = setmetatable({}, { __index = function(_, key) return key end }),
     db = {},
@@ -30,9 +31,20 @@ local ns = {
     RingPoint = function(frame, degrees) frame.angle = degrees end,
     DressNew = noop, RoundIcon = noop, MinimapButtonBorder = noop, DressStates = noop, AttachTip = noop, MinimapShow = noop,
     HookMethod = noop, OnToggle = noop, Dress = noop, PlaceSavedWindows = noop,
-    RegisterModule = function(_, spec) showOptions = spec.apply end,
+    RegisterModule = function(key, spec) if key == "minimapButton" then showOptions = spec.apply end end,
 }
 assert(loadfile(ROOT .. "/Map/MinimapButton.lua"))("ClassicUIForever", ns)
+-- The addon bag's own ring button, as its file registers it.
+local RingButton = ns.RingButton
+ns.RingButton = function(spec)
+    local show, hide = RingButton(spec)
+    bag = { spec = spec, show = show, hide = hide }
+    return show, hide
+end
+assert(loadfile(ROOT .. "/Map/MinimapCollector.lua"))("ClassicUIForever", ns)
+ns.RingButton = RingButton
+ns.modules, ns.TOGGLES = {}, {}
+assert(loadfile(ROOT .. "/Core/Defaults.lua"))("ClassicUIForever", ns)
 
 ------------------------------------------------------------------ checks
 
@@ -59,13 +71,24 @@ local function Ring(name, angle, free)
     return spec.button.angle
 end
 
+-- No saved default spot: one would stand in for a button's own spot and its clear-spot search.
+for key, value in pairs(ns.DB_DEFAULTS) do
+    Check(not (key:find("Angle$") and key ~= "minimapButtonAngle"), "no default for " .. key .. " (" .. tostring(value) .. ")")
+end
+
 -- As in game: the options button and the group finder eye are up before the rest.
 showOptions()
 Check(_G.ForeverClassicUIMinimapButton == nil or true, "options button shown")
+-- The addon bag stands left of the clock, clear of the eye, and keeps the spot while it stays clear.
+bag.show()
+Check(bag.spec.button.angle == 238, "the addon bag stands left of the clock (" .. tostring(bag.spec.button.angle) .. ")")
 Check(Ring("eye", 137, false) == 137, "the eye keeps Era's spot")
+bag.show()
+Check(bag.spec.button.angle == 238, "the addon bag keeps its spot with the eye up (" .. tostring(bag.spec.button.angle) .. ")")
+shown[#shown + 1] = bag.spec
 Check(Ring("legacy", 347, true) == 347, "Legacy stands under the mail icon, its own spot clear")
 local first = Ring("character", 232, true)
-Check(first == 238, "a free icon aimed at a taken spot takes the nearest clear one (" .. tostring(first) .. ")")
+Check(first ~= 232 and Apart(first, 238) >= 25, "a free icon aimed at a taken spot takes a clear one (" .. tostring(first) .. ")")
 for i, a in ipairs(shown) do
     for _, fixed in ipairs(a.free and FIXED or {}) do
         Check(Apart(a.button.angle, fixed) >= 25,
@@ -102,6 +125,13 @@ ns.FreeOptionsButton()
 Check(ns.db.minimapButtonAngle == nil and ns.db.profiles.old.minimapButtonAngle == nil, "an unmoved options button takes the new default")
 Check(ns.db.profiles.moved.minimapButtonAngle == 203.4, "a moved options button stays")
 Check(ns.db.dbVersion == 12, "writes dbVersion 12")
+
+-- The addon bag's saved default stood on the eye: one never moved takes a clear spot, a moved one stays.
+ns.db = { minimapCollectorAngle = 132, profiles = { moved = { minimapCollectorAngle = 95.2 }, old = { minimapCollectorAngle = 132 } } }
+ns.FreeAddonBag()
+Check(ns.db.minimapCollectorAngle == nil and ns.db.profiles.old.minimapCollectorAngle == nil, "an unmoved addon bag leaves the eye")
+Check(ns.db.profiles.moved.minimapCollectorAngle == 95.2, "a moved addon bag stays")
+Check(ns.db.dbVersion == 13, "writes dbVersion 13")
 
 if failures > 0 then
     print(string.format("ring spots: %d failed", failures))

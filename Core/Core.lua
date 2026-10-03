@@ -422,6 +422,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         if saved and saved < 10 then ns.KeepLegacyIcon() end
         if saved and saved < 11 then ns.OneTrackerChoice() end
         if saved and saved < 12 then ns.FreeOptionsButton() end
+        if saved and saved < 13 then ns.FreeAddonBag() end
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
         ns.BarSizeKey()
@@ -436,7 +437,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         ns.KeepGameMicroButtons(saved)
         ns.LoadProfile()
         -- The old default sat on the tracking spell; a dragged angle is never exactly 160.
-        if ns.db.minimapCollectorAngle == 160 then ns.db.minimapCollectorAngle = 132 end
+        if ns.db.minimapCollectorAngle == 160 then ns.db.minimapCollectorAngle = nil end
         ns.MigrateMinimapShow(ns.db)
         -- Hide professions button moved under Hide micro buttons: its parent turns on for it once.
         if not ns.db.microHideMerged then
