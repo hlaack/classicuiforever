@@ -29,4 +29,7 @@ return {
     themeIgnoreElite = "same for everyone: opt-in, off by default; dragons take the theme as before",
     plateDragons = "same for everyone: opt-in, off by default; nameplates show no dragon as before",
     themeIgnorePlateDragon = "same for everyone: opt-in, off by default; only seen with Elite dragons on",
+    showMinimapDifficulty = "hidden for everyone: 1.x had no difficulty banner; Shown brings it back",
+    hoverMinimapDifficulty = "hidden for everyone: 1.x had no difficulty banner; Shown brings it back",
+    hideMinimapDifficulty = "hidden for everyone: 1.x had no difficulty banner; Shown brings it back",
 }

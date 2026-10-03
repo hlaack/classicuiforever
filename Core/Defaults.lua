@@ -180,6 +180,7 @@ ns.DB_DEFAULTS = {
     showMinimapZoomIn = true, hoverMinimapZoomIn = false, hideMinimapZoomIn = false,
     showMinimapZoomOut = true, hoverMinimapZoomOut = false, hideMinimapZoomOut = false,
     showMinimapClock = true, hoverMinimapClock = false, hideMinimapClock = false,
+    showMinimapDifficulty = false, hoverMinimapDifficulty = false, hideMinimapDifficulty = true,
     showMinimapDiel = true, hoverMinimapDiel = false, hideMinimapDiel = false,
     showMinimapCalendar = true, hoverMinimapCalendar = false, hideMinimapCalendar = false,
     showMinimapCoords = true, hoverMinimapCoords = false, hideMinimapCoords = false,

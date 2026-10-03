@@ -53,7 +53,7 @@ local PIECES = {
 }
 MM.PIECE_KEYS = PIECES
 local SHOW_IDS = { "MinimapZone", "MinimapTracking", "MinimapMail", "MinimapZoomIn", "MinimapZoomOut", "MinimapClock",
-    "MinimapDiel", "MinimapCalendar", "MinimapCoords" }
+    "MinimapDiel", "MinimapCalendar", "MinimapCoords", "MinimapDifficulty" }
 local ZOOM_R = 79
 local DIEL_RING = "UI-HUD-Minimap-Frame-Cycle"
 -- Other addons' minimap buttons wear the old gold tracking ring (MiniMap-TrackingBorder): tinted as ours.
@@ -165,12 +165,33 @@ local function HoverTick(job)
     end
 end
 
--- fade: a client frame, hidden by alpha so the client's own shows cannot bring it back.
-function ns.MinimapShow(frame, id, fade)
+-- A client frame hidden under a hidden frame of ours: by alpha alone it still took the mouse and showed its tooltip, and
+-- the client's own shows cannot reach it here. Its parent, strata and level back for any other choice.
+local stash
+local stashedFrom = setmetatable({}, { __mode = "k" })
+local function Stash(frame, hide)
+    local was = stashedFrom[frame]
+    if hide and not was then
+        if not stash then
+            stash = CreateFrame("Frame")
+            stash:Hide()
+        end
+        stashedFrom[frame] = { frame:GetParent(), frame:GetFrameStrata(), frame:GetFrameLevel() }
+        frame:SetParent(stash)
+    elseif not hide and was then
+        stashedFrom[frame] = nil
+        frame:SetParent(was[1])
+        frame:SetFrameStrata(was[2])
+        frame:SetFrameLevel(was[3])
+    end
+end
+
+-- client: a frame the client shows and hides itself (never shown from here).
+function ns.MinimapShow(frame, id, client)
     if not frame then return end
     local state = MM.ShowState(id)
-    if fade then
-        if state == "hide" then ns.SetAlphaIf(frame, 0) end
+    if client then
+        Stash(frame, state == "hide")
     else
         ns.SetShownIf(frame, state ~= "hide")
     end
@@ -568,8 +589,10 @@ local function Layout()
         MM.PlaceEye()
         MM.WatchEye()
     end
+    -- 1.x had no difficulty flag: hidden by default (the game shows it per instance).
     if cluster.InstanceDifficulty then
         ns.SetPointOnce(cluster.InstanceDifficulty, "TOPLEFT", cluster, "TOPLEFT", 22, -17)
+        ns.MinimapShow(cluster.InstanceDifficulty, "MinimapDifficulty", true)
     end
     -- No landing page in 1.x; faded rather than moved, still reachable from the micro menu.
     if ExpansionLandingPageMinimapButton then
@@ -688,6 +711,7 @@ local function Restore()
     HideOwn(MinimapBackdrop)
     MM.HideCalendar()
     for _, home in pairs(homes) do ns.MinimapShow(home, nil) end
+    if MinimapCluster and MinimapCluster.InstanceDifficulty then ns.MinimapShow(MinimapCluster.InstanceDifficulty, nil, true) end
     for tex in pairs(buttonBorders) do ns.SetAlphaIf(tex, 1) end
     -- Day/night and coordinates back in the client's frames at its spots.
     local diel = MinimapCluster and MinimapCluster.DielFrame
