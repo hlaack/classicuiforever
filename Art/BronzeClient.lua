@@ -197,7 +197,7 @@ local function ChatTextures()
     return list, n
 end
 
-local CLIENT_WINDOWS = { "MailFrame", "TradeFrame", "MerchantFrame", "BankFrame", "GossipFrame", "QuestFrame",
+local CLIENT_WINDOWS = { "MailFrame", "OpenMailFrame", "TradeFrame", "MerchantFrame", "BankFrame", "GossipFrame", "QuestFrame",
     "ClassTrainerFrame", "LootFrame", "GameMenuFrame", "CharacterFrame", "PlayerSpellsFrame", "FriendsFrame", "PVEFrame",
     "LFGParentFrame", "WorldMapFrame", "SettingsPanel", "ContainerFrameCombinedBags", "ContainerFrame1", "ContainerFrame2",
     "ContainerFrame3", "ContainerFrame4", "ContainerFrame5", "ContainerFrame6", "ProfessionsFrame", "ProfessionsBookFrame",

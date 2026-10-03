@@ -74,6 +74,8 @@ local WINDOWS = {
     { "MailFrame", lift = 5, tabLift = MAIL_TAB_LIFT, after = function()
         ns.EraTabRow({ _G["MailFrameTab1"], _G["MailFrameTab2"] }, MAIL_TAB_STEP)
     end },
+    -- The opened letter. Half lift: Reply, Delete and Close sit 4 up from the bottom edge.
+    { "OpenMailFrame", lift = 5 },
     -- Smaller tab lift: the full one pushed the tabs through the border.
     { "FriendsFrame", lift = 5, tabLift = 3, after = function(frame)
         -- Classic Era's width (measured 338, as its macro window); the lists hang from its edges.
