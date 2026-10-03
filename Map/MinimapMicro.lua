@@ -1,0 +1,169 @@
+local _, ns = ...
+local L = ns.L
+
+-- Micro buttons as icons on the minimap ring, hidden from the micro menu or not: Classic's group finder eye, the player's
+-- portrait, and for the rest the icon off the button's own 1.x sheet. A click goes through a secure pad onto what the micro
+-- button presses (its own pad where it opens a window of ours), so the window opens in the player's name.
+
+local FACE = ns.RING_ICON_FACE
+local EYE = { layer = "ARTWORK", coords = { 0.019, 0.106, 0.0375, 0.2125 }, w = 24, h = 24, point = "CENTER", relPoint = "TOPLEFT",
+    x = FACE.x, y = FACE.y }
+-- The icon on a 32 x 64 micro sheet: 22 square, 5 in and 32 down.
+local SHEET = { layer = "ARTWORK", coords = { 5 / 32, 27 / 32, 32 / 64, 54 / 64 }, w = 24, h = 24, point = "CENTER",
+    relPoint = "TOPLEFT", x = FACE.x, y = FACE.y }
+
+-- Each icon: its toggle, the micro button it presses (none: the zone name, which opens the map), its face, frame name,
+-- edit mode entry, ring angle (free: the nearest clear spot to it; Legacy's is under the mail icon), name, and the game
+-- rule that takes the button away. Names match UI/WindowList.lua.
+local MICROS = {
+    { toggle = "characterMinimapButton", micro = "CharacterMicroButton", face = "portrait", id = "Character", angle = 232, free = true,
+        label = L["OPT_hideMicroCharacter"], rule = "CharacterPanelDisabled" },
+    { toggle = "spellbookMinimapButton", micro = "SpellbookMicroButton", face = "Spellbook", id = "Spellbook", angle = 232, free = true,
+        label = L["OPT_hideMicroSpellbook"] },
+    { toggle = "talentsMinimapButton", micro = "TalentMicroButton", face = "Talents", id = "Talents", angle = 232, free = true,
+        label = L["OPT_hideMicroTalents"] },
+    { toggle = "professionsMinimapButton", micro = "ProfessionMicroButton", face = "Professions", id = "Professions", angle = 232, free = true,
+        label = L["OPT_hideProfessionsButton"], rule = "ProfessionsPanelDisabled" },
+    { toggle = "questLogMinimapButton", micro = "QuestLogMicroButton", face = "Quest", id = "QuestLog", angle = 232, free = true,
+        label = L["OPT_hideMicroQuestLog"], rule = "QuestLogMicrobuttonDisabled" },
+    { toggle = "legacyMinimapButton", micro = "LegacyMicroButton", face = "Achievement", id = "Legacy", angle = 347, free = true,
+        label = L["OPT_hideMicroLegacy"] },
+    { toggle = "worldMapMinimapButton", face = "World", id = "WorldMap", angle = 232, free = true, label = L["OPT_hideMicroWorldMap"] },
+    { toggle = "guildMinimapButton", micro = "GuildMicroButton", face = "Socials", id = "Guild", angle = 232, free = true,
+        label = L["OPT_hideMicroGuild"], rule = "CommunitiesPanelDisabled" },
+    -- Era's LFG eye spot (backdrop top left +25, -28); its frame and entry keep their first names.
+    { toggle = "lfgMinimapButton", micro = "LFDMicroButton", face = "eye", id = "GroupFinder", angle = 137,
+        name = "ForeverClassicUIGroupFinderButton", entry = "minimapGroupFinder", angleKey = "lfgButtonAngle",
+        label = L["OPT_hideMicroGroupFinder"], rule = "FinderPanelDisabled" },
+    { toggle = "collectionsMinimapButton", micro = "CollectionsMicroButton", face = "Mounts", id = "Collections", angle = 232, free = true,
+        label = L["OPT_hideMicroCollections"], rule = "CollectionsPanelDisabled" },
+    { toggle = "helpMinimapButton", micro = "HelpMicroButton", face = "Help", id = "Help", angle = 232, free = true,
+        label = L["OPT_hideMicroHelp"], rule = "HelpPanelDisabled" },
+    { toggle = "gameMenuMinimapButton", micro = "MainMenuMicroButton", face = "MainMenu", id = "GameMenu", angle = 232, free = true,
+        label = L["OPT_hideMicroGameMenu"] },
+    { toggle = "shopMinimapButton", micro = "StoreMicroButton", face = "BStore", id = "Shop", angle = 232, free = true,
+        label = L["OPT_hideMicroShop"], rule = "StoreDisabled" },
+}
+local byToggle = {}
+
+local function Face(spec, icon)
+    if spec.face == "eye" then
+        ns.Dress(icon, "lfgEye", EYE)
+    elseif spec.face == "portrait" then
+        ns.Dress(icon, nil, FACE)
+        SetPortraitTexture(icon, "player")
+    else
+        ns.Dress(icon, "micro" .. spec.face .. "Up", SHEET)
+    end
+end
+
+-- The micro button's own tooltip line (its name and key), or our name for it.
+local function TipText(spec)
+    local micro = spec.micro and _G[spec.micro]
+    local text = micro and micro.tooltipText
+    if type(text) == "string" and not ns.IsSecret(text) and text ~= "" then return text end
+    return spec.label
+end
+
+-- What the icon presses: nil while this client has no such button, or a game rule holds it off.
+local function Target(spec)
+    local rule = spec.rule and Enum.GameRule and Enum.GameRule[spec.rule]
+    if rule and C_GameRules and C_GameRules.IsGameRuleActive and C_GameRules.IsGameRuleActive(rule) then return nil end
+    if not spec.micro then return MinimapCluster and MinimapCluster.ZoneTextButton end
+    local micro = _G[spec.micro]
+    return micro and ns.PressTarget(micro)
+end
+
+local function Wanted(spec)
+    local db = ns.db
+    return db and db.microMinimapButtons ~= false and db[spec.toggle] == true and Target(spec) ~= nil
+end
+
+for _, spec in ipairs(MICROS) do
+    byToggle[spec.toggle] = spec
+    spec.show, spec.hide = ns.RingButton({
+        name = spec.name or ("ForeverClassicUIMinimap" .. spec.id .. "Button"),
+        key = spec.entry or ("minimap" .. spec.id),
+        angleKey = spec.angleKey or ("minimap" .. spec.id .. "Angle"),
+        angle = spec.angle,
+        free = spec.free,
+        show = "GroupFinderButton",
+        face = function(icon) Face(spec, icon) end,
+        tip = { anchor = "ANCHOR_LEFT", text = function() return TipText(spec) end, r = 1, g = 1, b = 1,
+            lines = { { L["MAP_DRAG_TO_MOVE_AROUND_THE"], 0.8, 0.8, 0.8 } } },
+    })
+    spec.frame = spec.name or ("ForeverClassicUIMinimap" .. spec.id .. "Button")
+end
+
+-- Each shown icon's pad on what its micro button presses now: a window module turned on or off changes it.
+local function Aim()
+    if InCombatLockdown() then
+        ns.WhenCalm("minimapMicro.aim", Aim)
+        return
+    end
+    for _, spec in ipairs(MICROS) do
+        local button = spec.shown and _G[spec.frame]
+        local target = button and Target(spec)
+        if target then
+            local pad = ns.PadOf(button)
+            if pad then
+                ns.SetAttributeIf(pad, "clickbutton", target)
+            else
+                ns.MapPad(button, "MEDIUM", nil, target)
+            end
+        end
+    end
+end
+
+local function Sync()
+    for _, spec in ipairs(MICROS) do
+        local want = Wanted(spec)
+        if want then spec.show() elseif spec.shown then spec.hide() end
+        spec.shown = want
+    end
+    -- After the pass: a window's pad made later in it is the target.
+    ns.Sched.NextFrame("minimapMicro.aim", Aim)
+end
+
+local function Restore()
+    for _, spec in ipairs(MICROS) do
+        if spec.shown then spec.hide() end
+        spec.shown = false
+    end
+end
+
+-- The eye showed only with the micro button hidden: an install from before with that button showing keeps no eye, in the
+-- account and every profile. Runs before the defaults fill.
+function ns.KeepGroupFinderEye()
+    local db = ns.db
+    local function Keep(t)
+        if t.hideMicroButtons == false or t.hideMicroGroupFinder == false then t.lfgMinimapButton = false end
+    end
+    Keep(db)
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" then Keep(shot) end
+    end
+    db.dbVersion = 8
+end
+
+-- Legacy on the minimap by default, where its micro button is hidden (it had no other way in): an install from before
+-- with that button showing gets no icon, in the account and every profile. Runs before the defaults fill.
+function ns.KeepLegacyIcon()
+    local db = ns.db
+    local function Keep(t)
+        if t.hideMicroButtons == false or t.hideMicroLegacy == false then t.legacyMinimapButton = false end
+    end
+    Keep(db)
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" then Keep(shot) end
+    end
+    db.dbVersion = 10
+end
+
+ns.RegisterModule("microMinimapButtons", { apply = Sync, restore = Restore })
+
+-- Seen at once in a fight; a new icon's pad comes when it ends.
+ns.OnToggle(function(key)
+    if key == "microMinimapButtons" or byToggle[key] then Sync() else ns.Sched.NextFrame("minimapMicro.aim", Aim) end
+end)
+ns.EventFrame({ "PLAYER_ENTERING_WORLD" }, function() ns.Sched.NextFrame("minimapMicro.aim", Aim) end)

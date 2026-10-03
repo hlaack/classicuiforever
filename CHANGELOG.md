@@ -2,6 +2,58 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.18.0] - 2026-10-03
+
+### Added
+- Micro buttons on the minimap, under Minimap: any micro button as an icon on the minimap ring, whether or not it is hidden from the micro menu. Legacy and the group finder are on by default, so Legacy has a way in again; the rest are off.
+- Shift-drag moves our minimap buttons around the ring: the options button, the addon button bag, the group finder eye, the micro button icons and the tracking spell icon.
+- Objective tracker, under Quests, is one choice: the classic look, Classic Era's quest watch, the game's own, or hidden. Classic Era's watch is new: plain lines under the minimap, titles that turn bright gold when a quest is done, a click on a title to open the quest, shift-click to untrack, right-click for more. The classic look stays the default.
+- Only in a group or dungeon, under Threat percent on target and focus: the threat percent shows only in a party or raid, or inside a dungeon or raid. Off by default.
+- The game menu button's tooltip has Classic Era's descriptions under the title and under latency, framerate, bandwidth, download and addon memory.
+
+### Changed
+- The options window is larger, and its long lists (hide micro buttons, minimap icons, chat buttons, unit frames, elite frames, flat color parts) are drop-downs. Rows are grouped by the piece they change, and Minimap and Chat have their own sections.
+- The game's drop-down menus, such as the Available, Away and Busy status menu, use Classic Era's iron frame.
+- Micro buttons keep their normal look while the game menu or the settings window is open, as in Classic Era. They turned gray.
+- The options button's default spot on the minimap moved clear of the tracking magnifier. One you dragged stays where you put it, and it now moves with Shift held.
+
+### Fixed
+- Reset toggles keeps the classic-sized bars when the interface is at Classic Era's size. It switched them back to the game's larger size.
+- With a custom theme, the lower half of the tabs under the options window takes the theme color.
+- On the ClassicUI Forever layout, the classic bar's art shows unless you hid it yourself in Edit Mode. A leftover Hide Bar Art setting could leave a new player with a bare bar.
+- With Minimap unchecked in the options, the game's day and night icon, coordinates and calendar button stay where another addon puts them. One hidden by a minimap addon came back after a reload.
+
+## [0.17.0] - 2026-10-02
+
+### Added
+- Track Recipe in the trade skill window lists the recipe's reagents in the objective tracker, and a chain link beside the window's title puts a link to your profession in chat, as in Wrath of the Lich King.
+- The trade skill window's Filter is Classic Era's checkbox menu, with a Slots submenu for professions that make gear.
+- Elite dragons under Nameplates: a gold dragon around the level of elite enemies, silver for rares. Off by default.
+- Ignore theme for elite frames and Ignore theme for nameplate dragons under Custom theme: the gold and silver dragons keep their own colors with a theme on. Off by default.
+- Hide combat glow under Unit frames: no red pulse on the player frame while you attack. The gold resting glow stays. Off by default.
+- Name who interrupted under Cast bars: interrupted cast bars say just Interrupted, as in Classic Era; check this to also see who interrupted. Off by default.
+- Instance difficulty under Minimap: the flag the game puts on the minimap in dungeons and raids can be shown, shown on hover or hidden. Hidden by default.
+- Shaded XP and reputation bars under Classic bar: the empty part of the bars is half dark, as in Classic Era, instead of showing the world through. On by default.
+- Shift-click a talent in the talent window to link it in chat.
+- Setting up, switching to or resetting the classic layout offers Classic Era's interface size when yours is different. Players updating on the game's default size are offered it once.
+
+### Changed
+- Right-click and drop-down menus have Classic Era's black background instead of a bright navy.
+- Nameplates match Classic Era's size: the health bar sits where Classic Era puts it, and the game's default nameplate size draws Classic Era's default.
+- On the classic layout, buffs and debuffs sit at Classic Era's spots beside the minimap. Buffs you moved in Edit Mode stay where you put them.
+
+### Fixed
+- Train works for spells and recipes far down a trainer's list, such as recipes that need more than 30 skill. Pressing it did nothing for them.
+- The professions key, the micro button and the spellbook's Professions tab open the professions book again. They opened the last profession you used.
+- The chat menu and voice chat buttons stay beside the chat on every docked tab. Two of the six buttons vanished on other tabs.
+- On the classic layout, the durability figure sits under the minimap, left of the side action bars. It was hidden behind them.
+- Interrupted casts on the target, focus and nameplates turn red and fill the bar, and other units' channels and finished casts show green. They stayed gold.
+- The classic world map opened in a fight no longer catches clicks around it.
+- Turning the theme off or switching themes no longer breaks red buttons such as Edit Mode's Save and Revert All Changes.
+- Turning the classic bar off gives the XP and reputation bars the game's own look back at once.
+- Turning the classic nameplates off no longer raises an error.
+- Small alignment fix on the bag close buttons.
+
 ## [0.16.2] - 2026-10-02
 
 ### Fixed

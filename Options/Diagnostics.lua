@@ -33,8 +33,8 @@ local function Debug()
     ns.Print("button1 " .. FrameInfo(ab1))
     if bar then
         local parent = bar:GetParent()
-        ns.Print(string.format("bar strata %s level %d alpha %.2f visible %s parent %s hideBarArt %s",
-            bar:GetFrameStrata(), bar:GetFrameLevel(), bar:GetAlpha(), tostring(bar:IsVisible()), parent and parent:GetName() or "?", tostring(bar.hideBarArt)))
+        ns.Print(string.format("bar strata %s level %d alpha %.2f visible %s parent %s hideBarArt %s ticked %s",
+            bar:GetFrameStrata(), bar:GetFrameLevel(), bar:GetAlpha(), tostring(bar:IsVisible()), parent and parent:GetName() or "?", tostring(bar.hideBarArt), tostring(ns.db.barArtHidden)))
     end
     if ab1 then
         local normal = ab1:GetNormalTexture()

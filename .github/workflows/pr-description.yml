@@ -1,0 +1,25 @@
+name: PR description
+
+# A blank pull request description filled in from its commits (.github/scripts/pr_autofill.py).
+# pull_request_target runs the base branch's copy with a token that may edit the PR; the PR's own code is never run.
+on:
+  pull_request_target:
+    types: [opened, reopened, edited, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-description-${{ github.event.pull_request.number }}
+
+jobs:
+  fill:
+    name: Fill a blank description
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Fill from the commits
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/pr_autofill.py "${{ github.repository }}" "${{ github.event.pull_request.number }}"

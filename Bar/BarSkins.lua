@@ -70,6 +70,48 @@ local function ClientTint(button)
     return info and info.backgroundColor
 end
 
+-- Forever greys every other micro button while the game menu or settings are open; Era leaves them as they are (#72).
+local function MenuOpen()
+    return (GameMenuFrame ~= nil and GameMenuFrame:IsShown()) or (SettingsPanel ~= nil and SettingsPanel:IsShown())
+end
+
+-- A button on the client's own sheet: meanwhile its disabled texture shows the up atlas, then its own again.
+local function ClientMenuLook(button, state)
+    local disabled = button:GetDisabledTexture()
+    if not disabled then return end
+    if MenuOpen() then
+        local normal = button:GetNormalTexture()
+        local atlas = normal and normal:GetAtlas()
+        if atlas and disabled:GetAtlas() ~= atlas then
+            state.clientDisabled = state.clientDisabled or disabled:GetAtlas()
+            disabled:SetAtlas(atlas)
+        end
+    elseif state.clientDisabled then
+        disabled:SetAtlas(state.clientDisabled)
+        state.clientDisabled = nil
+    end
+end
+
+-- The client's disable also halves the button and grays its portrait and a few disabled textures: not while the menu
+-- is open, handed back after. A hidden seat (Bar/BandMicro.lua) stays unseen through the client's 0.5 and 1.
+local function MenuDim(button, state, open)
+    local disabled = button:GetDisabledTexture()
+    if disabled and open then
+        if state.disabledGray == nil then state.disabledGray = disabled:IsDesaturated() end
+        local normal = button:GetNormalTexture()
+        disabled:SetDesaturated(normal ~= nil and normal:IsDesaturated())
+    elseif disabled and state.disabledGray ~= nil then
+        disabled:SetDesaturated(state.disabledGray)
+        state.disabledGray = nil
+    end
+    if ns.MicroSeatHidden(button) then
+        ns.SetFrameAlphaIf(button, 0)
+    elseif not button:IsEnabled() then
+        ns.SetFrameAlphaIf(button, open and 1 or 0.5)
+        if button.Portrait then button.Portrait:SetDesaturated(not open) end
+    end
+end
+
 local function ApplyMicroArt(button)
     local state = micro[button]
     if not state or not state.active then return end
@@ -80,18 +122,21 @@ local function ApplyMicroArt(button)
     end
     if state.art then
         -- The 1.x sheets are files the client still ships (and we bundle).
-        ns.DressStates(button, state.upKey, state.downKey, state.disabledKey, "microHighlight", MICRO)
+        ns.DressStates(button, state.upKey, state.downKey, MenuOpen() and state.upKey or state.disabledKey, "microHighlight", MICRO)
         -- The client tints the guild sheet with the tabard colour; the 1.x sheet is drawn untinted.
         ns.EachState(button, STATES, WhiteTex)
         ns.FadeKeys(button, EMBLEMS, 0, CHANGED)
         if button.Background then button.Background:Hide() end
         if button.PushedBackground then button.PushedBackground:Hide() end
+        MenuDim(button, state, MenuOpen())
     elseif ns.OnForever() then
         -- Forever's own art (1.x had no such button): the bronze frame behind the icon drained to silver in the
         -- classic theme; the icon (the state textures) keeps its colors.
         Drained(button.Background)
         Drained(button.PushedBackground)
         ns.DressStates(button, nil, nil, nil, "microHighlight", MICRO_HOVER)
+        ClientMenuLook(button, state)
+        MenuDim(button, state, MenuOpen())
     end
     if button.Portrait then
         if button.PortraitMask then button.PortraitMask:Hide() end
@@ -124,7 +169,7 @@ local function RedressState(button, state, which)
     elseif which == "Pushed" then
         ns.DressStates(button, nil, state.downKey, nil, nil, how)
     elseif which == "Disabled" then
-        ns.DressStates(button, nil, nil, state.disabledKey, nil, how)
+        ns.DressStates(button, nil, nil, MenuOpen() and state.upKey or state.disabledKey, nil, how)
     else
         ns.DressStates(button, nil, nil, nil, "microHighlight", how)
     end
@@ -162,6 +207,10 @@ local function HookMicro(button)
     end
 end
 
+local function MenuLooks()
+    for _, each in ipairs(microButtons) do ApplyMicroArt(each) end
+end
+
 function ns.SkinMicroButton(button)
     local state = micro[button]
     if not state then
@@ -178,6 +227,11 @@ function ns.SkinMicroButton(button)
         microButtons[#microButtons + 1] = button
         microStates[#microStates + 1] = state
         HookMicro(button)
+        -- The game menu or settings closing, and opening: after the client's show pass, which disables the buttons.
+        for _, panel in ipairs({ GameMenuFrame, SettingsPanel }) do
+            ns.Sched.OnVisible(panel, "microMenuLook", MenuLooks)
+            ns.Sched.AfterShow(panel, "microMenuLook", MenuLooks)
+        end
     end
     state.active = true
     ApplyMicroArt(button)
@@ -198,6 +252,8 @@ function ns.UnskinMicroButton(button)
         button:ClearHighlightTexture()
         state.madeHighlight = nil
     end
+    state.clientDisabled = nil
+    MenuDim(button, state, false)
     ShowPerfBar(button, true)
     if button.textureName and type(LoadMicroButtonTextures) == "function" then
         -- Ours cleared the tabard tint; the client's GuildColor sheet needs it back.

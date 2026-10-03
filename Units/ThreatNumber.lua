@@ -15,9 +15,10 @@ local BOX_W, BOX_H, FILL_W, FILL_H, FILL_Y, TEXT_Y = 49, 18, 37, 14, -3, -4
 local BOX_X, BOX_Y = -30, -26
 local BORDER_COORDS = { 0, 0.765625, 0, 0.5625 }
 local FRAMES = { target = "TargetFrame", focus = "FocusFrame" }
--- The mobs' threat lists and the player's standing on them; a new target or focus and the fight's end.
+-- The mobs' threat lists and the player's standing on them; a new target or focus, the fight's end, a group or zone change.
 local UNIT_EVENTS = { "UNIT_THREAT_LIST_UPDATE", "UNIT_THREAT_SITUATION_UPDATE" }
-local EVENTS = { "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "PLAYER_REGEN_ENABLED" }
+local EVENTS = { "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "PLAYER_REGEN_ENABLED", "GROUP_ROSTER_UPDATE",
+    "PLAYER_ENTERING_WORLD" }
 local boxes, live, shown = {}, {}, {}
 local driver, focusDriver
 
@@ -47,12 +48,17 @@ local function Build(frame)
     return box
 end
 
+-- Only in a group: in a party or raid, or inside a dungeon, raid or other instance.
+local function Allowed()
+    return not ns.db.threatNumberGrouped or IsInGroup() or (IsInInstance())
+end
+
 -- The game's own reading (UnitFrame_UpdateThreatIndicator): your share, or your lead over the next while tanking.
 local function UpdateBox(unit)
     local box = boxes[unit]
     if not box then return end
     local show = false
-    if live[unit] and UnitExists(unit) and not UnitIsDead(unit) and UnitClassification(unit) ~= "minus" then
+    if live[unit] and Allowed() and UnitExists(unit) and not UnitIsDead(unit) and UnitClassification(unit) ~= "minus" then
         local tanking, status, _, raw = UnitDetailedThreatSituation("player", unit)
         local value = raw
         if tanking and not IsSecret(tanking) then value = UnitThreatPercentageOfLead("player", unit) end
@@ -104,5 +110,5 @@ end
 
 -- The options pass waits out a fight, where threat shows: the switch answers at once.
 ns.OnToggle(function(key)
-    if key == "threatNumber" then ns.ThreatNumberSync() end
+    if key == "threatNumber" or key == "threatNumberGrouped" then ns.ThreatNumberSync() end
 end)

@@ -1,12 +1,13 @@
 local _, ns = ...
 
--- 1.x plate: 128x16 border with the level in its right slot, 102x8 health bar, name above, cast bar below.
+-- 1.x plate: 128x16 border with the level in its right slot, 103.75x10 health bar, name above, cast bar below.
 -- We re-lay the client plate's pieces and fade its retail art; forbidden plates (instances) are left alone.
 
 local Dress, DressNew, FadeKeys, IsSecret = ns.Dress, ns.DressNew, ns.FadeKeys, ns.IsSecret
 
 local BORDER_W, BORDER_H = 128, 16
-local INSET_L, INSET_R, INSET_T, INSET_B = 5, 21, 4, 4
+-- Era's classic plate: the bar 3.5 and 20.75 in from the border's ends, 0.5 above its 3-each centring.
+local INSET_L, INSET_R, INSET_T, INSET_B = 3.5, 20.75, 2.5, 3.5
 local BAR_W, BAR_H = BORDER_W - INSET_L - INSET_R, BORDER_H - INSET_T - INSET_B
 local BORDER_GAP = 2       -- health border to cast border
 local NAME_GAP = 2         -- name bottom above the border top
@@ -36,16 +37,16 @@ local PLATE_EVENTS = { "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED",
 local CAST_EVENTS = { UNIT_SPELLCAST_START = true, UNIT_SPELLCAST_STOP = true, UNIT_SPELLCAST_CHANNEL_START = true,
     UNIT_SPELLCAST_CHANNEL_STOP = true, UNIT_SPELLCAST_INTERRUPTED = true }
 
--- The game's nameplate Size (Small..Huge) at the client's classic-style scale steps.
+-- The game's nameplate Size (Small..Huge) one classic-style step up: Forever's default (Small) draws Era's (Medium).
 local SIZE_CVAR = "nameplateSize"
-local SIZE_SCALES = { 0.8, 1.0, 1.25, 1.4, 1.6 }
+local SIZE_SCALES = { 1.0, 1.25, 1.4, 1.6, 1.8 }
 -- Read at most once a second (every plate asks on every re-lay); CVAR_UPDATE clears it.
 local plateScale, plateScaleAt = nil, 0
 local function PlateScale()
     local now = GetTime()
     if plateScale and now - plateScaleAt < 1 then return plateScale end
     local value = tonumber(ns.GetCVar(SIZE_CVAR))
-    plateScale, plateScaleAt = SIZE_SCALES[value or 2] or 1, now
+    plateScale, plateScaleAt = SIZE_SCALES[value or 1] or 1, now
     return plateScale
 end
 
@@ -111,6 +112,27 @@ local function UpdateLevel(unitFrame)
     if color then level:SetTextColor(color.r, color.g, color.b) else level:SetTextColor(1, 0.82, 0) end
 end
 
+-- Elite dragons (an option, as Mists of Pandaria drew them): gold round an elite's level, silver round a rare's, under
+-- the border. The 64x32 art (drawn 37x27 from its top left) hugs the level box's right end; its top left from the level's centre.
+local DRAGON_X = -12.5
+local DRAGON_Y = 12
+local DRAGON_WIDTH = 57.5
+local DRAGON_HEIGHT = 29
+local DRAGON = { own = "dragon", layer = "OVERLAY", sublevel = 1, w = DRAGON_WIDTH, h = DRAGON_HEIGHT, coords = FULL,
+    point = "TOPLEFT", relPoint = "RIGHT", x = LEVEL_X + DRAGON_X, y = DRAGON_Y }
+local DRAGON_KEY = { elite = "plateElite", worldboss = "plateElite", rare = "plateRare", rareelite = "plateRare" }
+
+local function UpdateDragon(unitFrame, health)
+    local own = health.fcui
+    local border = own and own.border
+    if not border then return end
+    local kind = ns.db and ns.db.plateDragons == true and unitFrame.unit and UnitClassification(unitFrame.unit)
+    if IsSecret(kind) then kind = nil end
+    local key = kind and DRAGON_KEY[kind]
+    if key then DressNew(health, key, DRAGON, border) end
+    if own.dragon then ns.SetShownIf(own.dragon, key ~= nil) end
+end
+
 -- The client's bottom-up chain at 1.x sizes, bars scaled by Size; name and auras keep the client's sizing.
 local function LayChain(unitFrame, castContainer, container, health)
     local scale = PlateScale()
@@ -123,14 +145,22 @@ local function LayChain(unitFrame, castContainer, container, health)
     ns.SetTwoPointsIf(health, "TOPLEFT", container, "TOPLEFT", 0, 0, "BOTTOMRIGHT", container, "BOTTOMRIGHT", 0, 0)
 end
 
+-- Plate -> its cast was interrupted, till the next one starts (from our event watch: plates are never hooked).
+local castCut = setmetatable({}, { __mode = "k" })
+
 -- Cast bar: same fill and border, icon to the left, text inside.
-local function LayCast(castContainer)
+local function LayCast(castContainer, unitFrame)
     local cast = castContainer.castBar
     if not cast then return end
     ns.SetTwoPointsIf(cast, "TOPLEFT", castContainer, "TOPLEFT", 0, 0, "BOTTOMRIGHT", castContainer, "BOTTOMRIGHT", CAST_EXTRA, 0)
     ShadedFill(cast)
-    -- 1.x yellow cast, green channel: the client picks colour by bar art, which is ours now.
-    if cast.channeling then
+    -- 1.x yellow cast, green channel, red and full once interrupted (on our own 0 to 1: its range is secret).
+    if castCut[unitFrame] then
+        ns.SetBarColorIf(cast, 1, 0, 0)
+        cast:SetMinMaxValues(0, 1)
+        cast:SetValue(1)
+        if cast.Text and not ns.db.castBarInterrupter then cast.Text:SetText(INTERRUPTED) end
+    elseif cast.channeling then
         ns.SetBarColorIf(cast, 0, 1, 0)
     else
         ns.SetBarColorIf(cast, 1, 0.7, 0)
@@ -163,7 +193,7 @@ local function CastLayout(unitFrame)
     local container, health, castContainer = Pieces(unitFrame)
     if not container then return end
     LayChain(unitFrame, castContainer, container, health)
-    LayCast(castContainer)
+    LayCast(castContainer, unitFrame)
 end
 
 ns.PLATE_NAME_MIN, ns.PLATE_NAME_MAX = -6, 6
@@ -224,6 +254,7 @@ local function Layout(unitFrame)
     ns.SetPointIf(level, "CENTER", border, "RIGHT", LEVEL_X, 0)
     ns.SetPointIf(own.skull, "CENTER", border, "RIGHT", LEVEL_X, 0)
     UpdateLevel(unitFrame)
+    UpdateDragon(unitFrame, health)
 
     -- Name centred above the border, sized to its text; debuffs above it.
     local name = unitFrame.name
@@ -239,7 +270,7 @@ local function Layout(unitFrame)
         end
     end
 
-    LayCast(castContainer)
+    LayCast(castContainer, unitFrame)
 end
 
 -- From our passes, never a client hook: a pass our code joins is refused unit health for the rest of it.
@@ -385,7 +416,7 @@ end
 local ALL_EVENTS = { PLAYER_TARGET_CHANGED = true, PLAYER_FOCUS_CHANGED = true, DISPLAY_SIZE_CHANGED = true,
     UI_SCALE_CHANGED = true, CVAR_UPDATE = true }
 
-local function OnEvent(_, event, unit)
+local function OnEvent(_, event, unit, _, _, interruptedBy)
     if not NP.active then return end
     if event == "NAME_PLATE_UNIT_ADDED" then
         if MaybePlayer(unit) then SetSweeping(true) end
@@ -394,7 +425,10 @@ local function OnEvent(_, event, unit)
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
         -- The plate is recycled for another unit.
         local unitFrame = LivePlate(unit)
-        if unitFrame then NP.Unpaint(ns.Path(unitFrame, "HealthBarsContainer", "healthBar")) end
+        if unitFrame then
+            castCut[unitFrame] = nil
+            NP.Unpaint(ns.Path(unitFrame, "HealthBarsContainer", "healthBar"))
+        end
     elseif event == "UNIT_FACTION" or event == "UNIT_FLAGS" then
         local unitFrame = LivePlate(unit)
         if unitFrame then
@@ -405,9 +439,17 @@ local function OnEvent(_, event, unit)
         local unitFrame = LivePlate(unit)
         if unitFrame then UpdateLevel(unitFrame) end
     elseif CAST_EVENTS[event] then
-        -- Cast start or stop re-lays only that plate's chain and cast bar.
+        -- Cast start or stop re-lays only that plate's chain and cast bar; a channel's stop names who interrupted it.
         local unitFrame = unit and PlateFor(unit)
-        if unitFrame then QueueRelay(unitFrame, "cast") end
+        if unitFrame then
+            if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
+                castCut[unitFrame] = nil
+            elseif event == "UNIT_SPELLCAST_INTERRUPTED" or (event == "UNIT_SPELLCAST_CHANNEL_STOP"
+                and (ns.IsSecret(interruptedBy) or interruptedBy ~= nil)) then
+                castCut[unitFrame] = true
+            end
+            QueueRelay(unitFrame, "cast")
+        end
     elseif ALL_EVENTS[event] then
         if event == "CVAR_UPDATE" then plateScale = nil end
         QueueRelay()
@@ -432,7 +474,10 @@ local function Restore()
     NP.RestoreStyleChoice()
     for unitFrame in pairs(skinned) do
         if unitFrame.fcui then
-            for _, region in pairs(unitFrame.fcui) do region:Hide() end
+            -- Regions only: the table also keeps the name's sizes.
+            for _, region in pairs(unitFrame.fcui) do
+                if type(region) == "table" and region.Hide then region:Hide() end
+            end
         end
         if unitFrame.HealthBarsContainer then unitFrame.HealthBarsContainer:SetScale(1) end
         if unitFrame.CastBarsContainer then unitFrame.CastBarsContainer:SetScale(1) end
@@ -453,3 +498,12 @@ local function Restore()
 end
 
 ns.RegisterModule("namePlates", { apply = Apply, restore = Restore })
+
+-- Elite dragons turn at once, in a fight too.
+ns.OnToggle(function(key)
+    if key ~= "plateDragons" or not NP.active then return end
+    EachPlate(function(unitFrame)
+        local _, health = Pieces(unitFrame)
+        if health then UpdateDragon(unitFrame, health) end
+    end)
+end)

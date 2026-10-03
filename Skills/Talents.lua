@@ -237,6 +237,12 @@ local Refresh
 
 local function Button_OnClick(self, mouse)
     local talent, tree = self.talent, frame.tree
+    -- Shift-click links it in chat, in a fight and on an inspected tree too, as the game's window does.
+    if talent and talent.spellID and mouse == "LeftButton" and IsModifiedClick("CHATLINK") then
+        local link = C_Spell.GetSpellLink(talent.spellID)
+        if link and not IsSecret(link) then ChatFrameUtil.InsertLink(link) end
+        return
+    end
     if not talent or not tree or tree.inspect or InCombatLockdown() then return end
     if mouse == "RightButton" then
         if talent.canRefund then pcall(C_Traits.RefundRank, tree.configID, talent.nodeID) end

@@ -270,9 +270,14 @@ local function Run(body)
     return ok
 end
 
+-- Hidden for another addon's tracker, or for Era's quest watch (Quest/QuestWatch.lua).
+local function Wanted()
+    return ns.db and (ns.db.hideObjectiveTracker == true or ns.db.questWatch == true) or false
+end
+
 local function HideTracker()
     local tracker = ObjectiveTrackerFrame
-    if not tracker or not (ns.db and ns.db.hideObjectiveTracker) then return end
+    if not tracker or not Wanted() then return end
     if not hideHolder then
         hideHolder = CreateFrame("Frame")
         hideHolder:Hide()
@@ -285,7 +290,7 @@ end
 -- Back under its parent, then shown for the container to lay it out and the client to refill it.
 local function ShowTracker()
     local tracker = ObjectiveTrackerFrame
-    if not tracker or not hideHolder or tracker:GetParent() ~= hideHolder then return end
+    if Wanted() or not tracker or not hideHolder or tracker:GetParent() ~= hideHolder then return end
     if not Run(HIDE) then return end
     tracker:SetParent(trackerParent or UIParent)
     Run(SHOW)
@@ -298,6 +303,12 @@ end
 
 local function HideRestore()
     ns.WhenCalm("tracker.hidden", ShowTracker)
+end
+
+-- Either option's switch: parked or back, out of a fight.
+function ns.SyncGameTracker()
+    if not ObjectiveTrackerFrame then return end
+    ns.WhenCalm("tracker.hidden", Wanted() and HideTracker or ShowTracker)
 end
 
 ns.RegisterModule("hideObjectiveTracker", { apply = HideApply, restore = HideRestore })

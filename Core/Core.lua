@@ -416,6 +416,12 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         if saved and saved < 3 then ns.KeepOldLook() elseif saved == 3 then ns.NoteBarsLook() end
         -- Last, as it writes the newest dbVersion.
         if saved and saved < 6 then ns.HideThreatGlowNow() end
+        if saved and saved < 7 then ns.MarkEraScaleOffer() end
+        if saved and saved < 8 then ns.KeepGroupFinderEye() end
+        if saved and saved < 9 then ns.KeepBarArt() end
+        if saved and saved < 10 then ns.KeepLegacyIcon() end
+        if saved and saved < 11 then ns.OneTrackerChoice() end
+        if saved and saved < 12 then ns.FreeOptionsButton() end
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
         ns.BarSizeKey()
@@ -457,6 +463,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
                 ns.FirstRun()
                 if ns.OfferBarSize then ns.OfferBarSize() end
                 if ns.OfferClassicLook then ns.OfferClassicLook() end
+                if ns.OfferEraScale then ns.OfferEraScale() end
             end)
         end
     end

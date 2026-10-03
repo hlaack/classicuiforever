@@ -39,14 +39,14 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
-              "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX",
+              "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST",
               "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
@@ -133,6 +133,7 @@ DEV_NAMES = frozenset((
     "BronzeOn", "DrainBronze", "UndrainBronze", "band", "Sched", "DB_DEFAULTS", "OpenGuildRoster", "sheet",
     "ClassBandState", "PadOf", "TrainerState", "ActiveLayoutInfo", "LayoutWritable", "BandPinsWanted",
     "WindowLockButtons", "GameArtTinted", "FlatLayersShown", "FlatState", "FlatPartOf", "ThemeLayerSample",
+    "ClassicMapArt",
 ))
 # Shared API kept without a reader yet (plan section 5); never reported by DEADNS.
 KEPT_API = frozenset((
@@ -155,6 +156,8 @@ FIX = {
     "SECRETLAYER": "test it with ns.AnySecret(layer, sub) before any compare or math, and skip that region when secret",
     "PCALLMANY": "pcall a function of ours that walks them and returns one value (ns.EachChildProtected, "
                  "ns.EachRegionProtected in Core/Util.lua), never the getter itself",
+    "PADLIST": "change the trainer list's size only in the Train pad's secure snippet (LIST_TALL / LIST_BACK in "
+               "Skills/Trainer.lua), which measures it there too; our Lua never sizes, places or measures that list",
     "SELFBOX": "anchor an edit mode Selection to its own frame (offsets for a wider box): the client sets the frame's "
                "clamp and snap offsets from the gap between them, so a box hung elsewhere shoves the frame off its anchor",
     "MOUSEORDER": "set OnEnter/OnLeave/OnMouse* first, then SetMouseClickEnabled(false) (the hover sensor over the "
@@ -377,6 +380,8 @@ MESSAGES = {
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "MOUSEORDER": "a mouse script set after the frame's clicks were switched off (setting it turns clicks back on)",
     "SELFBOX": "an edit mode Selection anchored to another frame than its own (the bars launched to the screen top)",
+    "PADLIST": "the trainer's client list sized, placed or measured in our Lua (rows it rebuilds in our name are "
+               "refused by Train's pad: a 6000-tall list left Train dead for every service)",
     "FADEDPIECE": "a client end cap faded or laid on the band as a handle (bars snapped to it, saved at the screen top)",
     "PCALLMANY": "a pcall straight around GetChildren/GetRegions/GetAnimations: 22 or more results abort the beta client",
     "SECRETLAYER": "a draw layer read with no secret test beside it (a nameplate's pieces answer secret: 0.16.1, 1381 errors)",
@@ -1112,6 +1117,34 @@ def self_box_hits(lx):
     return found
 
 
+# Lists whose rows a secure pad clicks; only the pad's snippet may size them.
+PADLIST_FILES = ("Skills/Trainer.lua",)
+PADLIST_ANY_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=")
+PADLIST_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=\s*(?:[\w.]+\s+and\s+)?[\w.]+\.Scroll(?:Box|Bar)\b")
+PADLIST_CALL = re.compile(r"([\w.]+)\s*:\s*(?:Set(?:Height|Width|Size|Point|AllPoints)|ClearAllPoints"
+                          r"|Get(?:Height|Width|Size|Rect|Top|Bottom|Left|Right))\s*\(")
+PADLIST_SETTER = re.compile(r"\b(?:Set(?:Size|Point|Width|Height)If|SetPointOnce|PutPoints)\s*\(\s*([\w.]+)")
+
+
+def pad_list_hits(path, lx):
+    """The pad-clicked client list (X.ScrollBox / X.ScrollBar, or a local holding one) sized, placed or measured."""
+    found = set()
+    if path not in PADLIST_FILES:
+        return found
+    held = set()
+    for no, line in enumerate(lx.blank, 1):
+        for m in PADLIST_ANY_LOCAL.finditer(line):
+            held.discard(m.group(1))
+        for m in PADLIST_LOCAL.finditer(line):
+            held.add(m.group(1))
+        for rx in (PADLIST_CALL, PADLIST_SETTER):
+            for m in rx.finditer(line):
+                target = m.group(1)
+                if target.endswith((".ScrollBox", ".ScrollBar")) or target in held:
+                    found.add(("PADLIST", no))
+    return found
+
+
 def mouse_order_hits(lx):
     """A mouse script set on a frame after its clicks were switched off, in the same file."""
     found = set()
@@ -1218,6 +1251,7 @@ def pattern_hits(path, lx, funcs):
     found |= check_label_hits(lx)
     found |= mouse_order_hits(lx)
     found |= self_box_hits(lx)
+    found |= pad_list_hits(path, lx)
     found |= secret_layer_hits(lx)
     found |= cvar_login_hits(lx, funcs)
     found |= held_cvar_hits(lx, funcs)

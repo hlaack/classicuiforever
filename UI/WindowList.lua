@@ -25,6 +25,9 @@ ns.WINDOW_LIST = {
         section = L["UI_MINIMAP"], piece = true, choice = "minimapZoneShow", choiceLabel = L["UI_SHOW"] },
     { key = "minimapTracking", label = L["UI_TRACKING"], name = "ForeverClassicUIMinimapTrackingHome", w = 32, h = 32,
         section = L["UI_MINIMAP"], piece = true, choice = "minimapTrackingShow", choiceLabel = L["UI_SHOW"] },
+    -- The tracking spell's icon: Era's spot until dragged round the ring (Map/Minimap.lua).
+    { key = "minimapTrackingIcon", label = L["OPT_classicTracking"], name = "ForeverClassicUIMinimapTrackingIcon", w = 32,
+        h = 32, section = L["UI_MINIMAP"], piece = true, ringKey = "trackingIconAngle" },
     { key = "minimapMail", label = L["UI_MAIL"], name = "ForeverClassicUIMinimapMailHome", w = 33, h = 33,
         section = L["UI_MINIMAP"], piece = true, choice = "minimapMailShow", choiceLabel = L["UI_SHOW"] },
     { key = "minimapZoomIn", label = L["UI_ZOOM_IN"], name = "ForeverClassicUIMinimapZoomInHome", w = 32, h = 32,
@@ -46,6 +49,9 @@ ns.WINDOW_LIST = {
     { key = "minimapGroupFinder", label = L["OPT_groupFinder"], name = "ForeverClassicUIGroupFinderButton", w = 32, h = 32,
         section = L["UI_MINIMAP"], piece = true, ringKey = "lfgButtonAngle", choice = "groupFinderButtonShow",
         choiceLabel = L["UI_SHOW"] },
+    -- Era's quest watch (Quest/QuestWatch.lua), under the minimap until placed.
+    { key = "questWatch", label = L["UI_QUEST_WATCH"], name = "ForeverClassicUIQuestWatch", w = 200, h = 80, piece = true,
+        section = L["UI_QUEST_WATCH"] },
     -- The classic bar's gryphons (Bar/BandArt.lua), on the band ends until placed.
     { key = "gryphonLeft", label = L["UI_GRYPHON_LEFT"], name = "ForeverClassicUIGryphonLeft", w = 128, h = 128,
         piece = true, gameEdit = true, choice = "gryphonLeftShow", choiceLabel = L["UI_SHOW"] },
@@ -60,6 +66,18 @@ ns.WINDOW_LIST = {
     { key = "gossip", label = L["UI_GOSSIP"], name = "GossipFrame", w = 338, h = 427, client = true,
         follows = "questGiver", followX = 0, followY = 0, followSize = true },
 }
+
+-- The other micro buttons on the minimap ring: Map/MinimapMicro.lua names its frames and angles the same way.
+for _, micro in ipairs({ { "Character", L["OPT_hideMicroCharacter"] }, { "Spellbook", L["OPT_hideMicroSpellbook"] },
+    { "Talents", L["OPT_hideMicroTalents"] }, { "Professions", L["OPT_hideProfessionsButton"] },
+    { "QuestLog", L["OPT_hideMicroQuestLog"] }, { "Legacy", L["OPT_hideMicroLegacy"] },
+    { "WorldMap", L["OPT_hideMicroWorldMap"] }, { "Guild", L["OPT_hideMicroGuild"] },
+    { "Collections", L["OPT_hideMicroCollections"] }, { "Help", L["OPT_hideMicroHelp"] },
+    { "GameMenu", L["OPT_hideMicroGameMenu"] }, { "Shop", L["OPT_hideMicroShop"] } }) do
+    ns.WINDOW_LIST[#ns.WINDOW_LIST + 1] = { key = "minimap" .. micro[1], label = micro[2],
+        name = "ForeverClassicUIMinimap" .. micro[1] .. "Button", w = 32, h = 32, section = L["UI_MINIMAP"], piece = true,
+        ringKey = "minimap" .. micro[1] .. "Angle", choice = "groupFinderButtonShow", choiceLabel = L["UI_SHOW"] }
+end
 
 -- An entry's window; none for a padHost one inside the game's spell window (gamepad on at login), which places it.
 function ns.WindowFrame(entry)

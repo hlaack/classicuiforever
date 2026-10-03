@@ -96,16 +96,15 @@ function ns.LengthenTabPiece(piece, u0, u1, more)
     end
     piece:SetHeight(SLICE_BODY)
     piece:SetTexCoord(u0, u1, 0, SLICE_BODY / ROWS)
-    local file, r, g, b = piece:GetTexture(), piece:GetVertexColor()
-    local desat = piece:IsDesaturated()
+    local file = piece:GetTexture()
     local rows = { { SLICE_BODY, SLICE_RIM, SLICE_RIM - SLICE_BODY + TAB_EXTRA + (more or 0) }, { SLICE_RIM, ROWS, ROWS - SLICE_RIM } }
     for i, tex in ipairs(pair) do
         local from, to, h = rows[i][1], rows[i][2], rows[i][3]
         tex:SetTexture(file)
         tex:SetTexCoord(u0, u1, from / ROWS, to / ROWS)
         tex:SetHeight(h)
-        tex:SetVertexColor(r, g, b)
-        tex:SetDesaturated(desat)
+        -- Not painted once: a theme change repaints the body and rim with the piece (the options' tabs are skinned once).
+        ns.ThemeAs(tex, piece)
         tex:SetShown(piece:IsShown())
     end
 end

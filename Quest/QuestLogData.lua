@@ -101,6 +101,29 @@ function QL.SetWatched(questID, watched)
     end
 end
 
+-- The game's own abandon prompt for a quest in the log, naming the items it takes with it.
+function QL.AbandonPrompt(questID)
+    if not questID then return end
+    C_QuestLog.SetSelectedQuest(questID)
+    C_QuestLog.SetAbandonQuest()
+    local info = QL.QuestInLog(questID)
+    local name = C_QuestLog.GetAbandonQuestName and C_QuestLog.GetAbandonQuestName() or info and info.title or ""
+    local items = C_QuestLog.GetAbandonQuestItems and C_QuestLog.GetAbandonQuestItems() or {}
+    if #items > 0 then
+        local names = {}
+        for _, item in ipairs(items) do
+            local itemName = C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(item)
+            names[#names + 1] = itemName or tostring(item)
+        end
+        StaticPopup_Hide("ABANDON_QUEST")
+        StaticPopup_Show("ABANDON_QUEST_WITH_ITEMS", name, table.concat(names, ", "))
+    else
+        StaticPopup_Hide("ABANDON_QUEST_WITH_ITEMS")
+        StaticPopup_Show("ABANDON_QUEST", name)
+    end
+    PlaySound(SOUNDKIT.IG_QUEST_LOG_ABANDON_QUEST)
+end
+
 -- Party members on the quest; solo returns the shared ns.EMPTY, no allocation.
 function QL.PartyOnQuest(questID)
     if not questID or not IsInGroup or not IsInGroup() then return ns.EMPTY end

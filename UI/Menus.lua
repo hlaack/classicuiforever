@@ -3,11 +3,6 @@ local _, ns = ...
 -- Drop down lists and row right-click menus, on Classic Era's menu art and numbers (Blizzard_Menu Classic).
 
 local MOUSE_DOWN = { "GLOBAL_MOUSE_DOWN" }
--- The client's own right-click menus wear the tooltip's thin rim and fill (UI/ClientMenus.lua).
-local TIP_FILL = _G.TOOLTIP_DEFAULT_BACKGROUND_COLOR
-ns.MENU_LOOK = { bronze = false, border = { 1, 1, 1, 1 },
-    bg = TIP_FILL and { TIP_FILL.r, TIP_FILL.g, TIP_FILL.b, 1 } or { 0.09, 0.09, 0.19, 1 } }
-
 -- Era's menu sheet (256 square): each box as left, top, right, bottom px.
 local SHEET = 256
 local IRON_BOX, IRON_MARGIN = { 1, 1, 97, 97 }, 32          -- common-dropdown-classic-bg: drop down lists
@@ -18,6 +13,8 @@ local RADIO_OFF = { 226, 127, 242, 143 }                    -- common-dropdown-t
 local IRON_OUT, IRON_FILL, IRON_INSET = { -3, 3, 3, -4 }, { 6, -6, -6, 6 }, { 16, 10, 16, 10 }
 local RIM_OUT, RIM_FILL, RIM_INSET = { -3, 1, 3, -4 }, { 7, -4, -8, 8 }, { 14, 14, 14, 14 }
 local FILL_ALPHA = 0.8
+-- The client's own right-click menus: the tooltip's thin rim over Era's menu fill (UI/ClientMenus.lua).
+ns.MENU_LOOK = { bg = { 0, 0, 0, FILL_ALPHA } }
 local MENU_ROW = 20             -- every text row
 local MENU_DIVIDER = 13         -- divider row
 local RADIO_SIZE, RADIO_GAP = 16, 2
@@ -68,6 +65,16 @@ local function Dress(menu, box, margin, out, fill)
     black:SetColorTexture(0, 0, 0, FILL_ALPHA)
     black:SetPoint("TOPLEFT", art, "TOPLEFT", fill[1], fill[2])
     black:SetPoint("BOTTOMRIGHT", art, "BOTTOMRIGHT", fill[3], fill[4])
+    return art
+end
+
+-- Era's drop down look on a client menu (UI/ClientMenus.lua); its reach past the menu's edges for the clamp.
+ns.IRON_REACH = IRON_OUT
+function ns.IronMenuArt(menu)
+    local art = Dress(menu, IRON_BOX, IRON_MARGIN, IRON_OUT, IRON_FILL)
+    -- The client's pooled menus change level per open.
+    if art.SetUsingParentLevel then art:SetUsingParentLevel(true) end
+    return art
 end
 
 local function NewMenu(strata)
@@ -263,9 +270,9 @@ end
 
 ------------------------------------------------------------ drop lists with submenus
 
--- Blizzard_Menu Vanilla's rows on the iron list. Entries: { text, check = isOn, toggle = fn } (its gold tick only when
--- on), { text, radio = isOn, pick = fn }, { text, click = fn }, { divider = true }, { text, sub = entries or a function
--- giving them }. A pick keeps the menu open and redraws the marks; a submenu opens beside its row on hover.
+-- Blizzard_Menu Vanilla's rows on the iron list. Entries, or a function giving them per open: { text, check = isOn, toggle = fn }
+-- (gold tick when on), { text, radio = isOn, pick = fn }, { text, click = fn }, { divider = true }, { text, sub = entries or
+-- a function }. A pick keeps the menu open and redraws the marks; a submenu opens beside its row on hover.
 local CHECK_MARK, CHECK_SIZE = { 211, 1, 243, 33 }, 20      -- common-dropdown-icon-checkmark-yellow-classic-2
 local EXPAND_ARROW, EXPAND_SIZE, EXPAND_GAP = "Interface\\ChatFrame\\ChatFrameExpandArrow", 16, 4
 local SUB_GAP = 4
@@ -408,7 +415,7 @@ end
 
 function ns.TreeMenu(entries)
     local root = NewLevel()
-    root.entries = entries
+    root.entries = type(entries) == "table" and entries or {}
     ns.RegisterEvents(root, MOUSE_DOWN)
     root:SetScript("OnEvent", function(self)
         if not self:IsShown() then return end
@@ -426,6 +433,7 @@ function ns.TreeMenu(entries)
     function root:Toggle(owner)
         if self:IsShown() then self:Hide() return end
         self.owner = owner
+        if type(entries) == "function" then self.entries = entries() end
         Layout(self)
         ns.SetPointOnce(self, "TOPLEFT", owner, "BOTTOMLEFT", DROP_LIST_X, DROP_LIST_Y)
         self:Show()

@@ -38,12 +38,60 @@ local function Radius()
     return (map and map:GetWidth() or 140) / 2 + 5
 end
 
+-- Ring spots other pieces stand on by default (mail, day and night, tracking spell, tracking glass, zoom out, zoom in),
+-- the arcs the zone bar and the clock cover, and how far apart two 32 px buttons must be, all in degrees.
+local TAKEN = { 12, 34, 159, 186, 302, 322 }
+local COVERED = { { 60, 120 }, { 246, 294 } }
+local APART = 25
+
+local function Angle(ring)
+    return ns.db and ns.db[ring.angleKey] or ring.freeAngle or ring.angle
+end
+
+local function Apart(a, b)
+    local d = math.abs(a - b) % 360
+    return d > 180 and 360 - d or d
+end
+
+-- How far the nearest piece or button is from a spot; nil on a covered arc.
+local function Room(degrees, self)
+    for _, arc in ipairs(COVERED) do
+        if degrees >= arc[1] and degrees <= arc[2] then return nil end
+    end
+    local room = 360
+    for _, taken in ipairs(TAKEN) do room = math.min(room, Apart(degrees, taken)) end
+    for _, other in ipairs(rings) do
+        if other ~= self and other.active then room = math.min(room, Apart(degrees, Angle(other))) end
+    end
+    return room
+end
+
+-- A button with no place of its own (spec.free): the nearest clear spot to its own, for the session; on a full ring the
+-- roomiest spot.
+local function FreeSpot(ring)
+    if not ring.free or ring.freeAngle or (ns.db and ns.db[ring.angleKey]) then return end
+    local best, bestRoom = ring.angle, -1
+    for step = 0, 180 do
+        for sign = 1, -1, -2 do
+            local degrees = (ring.angle + sign * step) % 360
+            local room = Room(degrees, ring)
+            if room and room >= APART then
+                ring.freeAngle = degrees
+                return
+            elseif room and room > bestRoom then
+                best, bestRoom = degrees, room
+            end
+        end
+    end
+    ring.freeAngle = best
+end
+
 -- Only we move these buttons, so an unchanged angle, radius and size means no move.
 -- Not while collected into the addon button bag (another parent). Offsets count in the button's own size (edit mode's).
 local function Position(ring)
     local button = ring.button
     if not button or not Minimap or button:GetParent() ~= Minimap then return end
-    local degrees = ns.db and ns.db[ring.angleKey] or ring.angle
+    local degrees = Angle(ring)
     local r = Radius()
     local k = button:GetEffectiveScale() / Minimap:GetEffectiveScale()
     if degrees == ring.placedAngle and r == ring.placedRadius and k == ring.placedScale then return end
@@ -106,7 +154,10 @@ local function Build(ring)
     ns.MinimapButtonBorder(ns.DressNew(b, "trackingBorder", RING))
     ns.DressStates(b, nil, nil, nil, "zoomHighlight", HL_RING)
     b:SetScript("OnClick", ring.onClick)
+    -- Shift, as other addons' minimap buttons move; a pad over the button hands its drag here (UI/SecurePad.lua), and
+    -- follows the button only out of a fight.
     b:SetScript("OnDragStart", function()
+        if not IsShiftKeyDown() or InCombatLockdown() then return end
         ring.dragX = nil
         dragJob:Wake()
     end)
@@ -118,11 +169,12 @@ local function Build(ring)
     return b
 end
 
--- spec: { name, key (its edit mode entry), angleKey, angle (default degrees), show (its on hover id), face(texture),
--- onClick(button, mouse), tip }; returns show and hide.
+-- spec: { name, key (its edit mode entry), angleKey, angle (default degrees), free (takes the nearest clear spot), show
+-- (its on hover id), face(texture), onClick(button, mouse), tip }; returns show and hide.
 function ns.RingButton(spec)
     rings[#rings + 1] = spec
     local function Show()
+        FreeSpot(spec)
         spec.active = true
         if not Minimap then return end
         if not spec.button then
@@ -153,7 +205,7 @@ local ShowOptions, HideOptions = ns.RingButton({
     name = "ForeverClassicUIMinimapButton",
     key = "minimapOptionsButton",
     angleKey = "minimapButtonAngle",
-    angle = 200,
+    angle = 213,   -- clear of the tracking glass (186) under the tracking spell
     show = "OptionsButton",
     face = function(icon) ns.Dress(icon, "gryphonIcon", GRYPHON) end,
     onClick = function(_, mouse)
@@ -171,3 +223,14 @@ local ShowOptions, HideOptions = ns.RingButton({
 })
 
 ns.RegisterModule("minimapButton", { apply = ShowOptions, restore = HideOptions })
+
+-- The options button's default spot left the tracking glass (200 to 213): one never dragged follows, in the account and
+-- every profile. Runs before the defaults fill.
+function ns.FreeOptionsButton()
+    local db = ns.db
+    if db.minimapButtonAngle == 200 then db.minimapButtonAngle = nil end
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" and shot.minimapButtonAngle == 200 then shot.minimapButtonAngle = nil end
+    end
+    db.dbVersion = 12
+end

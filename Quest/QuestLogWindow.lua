@@ -459,26 +459,7 @@ local function EmptyPane(parent)
     return empty
 end
 
-local function AbandonClick()
-    if not selectedID then return end
-    C_QuestLog.SetSelectedQuest(selectedID)
-    C_QuestLog.SetAbandonQuest()
-    local name = C_QuestLog.GetAbandonQuestName and C_QuestLog.GetAbandonQuestName() or QuestInLog(selectedID) and QuestInLog(selectedID).title or ""
-    local items = C_QuestLog.GetAbandonQuestItems and C_QuestLog.GetAbandonQuestItems() or {}
-    if #items > 0 then
-        local names = {}
-        for _, item in ipairs(items) do
-            local itemName = C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(item)
-            names[#names + 1] = itemName or tostring(item)
-        end
-        StaticPopup_Hide("ABANDON_QUEST")
-        StaticPopup_Show("ABANDON_QUEST_WITH_ITEMS", name, table.concat(names, ", "))
-    else
-        StaticPopup_Hide("ABANDON_QUEST_WITH_ITEMS")
-        StaticPopup_Show("ABANDON_QUEST", name)
-    end
-    PlaySound(SOUNDKIT.IG_QUEST_LOG_ABANDON_QUEST)
-end
+local function AbandonClick() QL.AbandonPrompt(selectedID) end
 
 local function TrackButtonClick()
     if not selectedID then return end
@@ -768,6 +749,7 @@ end
 function ns.HideQuestLog()
     if frame then frame:Hide() end
 end
+
 
 function ns.ToggleQuestLog()
     if frame and frame:IsShown() then ns.HideQuestLog() else ns.ShowQuestLog() end

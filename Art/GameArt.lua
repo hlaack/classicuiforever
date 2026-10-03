@@ -59,13 +59,30 @@ local function IsMetal(atlas)
     return metal
 end
 
+-- The game's elite and rare dragons: as drawn with Ignore theme for elite frames.
+local DRAGONS = { "portraiton%-boss%-gold", "portraiton%-boss%-rare%-silver" }
+local dragonAtlas = {}
+local function KeptDragon(atlas)
+    if not (ns.db and ns.db.themeIgnoreElite == true) then return false end
+    local known = dragonAtlas[atlas]
+    if known == nil then
+        local name = atlas:lower()
+        known = false
+        for i = 1, #DRAGONS do
+            if name:find(DRAGONS[i]) then known = true end
+        end
+        dragonAtlas[atlas] = known
+    end
+    return known
+end
+
 -- A nameplate's art can come back secret: never a table key.
 local function Match(region)
     if not (region.IsObjectType and region:IsObjectType("Texture")) then return end
     local atlas = region:GetAtlas()
     if ns.IsSecret(atlas) then return end
     if atlas then
-        if IsMetal(atlas) then want[region] = true end
+        if IsMetal(atlas) and not KeptDragon(atlas) then want[region] = true end
     else
         local file = region:GetTexture()
         if not ns.IsSecret(file) and type(file) == "number" and METAL_FILES[file] then want[region] = true end
@@ -219,3 +236,8 @@ end)
 
 -- After every other module (last in ns.MODULE_ORDER), in a fight too: only colours change.
 ns.RegisterModule("bronzeTheme", { id = "gameArt", apply = Sync, restore = Sync, inFight = true })
+
+-- Ignore theme for elite frames: the walk again at once, in a fight too.
+ns.OnToggle(function(key)
+    if key == "themeIgnoreElite" and ns.ready then Sync() end
+end)

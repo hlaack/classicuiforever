@@ -75,14 +75,29 @@ function ns.SetTex(texture, key, ...)
     elseif swapped[texture] then
         swapped[texture] = nil
     end
-    if B.METAL[key] then
+    if B.METAL[key] and not B.EliteAsDrawn(key) then
         ns.BronzeTint(texture, SHARE[key])
     elseif B.tinted[texture] then
-        -- Texture reused for non-metal art: clear the tint.
+        -- Non-metal art, or a dragon kept as drawn: clear the tint.
         ns.UntintBronze(texture)
     end
     ns.PaintCopy(texture, swapped[texture] ~= nil and ns.BronzeOn() and primary or nil)
     return ok ~= false
+end
+
+-- A texture showing more of a themed piece's file (a tab's body and rim under its face): in the theme's repaints as the
+-- piece is, or in the piece's own color. After its coords are set (the color copy takes its shape).
+function ns.ThemeAs(texture, piece)
+    local key, share, swap = B.artKey[piece], B.tinted[piece], B.swapped[piece]
+    B.swapped[texture] = swap
+    if share then
+        ns.BronzeTint(texture, share ~= true and share or nil)
+    else
+        if B.tinted[texture] then ns.UntintBronze(texture) end
+        texture:SetVertexColor(piece:GetVertexColor())
+        texture:SetDesaturated(piece:IsDesaturated())
+    end
+    ns.PaintCopy(texture, key and swap ~= nil and ns.BronzeOn() and (ns.TexPath(key)) or nil)
 end
 
 -- By file; swaps to its bronze copy with the theme.
@@ -130,3 +145,13 @@ function ns.SetButtonTex(button, which, key)
     ns.SetTex(tex, key)
     return tex
 end
+
+-- Ignore theme for elite frames or nameplate dragons turns at once, in a fight too (the options pass waits one out).
+ns.OnToggle(function(key)
+    if key ~= "themeIgnoreElite" and key ~= "themeIgnorePlateDragon" then return end
+    for texture, art in pairs(B.artKey) do
+        if B.AS_DRAWN[art] == key then
+            if B.EliteAsDrawn(art) then ns.UntintBronze(texture) else ns.BronzeTint(texture, SHARE[art]) end
+        end
+    end
+end)

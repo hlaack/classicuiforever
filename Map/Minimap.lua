@@ -53,7 +53,7 @@ local PIECES = {
 }
 MM.PIECE_KEYS = PIECES
 local SHOW_IDS = { "MinimapZone", "MinimapTracking", "MinimapMail", "MinimapZoomIn", "MinimapZoomOut", "MinimapClock",
-    "MinimapDiel", "MinimapCalendar", "MinimapCoords" }
+    "MinimapDiel", "MinimapCalendar", "MinimapCoords", "MinimapDifficulty" }
 local ZOOM_R = 79
 local DIEL_RING = "UI-HUD-Minimap-Frame-Cycle"
 -- Other addons' minimap buttons wear the old gold tracking ring (MiniMap-TrackingBorder): tinted as ours.
@@ -165,12 +165,33 @@ local function HoverTick(job)
     end
 end
 
--- fade: a client frame, hidden by alpha so the client's own shows cannot bring it back.
-function ns.MinimapShow(frame, id, fade)
+-- A client frame hidden under a hidden frame of ours: by alpha alone it still took the mouse and showed its tooltip, and
+-- the client's own shows cannot reach it here. Its parent, strata and level back for any other choice.
+local stash
+local stashedFrom = setmetatable({}, { __mode = "k" })
+local function Stash(frame, hide)
+    local was = stashedFrom[frame]
+    if hide and not was then
+        if not stash then
+            stash = CreateFrame("Frame")
+            stash:Hide()
+        end
+        stashedFrom[frame] = { frame:GetParent(), frame:GetFrameStrata(), frame:GetFrameLevel() }
+        frame:SetParent(stash)
+    elseif not hide and was then
+        stashedFrom[frame] = nil
+        frame:SetParent(was[1])
+        frame:SetFrameStrata(was[2])
+        frame:SetFrameLevel(was[3])
+    end
+end
+
+-- client: a frame the client shows and hides itself (never shown from here).
+function ns.MinimapShow(frame, id, client)
     if not frame then return end
     local state = MM.ShowState(id)
-    if fade then
-        if state == "hide" then ns.SetAlphaIf(frame, 0) end
+    if client then
+        Stash(frame, state == "hide")
     else
         ns.SetShownIf(frame, state ~= "hide")
     end
@@ -296,15 +317,41 @@ local function TrackingEnter(self)
     GameTooltip:Show()
 end
 
--- Era's rim spot, in our backdrop's coordinates.
+-- Era's rim spot, in our backdrop's coordinates, until it is dragged round the ring (shift-drag, or edit mode): then at
+-- its angle, as far from the map's middle as Era's spot is.
+local TRACK_KEY, TRACK_ANGLE, TRACK_R = "minimapTrackingIcon", "trackingIconAngle", 83.6
+local function PlaceTracking()
+    local frame = trackFrame
+    if not frame then return end
+    local degrees = ns.db and ns.db[TRACK_ANGLE]
+    if degrees then
+        ns.RingPoint(frame, degrees, TRACK_R, frame:GetEffectiveScale() / Minimap:GetEffectiveScale())
+    else
+        ns.SetPointOnce(frame, "TOPLEFT", frame:GetParent(), "TOPLEFT", 11, -26)
+    end
+end
+function ns.LayTrackingIcon(key)
+    if key == TRACK_KEY then PlaceTracking() end
+end
+
 local function TrackingFrame(backdrop, level)
     local frame = trackFrame
     if not frame then
-        frame = CreateFrame("Frame", nil, backdrop)
+        frame = CreateFrame("Frame", "ForeverClassicUIMinimapTrackingIcon", backdrop)
         trackFrame = frame
         frame:Hide()
         frame:SetSize(32, 32)
         frame:EnableMouse(true)
+        -- Shift-drag round the ring, as our ring buttons move.
+        frame:RegisterForDrag("LeftButton")
+        local drag = ns.Sched.OnFrame(CreateFrame("Frame", nil, frame), { name = "minimap.trackingDrag", every = 0,
+            awake = false, fn = function()
+                ns.db[TRACK_ANGLE] = ns.MinimapCursorAngle()
+                PlaceTracking()
+            end })
+        frame:SetScript("OnDragStart", function() if IsShiftKeyDown() then drag:Wake() end end)
+        frame:SetScript("OnDragStop", function() drag:Sleep() end)
+        if ns.PlaceSavedWindows then ns.PlaceSavedWindows() end
         local border = ns.DressNew(frame, "trackingBorder", TRACK_BORDER)
         ns.MinimapButtonBorder(border)
         -- Round, slightly wider than the hole so its edge hides under the ring.
@@ -321,7 +368,7 @@ local function TrackingFrame(backdrop, level)
         UpdateTracking()
     end
     frame:SetFrameLevel(level)
-    ns.SetPointOnce(frame, "TOPLEFT", backdrop, "TOPLEFT", 11, -26)
+    PlaceTracking()
 end
 
 ----------------------------------------------------- the tracking glass
@@ -568,8 +615,10 @@ local function Layout()
         MM.PlaceEye()
         MM.WatchEye()
     end
+    -- 1.x had no difficulty flag: hidden by default (the game shows it per instance).
     if cluster.InstanceDifficulty then
         ns.SetPointOnce(cluster.InstanceDifficulty, "TOPLEFT", cluster, "TOPLEFT", 22, -17)
+        ns.MinimapShow(cluster.InstanceDifficulty, "MinimapDifficulty", true)
     end
     -- No landing page in 1.x; faded rather than moved, still reachable from the micro menu.
     if ExpansionLandingPageMinimapButton then
@@ -660,6 +709,7 @@ end
 -- These hooks run inside the client's edit mode layout passes: add no work to them.
 local function Apply()
     SetActive(true)
+    MM.taken = true
     if not MinimapCluster then ns.MissingPiece("MinimapCluster") return end
     BuildRing()
     Layout()
@@ -681,13 +731,18 @@ local function Apply()
     end
 end
 
--- Runs on every ApplyAll while off; OwnTexture never re-shows, so the ring needs a reload.
+-- Runs on every ApplyAll while off: only what Apply took this session goes back, the game's pieces are not ours to
+-- place otherwise. OwnTexture never re-shows, so the ring needs a reload.
 local function Restore()
     SetActive(false)
+    ThemeRingsOnGameMap()
+    if not MM.taken then return end
+    MM.taken = false
     HideOwn(MinimapCluster)
     HideOwn(MinimapBackdrop)
     MM.HideCalendar()
     for _, home in pairs(homes) do ns.MinimapShow(home, nil) end
+    if MinimapCluster and MinimapCluster.InstanceDifficulty then ns.MinimapShow(MinimapCluster.InstanceDifficulty, nil, true) end
     for tex in pairs(buttonBorders) do ns.SetAlphaIf(tex, 1) end
     -- Day/night and coordinates back in the client's frames at its spots.
     local diel = MinimapCluster and MinimapCluster.DielFrame
@@ -706,7 +761,6 @@ local function Restore()
         end
     end
     if MinimapCluster and MinimapCluster.BorderTop then ns.Unfade(MinimapCluster.BorderTop) end
-    ThemeRingsOnGameMap()
     ns.needsReload = true
 end
 

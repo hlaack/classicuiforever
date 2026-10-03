@@ -4,6 +4,7 @@ local _, ns = ...
 -- The map pad clicks the zone name button over the minimap (a map opened from our click taints its pins for later fights).
 -- Hangs from UIParent, placed by measure out of combat: a frame a secure frame anchors to is locked in combat.
 local mapPads = {}
+local padWhen = {}   -- button -> its pad's when()
 local MapPad
 local Report = ns.Report
 
@@ -46,6 +47,7 @@ MapPad = function(button, strata, after, target, when, editMode)
     end
     local mapPad = CreateFrame("Button", nil, UIParent, "SecureActionButtonTemplate")
     mapPads[button] = mapPad
+    padWhen[button] = when
     if macroFn or type(target) == "string" then
         mapPad:SetAttribute("type", "macro")
         mapPad:SetAttribute("macrotext", macroFn and "" or target)
@@ -89,6 +91,16 @@ MapPad = function(button, strata, after, target, when, editMode)
         local leave = button:GetScript("OnLeave")
         if leave then leave(button) end
         GameTooltip:Hide()
+    end)
+    -- A drag belongs to the button under the pad (a minimap ring button's shift-drag).
+    mapPad:RegisterForDrag("LeftButton")
+    mapPad:SetScript("OnDragStart", function()
+        local start = button:GetScript("OnDragStart")
+        if start then start(button) end
+    end)
+    mapPad:SetScript("OnDragStop", function()
+        local stop = button:GetScript("OnDragStop")
+        if stop then stop(button) end
     end)
     local function HidePad()
         if mapPad:IsShown() then mapPad:Hide() end
@@ -150,3 +162,11 @@ end
 
 -- Read by the dev addon's probes: the pad over one of our buttons.
 function ns.PadOf(button) return mapPads[button] end
+
+-- What another pad presses to do the button's work (a minimap icon for a micro button): its pad while that is
+-- wanted, shown or not, else the button itself.
+function ns.PressTarget(button)
+    local pad, when = mapPads[button], padWhen[button]
+    if pad and (not when or when()) then return pad end
+    return button
+end

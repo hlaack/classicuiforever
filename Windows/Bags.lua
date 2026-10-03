@@ -407,12 +407,8 @@ local function Skin(frame)
     local close = frame.CloseButton
     if close then
         ns.SkinCloseButton(close, true)
-        close:ClearAllPoints()
-        if extra then
-            close:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 1, -2)
-        else
-            close:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -2, 0)
-        end
+        -- Era's container template, every bag and the backpack: 0, -1 from the frame's top right, where the art is pinned.
+        ns.SetPointOnce(close, "TOPRIGHT", frame, "TOPRIGHT", 0, -1)
     end
     -- Money on the sheet's own strip; the client's pill goes.
     if frame.MoneyFrame and extra then

@@ -333,6 +333,7 @@ local function ClientArtBack(bar)
             end
         end
     end
+    B.StatusLookBack()
 end
 
 -- Page number and arrows back where the client's file has them, off bar 1's left end (left on the band corner they sat

@@ -427,12 +427,25 @@ local function FadeOut(piece)
     piece:SetAlpha(0)
 end
 
+-- Faded is not gone: the frame's own body past the art, and its pieces there, still took the clicks meant for the world.
+-- Each mouse area is cut to the art (a child's does not follow its parent's); not a resize, so no refit runs as ours.
+local clipped = {}   -- frame -> its hit insets before
+local function ClipMouse(frame)
+    if clipped[frame] or not frame:IsMouseEnabled() or frame:IsProtected() then return end
+    local l, t, r, b = Bounds(frame)
+    if not l then return end
+    clipped[frame] = { frame:GetHitRectInsets() }
+    frame:SetHitRectInsets(math.max(0, rect[1] - l), math.max(0, r - rect[3]), math.max(0, t - rect[2]),
+        math.max(0, rect[4] - b))
+end
+
 local FadeTree
 local function FadeRegion(region)
     if region:IsShown() and not Inside(region) then FadeOut(region) end
 end
 local function FadeChild(child, depth)
     if keep[child] or not child:IsShown() or Inside(child) then return end
+    ClipMouse(child)
     if Overlaps(child) then FadeTree(child, depth) else FadeOut(child) end
 end
 FadeTree = function(frame, depth)
@@ -452,6 +465,7 @@ local function FadeOutside(map)
         border.MaximizeMinimizeFrame }) do
         if piece then keep[piece] = true end
     end
+    ClipMouse(map)
     FadeTree(map, 0)
 end
 
@@ -459,6 +473,10 @@ local function Unfade()
     fadedFor = nil
     for piece, alpha in pairs(faded) do piece:SetAlpha(alpha) end
     wipe(faded)
+    for frame, insets in pairs(clipped) do
+        if not frame:IsProtected() then frame:SetHitRectInsets(insets[1], insets[2], insets[3], insets[4]) end
+    end
+    wipe(clipped)
 end
 
 local function Pass()
@@ -486,6 +504,9 @@ local function Pass()
     end
     Refit()
 end
+
+-- The Era art frame, or nil before the first lay (dev selftest map.fightmouse).
+function ns.ClassicMapArt() return art end
 
 -- How far the Era layout lifts the quest details' text (its Back button follows, Quest/QuestMapPane.lua).
 function ns.MapDetailsLift() return eraDressed and DETAILS_LIFT or 0 end

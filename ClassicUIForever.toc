@@ -2,7 +2,7 @@
 ## Title: ClassicUI Forever
 ## Notes: The original Classic look on WoW Forever: the gryphon bar, square buttons, 1.x unit frames, cast bars, minimap, nameplates, quest tracker and window frames, each one a toggle.
 ## Author: justawower
-## Version: 0.16.2
+## Version: 0.18.0
 ## X-Curse-Project-ID: 1700043
 ## IconTexture: Interface\MainMenuBar\UI-MainMenuBar-EndCap-Dwarf
 ## Category: UI
@@ -65,6 +65,7 @@ UI\SecurePad.lua
 Bar\BarSkins.lua
 Bar\Band.lua
 Bar\BandShape.lua
+Bar\BandBare.lua
 Bar\BandArt.lua
 Bar\BandBars.lua
 Bar\BandBags.lua
@@ -74,6 +75,7 @@ Bar\BandMicro.lua
 Bar\GameMicro.lua
 Bar\BandStatusHide.lua
 Bar\BandStatus.lua
+Bar\BandStatusBack.lua
 Bar\BandCast.lua
 Bar\BandBottom.lua
 Bar\BandPins.lua
@@ -105,13 +107,14 @@ Map\MinimapCalendar.lua
 Map\TrackingBuff.lua
 Map\MinimapEye.lua
 Map\MinimapButton.lua
-Map\MinimapGroupFinder.lua
+Map\MinimapMicro.lua
 Map\MinimapCollector.lua
 UI\ClassicFonts.lua
 Units\NamePlates.lua
 Units\NamePlateOptions.lua
 Units\NamePlateAuras.lua
 Quest\QuestTracker.lua
+Quest\QuestWatch.lua
 Quest\QuestLogData.lua
 Quest\QuestLogShare.lua
 Quest\QuestLogWindow.lua
@@ -160,12 +163,14 @@ Skills\ProfessionsBook.lua
 Skills\ProfessionsBookFrame.lua
 Skills\ProfessionsFootTabs.lua
 Skills\ProfessionsWindow.lua
+Skills\TradeSkillExtras.lua
 Skills\TradeSkill.lua
 Skills\Trainer.lua
 Skills\Talents.lua
 Skills\TalentsTree.lua
 Options\Toggles.lua
 Options\Layout.lua
+Options\EraScale.lua
 Options\Diagnostics.lua
 Options\Options.lua
 Options\OptionsSearch.lua
