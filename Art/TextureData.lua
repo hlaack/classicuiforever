@@ -171,6 +171,10 @@ ns.TEX = {
     -- Old options dialog top tabs: active open at the bottom, inactive closed.
     optionsTabActive = "!UI-OptionsFrame-ActiveTab",
     optionsTabInactive = "!UI-OptionsFrame-InActiveTab",
+    -- Era's small top tabs (its TabButtonTemplate): the macro window's.
+    topTabActive = "HelpFrame\\HelpFrameTab-Active",
+    topTabInactive = "HelpFrame\\HelpFrameTab-Inactive",
+    topTabHighlight = "=PaperDollInfoFrame\\UI-Character-Tab-Highlight",
     -- Era's dropdown sheet (file 5767279), which this client lacks: its classic text holder boxes the Who Zone plate.
     dropdownClassic = "!CommonDropdownClassic",
     -- Era's settings window art where this client redrew it (Era's files, unchanged): options sheet, key binding bars,

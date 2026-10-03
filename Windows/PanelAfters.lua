@@ -319,15 +319,15 @@ local function SwapBarPiece(region, barFile)
     end
 end
 
--- Tabs on the list, silver text box, the foot row in an iron box (as professions),
+-- Era's tabs, silver text box, the foot row in an iron box (as professions),
 -- bottom border low under it.
 function A.MacroFrame(frame)
     local first, second = _G["MacroFrameTab1"], _G["MacroFrameTab2"]
-    local inset = frame.Inset or _G["MacroFrameInset"]
-    if first and inset then
-        ns.SetPointOnce(first, "BOTTOMLEFT", inset, "TOPLEFT", 50, -2)
-        -- 10 in from the client's spot, against the first.
-        ns.SetPointOnce(second, "BOTTOMLEFT", first, "BOTTOMRIGHT", -8, 0)
+    if first and second then
+        -- Era's spots (its Blizzard_MacroUI.xml); the character tab's label gives up 15 and stops at 130.
+        ns.SetPointOnce(first, "TOPLEFT", frame, "TOPLEFT", 51, -28)
+        ns.SetPointOnce(second, "LEFT", first, "RIGHT", 0, 0)
+        ns.SkinTopTab(second, -15, 130)
     end
     -- Slots 5 left; their bar 5 right and 8 taller at the top (it hung free of the
     -- border). The bar hangs from the slots' frame, so it offsets that 5 plus 5.

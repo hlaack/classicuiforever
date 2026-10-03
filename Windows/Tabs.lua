@@ -31,9 +31,28 @@ function ns.FitBottomTab(tab)
     if tab.Middle then tab.Middle:SetWidth(width - 40) end
     if tab.MiddleActive then tab.MiddleActive:SetWidth(width - 40) end
 end
-if type(PanelTemplates_TabResize) == "function" then
-    hooksecurefunc("PanelTemplates_TabResize", function(tab) if tab and tab.fcuiTab then ns.FitBottomTab(tab) end end)
+
+-- Era's top tabs (its TabButtonTemplate; the macro window): tab -> { padding, widest label }, as its PanelTemplates_TabResize.
+local TOP_CAP = 16
+local topFit = setmetatable({}, { __mode = "k" })
+
+-- The label's width plus the padding, cut to the widest (then it truncates), and a cap each side.
+local function FitTopTab(tab)
+    local text, fit = tab.Text, topFit[tab]
+    if not text then return end
+    text:SetWidth(0)
+    local width = (text:GetStringWidth() or 0) + fit[1]
+    if fit[2] and width > fit[2] then
+        width = fit[2] + fit[1]
+        text:SetWidth(width)
+    end
+    tab:SetWidth(width + 2 * TOP_CAP)
 end
+
+ns.HookGlobal("PanelTemplates_TabResize", function(tab)
+    if not tab then return end
+    if topFit[tab] then FitTopTab(tab) elseif tab.fcuiTab then ns.FitBottomTab(tab) end
+end)
 
 -- Hover glow: 1.x's light blue tab sheet (128 x 32; lit body columns 14 to 115, rows 5 to 24), additive, cut across
 -- to its lit body and drawn over the drawn tab's cap pieces by these numbers. A flipped (foot-anchored) face flips it.
@@ -180,7 +199,17 @@ local function PlaceText(tab)
 end
 -- The client shows and hides the faces on select and deselect; their body and rim follow.
 local FACE_FIELDS = { "LeftActive", "MiddleActive", "RightActive", "Left", "Middle", "Right" }
+-- A top tab's label: over the tab's middle, lower on the picked one (Era's -3 and 2).
+local TOP_TEXT_PICKED_Y, TOP_TEXT_OFF_Y = -3, 2
+local function PlaceTopText(tab)
+    local text = tab.Text
+    if text then ns.SetPointOnce(text, "CENTER", tab, "CENTER", 0, PickedFace(tab) and TOP_TEXT_PICKED_Y or TOP_TEXT_OFF_Y) end
+end
 local function TextAfterClient(tab)
+    if tab and topFit[tab] then
+        PlaceTopText(tab)
+        return
+    end
     if not (tab and tab.fcuiTab) then return end
     PlaceText(tab)
     EraPlace(tab)
@@ -208,25 +237,38 @@ function ns.SkinBottomTab(tab)
     EraPlace(tab)
 end
 
--- Bottom tab art flipped and foot-anchored: the taller selected tab rises (macro window).
+-- Era's top tab: the help tab sheet (64 x 32) on the tab's foot, caps 16 wide, the picked face 3 lower.
+local TOP_HEIGHT, TOP_PICKED_Y = 32, -3
+local TOP_COORDS = { { 0, 0.25, 0, 1 }, { 0.25, 0.75, 0, 1 }, { 0.75, 1, 0, 1 } }
 local TOP_ACTIVE = {
-    fields = { "LeftActive", "MiddleActive", "RightActive" }, key = "tabActive", cap = 20, height = 32,
-    edge = "BOTTOM", middle = "edge", midW = 88, horizTile = false,
-    coords = { { 0, 0.15625, 1, 0 }, { 0.15625, 0.84375, 1, 0 }, { 0.84375, 1, 1, 0 } },
+    fields = { "LeftActive", "MiddleActive", "RightActive" }, key = "topTabActive", cap = TOP_CAP, height = TOP_HEIGHT,
+    edge = "BOTTOM", middle = "edge", horizTile = false, coords = TOP_COORDS, oy = TOP_PICKED_Y,
 }
 local TOP_INACTIVE = {
-    fields = { "Left", "Middle", "Right" }, key = "tabInactive", cap = 20, height = 32,
-    edge = "BOTTOM", middle = "edge", midW = 88, horizTile = false,
-    coords = { { 0, 0.15625, 1, 0 }, { 0.15625, 0.84375, 1, 0 }, { 0.84375, 1, 1, 0 } },
+    fields = { "Left", "Middle", "Right" }, key = "topTabInactive", cap = TOP_CAP, height = TOP_HEIGHT,
+    edge = "BOTTOM", middle = "edge", horizTile = false, coords = TOP_COORDS,
 }
-function ns.SkinTopTab(tab)
+local TOP_GLOW_X, TOP_GLOW_Y = 2, -8   -- hover glow: the tab's width, from its foot
+
+-- padding, widest: this tab's resize numbers in Era (its template's are 0 and none).
+function ns.SkinTopTab(tab, padding, widest)
     if not tab or not tab.Left then return end
     ns.ThreeSlice(tab, nil, TOP_ACTIVE)
     ns.ThreeSlice(tab, nil, TOP_INACTIVE)
     ns.FadeKeys(tab, ns.KEYS.TAB_GLOW)
-    tab.fcuiTab = true
-    tab.fcuiPad = tab.fcuiPad or 36
-    ns.FitBottomTab(tab)
+    local fit = topFit[tab] or { 0 }
+    if padding then fit[1], fit[2] = padding, widest end
+    topFit[tab] = fit
+    tab:SetHeight(TOP_HEIGHT)
+    FitTopTab(tab)
     OverBorder(tab)
-    ns.TabGlow(tab, "glow", TOP_INACTIVE, tab.Left, tab.Middle, tab.Right)
+    local glow = ns.OwnTexture(tab, "glow", "HIGHLIGHT")
+    ns.SetTex(glow, "topTabHighlight")
+    glow:SetBlendMode("ADD")
+    glow:SetTexCoord(0, 1, 0, 1)
+    glow:SetHeight(TOP_HEIGHT)
+    glow:ClearAllPoints()
+    glow:SetPoint("BOTTOMLEFT", tab, "BOTTOMLEFT", TOP_GLOW_X, TOP_GLOW_Y)
+    glow:SetPoint("BOTTOMRIGHT", tab, "BOTTOMRIGHT", TOP_GLOW_X, TOP_GLOW_Y)
+    PlaceTopText(tab)
 end
