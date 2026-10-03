@@ -68,13 +68,14 @@ function ns.ReloadForLayout()
     end
     if ns.db then
         ns.sessionEnding = true
-        pcall(ns.RunLayoutJobsBeforePin)
+        -- Each step on its own, its error reported: one failing took the later ones with it unseen.
+        ns.SafeCall(ns.RunLayoutJobsBeforePin)
         if ns.db.classicBar ~= false then
-            pcall(ns.PinBandBars)
+            ns.SafeCall(ns.PinBandBars)
         elseif not ns.db.bandHandedBack then
-            pcall(ns.UnpinBandBars)
+            ns.SafeCall(ns.UnpinBandBars)
         end
-        pcall(ns.RunLayoutJobsAfterPin)
+        ns.SafeCall(ns.RunLayoutJobsAfterPin)
     end
     C_UI.Reload()
 end
@@ -621,16 +622,16 @@ function ns.RunLayoutJobsBeforePin()
     -- Each job is taken off before it runs: settings outlive sessions, so one that errored re-ran at every logout.
     if jobs.reset then
         jobs.reset = nil
-        ResetNow()
+        ns.SafeCall(ResetNow)
     end
     if jobs.adopt then
         jobs.adopt = nil
-        ns.AdoptBandBars()
+        ns.SafeCall(ns.AdoptBandBars)
     end
-    if jobs.eraScale then ns.EraScaleBeforePin() end
+    if jobs.eraScale then ns.SafeCall(ns.EraScaleBeforePin) end
     -- A slot-count job queued before 0.11.0 (the bar size no longer trims the bars).
     jobs.fit = nil
-    ns.ResetSizesNow(jobs)
+    ns.SafeCall(ns.ResetSizesNow, jobs)
 end
 
 function ns.RunLayoutJobsAfterPin()
@@ -640,9 +641,10 @@ function ns.RunLayoutJobsAfterPin()
     ns.db.layoutJobs = nil
     -- Legacy: only old saved data still holds "previous".
     if jobs.previous and SelectNow(jobs.previous) then ns.db.previousLayout = "" end
-    if jobs.classic then ClassicNow(jobs.classic) end
-    if jobs.select then SelectNow(LAYOUT_NAME) end
-    if jobs.eraScale then ns.EraScaleAfterPin() end
+    -- Guarded one by one: a layout that fails to build must not cost the size written after it.
+    if jobs.classic then ns.SafeCall(ClassicNow, jobs.classic) end
+    if jobs.select then ns.SafeCall(SelectNow, LAYOUT_NAME) end
+    if jobs.eraScale then ns.SafeCall(ns.EraScaleAfterPin) end
 end
 
 -- No room for another layout. Steps, not a button: edit mode opened from our code would run its setup in our name.
