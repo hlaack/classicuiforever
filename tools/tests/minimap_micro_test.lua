@@ -11,11 +11,11 @@ if ROOT == (arg and arg[0]) or ROOT == "" then ROOT = "." end
 
 for _, name in ipairs({ "CharacterMicroButton", "SpellbookMicroButton", "TalentMicroButton", "ProfessionMicroButton",
     "QuestLogMicroButton", "LegacyMicroButton", "GuildMicroButton", "LFDMicroButton", "CollectionsMicroButton",
-    "HelpMicroButton", "MainMenuMicroButton", "StoreMicroButton" }) do
+    "HelpMicroButton", "MainMenuMicroButton", "StoreMicroButton", "HousingMicroButton" }) do
     _G[name] = { name = name }
 end
 MinimapCluster = { ZoneTextButton = { name = "ZoneTextButton" } }
-Enum = { GameRule = { StoreDisabled = 7, FinderPanelDisabled = 8 } }
+Enum = { GameRule = { StoreDisabled = 7, FinderPanelDisabled = 8, HousingDashboardDisabled = 9 } }
 local ruleOn = {}
 C_GameRules = { IsGameRuleActive = function(rule) return ruleOn[rule] == true end }
 function InCombatLockdown() return false end
@@ -74,6 +74,19 @@ ns.db.questLogMinimapButton, ns.db.worldMapMinimapButton = true, true
 Pass()
 Check(shown[QUEST] and pads[_G[QUEST]].clickbutton == questPad, "the quest log icon presses the quest log's own pad")
 Check(shown[MAP] and pads[_G[MAP]].clickbutton == MinimapCluster.ZoneTextButton, "the map icon presses the zone name")
+
+-- The housing button: both clients have the frame; Forever holds it off by a game rule, and the icon goes with it.
+local HOUSING = "ForeverClassicUIMinimapHousingButton"
+ns.db.housingMinimapButton = true
+ruleOn[Enum.GameRule.HousingDashboardDisabled] = true
+Pass()
+Check(not shown[HOUSING], "no housing icon while the game has housing off (Forever)")
+ruleOn[Enum.GameRule.HousingDashboardDisabled] = nil
+Pass()
+Check(shown[HOUSING] and pads[_G[HOUSING]].clickbutton == HousingMicroButton, "the housing icon presses the housing button (retail)")
+ns.db.housingMinimapButton = false
+Pass()
+Check(not shown[HOUSING], "unchecked, the housing icon goes")
 
 -- A game rule that takes the button away takes its icon.
 ns.db.shopMinimapButton = true

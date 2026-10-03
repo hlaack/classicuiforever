@@ -258,6 +258,20 @@ if not ns.ENGLISH_CLIENT then
     for _, row in ipairs(ENGLISH_ROWS) do ns.TOGGLES[#ns.TOGGLES + 1] = row end
 end
 
+-- Retail's housing button, in both micro lists after Collections; Forever's game rule holds that button off.
+local HOUSING_ROWS = {
+    hideMicroCollections = { "hideMicroHousing", L["OPT_hideMicroHousing"], L["OPT_hideMicroHousing_TIP"], parent = "hideMicroButtons",
+        checks = "hideMicroList", drop = true },
+    collectionsMinimapButton = { "housingMinimapButton", L["OPT_hideMicroHousing"], nil, parent = "microMinimapButtons",
+        checks = "microMinimapList", drop = true },
+}
+if not ns.OnForever() then
+    for i = #ns.TOGGLES, 1, -1 do
+        local row = HOUSING_ROWS[ns.TOGGLES[i][1]]
+        if row then table.insert(ns.TOGGLES, i + 1, row) end
+    end
+end
+
 -- Radio rows: key -> its group's keys (Core ToggleChanged keeps exactly one on).
 ns.TOGGLE_RADIO = {}
 do

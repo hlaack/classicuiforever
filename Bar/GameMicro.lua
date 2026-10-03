@@ -11,6 +11,7 @@ local GAME_HIDE = {
     GuildMicroButton = "hideMicroGuild", LFDMicroButton = "hideMicroGroupFinder",
     CollectionsMicroButton = "hideMicroCollections", HelpMicroButton = "hideMicroHelp",
     StoreMicroButton = "hideMicroShop", MainMenuMicroButton = "hideMicroGameMenu",
+    HousingMicroButton = "hideMicroHousing",
 }
 local hidden = setmetatable({}, { __mode = "k" })   -- buttons we hid, shown again on hand-back
 
