@@ -97,8 +97,9 @@ local function OnPane(manager)
     local p1, r1, rp1, x1, y1 = manager:GetPoint(1)
     local p2, r2, rp2, x2, y2 = manager:GetPoint(2)
     if ns.AnySecret(p1, r1, rp1, x1, y1, p2, r2, rp2, x2, y2) then return false end
-    return p1 == "TOPLEFT" and r1 == pane and rp1 == "TOPLEFT" and x1 == 0 and y1 == INNER_TOP
-        and p2 == "BOTTOMRIGHT" and r2 == pane and rp2 == "TOPLEFT" and x2 == INNER_W and y2 == INNER_BOTTOM
+    local Near = ns.Near
+    return p1 == "TOPLEFT" and r1 == pane and rp1 == "TOPLEFT" and Near(x1, 0, 1) and Near(y1, INNER_TOP, 1)
+        and p2 == "BOTTOMRIGHT" and r2 == pane and rp2 == "TOPLEFT" and Near(x2, INNER_W, 1) and Near(y2, INNER_BOTTOM, 1)
 end
 
 local function PointsOf(region)
@@ -121,7 +122,7 @@ local function OnList(manager, box)
     if box:GetNumPoints() ~= 2 then return false end
     local point, relativeTo, _, x = box:GetPoint(1)
     if ns.AnySecret(point, relativeTo, x) then return false end
-    return point == "TOPLEFT" and relativeTo == manager and x == EQUIP_LIST_LEFT
+    return point == "TOPLEFT" and relativeTo == manager and ns.Near(x, EQUIP_LIST_LEFT, 1)
 end
 
 local function PlaceList(manager)

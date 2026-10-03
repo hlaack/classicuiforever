@@ -39,7 +39,7 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "POINTEXACT", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
@@ -47,6 +47,7 @@ LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
               "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST",
+              "POINTEXACT",
               "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
@@ -158,6 +159,8 @@ FIX = {
                  "ns.EachRegionProtected in Core/Util.lua), never the getter itself",
     "PADLIST": "change the list's size only in a secure snippet that measures it there too (LIST_TALL / LIST_BACK in "
                "Skills/Trainer.lua, GROW in Social/GuildNoteBridge.lua); our Lua never sizes, places or measures that list",
+    "POINTEXACT": "compare the offset with ns.Near(x, want, 1) (Core/Setters.lua), or place through ns.SetPointIf: the "
+                  "game hands an offset back a hair off (4000 came back 4000.000244), so an exact test never passes",
     "SELFBOX": "anchor an edit mode Selection to its own frame (offsets for a wider box): the client sets the frame's "
                "clamp and snap offsets from the gap between them, so a box hung elsewhere shoves the frame off its anchor",
     "MOUSEORDER": "set OnEnter/OnLeave/OnMouse* first, then SetMouseClickEnabled(false) (the hover sensor over the "
@@ -379,6 +382,8 @@ MESSAGES = {
     "KEYUP": "a key bound straight to a release-acting button (it opens on release; the game's windows on press)",
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "MOUSEORDER": "a mouse script set after the frame's clicks were switched off (setting it turns clicks back on)",
+    "POINTEXACT": "an offset read from GetPoint compared exactly with a number or constant (the test failed every "
+                  "frame, and the hidden guild window was anchored again each one: 5 % CPU with the roster open)",
     "SELFBOX": "an edit mode Selection anchored to another frame than its own (the bars launched to the screen top)",
     "PADLIST": "a pad-clicked client list sized, placed or measured in our Lua (rows it rebuilds in our name are "
                "refused by Train's pad and fail a guild note save)",
@@ -1117,6 +1122,32 @@ def self_box_hits(lx):
     return found
 
 
+# The offsets (4th and 5th results) of a GetPoint read into locals, then compared exactly within the next lines.
+POINT_READ = re.compile(r"\blocal\s+([\w\s,]+?)\s*=\s*[\w.\[\]]+:GetPoint\(")
+POINT_REACH = 12
+
+
+def point_exact_hits(lx):
+    """An offset read from GetPoint compared with == or ~= to a number or an upper-case constant."""
+    found = set()
+    lines = lx.blank
+    for no, line in enumerate(lines, 1):
+        m = POINT_READ.search(line)
+        if not m:
+            continue
+        names = [n.strip() for n in m.group(1).split(",")]
+        offsets = [re.escape(n) for n in names[3:5] if n and n != "_"]
+        if not offsets:
+            continue
+        name = r"(?:%s)" % "|".join(offsets)
+        value = r"(?:-?\d[\d.]*|[A-Z][A-Z0-9_]*)"
+        rx = re.compile(r"(?<![\w.])%s\s*(?:==|~=)\s*%s\b|(?<![\w.])%s\s*(?:==|~=)\s*%s\b" % (name, value, value, name))
+        for at in range(no, min(no + POINT_REACH, len(lines)) + 1):
+            if rx.search(lines[at - 1]):
+                found.add(("POINTEXACT", at))
+    return found
+
+
 # Lists whose rows a secure pad clicks; only the pad's snippet may size them.
 PADLIST_FILES = ("Skills/Trainer.lua", "Social/GuildNoteBridge.lua")
 PADLIST_ANY_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=")
@@ -1251,6 +1282,7 @@ def pattern_hits(path, lx, funcs):
     found |= check_label_hits(lx)
     found |= mouse_order_hits(lx)
     found |= self_box_hits(lx)
+    found |= point_exact_hits(lx)
     found |= pad_list_hits(path, lx)
     found |= secret_layer_hits(lx)
     found |= cvar_login_hits(lx, funcs)
