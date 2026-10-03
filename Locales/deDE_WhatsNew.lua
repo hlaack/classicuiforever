@@ -3,7 +3,13 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
-L["WN20_1_TITLE"] = "PvP-Rangdetails"
+L["WN21_1_TITLE"] = "Gildenliste"
+L["WN21_1_TEXT"] = "Ein Klick auf ein Mitglied öffnet jetzt bei jedem Mitglied dessen Notizen und Optionen; in größeren Gilden öffnete sich bei vielen nichts. Die Liste braucht außerdem deutlich weniger CPU, solange sie offen ist."
+L["WN21_2_TITLE"] = "Quests teilen"
+L["WN21_2_TEXT"] = "Quest teilen im klassischen Questlog funktioniert mit einem Klick für jede Quest, auch direkt nach dem Einloggen. Bisher ging es nur bei Quests des Gebiets, das die Weltkarte zuletzt zeigte."
+L["WN21_3_TITLE"] = "Fenster"
+L["WN21_3_TEXT"] = "Ein geöffneter Brief hat den klassischen Fensterrahmen wie der Posteingang, und die Seitenleiste des Charakterfensters zeigt bei manchen Interfacegrößen keine dünne durchsichtige Linie mehr."
+L["WN20_1_TITLE"] ="PvP-Rangdetails"
 L["WN20_1_TEXT"] = "Der PvP-Reiter des Charakterfensters kann deine Rangdetails und die Belohnungen des nächsten Rangs zeigen. Klicke auf den Pfeil unten rechts im Reiter, um die Seitenleiste zu öffnen."
 L["WN20_2_TITLE"] = "Addon-Tasche"
 L["WN20_2_TEXT"] = "Ihr Standardplatz liegt jetzt links neben der Uhr, frei vom Auge der Gruppensuche, und sie lässt unsere eigenen Minikartensymbole wie Vermächtnis auf der Minikarte. Die Schaltfläche Klassisches Layout stellt auch verschobene Minikartenknöpfe zurück."

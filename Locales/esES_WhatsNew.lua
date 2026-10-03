@@ -3,7 +3,13 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
-L["WN20_1_TITLE"] = "Detalles de rango JcJ"
+L["WN21_1_TITLE"] = "Lista de hermandad"
+L["WN21_1_TEXT"] = "Al hacer clic en un miembro se abren sus notas y opciones con todos los miembros; en hermandades grandes, con muchos no se abría nada. La lista también usa mucha menos CPU mientras está abierta."
+L["WN21_2_TITLE"] = "Compartir misiones"
+L["WN21_2_TEXT"] = "Compartir misión en el registro de misiones clásico funciona con cualquier misión con una sola pulsación, también justo después de entrar al juego. Solo funcionaba con las misiones de la zona que el mapa del mundo había mostrado por última vez."
+L["WN21_3_TITLE"] = "Ventanas"
+L["WN21_3_TEXT"] = "Una carta abierta tiene el marco de ventana clásico, como la bandeja de entrada, y el panel lateral de la ventana del personaje ya no muestra una fina línea transparente con algunos tamaños de interfaz."
+L["WN20_1_TITLE"] ="Detalles de rango JcJ"
 L["WN20_1_TEXT"] = "La pestaña JcJ de la ventana del personaje puede mostrar los detalles de tu rango y las recompensas del siguiente. Haz clic en la flecha de abajo a la derecha de la pestaña para abrir el panel lateral."
 L["WN20_2_TITLE"] = "Bolsa de botones de addons"
 L["WN20_2_TEXT"] = "Su lugar por defecto está ahora a la izquierda del reloj, lejos del ojo del buscador de grupos, y deja en el minimapa nuestros propios iconos, como Legado. El botón Diseño clásico también devuelve a su sitio los botones del minimapa que hayas movido."

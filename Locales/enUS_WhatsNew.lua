@@ -2,7 +2,13 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
-L["WN20_1_TITLE"] = "PvP rank details"
+L["WN21_1_TITLE"] = "Guild roster"
+L["WN21_1_TEXT"] = "Clicking a member opens their notes and options for every member; in larger guilds many members opened nothing. The roster also uses far less CPU while it is open."
+L["WN21_2_TITLE"] = "Quest sharing"
+L["WN21_2_TEXT"] = "Share Quest in the classic quest log works for any quest in one press, right after logging in too. It worked only for quests of the zone the world map last showed."
+L["WN21_3_TITLE"] = "Windows"
+L["WN21_3_TEXT"] = "An opened letter has the classic window frame, as the inbox does, and the character window's side panel no longer shows a thin see-through line at some interface sizes."
+L["WN20_1_TITLE"] ="PvP rank details"
 L["WN20_1_TEXT"] = "The PvP tab of the character window can show your rank details and the next rank's rewards. Click the arrow at the bottom right of the tab to open the side panel."
 L["WN20_2_TITLE"] = "Addon button bag"
 L["WN20_2_TEXT"] = "Its default spot is now left of the clock, clear of the group finder eye, and it leaves our own minimap icons such as Legacy on the minimap. The Classic layout button also puts dragged minimap buttons back."

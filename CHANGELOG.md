@@ -2,6 +2,15 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.19.1] - 2026-10-03
+
+### Fixed
+- Guild roster: clicking a member opens their notes and options for every member. In larger guilds many members opened nothing.
+- Guild roster: far less CPU while it is open. The game's guild window, kept out of sight for member notes, was placed again every frame.
+- Share Quest in the classic quest log works for any quest, right after logging in too. It worked only for quests of the zone the world map last showed, and otherwise said to open the map.
+- An opened letter has the classic window frame, as the inbox does.
+- Character sheet's side panel: no thin see-through line across it at some interface sizes.
+
 ## [0.19.0] - 2026-10-03
 
 ### Added

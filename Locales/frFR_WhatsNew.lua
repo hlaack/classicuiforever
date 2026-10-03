@@ -3,7 +3,13 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
-L["WN20_1_TITLE"] = "Détails du rang JcJ"
+L["WN21_1_TITLE"] = "Liste de guilde"
+L["WN21_1_TEXT"] = "Cliquer sur un membre ouvre ses notes et ses options pour chaque membre ; dans les grandes guildes, rien ne s'ouvrait pour beaucoup d'entre eux. La liste utilise aussi bien moins de processeur tant qu'elle est ouverte."
+L["WN21_2_TITLE"] = "Partage de quêtes"
+L["WN21_2_TEXT"] = "Partager la quête dans le journal de quêtes classique fonctionne pour n'importe quelle quête en un clic, y compris juste après la connexion. Cela ne marchait que pour les quêtes de la zone affichée en dernier par la carte du monde."
+L["WN21_3_TITLE"] = "Fenêtres"
+L["WN21_3_TEXT"] = "Une lettre ouverte a le cadre de fenêtre classique, comme la boîte de réception, et le panneau latéral de la fenêtre du personnage n'affiche plus de fine ligne transparente à certaines tailles d'interface."
+L["WN20_1_TITLE"] ="Détails du rang JcJ"
 L["WN20_1_TEXT"] = "L'onglet JcJ de la fenêtre du personnage peut afficher les détails de votre rang et les récompenses du rang suivant. Cliquez sur la flèche en bas à droite de l'onglet pour ouvrir le panneau latéral."
 L["WN20_2_TITLE"] = "Sac des boutons d'addons"
 L["WN20_2_TEXT"] = "Sa place par défaut est désormais à gauche de l'horloge, à l'écart de l'œil de la recherche de groupe, et il laisse sur la minicarte nos propres icônes, comme Héritage. Le bouton Disposition classique remet aussi en place les boutons de la minicarte que vous avez déplacés."

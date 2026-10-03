@@ -3,7 +3,13 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
-L["WN20_1_TITLE"] = "Dettagli del grado PvP"
+L["WN21_1_TITLE"] = "Elenco di gilda"
+L["WN21_1_TEXT"] = "Un clic su un membro apre le sue note e opzioni per ogni membro; nelle gilde più grandi per molti non si apriva nulla. L'elenco usa anche molta meno CPU mentre è aperto."
+L["WN21_2_TITLE"] = "Condivisione delle missioni"
+L["WN21_2_TEXT"] = "Condividi missione nel registro delle missioni classico funziona per qualsiasi missione con un solo clic, anche subito dopo l'accesso. Funzionava solo per le missioni della zona mostrata per ultima dalla mappa del mondo."
+L["WN21_3_TITLE"] = "Finestre"
+L["WN21_3_TEXT"] = "Una lettera aperta ha la cornice classica della finestra, come la posta in arrivo, e il pannello laterale della finestra del personaggio non mostra più una sottile linea trasparente con alcune dimensioni dell'interfaccia."
+L["WN20_1_TITLE"] ="Dettagli del grado PvP"
 L["WN20_1_TEXT"] = "La scheda PvP della finestra del personaggio può mostrare i dettagli del tuo grado e le ricompense del grado successivo. Fai clic sulla freccia in basso a destra della scheda per aprire il pannello laterale."
 L["WN20_2_TITLE"] = "Borsa dei pulsanti degli addon"
 L["WN20_2_TEXT"] = "La sua posizione predefinita è ora a sinistra dell'orologio, lontano dall'occhio della ricerca gruppi, e lascia sulla minimappa le nostre icone, come Eredità. Il pulsante Disposizione classica rimette a posto anche i pulsanti della minimappa che hai spostato."
