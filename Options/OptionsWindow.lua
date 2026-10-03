@@ -6,8 +6,9 @@ local L = ns.L
 local O = ns.options
 local TITLE = O.TITLE
 local EMPTY = ns.EMPTY
-local WIDTH, ROW = 470, 24
-local LIST_ROWS, INDENT, COLUMNS = 10, 22, 2
+local WIDTH, ROW = 560, 24
+-- Rows per column: the popout's, and the Settings page's on its fixed canvas.
+local LIST_ROWS, CANVAS_ROWS, INDENT, COLUMNS = 14, 16, 22, 2
 local C = ns.ART.CHECK
 local BTN = "Interface\\Buttons\\UI-"
 -- Raw paths: no bronze swap.
@@ -363,7 +364,7 @@ end
 local function Build(canvas)
     local width = canvas and (canvas:GetWidth() or WIDTH) or WIDTH
     if width < WIDTH then width = WIDTH end
-    local listRows = canvas and LIST_ROWS + 6 or LIST_ROWS
+    local listRows = canvas and CANVAS_ROWS or LIST_ROWS
     local frame = canvas
     if not frame then
         -- HIGH, not DIALOG: on edit mode's strata its panel backing drew over our boxes.
