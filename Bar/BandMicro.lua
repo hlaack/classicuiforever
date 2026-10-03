@@ -195,7 +195,7 @@ local MICRO_TIPS = {
     ForeverClassicUIWorldMapMicroButton = "NEWBIE_TOOLTIP_WORLDMAP", GuildMicroButton = "NEWBIE_TOOLTIP_GUILDTAB",
     ForeverClassicUIHelpMicroButton = "NEWBIE_TOOLTIP_HELP",
     LFDMicroButton = "NEWBIE_TOOLTIP_LFGPARENT", CollectionsMicroButton = "NEWBIE_TOOLTIP_MOUNTS_AND_PETS",
-    MainMenuMicroButton = "NEWBIE_TOOLTIP_MAINMENU", AchievementMicroButton = "NEWBIE_TOOLTIP_ACHIEVEMENT",
+    AchievementMicroButton = "NEWBIE_TOOLTIP_ACHIEVEMENT",
     EJMicroButton = "NEWBIE_TOOLTIP_ENCOUNTER_JOURNAL", HousingMicroButton = "NEWBIE_TOOLTIP_HOUSING",
 }
 
@@ -215,8 +215,53 @@ local function MicroTip(button)
 end
 ns.MicroTip = MicroTip
 
+-- The game menu button's tooltip as Era draws it with beginner tips: a gold line under the title and under each reading
+-- (#70). The game builds it a frame after the enter and again every second, so ours follows each build.
+local PERF_TIPS = {
+    { "MAINMENUBAR_LATENCY_LABEL", "NEWBIE_TOOLTIP_LATENCY" }, { "MAINMENUBAR_FPS_LABEL", "NEWBIE_TOOLTIP_FRAMERATE" },
+    { "MAINMENUBAR_BANDWIDTH_LABEL", "NEWBIE_TOOLTIP_BANDWIDTH" },
+    { "MAINMENUBAR_DOWNLOAD_PERCENT_LABEL", "NEWBIE_TOOLTIP_DOWNLOAD_PERCENT" },
+    { "TOTAL_MEM_MB_ABBR", "NEWBIE_TOOLTIP_MEMORY" }, { "TOTAL_MEM_KB_ABBR", "NEWBIE_TOOLTIP_MEMORY" },
+}
+local perfLines = {}   -- scratch: text, r, g, b of each line
+
+-- A reading's description by the words its label starts with (the client's format, up to its first value).
+local function PerfDesc(text)
+    for _, pair in ipairs(PERF_TIPS) do
+        local label = _G[pair[1]]
+        local start = type(label) == "string" and label:match("^([^%%]+)")
+        if start and text:sub(1, #start) == start then return ns.EraText(pair[2]) end
+    end
+end
+
+local function PerfTip(button)
+    if not (B.active and ns.db.microTips) or GameTooltip:GetOwner() ~= button then return end
+    local count = GameTooltip:NumLines()
+    for i = 1, count do
+        local line = _G["GameTooltipTextLeft" .. i]
+        local text = line and line:GetText()
+        if text == nil or ns.IsSecret(text) then return end
+        local r, g, b = line:GetTextColor()
+        local at = (i - 1) * 4
+        perfLines[at + 1], perfLines[at + 2], perfLines[at + 3], perfLines[at + 4] = text, r, g, b
+    end
+    if count == 0 then return end
+    GameTooltip:SetText(perfLines[1], perfLines[2], perfLines[3], perfLines[4])
+    local main = ns.EraText("NEWBIE_TOOLTIP_MAINMENU")
+    if main then GameTooltip:AddLine(main, 1, 0.82, 0, true) end
+    for i = 2, count do
+        local at = (i - 1) * 4
+        local text = perfLines[at + 1]
+        GameTooltip:AddLine(text, perfLines[at + 2], perfLines[at + 3], perfLines[at + 4])
+        local desc = PerfDesc(text)
+        if desc then GameTooltip:AddLine(desc, 1, 0.82, 0, true) end
+    end
+    GameTooltip:Show()
+end
+
 local function SeatShown(button)
     ns.HookScriptOnce(button, "OnEnter", MicroTip)
+    if button == MainMenuMicroButton then ns.HookGlobal("MainMenuBarPerformanceBarFrame_OnEnter", PerfTip) end
     SeatHidden(button)
 end
 
