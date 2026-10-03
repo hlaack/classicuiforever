@@ -1,15 +1,27 @@
 local _, ns = ...
 
--- Classic's group finder eye on the minimap ring, while the micro menu's group finder button is hidden. Its click goes
--- through a secure pad onto that hidden button, so the finder opens in the player's name. Face: the first eye frame, cropped.
+-- Classic's group finder eye on the minimap ring, with the micro menu's group finder button hidden or not. Its click goes
+-- through a secure pad onto that button, so the finder opens in the player's name. Face: the first eye frame, cropped.
 
 local EYE = { layer = "ARTWORK", coords = { 0.019, 0.106, 0.0375, 0.2125 }, w = 24, h = 24, point = "CENTER", relPoint = "TOPLEFT",
     x = ns.RING_ICON_FACE.x, y = ns.RING_ICON_FACE.y }
 
 local function Wanted()
+    return ns.db and ns.db.lfgMinimapButton == true and _G.LFDMicroButton ~= nil
+end
+
+-- The eye showed only with the micro button hidden: an install from before with that button showing keeps no eye, in the
+-- account and every profile. Runs before the defaults fill.
+function ns.KeepGroupFinderEye()
     local db = ns.db
-    return db and db.lfgMinimapButton == true and db.hideMicroButtons == true and db.hideMicroGroupFinder == true
-        and _G.LFDMicroButton ~= nil
+    local function Keep(t)
+        if t.hideMicroButtons == false or t.hideMicroGroupFinder == false then t.lfgMinimapButton = false end
+    end
+    Keep(db)
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" then Keep(shot) end
+    end
+    db.dbVersion = 8
 end
 
 local padded = false

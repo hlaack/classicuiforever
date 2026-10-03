@@ -417,6 +417,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         -- Last, as it writes the newest dbVersion.
         if saved and saved < 6 then ns.HideThreatGlowNow() end
         if saved and saved < 7 then ns.MarkEraScaleOffer() end
+        if saved and saved < 8 then ns.KeepGroupFinderEye() end
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
         ns.BarSizeKey()
