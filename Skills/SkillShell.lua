@@ -123,6 +123,25 @@ function SkillList.Draw(panel, lines, collapsed, drawItem)
     end
 end
 
+-- An item row in its colour: white text on a bar of that colour when picked.
+function SkillList.Paint(row, picked, color)
+    if picked then
+        row.text:SetTextColor(1, 1, 1)
+        row.selectedTex:SetVertexColor(color[1], color[2], color[3])
+        row.selectedTex:Show()
+    else
+        row.text:SetTextColor(color[1], color[2], color[3])
+        row.selectedTex:Hide()
+    end
+end
+
+-- A header line's click folds or unfolds it; true when it was a header, and the caller draws the list again.
+function SkillList.Fold(line, collapsed)
+    if not line.header then return false end
+    collapsed[line.id] = not collapsed[line.id] or nil
+    return true
+end
+
 function SkillList.FoldIcon(panel, lines, collapsed)
     ns.SetCollapseIcon(panel.collapseAll.icon, SkillList.AllCollapsed(lines, collapsed))
 end

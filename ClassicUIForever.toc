@@ -171,11 +171,14 @@ Skills\ProfessionsWindow.lua
 Skills\TradeSkillExtras.lua
 Skills\TradeSkill.lua
 Skills\Trainer.lua
+UI\SkillLineTab.lua
 UI\TraitTree.lua
 UI\TalentWindow.lua
 Skills\Talents.lua
 Skills\TalentsTree.lua
+Legacy\LegacyWindow.lua
 Legacy\LegacyTree.lua
+Legacy\LegacyChallenges.lua
 Options\Toggles.lua
 Options\Layout.lua
 Options\EraScale.lua

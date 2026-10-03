@@ -362,18 +362,26 @@ local function BuildShell(name, spec)
     return frame
 end
 
--- Points spent on a dark bar with the old round-ended grey rim, and the tree in a window that scrolls.
+-- A dark bar with the skill bars' old round-ended grey rim and a label in its middle (bar.text); width and place are the caller's.
+function ns.RimBar(parent, height)
+    local bar = ns.NewFrame("Frame", nil, parent)
+    bar:SetHeight(height or 13)
+    local fill = bar:CreateTexture(nil, "BACKGROUND")
+    fill:SetColorTexture(0, 0, 0, 0.6)
+    fill:SetPoint("TOPLEFT", bar, "TOPLEFT", 1, 0)
+    fill:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -1, 0)
+    ns.ThreeSlice(bar, nil, RIM)
+    bar.text = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    bar.text:SetPoint("CENTER", bar, "CENTER", 0, 0)
+    return bar
+end
+
+-- Points spent on the rimmed bar, and the tree in a window that scrolls.
 local function BuildView(frame)
-    local spentBar = ns.NewFrame("Frame", nil, frame)
-    spentBar:SetSize(258, 13)
+    local spentBar = ns.RimBar(frame)
+    spentBar:SetWidth(258)
     spentBar:SetPoint("TOP", frame, "TOP", 12, -48)
-    local spentFill = spentBar:CreateTexture(nil, "BACKGROUND")
-    spentFill:SetColorTexture(0, 0, 0, 0.6)
-    spentFill:SetPoint("TOPLEFT", spentBar, "TOPLEFT", 1, 0)
-    spentFill:SetPoint("BOTTOMRIGHT", spentBar, "BOTTOMRIGHT", -1, 0)
-    ns.ThreeSlice(spentBar, nil, RIM)
-    frame.spent = spentBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    frame.spent:SetPoint("CENTER", spentBar, "CENTER", 0, 0)
+    frame.spentBar, frame.spent = spentBar, spentBar.text
 
     local scroll = ns.NewFrame("ScrollFrame", nil, frame)
     scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", VIEW_X, VIEW_Y)
@@ -410,6 +418,7 @@ end
 -- art's painted points box is covered with stone.
 local function BuildFoot(frame, spec)
     local foot = ns.NewFrame("Frame", nil, frame)
+    frame.foot = foot
     foot:SetPoint("TOPLEFT", frame, "TOPLEFT", 14, -409)
     -- To the border's inner edge (340 in the old art); 352 ran past the window's side.
     foot:SetPoint("BOTTOMRIGHT", frame, "TOPLEFT", 340, -435)
@@ -482,6 +491,17 @@ function ns.TalentWindow(name, spec)
     BuildFoot(frame, spec)
     BuildTabs(frame, spec)
     return frame
+end
+
+-- The tree's own pieces (the tree, its scroll bar, the foot and foot tabs) shown or hidden, for a window that shows
+-- another page in their place; the title and the points bar stay. The next DrawTalentTab sets the foot tabs again.
+function ns.TalentTreeShown(frame, shown)
+    frame.scroll:SetShown(shown)
+    frame.foot:SetShown(shown)
+    if not shown then
+        frame.bar:Hide()
+        for _, tab in ipairs(frame.tabs) do tab:Hide() end
+    end
 end
 
 -- The window's show and hide: a talent tooltip up across a hide and show keeps its listener.

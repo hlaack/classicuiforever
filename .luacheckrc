@@ -23,6 +23,8 @@ globals = { "ToggleGuildFrame",
 }
 
 read_globals = {
+    "GetCategoryList", "GetCategoryInfo", "GetCategoryNumAchievements", "GetAchievementInfo", "GetAchievementLink",
+    "GetAchievementNumCriteria", "GetAchievementCriteriaInfo", "FormatShortDate", "C_MajorFactions",
     "C_Map", "WORLD_MAP",
     "date",
     "InputUtil", "GetNumLootItems",

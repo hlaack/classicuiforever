@@ -30,7 +30,6 @@ local IsSecret = ns.IsSecret
 
 -- Art specs, built once.
 local ADD_HL = { add = true }
-local SKILL_TAB = { checked = "checked", add = { Highlight = true, Checked = true }, states = { "Highlight", "Checked" } }
 local SB_QUARTERS = {   -- shared: the small professions book wears the same frame (Skills/ProfessionsBookFrame.lua)
     { key = "sbTopLeft", layer = "BACKGROUND", w = 256, h = 256, point = "TOPLEFT" },
     { key = "sbTopRight", layer = "BACKGROUND", w = 128, h = 256, point = "TOPRIGHT" },
@@ -618,24 +617,11 @@ local function SkillTab_OnEnter(self)
 end
 
 local function CreateSkillTab(parent, i, prev)
-    local tab = ns.NewFrame("CheckButton", nil, parent)
-    tab:SetSize(32, 32)
-    if prev then
-        tab:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -17)
-    else
-        tab:SetPoint("TOPLEFT", parent, "TOPRIGHT", -32, -65)
-    end
-    local plate = tab:CreateTexture(nil, "BACKGROUND")
-    ns.SetTex(plate, "sbSkillTab")
-    plate:SetSize(64, 64)
-    plate:SetPoint("TOPLEFT", tab, "TOPLEFT", -3, 11)
-    tab:SetNormalTexture("")
-    ns.DressStates(tab, nil, nil, nil, "highlight", SKILL_TAB)
+    local tab = ns.SkillLineTab(parent, prev)
     tab:SetID(i)
     tab:SetScript("OnClick", SkillTab_OnClick)
     tab:SetScript("OnEnter", SkillTab_OnEnter)
     tab:SetScript("OnLeave", GameTooltip_Hide)
-    tab:Hide()
     return tab
 end
 
@@ -748,7 +734,7 @@ local function CreateBook()
     -- Not a UIPanel: the panel manager refuses addon show/hide in combat (the
     -- book stuck open). Escape and placement are ours: the left window slot,
     -- like the classic quest log.
-    f.fcuiSlotWidth = 392
+    ns.SetSlotWidth(f, ns.SIDE_TAB_SLOT)
     if not Hosted() then ns.RegisterClassicWindow(f, true, "spellBook") end
     ns.db.spellBookPos = nil
     -- Our Escape out of combat: the client's clears the target first, 1.x closed

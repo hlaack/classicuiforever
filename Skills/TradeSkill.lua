@@ -158,15 +158,7 @@ local function DrawItem(row, line)
     local count = Craftable(info)
     if count > 0 then name = name .. " [" .. count .. "]" end
     row.text:SetText(name)
-    local color = DIFFICULTY[info.relativeDifficulty or 3] or DIFFICULTY[3]
-    if info.recipeID == selected then
-        row.text:SetTextColor(1, 1, 1)
-        row.selectedTex:SetVertexColor(color[1], color[2], color[3])
-        row.selectedTex:Show()
-    else
-        row.text:SetTextColor(color[1], color[2], color[3])
-        row.selectedTex:Hide()
-    end
+    SkillList.Paint(row, info.recipeID == selected, DIFFICULTY[info.relativeDifficulty or 3] or DIFFICULTY[3])
 end
 
 local function UpdateRows()
@@ -179,8 +171,7 @@ end
 local function Row_OnClick(self, button)
     local line = self.line
     if not line then return end
-    if line.header then
-        collapsed[line.id] = not collapsed[line.id] or nil
+    if SkillList.Fold(line, collapsed) then
         Collect()
         UpdateRows()
         UpdateDetail()
