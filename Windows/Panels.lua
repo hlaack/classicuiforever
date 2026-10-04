@@ -118,7 +118,9 @@ local WINDOWS = {
     { "ClassTrainerFrame", addon = "Blizzard_TrainerUI" },
     { "AuctionHouseFrame", addon = "Blizzard_AuctionHouseUI", lift = 9 },
     { "CommunitiesFrame", addon = "Blizzard_Communities", after = A.CommunitiesFrame },
-    { "CollectionsJournal", addon = "Blizzard_Collections", after = A.CollectionsJournal },
+    -- Half lift: the Mount button sits on the foot. The tabs' tops on the metal line, as the vendor's.
+    { "CollectionsJournal", addon = "Blizzard_Collections", lift = 5, tabLift = MERCHANT_TAB_LIFT,
+        after = A.CollectionsJournal },
     { "EncounterJournal", addon = "Blizzard_EncounterJournal" },
     { "AchievementFrame", addon = "Blizzard_AchievementUI" },
     -- Retail's has a tab row: the client's foot line, tabs unlifted.
