@@ -52,14 +52,20 @@ function B.TailParts()
     local key = KeyRingButton ~= nil and not (db and (db.hideKeyRing == true or ns.ValidPlace(db.keyRingPos)))
     return latency, key
 end
+-- A client with no key ring: the reagent bag without a socket of its own ends the bag row in the key slot.
+function B.SlimReagent()
+    return KeyRingButton == nil and CharacterReagentBag0Slot ~= nil and not B.ReagentSlot()
+end
 -- The section's u span on its sheet, or nil with both halves hidden: after a post (the micro row's, the bags' end) that post
--- opens it, before the bags the client's bag post closes it, elsewhere it keeps its own posts.
+-- opens it, before the bags the client's bag post closes it, elsewhere it keeps its own posts. slot: the key slot is in it.
 function B.TailSpan(afterPost, beforeBags)
     local latency, key = B.TailParts()
-    if not (latency or key) then return nil end
+    -- The slim reagent bag rides the bag row: its slot stands only against the bags.
+    local slot = key or (beforeBags and B.SlimReagent()) or false
+    if not (latency or slot) then return nil end
     local u0 = latency and (afterPost and 7 or 0) or (afterPost and 23 or 14)
-    local u1 = key and (beforeBags and 38 or 45) or (beforeBags and 14 or 23)
-    return u0, u1
+    local u1 = slot and (beforeBags and 38 or 45) or (beforeBags and 14 or 23)
+    return u0, u1, slot
 end
 -- The real post by the key ring on the client's fourth sheet (drawn, unlike the bundled one): u and width, for group ends off the band.
 B.POST_U, B.POST_W = 82, 8

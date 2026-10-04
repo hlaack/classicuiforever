@@ -119,13 +119,6 @@ local function HookHover()
     end
 end
 
--- What ends the bag row in its key ring hole: never the key ring (its own piece, BandSection.lua); on a client without
--- one, the round reagent bag.
-local function RowSlim(square)
-    if KeyRingButton then return nil end
-    return (not square and CharacterReagentBag0Slot) or nil
-end
-
 function B.LayoutBags()
     local backpack = MainMenuBarBackpackButton
     if not backpack then return end
@@ -141,7 +134,8 @@ function B.LayoutBags()
     local square = B.ReagentSlot()
     local rowW = size + 4 * (size - gap)
     if square then rowW = rowW + size - gap end
-    local slim = RowSlim(square)
+    -- The key slot's tenant: never the key ring (its own piece, BandSection.lua).
+    local slim = B.SlimReagent() and CharacterReagentBag0Slot or nil
     if slim then rowW = rowW + KEYRING_W - KEYRING_GAP end
     -- On the band: socket size. Off it (moved, or one-bar corner): edit mode's Size with the band scale divided out.
     local band = BandNow()

@@ -58,7 +58,7 @@ local function OnBand(el, plan)
     local u0, u1 = plan.tailU0, plan.tailU1
     if el == LATENCY then
         if not latency then return nil end
-        if key then u1 = 14 end
+        if plan.tailSlot then u1 = 14 end
     else
         if not key then return nil end
         if latency then u0 = 14 end
