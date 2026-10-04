@@ -68,12 +68,12 @@ local function Dress(menu, box, margin, out, fill)
     return art
 end
 
--- Era's drop down look on a client menu (UI/ClientMenus.lua). Forever pads its rows 8, 8, 8, 15 and makes them 20 wider
--- than their text (MenuStyle1Mixin, Mainline); Era insets them 16, 10 at the text's width. The art reaches out by the
--- difference, so it stands off the text as Era's did.
-local CLIENT_INSET, CLIENT_WIDER = { 8, 8, 8, 15 }, 20
+-- Era's drop down look on a client menu (UI/ClientMenus.lua). Forever pads its rows 8, 8, 8, 15 (MenuStyle1Mixin);
+-- Era insets them 16, 10. The art reaches out by the difference and holds the rows' whole width: cut to the text's
+-- (the rows are 20 wider), a row's icon, arrow and highlight stood outside the border (the tracking menu).
+local CLIENT_INSET = { 8, 8, 8, 15 }
 local CLIENT_OUT = { IRON_OUT[1] - IRON_INSET[1] + CLIENT_INSET[1], IRON_OUT[2] + IRON_INSET[2] - CLIENT_INSET[2],
-    IRON_OUT[3] + IRON_INSET[3] - CLIENT_INSET[3] - CLIENT_WIDER, IRON_OUT[4] - IRON_INSET[4] + CLIENT_INSET[4] }
+    IRON_OUT[3] + IRON_INSET[3] - CLIENT_INSET[3], IRON_OUT[4] - IRON_INSET[4] + CLIENT_INSET[4] }
 ns.IRON_REACH = CLIENT_OUT
 -- How far the menu moves, by its anchored edge, for the art to sit against the button as Era's.
 ns.IRON_SHIFT = { LEFT = IRON_OUT[1] - CLIENT_OUT[1], TOP = IRON_OUT[2] - CLIENT_OUT[2], RIGHT = IRON_OUT[3] - CLIENT_OUT[3],

@@ -132,11 +132,12 @@ end
 local iron, rim = Look({ GenerateMenu = DropdownButtonMixin.GenerateMenu })
 Check(iron and not rim, "a drop down button's menu wears the iron list")
 
--- Era's art stands 19, 13, 19, 14 off the text (insets 16, 10, 16, 10 plus its reach); Forever pads the rows 8, 8, 8, 15
--- and makes each row 20 wider than its text.
+-- Era's art stands 19, 13, 19, 14 off its rows (insets 16, 10, 16, 10 plus its reach); Forever pads the rows 8, 8, 8, 15.
+-- On the right it stands off the row's whole width, not its text's (20 less): a row's icon, arrow and highlight
+-- stood outside the border (the tracking menu, seen live 2026-10-04).
 local reach = ns.IRON_REACH
-Check(8 - reach[1] == 19 and 8 + reach[2] == 13 and 8 + 20 + reach[3] == 19 and 15 - reach[4] == 14,
-    "the iron stands off the text as in Classic Era (" .. table.concat(reach, ", ") .. ")")
+Check(8 - reach[1] == 19 and 8 + reach[2] == 13 and 8 + reach[3] == 19 and 15 - reach[4] == 14,
+    "the iron stands off the rows as in Classic Era, holding their whole width (" .. table.concat(reach, ", ") .. ")")
 Check(moves[openMenu] == 1 and math.abs(spot[openMenu][1] - 8) < 0.01 and math.abs(spot[openMenu][2] + 2) < 0.01,
     "the drop down's menu moves once, 8 right and 2 down (" .. moves[openMenu] .. " moves to "
     .. table.concat(spot[openMenu], ", ") .. ")")
