@@ -69,13 +69,19 @@ ns.WINDOW_LIST = {
 }
 
 -- The other micro buttons on the minimap ring: Map/MinimapMicro.lua names its frames and angles the same way.
-for _, micro in ipairs({ { "Character", L["OPT_hideMicroCharacter"] }, { "Spellbook", L["OPT_hideMicroSpellbook"] },
+local RING_MICROS = { { "Character", L["OPT_hideMicroCharacter"] }, { "Spellbook", L["OPT_hideMicroSpellbook"] },
     { "Talents", L["OPT_hideMicroTalents"] }, { "Professions", L["OPT_hideProfessionsButton"] },
     { "QuestLog", L["OPT_hideMicroQuestLog"] }, { "Legacy", L["OPT_hideMicroLegacy"] },
     { "WorldMap", L["OPT_hideMicroWorldMap"] }, { "Guild", L["OPT_hideMicroGuild"] },
     { "Collections", L["OPT_hideMicroCollections"] }, { "Help", L["OPT_hideMicroHelp"] },
     { "GameMenu", L["OPT_hideMicroGameMenu"] }, { "Shop", L["OPT_hideMicroShop"] },
-    { "Housing", L["OPT_hideMicroHousing"] } }) do
+    { "Housing", L["OPT_hideMicroHousing"] } }
+-- Retail's alone (Map/MinimapMicro.lua makes them only there).
+if not ns.OnForever() then
+    RING_MICROS[#RING_MICROS + 1] = { "Achievements", L["OPT_hideMicroAchievements"] }
+    RING_MICROS[#RING_MICROS + 1] = { "Journal", L["OPT_hideMicroJournal"] }
+end
+for _, micro in ipairs(RING_MICROS) do
     ns.WINDOW_LIST[#ns.WINDOW_LIST + 1] = { key = "minimap" .. micro[1], label = micro[2],
         name = "ForeverClassicUIMinimap" .. micro[1] .. "Button", w = 32, h = 32, section = L["UI_MINIMAP"], piece = true,
         ringKey = "minimap" .. micro[1] .. "Angle", choice = "groupFinderButtonShow", choiceLabel = L["UI_SHOW"] }

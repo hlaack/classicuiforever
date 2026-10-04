@@ -396,8 +396,9 @@ local function ResetNow()
     ns.db.hideMicroButtons, ns.db.hideProfessionsButton = defaults.hideMicroButtons, defaults.hideProfessionsButton
     -- The classic look's micro buttons and bag slots too (Legacy, group finder and collections off, Era's bag slots).
     TakeClassicLook(ns.db, true)
-    -- Retail's buttons 1.x never had, off the menu as on a fresh install; housing keeps its minimap icon.
-    for _, key in ipairs({ "hideMicroAchievements", "hideMicroJournal", "hideMicroHousing", "housingMinimapButton" }) do
+    -- Retail's buttons 1.x never had, off the menu as on a fresh install, each with its minimap icon.
+    for _, key in ipairs({ "hideMicroAchievements", "hideMicroJournal", "hideMicroHousing", "housingMinimapButton",
+        "achievementsMinimapButton", "journalMinimapButton" }) do
         ns.db[key] = defaults[key]
     end
     -- Windows and gryphons placed or sized in the windows edit mode (the map included) back to their own; Movable

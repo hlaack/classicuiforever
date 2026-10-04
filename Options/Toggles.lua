@@ -267,6 +267,10 @@ local RETAIL_ROWS = {
             checks = "hideMicroList", drop = true },
     },
     collectionsMinimapButton = {
+        { "achievementsMinimapButton", L["OPT_hideMicroAchievements"], nil, parent = "microMinimapButtons",
+            checks = "microMinimapList", drop = true },
+        { "journalMinimapButton", L["OPT_hideMicroJournal"], nil, parent = "microMinimapButtons", checks = "microMinimapList",
+            drop = true },
         { "housingMinimapButton", L["OPT_hideMicroHousing"], nil, parent = "microMinimapButtons", checks = "microMinimapList",
             drop = true },
     },

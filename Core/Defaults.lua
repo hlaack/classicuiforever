@@ -199,6 +199,7 @@ ns.DB_DEFAULTS = {
     professionsMinimapButton = false, questLogMinimapButton = false, worldMapMinimapButton = false,
     guildMinimapButton = false, collectionsMinimapButton = false, helpMinimapButton = false,
     gameMenuMinimapButton = false, shopMinimapButton = false, housingMinimapButton = true,
+    achievementsMinimapButton = true, journalMinimapButton = true,
     hideMapQuestButton = false,
     lootWindow = true,
     gameMenu = true,

@@ -39,6 +39,8 @@ local ns = {
     SetAttributeIf = function(pad, key, value) pad[key] = value end,
     Sched = { NextFrame = function(_, fn) soon[#soon + 1] = fn end },
     IsSecret = function() return false end,
+    -- Retail: its own two icons are made.
+    OnForever = function() return false end,
     Dress = noop, OnToggle = noop, EventFrame = noop, WhenCalm = noop,
 }
 assert(loadfile(ROOT .. "/Map/MinimapMicro.lua"))("ClassicUIForever", ns)
@@ -87,6 +89,18 @@ Check(shown[HOUSING] and pads[_G[HOUSING]].clickbutton == HousingMicroButton, "t
 ns.db.housingMinimapButton = false
 Pass()
 Check(not shown[HOUSING], "unchecked, the housing icon goes")
+
+-- Retail's achievements and adventure guide buttons, off its micro menu by default: an icon each, pressing the button.
+AchievementMicroButton, EJMicroButton = { name = "achievements" }, { name = "adventure guide" }
+local ACHIEVEMENTS, JOURNAL = "ForeverClassicUIMinimapAchievementsButton", "ForeverClassicUIMinimapJournalButton"
+ns.db.achievementsMinimapButton, ns.db.journalMinimapButton = true, true
+Pass()
+Check(shown[ACHIEVEMENTS] and pads[_G[ACHIEVEMENTS]].clickbutton == AchievementMicroButton,
+    "the achievements icon presses the achievements button (retail)")
+Check(shown[JOURNAL] and pads[_G[JOURNAL]].clickbutton == EJMicroButton, "the adventure guide icon presses its button (retail)")
+ns.db.achievementsMinimapButton, ns.db.journalMinimapButton = false, false
+Pass()
+Check(not shown[ACHIEVEMENTS] and not shown[JOURNAL], "unchecked, both icons go")
 
 -- A game rule that takes the button away takes its icon.
 ns.db.shopMinimapButton = true

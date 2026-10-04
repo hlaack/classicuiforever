@@ -1,5 +1,6 @@
 -- Written by: lua tools/tests/defaults_test.lua --write. Never edit by hand.
 return {
+    achievementsMinimapButton = true,
     addonMessages = true,
     bagWindowsFollow = false,
     bags = true,
@@ -141,6 +142,7 @@ return {
     hoverMinimapZoomIn = false,
     hoverMinimapZoomOut = false,
     hoverOptionsButton = false,
+    journalMinimapButton = true,
     keyTextSize = 12,
     layoutPrompted = false,
     layoutSelectPending = false,

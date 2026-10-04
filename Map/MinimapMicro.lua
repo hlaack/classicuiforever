@@ -47,6 +47,14 @@ local MICROS = {
     { toggle = "housingMinimapButton", micro = "HousingMicroButton", atlas = "UI-HUD-MicroMenu-Housing-Up", id = "Housing",
         angle = 232, free = true, label = L["OPT_hideMicroHousing"], rule = "HousingDashboardDisabled" },
 }
+-- Retail's own buttons 1.x never had: off the micro menu by default, each with its way in on the ring. Achievements
+-- wears the 1.x achievement face (Forever's Legacy icon there); the adventure guide has no 1.x sheet.
+if not ns.OnForever() then
+    MICROS[#MICROS + 1] = { toggle = "achievementsMinimapButton", micro = "AchievementMicroButton", face = "Achievement",
+        id = "Achievements", angle = 232, free = true, label = L["OPT_hideMicroAchievements"] }
+    MICROS[#MICROS + 1] = { toggle = "journalMinimapButton", micro = "EJMicroButton", atlas = "UI-HUD-MicroMenu-AdventureGuide-Up",
+        id = "Journal", angle = 232, free = true, label = L["OPT_hideMicroJournal"] }
+end
 local byToggle = {}
 
 local function Face(spec, icon)
