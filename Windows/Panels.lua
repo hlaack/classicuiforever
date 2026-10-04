@@ -136,6 +136,12 @@ local WINDOWS = {
     { "ClickBindingFrame", addon = "Blizzard_ClickBindingUI", lift = 5, scrollBars = false, after = A.ClickBindingFrame },
     { "CooldownViewerSettings", lift = 5, scrollBars = false, after = A.CooldownViewerSettings },
 }
+-- Retail's talents are the game's spells window; Forever's are our own (Skills/Talents.lua), its row either way.
+-- No lift: its pages run to the client's border line, and its tab row's layout puts a lifted tab back.
+if not ns.OnForever() then
+    WINDOWS[#WINDOWS + 1] = { "PlayerSpellsFrame", addon = "Blizzard_PlayerSpells", toggle = "talents", lift = 0,
+        scrollBars = false, after = A.PlayerSpellsFrame }
+end
 
 P.WINDOWS = WINDOWS
 
@@ -182,7 +188,7 @@ ns.RegisterModule("panels", { apply = Apply, restore = Restore })
 -- A window with its own row (the entry's toggle): dressed by the panels pass while on; off, the strip goes and the
 -- rest waits for the reload, as Window frames off does. Frame() is the dressed frame, once it exists.
 local stripOff = setmetatable({}, { __mode = "k" })   -- frame -> its row hid the strip (the loot skin hides its own)
-local function WindowRow(key, Frame)
+local function RowPass(Frame)
     local function Apply()
         if not P.active then return end
         local frame = Frame()
@@ -202,7 +208,13 @@ local function WindowRow(key, Frame)
         end
         ns.needsReload = true
     end
-    ns.RegisterModule(key, { apply = Apply, restore = Restore })
+    return Apply, Restore
+end
+P.RowPass = RowPass
+
+local function WindowRow(key, Frame)
+    local apply, restore = RowPass(Frame)
+    ns.RegisterModule(key, { apply = apply, restore = restore })
 end
 
 WindowRow("worldMap", function() return WorldMapFrame and WorldMapFrame.BorderFrame end)

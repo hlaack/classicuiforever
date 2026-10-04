@@ -133,7 +133,7 @@ ns.TOGGLES = {
     { "spellBook", L["OPT_spellBook"], L["OPT_spellBook_TIP"] },
     { "spellBookTopRank", L["OPT_spellBookTopRank"], L["OPT_spellBookTopRank_TIP"], parent = "spellBook" },
     { "spellBookSearch", L["OPT_spellBookSearch"], L["OPT_spellBookSearch_TIP"], parent = "spellBook" },
-    { "talents", L["OPT_talents"], L["OPT_talents_TIP"] },
+    { "talents", L["OPT_talents"], ns.OnForever() and L["OPT_talents_TIP"] or L["OPT_talents_GAME_TIP"] },
 
     { "professionsBook", L["OPT_professionsBook"], L["OPT_professionsBook_TIP"], group = L["GROUP_PROFESSIONS"] },
     { "profBookBig", L["OPT_profBookBig"], L["OPT_profBookBig_TIP"], parent = "professionsBook", search = "big large popout" },

@@ -105,8 +105,8 @@ local function AimSpellTab()
 end
 
 local function SpellbookMacro()
-    local ours = ns.BookClickName and ns.BookClickName()
-    if ours then return "/click " .. ours end
+    local ours = ns.BookPadMacro and ns.BookPadMacro()
+    if ours then return ours end
     AimSpellTab()
     local frame = _G.PlayerSpellsFrame
     -- Open on another tab: the tab alone, or the toggle would shut the window.

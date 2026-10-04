@@ -1878,11 +1878,37 @@ local function TakeButton(on)
 end
 
 local BIND_NAME = "ForeverClassicUISpellBookBind"
--- The book's secure toggle by name, for a pad's macro (retail's spellbook micro button); nil while the book is off.
-function ns.BookClickName()
-    return active and _G[BIND_NAME] ~= nil and BIND_NAME or nil
-end
+local CLICK_NAME = "ForeverClassicUISpellBookClick"
 local bindButton
+local clickProxy
+-- After the layer's click the book follows it. Fires on press and release; acts on release.
+local function FollowLayer(_, _, down)
+    if not active or down then return end
+    local layer = book and book.Clicks
+    if layer and layer.fcuiLinked then
+        if book:LayerUp() then
+            Show()
+        elseif book:IsShown() then
+            Hide()
+        end
+    else
+        Toggle()
+    end
+end
+
+-- A pad's macro for the book (retail's spellbook micro button); nil while the book is off. The layer's click, then a
+-- sized button that lets the book follow: never the bind button, whose own macro, pressed from a macro, never reached
+-- the layer on retail. Out of combat.
+function ns.BookPadMacro()
+    if not active or not bindButton then return nil end
+    if not clickProxy then
+        clickProxy = ns.ClickProxy(CLICK_NAME)
+        clickProxy:SetScript("PostClick", FollowLayer)
+    end
+    local layer = book and book.Clicks
+    if layer and layer.fcuiLinked then return "/click ForeverClassicUISpellBookClicks\n/click " .. CLICK_NAME end
+    return "/click " .. CLICK_NAME
+end
 -- The professions key and micro button: our layer down first (our code cannot in a fight), then the client's opener; the
 -- book then goes as a client window replaces ours.
 local PROF_BIND_NAME = "ForeverClassicUIProfessionsBind"
@@ -1956,20 +1982,7 @@ local function Init()
     if ns.EscDisarmOnClick then ns.EscDisarmOnClick(bindButton) end
     bindButton:RegisterForClicks("AnyDown", "AnyUp")
     bindButton:SetAttribute("useOnKeyDown", false)
-    bindButton:SetScript("PostClick", function(_, _, down)
-        -- Fires on press and release; acts on release.
-        if not active or down then return end
-        local layer = book and book.Clicks
-        if layer and layer.fcuiLinked then
-            if book:LayerUp() then
-                Show()
-            elseif book:IsShown() then
-                Hide()
-            end
-        else
-            Toggle()
-        end
-    end)
+    bindButton:SetScript("PostClick", FollowLayer)
     bindButton:RegisterEvent("UPDATE_BINDINGS")
     bindButton:RegisterEvent("PLAYER_REGEN_ENABLED")
     bindButton:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -2005,6 +2018,7 @@ local function Apply()
     end
     -- Enabled mid-session: world entry has passed.
     if IsLoggedIn and IsLoggedIn() then ns.SafeCall(Prebuild) end
+    ns.GameBookTab()
 end
 
 local function Restore()
@@ -2012,6 +2026,7 @@ local function Restore()
     TakeOver(false)
     TakeButton(false)
     UpdateBinding()
+    ns.GameBookTab()
     if book and book:IsShown() then Hide() end
     if ns.HostSpellsWindow then ns.HostSpellsWindow() end
 end

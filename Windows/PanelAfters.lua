@@ -441,6 +441,55 @@ function A.CommunitiesFrame(frame)
     TintInner(frame, 6, frame.GuildMemberDetailFrame)
 end
 
+----------------------------------------------------------- spells window
+
+local TALENT_BUTTONS = { "ApplyButton", "InspectCopyButton" }
+local FOOT_STONE = { coords = { 0, 1, 0, 1 } }
+
+-- The Activate buttons come from a pool filled as the tab first shows.
+local function DressSpecButtons()
+    local window = Named("PlayerSpellsFrame")
+    local pool = window and window.SpecFrame and window.SpecFrame.SpecContentFramePool
+    if not pool or not P.active then return end
+    for content in pool:EnumerateActive() do ns.SkinRedButton(content.ActivateButton) end
+end
+
+local function SpecShown(shown)
+    if shown then ns.Sched.NextFrame("spells.spec", DressSpecButtons) end
+end
+
+-- Our spellbook on: the dressed window's own Spellbook tab, last in its row, goes unseen. Alpha and mouse only; the
+-- row's layout stays the client's.
+function ns.GameBookTab()
+    local window = Named("PlayerSpellsFrame")
+    if not window or not P.skinned[window] then return end
+    local tab = window.spellBookTabID and window:GetTabButton(window.spellBookTabID)
+    if not tab then return end
+    local ours = ns.SpellBookActive()
+    ns.SetAlphaIf(tab, ours and 0 or 1)
+    tab:EnableMouse(not ours)
+end
+
+-- Retail's talents stay the game's window: old buttons, drop down and search box, stone under the foot row.
+function A.PlayerSpellsFrame(frame)
+    local talents = frame.TalentsFrame
+    if talents then
+        ns.EachKey(talents, TALENT_BUTTONS, ns.SkinRedButton)
+        ns.SkinDropdown(talents.LoadSystem and talents.LoadSystem.Dropdown)
+        ns.DrainInput(talents.SearchBox)
+        local bar = talents.BottomBar
+        if bar then
+            local stone = ns.TileTex(ns.OwnTexture(talents, "footStone", "BACKGROUND", 1), "rockBg", FOOT_STONE)
+            stone:SetAllPoints(bar)
+            stone:Show()
+            bar:SetAlpha(0)
+        end
+    end
+    ns.Sched.OnVisible(frame.SpecFrame, "spells.spec", SpecShown)
+    -- After the skin marks the window dressed.
+    ns.Sched.NextFrame("spells.bookTab", ns.GameBookTab)
+end
+
 ------------------------------------------------------------- collections
 
 function A.CollectionsJournal(frame)
