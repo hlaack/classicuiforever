@@ -188,6 +188,22 @@ function ns.DressDropdown(dropdown, inset)
     return arrow
 end
 
+-- A drop down shrunk to its arrow button alone (a filter beside a list): the old arrow and its glow fill the frame.
+function ns.DressDropArrow(dropdown)
+    local arrow = ns.OwnTexture(dropdown, "ddArrow", "ARTWORK", 0)
+    ns.SetFile(arrow, DROPDOWN_ARROW .. "Up")
+    arrow:ClearAllPoints()
+    arrow:SetAllPoints(dropdown)
+    arrow:Show()
+    local glow = ns.OwnTexture(dropdown, "ddArrowGlow", "HIGHLIGHT", 0)
+    glow:SetTexture(HILIGHT)
+    glow:SetBlendMode("ADD")
+    glow:ClearAllPoints()
+    glow:SetAllPoints(dropdown)
+    glow:Show()
+    return arrow, glow
+end
+
 function ns.SkinDropdown(dropdown)
     if not dropdown or not Once(dropdown, "dropdown") then return end
     if dropdown.Background then dropdown.Background:SetAlpha(0) end

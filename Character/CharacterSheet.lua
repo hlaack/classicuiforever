@@ -613,9 +613,9 @@ local function HideSidePane(frame)
         local keep = SkillsFrame and pane == SkillsFrame.SkillDetailFrame and SkillsFrame:IsShown()
         if keep then Keep(pane) else Quiet(pane) end
     end
-    for _, name in ipairs(SIDE_PIECES) do
-        Quiet(_G[name])
-    end
+    for _, name in ipairs(SIDE_PIECES) do Quiet(_G[name]) end
+    -- Retail's faction pane hangs on the reputation frame, not in the side panes: it opened beside our box.
+    if ReputationFrame then Quiet(ReputationFrame.ReputationDetailFrame) end
     if type(GetPaperDollSideBarFrame) == "function" and type(PAPERDOLL_SIDEBARS) == "table" then
         for i = 1, #PAPERDOLL_SIDEBARS do
             local bar = GetPaperDollSideBarFrame(i)

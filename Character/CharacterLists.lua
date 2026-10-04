@@ -13,9 +13,11 @@ local BAR_W, BAR_H = 137, 13
 local SKILL_BLUE = { 0, 0, 0.5 }
 local SKILL_COORDS, REP_COORDS = { 0, 1, 0, 0.5 }, { 0, 1, 0, 1 }
 -- Row pitch is not ours to set (SkinListFrame): lists scale to the old pitch, contents by 1/scale.
--- Skills 30+3 to 19+1, reputation 35 to 28.
+-- Skills 30+3 to 19+1. Reputation: Forever's rows are 30 high and take 0.76; retail's are 22 (its own XML), so the
+-- same scale packed them 6 tighter than their plates: retail's scale gives the same pitch.
+local RETAIL = not ns.OnForever()
 local SKILL_LIST_SCALE = 20 / 33
-local REP_LIST_SCALE = 0.76
+local REP_LIST_SCALE = RETAIL and 0.76 * 30 / 22 or 0.76
 
 local FULL = { 0, 1, 0, 1 }
 local SKILL_BORDER = { own = "border", layer = "BORDER", coords = FULL, point = "LEFT", x = -5, point2 = "RIGHT", x2 = 5, h = 32, show = true }
@@ -25,7 +27,27 @@ local REP_PLATE = {
     { own = "plateRight", layer = "BORDER", sublevel = 0, key = "repPlate", coords = PLATE_R, w = 16, h = 21, point = "TOPLEFT", relPoint = "TOPRIGHT", chain = true, show = true },
 }
 local PLATE_PAIR = {}
+-- Retail: a faction under a faction that is itself a group stands CHILD_IN further in, its bar that much shorter, so
+-- the bars still end in one column; its plate is the same strip cut that much short inside the bar's frame.
+local CHILD_IN = 16
+local REP_PLATE_CHILD = {
+    { own = "plateLeft", layer = "BORDER", sublevel = 0, key = "repPlate", coords = { 0, (256 - CHILD_IN) / 256, 0, 0.328125 },
+        w = 256 - CHILD_IN, h = 21, point = "TOPLEFT", x = -126, y = 4, show = true },
+    REP_PLATE[2],
+}
 local COLLAPSE_ICON = { w = 16, h = 16, point = "LEFT", x = 7, show = true }
+-- Retail: a header's bar (the options list's three slices and their glow), and the old icon on a sub header's own button.
+local HEADER_BAR = { "Left", "Middle", "Right", "HighlightLeft", "HighlightMiddle", "HighlightRight" }
+local SUB_ICON = { w = 16, h = 16, point = "CENTER", show = true }
+local MINUS_DOWN = "Interface\\Buttons\\UI-MinusButton-Down"
+
+-- Retail starts a faction's row in from the list under its parent: how far, in the row content's units.
+local function Indent(row)
+    local list = RETAIL and row:GetParent()
+    local left, edge = row:GetLeft(), list and list:GetLeft()
+    if not left or not edge or ns.AnySecret(left, edge) then return 0 end
+    return math.max(0, (left - edge) * REP_LIST_SCALE)
+end
 local TOGGLE_FACES = { "Normal", "Pushed" }
 local TOGGLE = { set = "raw", coords = FULL, fill = true, states = TOGGLE_FACES }
 local TRACK_TOP = { own = "trackTop", layer = "BACKGROUND", coords = { 0, 0.484375, 0, 1 }, w = 31, h = 256, point = "TOPLEFT", x = -8, y = 9, show = true }
@@ -73,8 +95,21 @@ local function SkinListEntry(row, barKey)
     -- A faction's row opens the old detail box.
     if not skills then ns.HookScriptOnce(row, "OnClick", RepRowClick) end
     ns.FadeAtlas(bar, "stat-bar-bg", false, Fade)
+    -- Retail's bar has the old frame of its own, 99 wide, inside our 137: a second, narrower bar.
+    if bar.LeftTexture then Fade(bar.LeftTexture) end
+    if bar.RightTexture then Fade(bar.RightTexture) end
     ns.EachRegion(content.BackgroundHighlight, Fade)
-    if content.AccountWideIcon then Fade(content.AccountWideIcon) end
+    local account = content.AccountWideIcon
+    if account then
+        Fade(account)
+        -- Unseen, it still answered the mouse with its tooltip over the name plate.
+        if RETAIL and account.EnableMouse then
+            Take(account, "mouse")
+            account:EnableMouse(false)
+        end
+    end
+    local data = RETAIL and row.elementData
+    local inset = (data and data.isChild and not data.isHeader) and CHILD_IN or 0
     Take(bar, "size", "points")
     bar:ClearAllPoints()
     if skills then
@@ -82,8 +117,9 @@ local function SkinListEntry(row, barKey)
         bar:SetPoint("RIGHT", row, "RIGHT", -8, 0)
         bar:SetHeight(15)
     else
-        bar:SetSize(BAR_W, BAR_H)
-        bar:SetPoint("LEFT", row, "LEFT", 130, 0)
+        bar:SetSize(BAR_W - inset, BAR_H)
+        -- One column of bars: an indented row's would run past the window.
+        bar:SetPoint("LEFT", row, "LEFT", 130 - Indent(row) + inset, 0)
     end
     -- Old gradient fill under the art, in the client's colour or skill blue.
     local fill = bar.Fill
@@ -173,7 +209,7 @@ local function SkinListEntry(row, barKey)
             Take(bar.Text, "font")
             bar.Text:SetFontObject("GameFontHighlightSmall")
         end
-        ns.DressPieces(bar, REP_PLATE, nil, PLATE_PAIR)
+        ns.DressPieces(bar, inset > 0 and REP_PLATE_CHILD or REP_PLATE, nil, PLATE_PAIR)
         Own(PLATE_PAIR[1])
         Own(PLATE_PAIR[2])
     end
@@ -187,10 +223,19 @@ local function SkinListEntry(row, barKey)
         toggle:ClearAllPoints()
         if skills then
             toggle:SetPoint("RIGHT", bar, "LEFT", -2, 0)
+        elseif RETAIL then
+            -- Retail gives such a row no room on its left (the plus stood on the window's border): inside the plate's
+            -- left end and over it, the name after it. Minus while its factions show.
+            Take(toggle, "level")
+            toggle:SetFrameLevel(bar:GetFrameLevel() + 2)
+            toggle:SetPoint("LEFT", bar, "LEFT", -123, 0)
+            name:SetPoint("LEFT", bar, "LEFT", -104, 0)
+            name:SetWidth(89)
         else
             toggle:SetPoint("RIGHT", bar, "LEFT", -122, 0)
         end
-        ns.DressStates(toggle, ns.ART.PLUS, ns.ART.PLUS_DOWN, nil, nil, TOGGLE)
+        local open = RETAIL and row.IsCollapsed and not row:IsCollapsed()
+        ns.DressStates(toggle, open and ns.ART.MINUS or ns.ART.PLUS, open and MINUS_DOWN or ns.ART.PLUS_DOWN, nil, nil, TOGGLE)
     end
 end
 T.SkinListEntry = SkinListEntry
@@ -198,6 +243,7 @@ T.SkinListEntry = SkinListEntry
 -- Header name and plus/minus on our own holder, scaled back up from the small row.
 local function SkinSkillHeader(row, scale, font)
     ns.FadeAtlas(row, "collapseexpand", false, Fade)
+    if RETAIL then ns.EachKey(row, HEADER_BAR, Fade) end
     if row.StateIcon then Fade(row.StateIcon) end
     local holder = row.fcuiHolder
     if not holder then
@@ -222,6 +268,7 @@ local function SkinRepHeader(row, barKey)
     -- Reputation headers in their own gold, on the same scaled frame.
     if barKey == "ReputationBar" then return SkinSkillHeader(row, REP_LIST_SCALE, "GameFontNormal") end
     ns.FadeAtlas(row, "collapseexpand", false, Fade)
+    if RETAIL then ns.EachKey(row, HEADER_BAR, Fade) end
     if row.Name then
         Take(row.Name, "font", "points")
         row.Name:SetFontObject("GameFontNormal")
@@ -230,7 +277,15 @@ local function SkinRepHeader(row, barKey)
     if row.StateIcon then Fade(row.StateIcon) end
     local icon = Own(ns.OwnTexture(row, "collapseIcon", "ARTWORK"))
     ns.SetCollapseIcon(icon, row.IsCollapsed and row:IsCollapsed())
-    ns.Dress(icon, nil, COLLAPSE_ICON, row)
+    -- Retail's currency sub header has a button of its own: its faces go and the old icon stands on it.
+    local toggle = row.ToggleCollapseButton
+    if toggle then
+        Fade(toggle:GetNormalTexture())
+        Fade(toggle:GetPushedTexture())
+        ns.Dress(icon, nil, SUB_ICON, toggle)
+    else
+        ns.Dress(icon, nil, COLLAPSE_ICON, row)
+    end
 end
 
 local function SkinListRow(row, barKey)
@@ -356,6 +411,29 @@ local function AnchorList(box, k, bottom)
     box:SetPoint("BOTTOMRIGHT", CharacterFrame, "BOTTOMRIGHT", -66 / s, bottom / s)
 end
 
+-- Retail's list filter (1.x had none): its drop down shrunk to the arrow button alone, on the column labels' line
+-- between Standing and the scroll bar, where the wide box covered both.
+local FILTER_SIZE, FILTER_X, FILTER_Y = 24, 312, -64
+local function SmallFilter(dropdown, beside)
+    if not dropdown then return end
+    Take(dropdown, "size", "points")
+    dropdown:SetSize(FILTER_SIZE, FILTER_SIZE)
+    -- Currency's transfer log button stands over the scroll bar's top: the filter goes on its left.
+    if beside then
+        ns.SetPointOnce(dropdown, "RIGHT", beside, "LEFT", -2, 0)
+    else
+        ns.SetPointOnce(dropdown, "CENTER", CharacterFrame, "TOPLEFT", FILTER_X, FILTER_Y)
+    end
+    local glowOff = dropdown.GetHighlightTexture and dropdown:GetHighlightTexture()
+    if dropdown.Background then Fade(dropdown.Background) end
+    if dropdown.Arrow then Fade(dropdown.Arrow) end
+    if dropdown.Text then Fade(dropdown.Text) end
+    if glowOff then Fade(glowOff) end
+    local arrow, glow = ns.DressDropArrow(dropdown)
+    Own(arrow)
+    Own(glow)
+end
+
 local function FadeScrollLines(child, target)
     if child ~= target then ns.FadeAtlas(child, "scrollline", false, Fade) end
 end
@@ -404,7 +482,9 @@ local function SkinListFrame(frame, barKey)
         frame.ScrollBar:SetPoint("BOTTOMLEFT", box, "BOTTOMRIGHT", 6, 4)
     end
     if box.ForEachFrame then box:ForEachFrame(look.dress) end
-    if frame.filterDropdown then
+    if RETAIL then
+        SmallFilter(frame.filterDropdown, frame.CurrencyTransferLogToggleButton)
+    elseif frame.filterDropdown then
         Take(frame.filterDropdown, "points")
         ns.SetPointOnce(frame.filterDropdown, "TOPRIGHT", CharacterFrame, "TOPRIGHT", -40, -62)
     end
