@@ -2,7 +2,7 @@ local _, ns = ...
 
 -- Colour themes in two layers: a piece's copy as drawn (custom/) under its metal alone (custom-metal/) in the theme's
 -- colour. Flat colour adds the piece's stone panels (custom-flat/, one tone between the frame's lines) on top, in the
--- theme's colour. Each layer follows its piece's shown state, alpha, crop and draw layer.
+-- theme's colour. Each layer takes its piece's shown state, alpha, crop and draw layer on a signal, not every frame.
 
 local B = ns.bronze
 local THEMES = B.THEMES
@@ -12,7 +12,105 @@ local layers = setmetatable({}, weak)   -- copy piece -> { tex, cells, on, metal
 local flats = setmetatable({}, weak)    -- tinted piece -> { cells, on, flat, drawLayer, sub }
 local LISTS = { layers, flats }
 local own = setmetatable({}, weak)       -- our layer textures
+-- A piece's frame -> { layer -> piece }: the layers hang on that frame and go with it, so an unseen frame's are left alone.
+local frames = setmetatable({}, weak)
 local job
+-- No timer. A paint follows its own piece; one whole pass runs when a window shows or goes or the game restyles its
+-- bars; one window's pieces are followed every frame for BURST after it showed, was pressed or had a layer move.
+local BURST = 0.25
+local wantWhole = false
+local dirty = setmetatable({}, weak)    -- layer -> piece, painted since the last pass
+local groups = setmetatable({}, weak)   -- root (a window under UIParent) -> { piece's frame -> its layers }
+local rootOf = setmetatable({}, weak)   -- a piece's frame -> its root
+local hot = setmetatable({}, weak)      -- root -> when its burst ends
+
+-- A paint: its piece alone on the next pass, once the caller is done with it (it may still crop or fade it).
+local function Kick(piece, layer)
+    if not job:IsAwake() then return end
+    dirty[layer] = piece
+    job:Kick()
+end
+
+-- One whole pass on the next frame.
+local function Look()
+    if not job:IsAwake() then return end
+    wantWhole = true
+    job:Kick()
+end
+
+-- A window's pieces every frame for BURST from now.
+local function Heat(root, now)
+    hot[root] = now + BURST
+    job:Burst(BURST)
+end
+
+-- The frame a frame hangs from under UIParent; nil off it (a nameplate, a menu).
+local function RootOf(frame)
+    local root, parent = frame, frame:GetParent()
+    while parent and parent ~= UIParent do
+        if ns.IsForbidden(parent) then return nil end
+        root, parent = parent, parent:GetParent()
+    end
+    return parent and root or nil
+end
+
+-- A window showed or went (frame: it, or anything in it): its pieces for a while, and all once (the micro buttons
+-- follow their windows).
+local function Edge(frame)
+    if not job:IsAwake() then return end
+    local root = frame and RootOf(frame)
+    if root and groups[root] then Heat(root, GetTime()) end
+    Look()
+end
+ns.FollowLayers = Edge
+
+-- Presses, and the events on which the game restyles bars and unit frames with no press.
+local EVENTS = { "GLOBAL_MOUSE_DOWN", "GLOBAL_MOUSE_UP", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
+    "ACTIONBAR_PAGE_CHANGED", "UPDATE_BONUS_ACTIONBAR", "UPDATE_VEHICLE_ACTIONBAR", "UPDATE_OVERRIDE_ACTIONBAR",
+    "UPDATE_SHAPESHIFT_FORMS", "PET_BAR_UPDATE", "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED" }
+local listener = ns.EventFrame({}, function(_, event)
+    if event ~= "GLOBAL_MOUSE_DOWN" and event ~= "GLOBAL_MOUSE_UP" then return Look() end
+    -- A press moves pieces of the window under the mouse only; on the world (the camera) none.
+    local foci = GetMouseFoci and GetMouseFoci()
+    local focus = foci and foci[1]
+    if not focus or focus == _G.WorldFrame or ns.IsForbidden(focus) then return end
+    local root = RootOf(focus)
+    if root and groups[root] then
+        Heat(root, GetTime())
+        job:Kick()
+    end
+end)
+
+-- The pass and its events, only while a layer is on.
+local function Listen(on)
+    if on == job:IsAwake() then return end
+    if on then
+        job:Wake()
+        ns.RegisterEvents(listener, EVENTS)
+    else
+        job:Sleep()
+        listener:UnregisterAllEvents()
+    end
+end
+
+-- A piece's frame joins its root's group; a root gets one watcher, so its layers are looked at as it shows or goes.
+local function Index(piece, layer)
+    local frame = piece:GetParent()
+    local set = frames[frame]
+    if not set then
+        set = setmetatable({}, weak)
+        frames[frame] = set
+        local root = RootOf(frame)
+        if root then
+            if not groups[root] then
+                groups[root] = setmetatable({}, weak)
+                ns.Sched.OnVisible(root, "theme.layers", function() Edge(root) end)
+            end
+            groups[root][frame], rootOf[frame] = set, root
+        end
+    end
+    set[layer] = piece
+end
 
 local function Theme()
     return THEMES[ns.ThemeName() or ""]
@@ -30,12 +128,31 @@ local function NewTex(piece)
     return tex
 end
 
-local function FollowOne(tex, on, shown, alpha, piece)
-    if not tex then return end
-    ns.SetShownIf(tex, on and shown)
-    if not (on and shown) then return end
-    if alpha then ns.SetAlphaIf(tex, alpha) end
-    tex:SetTexCoord(piece:GetTexCoord())
+-- True when the layer had to change.
+local function FollowOne(tex, on, shown, alpha)
+    if not tex then return false end
+    local moved = ns.SetShownIf(tex, on and shown)
+    if on and shown and alpha and ns.SetAlphaIf(tex, alpha) then moved = true end
+    return moved
+end
+
+-- The piece's crop onto its layers when it differs from the one they took; a secret crop is handed on unread.
+local function Crop(layer, ulx, uly, llx, lly, urx, ury, lrx, lry)
+    local secret = ns.IsSecret(ulx)
+    if not secret then
+        local c = layer.crop
+        if not c then
+            c = {}
+            layer.crop = c
+        elseif c[1] == ulx and c[2] == uly and c[3] == llx and c[4] == lly and c[5] == urx and c[6] == ury and c[7] == lrx
+            and c[8] == lry then
+            return false
+        end
+        c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8] = ulx, uly, llx, lly, urx, ury, lrx, lry
+    end
+    if layer.tex and layer.metal then layer.tex:SetTexCoord(ulx, uly, llx, lly, urx, ury, lrx, lry) end
+    if layer.cells and layer.flat then layer.cells:SetTexCoord(ulx, uly, llx, lly, urx, ury, lrx, lry) end
+    return not secret
 end
 
 -- The lowest sublevel above the piece's that another of its parent's regions holds in its draw layer (an action
@@ -66,36 +183,78 @@ local function MakeRoom(piece, drawLayer, sub)
     return sub
 end
 
-local function Follow(piece, layer)
-    local shown = piece:IsShown() and piece:IsVisible()
+-- seen: the piece's frame is known to be visible (the pass asks each frame once). True when a layer had to change.
+local function Follow(piece, layer, seen)
+    local shown = piece:IsShown() and (seen or piece:IsVisible())
     local alpha = shown and piece:GetAlpha() or nil
     if ns.IsSecret(alpha) then alpha = nil end
-    FollowOne(layer.tex, layer.metal, shown, alpha, piece)
-    FollowOne(layer.cells, layer.flat, shown, alpha, piece)
-    if not shown then return end
+    local moved = FollowOne(layer.tex, layer.metal, shown, alpha)
+    if FollowOne(layer.cells, layer.flat, shown, alpha) then moved = true end
+    if not shown then return moved end
+    if Crop(layer, piece:GetTexCoord()) then moved = true end
     local drawLayer, sub = piece:GetDrawLayer()
-    if ns.AnySecret(drawLayer, sub) then return end
+    if ns.AnySecret(drawLayer, sub) then return moved end
     if drawLayer ~= layer.drawLayer or sub ~= layer.sub then sub = MakeRoom(piece, drawLayer, sub) end
     if drawLayer ~= layer.drawLayer or sub ~= layer.sub then
         layer.drawLayer, layer.sub = drawLayer, sub
         if layer.tex then layer.tex:SetDrawLayer(drawLayer, math.min(7, (sub or 0) + 1)) end
         if layer.cells then layer.cells:SetDrawLayer(drawLayer, math.min(7, (sub or 0) + 2)) end
+        moved = true
     end
+    return moved
 end
 
-local function FollowAll()
-    local any = false
-    for _, list in ipairs(LISTS) do
-        for piece, layer in pairs(list) do
-            if layer.on then
-                any = true
-                Follow(piece, layer)
-            end
+-- One frame's layers, when it shows. Returns whether a layer is on, and whether one had to change.
+local function FollowFrame(frame, set)
+    local any, moved, visible = false, false, nil
+    for layer, piece in pairs(set) do
+        if layer.on then
+            any = true
+            if visible == nil then visible = ns.Safe(frame:IsVisible(), true) and true or false end
+            if not visible then break end
+            if Follow(piece, layer, true) then moved = true end
         end
     end
-    if not any then job:Sleep() end
+    return any, moved
 end
-job = ns.Sched.Job({ name = "theme.layers", every = 0, awake = false, fn = FollowAll })
+
+-- Painted pieces first, each alone; then every frame once when asked, else only the windows in a burst. A layer
+-- that moved keeps its window's burst going (a fade is followed each frame).
+local function Pass(_, now)
+    for layer, piece in pairs(dirty) do
+        dirty[layer] = nil
+        local frame = piece:GetParent()
+        -- On a hidden frame the layer waits as it is: it shows with the frame.
+        if layer.on and ns.Safe(frame:IsVisible(), true) and Follow(piece, layer, true) and rootOf[frame] then
+            Heat(rootOf[frame], now)
+        end
+    end
+    if wantWhole then
+        wantWhole = false
+        local any = false
+        for frame, set in pairs(frames) do
+            local on, moved = FollowFrame(frame, set)
+            any = any or on
+            if moved and rootOf[frame] then Heat(rootOf[frame], now) end
+        end
+        if not any then Listen(false) end
+        return
+    end
+    for root, ends in pairs(hot) do
+        if now >= ends then
+            hot[root] = nil
+        elseif ns.Safe(root:IsVisible(), true) then
+            local moved = false
+            for frame, set in pairs(groups[root]) do
+                local _, changed = FollowFrame(frame, set)
+                moved = moved or changed
+            end
+            if moved then Heat(root, now) end
+        end
+    end
+end
+-- Kick-only: off the frame loop at rest.
+job = ns.Sched.Job({ name = "theme.layers", every = math.huge, awake = false, fn = Pass })
 
 local function Hide(layer)
     if not (layer and layer.on) then return end
@@ -138,7 +297,7 @@ local function Shape(piece, layer)
         layer.file = flat
         Tiles(layer.cells, piece)
     end
-    layer.on, layer.drawLayer = true, nil
+    layer.on, layer.drawLayer, layer.crop = true, nil, nil
     Tint(layer, theme)
 end
 
@@ -154,13 +313,28 @@ function ns.PaintCopy(piece, copyPath, ...)
     if not layer then
         layer = { wrap = {} }
         layers[piece] = layer
+        Index(piece, layer)
     end
     local wrap = layer.wrap
-    layer.copy, wrap[1], wrap[2], wrap[3] = copyPath, ...
+    local a, b, c = ...
+    -- The same art again (a client reset put back, once a second on the game menu button): the layers hold it.
+    local flat = ns.FlatOn(piece) and ns.FlatCopy(copyPath) and true or false
+    if layer.on and layer.copy == copyPath and wrap[1] == a and wrap[2] == b and wrap[3] == c
+        and layer.metal == (theme.colorCopies or nil) and (layer.flat or false) == flat then
+        if layer.metal then
+            layer.tex:SetBlendMode(piece:GetBlendMode())
+            Tiles(layer.tex, piece)
+        end
+        if layer.flat then Tiles(layer.cells, piece) end
+        Kick(piece, layer)
+        return
+    end
+    layer.copy, wrap[1], wrap[2], wrap[3] = copyPath, a, b, c
     Shape(piece, layer)
     if not layer.on then return end
     Follow(piece, layer)
-    job:Wake()
+    Listen(true)
+    Kick(piece, layer)
 end
 
 -- A tinted piece's stone panels (r, g, b: its tint) while its part is flat and its art has them; nil r: none.
@@ -175,14 +349,22 @@ function ns.PaintFlat(piece, r, g, b)
     if not layer then
         layer = { cells = NewTex(piece) }
         flats[piece] = layer
+        Index(piece, layer)
     end
-    layer.cells:SetTexture(flat)
-    layer.file = flat
+    -- The same panels again (every tint repaint): only the colour.
+    local fresh = not (layer.on and layer.file == flat)
+    if fresh then
+        layer.cells:SetTexture(flat)
+        layer.file = flat
+    end
     Tiles(layer.cells, piece)
     layer.cells:SetVertexColor(r, g, b)
-    layer.on, layer.flat, layer.drawLayer = true, true, nil
-    Follow(piece, layer)
-    job:Wake()
+    if fresh then
+        layer.on, layer.flat, layer.drawLayer, layer.crop = true, true, nil, nil
+        Follow(piece, layer)
+    end
+    Listen(true)
+    Kick(piece, layer)
 end
 
 -- A flat row or the theme changed: copy layers shaped again; a flat row repaints the tinted pieces now, even in a fight.
@@ -194,7 +376,8 @@ ns.OnToggle(function(key)
             if layer.on then Follow(piece, layer) end
         end
     end
-    job:Wake()
+    Listen(true)
+    Look()
     if key == "themeFlat" or key:find("^flat") then ns.RepaintTints() end
 end)
 
@@ -221,6 +404,12 @@ function ns.ThemeLayerSample(most)
         end
     end
     return on, out
+end
+
+-- Read by the dev addon's layerwatch probe: fn(piece, layer, isCopy) for every layer.
+function ns.EachThemeLayer(fn)
+    for piece, layer in pairs(layers) do fn(piece, layer, true) end
+    for piece, layer in pairs(flats) do fn(piece, layer, false) end
 end
 
 -- Read by the dev addon: flat layers shown, and how many draw the Hide inner borders copies.

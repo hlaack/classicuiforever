@@ -134,7 +134,7 @@ DEV_NAMES = frozenset((
     "BronzeOn", "DrainBronze", "UndrainBronze", "band", "Sched", "DB_DEFAULTS", "OpenGuildRoster", "sheet",
     "ClassBandState", "PadOf", "TrainerState", "ActiveLayoutInfo", "LayoutWritable", "BandPinsWanted",
     "WindowLockButtons", "GameArtTinted", "FlatLayersShown", "FlatState", "FlatPartOf", "ThemeLayerSample",
-    "ClassicMapArt",
+    "ClassicMapArt", "EachThemeLayer",
 ))
 # Shared API kept without a reader yet (plan section 5); never reported by DEADNS.
 KEPT_API = frozenset((

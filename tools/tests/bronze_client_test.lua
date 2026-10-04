@@ -34,16 +34,31 @@ C_Texture = { GetAtlasInfo = function() return nil end }
 local themeOn = true
 local noop = function() end
 local job = { Wake = noop, Kick = noop, Sleep = noop, Burst = noop }
-local ns = { db = {}, bronze = { tinted = {}, swapped = {}, THEME_KEYS = {} } }
+local plainTree              -- the subtree the walks leave out (the talent tree's nodes)
+local ns = { db = {}, bronze = { tinted = {}, swapped = {}, THEME_KEYS = {},
+    PlainTree = function(frame) return frame == plainTree end } }
 ns.BronzeCopy = function(name) return themeOn and ("copy\\" .. name) or nil end
 ns.BronzeOn = function() return themeOn end
 ns.IsSecret = function() return false end
 ns.IsForbidden = function() return false end
-ns.EachRegionProtected, ns.EachChildProtected, ns.EachChild = noop, noop, noop
-ns.Sched = { Job = function() return job end, OnVisible = noop }
+local walked = {}            -- window -> times its tree was walked
+local passes, edges = {}, {} -- job name -> its pass; window -> its visibility callback
+ns.EachRegionProtected = function(frame) walked[frame] = (walked[frame] or 0) + 1 end
+ns.EachChildProtected, ns.EachChild = noop, noop
+ns.Sched = {
+    Job = function(spec)
+        passes[spec.name] = spec.fn
+        return job
+    end,
+    OnVisible = function(window, _, fn) edges[window] = fn end,
+    AfterPerFrame = noop,
+}
 ns.OnToggle, ns.RegisterEvents, ns.UntintGameArt, ns.PaintCopy, ns.BronzeRim = noop, noop, noop, noop, noop
+ns.FollowLayers = noop
 ns.EventFrame = function() return {} end
 ns.ThemeTurned = function() return false end
+-- One client window of the list, open.
+CharacterFrame = { GetRegions = noop, IsShown = function() return true end }
 
 assert(loadfile(ROOT .. "/Art/BronzeClient.lua"))("ClassicUIForever", ns)
 
@@ -78,6 +93,35 @@ ns.BronzeClientTexture(cap)
 Check(cap.file == "copy\\RedButtonCaps.tga", "theme on: the cap shows the packed copy (" .. tostring(cap.file) .. ")")
 ns.BronzeClientTexture(cap, true)
 Check(cap.atlas == "128-RedButton-Left" and Coords(cap) == "0,1,0,1", "handed back: the cap's atlas and its crop")
+
+-- The beat never walks a window (67 thousand calls a pass with one open, read live 2026-10-04): a window is walked
+-- three times as it opens and then left alone.
+local Pass = passes["bronze.client"]
+Pass(job)
+Pass(job)
+Check(walked[CharacterFrame] == nil, "an open window is not walked on the beat")
+Check(edges[CharacterFrame] ~= nil, "the window is watched for its opening")
+edges[CharacterFrame](true)
+for _ = 1, 5 do Pass(job) end
+Check(walked[CharacterFrame] == 3, "an opening window is walked three times, then no more (" .. tostring(walked[CharacterFrame]) .. ")")
+edges[CharacterFrame](false)
+Pass(job)
+Check(walked[CharacterFrame] == 3, "a window going is not walked")
+
+-- A subtree with no art of the theme's (the talent tree: 92 thousand calls a walk, read live 2026-10-04) is left out.
+plainTree = CharacterFrame
+edges[CharacterFrame](true)
+for _ = 1, 3 do Pass(job) end
+Check(walked[CharacterFrame] == 3, "a plain subtree is not walked (" .. tostring(walked[CharacterFrame]) .. ")")
+plainTree = nil
+
+-- A copy the client reset is put back on the beat, with no walk.
+local reset = NewTex(130828, { 0, 1, 0, 1 })
+ns.BronzeClientTexture(reset)
+reset:SetTexture(130828)
+Pass(job)
+Check(reset.file == "copy\\UI-Panel-Button-Up.tga", "a reset copy is put back on the beat (" .. tostring(reset.file) .. ")")
+Check(walked[CharacterFrame] == 3, "putting a copy back walks no window")
 
 if failures > 0 then
     print(string.format("bronze client: %d failed", failures))

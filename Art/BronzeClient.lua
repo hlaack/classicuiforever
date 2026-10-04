@@ -100,12 +100,15 @@ local function SwapPacked(texture, was, atlas, packed)
     end
 end
 
+-- The theme on, read once a pass, not per texture.
+local themeOn = false
+
 local function BronzeClient(texture, off)
     if not texture or not texture.GetAtlas then return end
     -- Our own pieces: the theme already handles them.
     if B.tinted[texture] or B.swapped[texture] then return end
     local was = clientWas[texture]
-    if off or not ns.BronzeOn() then
+    if off or not themeOn then
         if was then
             clientWas[texture] = nil
             if was.atlas then
@@ -124,15 +127,15 @@ local function BronzeClient(texture, off)
     -- Still on our copy: the client has not reset it.
     if was and texture:GetTexture() == was.copyID then return end
     local atlas = texture:GetAtlas()
-    local packed = atlas and not IsSecret(atlas) and atlas:find("128%-[Rr]ed[Bb]utton") and PACKED[atlas:lower()]
+    -- A secret atlas is never a key: asked each time.
+    local secret = atlas and IsSecret(atlas)
+    if atlas and not secret and judged[texture] == atlas then return end
+    local packed = atlas and not secret and atlas:find("128%-[Rr]ed[Bb]utton") and PACKED[atlas:lower()]
     if packed then
         SwapPacked(texture, was, atlas, packed)
         return
     end
     if atlas and C_Texture and C_Texture.GetAtlasInfo then
-        -- A secret atlas is never a key: asked each time, as before.
-        local secret = IsSecret(atlas)
-        if not secret and judged[texture] == atlas then return end
         local info
         if secret then info = AskCopy(atlas) else info = CopyInfo(atlas) end
         if not info then
@@ -211,14 +214,20 @@ local Forbidden = ns.IsForbidden
 -- pcall-guarded walk, no tables built, five levels deep at most.
 local EachRegionProtected, EachChildProtected = ns.EachRegionProtected, ns.EachChildProtected
 
+-- Whether a region is a texture we may ask, worked out once.
+local askable = setmetatable({}, { __mode = "k" })
 local function ClientRegion(region)
-    if not Forbidden(region) and region.IsObjectType and region:IsObjectType("Texture") then
-        pcall(BronzeClient, region)
+    local ask = askable[region]
+    if ask == nil then
+        ask = not Forbidden(region) and region.IsObjectType ~= nil and region:IsObjectType("Texture")
+        askable[region] = ask
     end
+    if ask then pcall(BronzeClient, region) end
 end
 
 -- One client texture to the theme (off = back to the client's), for watchers of our own.
 function ns.BronzeClientTexture(texture, off)
+    themeOn = ns.BronzeOn()
     if texture and not Forbidden(texture) then pcall(BronzeClient, texture, off) end
 end
 
@@ -228,7 +237,7 @@ local function ClientChild(child, depth)
 end
 
 WalkClient = function(frame, depth)
-    if Forbidden(frame) or depth > 5 or not frame.GetRegions then return end
+    if Forbidden(frame) or depth > 5 or not frame.GetRegions or B.PlainTree(frame) then return end
     EachRegionProtected(frame, ClientRegion)
     EachChildProtected(frame, ClientChild, depth)
 end
@@ -237,22 +246,35 @@ end
 local themeSeen = {}
 local WakeAuras
 
--- A client window opening: a pass that frame, then every frame for 1 s (0.5 s later showed its old art first).
+-- A window is walked when something says its art may have changed, never on the beat: as it opens (that frame, a
+-- moment later and on the next beat, as its rows arrive), on a press inside it, on the game's window events.
 local clientJob
+local SETTLE, OPEN_WALKS = 0.15, 3
 local watched = setmetatable({}, { __mode = "k" })
-local function Opened(shown)
+local walks = setmetatable({}, { __mode = "k" })   -- window -> walks still owed
+local pressed = setmetatable({}, { __mode = "k" }) -- frames to walk once: where a press landed
+local function KickPass()
+    clientJob:Kick()
+end
+local function Owe(window, count)
+    if (walks[window] or 0) < count then walks[window] = count end
+    clientJob:Kick()
+end
+local function Opened(window, shown)
+    ns.FollowLayers(window)
     if shown and clientJob then
-        clientJob:Kick()
-        clientJob:Burst(1)
+        Owe(window, OPEN_WALKS)
+        ns.Sched.AfterPerFrame("bronze.client.settle", SETTLE, KickPass)
     end
 end
 Watch = function(window)
     if watched[window] then return end
     watched[window] = true
-    ns.Sched.OnVisible(window, "bronze.client", Opened)
+    ns.Sched.OnVisible(window, "bronze.client", function(shown) Opened(window, shown) end)
 end
 
--- Every 0.5 s, and every frame for 1 s after a client window opens; off, asleep once every copy is handed back.
+-- Every 0.5 s: only the textures on a copy are asked (the client reset one: a list row reused on a scroll), and a
+-- window is walked only when owed. Off, asleep once every copy is handed back.
 local function ClientPass(job)
     if not ns.db then return end
     if ns.ThemeTurned(themeSeen) then
@@ -262,7 +284,8 @@ local function ClientPass(job)
         end
         if themeSeen.on then WakeAuras() end
     end
-    if not ns.BronzeOn() then
+    themeOn = ns.BronzeOn()
+    if not themeOn then
         -- Restore everything on a copy, window open or not.
         for tex in pairs(clientWas) do BronzeClient(tex) end
         if next(clientWas) == nil then job:Sleep() end
@@ -270,28 +293,60 @@ local function ClientPass(job)
     end
     local list, n = ChatTextures()
     for i = 1, n do BronzeClient(list[i]) end
-    -- Open client windows only; each watched so its opening wakes the pass at once.
+    for tex in pairs(clientWas) do pcall(BronzeClient, tex) end
+    -- Each window watched so its opening asks for its walk at once.
     for _, name in ipairs(CLIENT_WINDOWS) do
         local window = _G[name]
         if window then
             Watch(window)
-            if window:IsShown() then WalkClient(window, 0) end
+            local owed = walks[window]
+            if owed then
+                walks[window] = owed > 1 and owed - 1 or nil
+                if window:IsShown() then WalkClient(window, 0) end
+            end
         end
+    end
+    for frame in pairs(pressed) do
+        pressed[frame] = nil
+        WalkClient(frame, 0)
     end
 end
 
 clientJob = ns.Sched.Job({ name = "bronze.client", every = 0.5, awake = true, fn = ClientPass })
+
+-- Every open window owes a walk: the theme turned, or the game filled a window.
+local function OweOpen()
+    for window in pairs(watched) do
+        if window:IsShown() then Owe(window, OPEN_WALKS) end
+    end
+    ns.Sched.AfterPerFrame("bronze.client.settle", SETTLE, KickPass)
+end
 ns.OnToggle(function(key)
     if not B.THEME_KEYS[key] then return end
     clientJob:Wake()
     clientJob:Kick()
+    OweOpen()
 end)
-
--- A pass the frame after a window opens (0.5 s later showed the trade window silver), then every frame for 1 s.
 ns.EventFrame({ "TRADE_SHOW", "MAIL_SHOW", "MERCHANT_SHOW", "BANKFRAME_OPENED", "GOSSIP_SHOW",
-    "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE", "QUEST_GREETING", "TRAINER_SHOW", "LOOT_OPENED" }, function()
+    "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE", "QUEST_GREETING", "TRAINER_SHOW", "LOOT_OPENED" }, OweOpen)
+
+-- A press inside a client window restyles the pressed piece and its row: the pressed frame's parent is walked once
+-- (the pressed frame alone when that parent is the window), never the whole window.
+ns.EventFrame({ "GLOBAL_MOUSE_DOWN", "GLOBAL_MOUSE_UP" }, function()
+    if not ns.BronzeOn() then return end
+    local foci = GetMouseFoci and GetMouseFoci()
+    local focus = foci and foci[1]
+    local frame = focus
+    for _ = 1, 12 do
+        if not frame or Forbidden(frame) or not frame.GetParent then return end
+        if watched[frame] then break end
+        frame = frame:GetParent()
+    end
+    if not (frame and watched[frame]) then return end
+    local spot = focus:GetParent()
+    if focus == frame or spot == frame or not spot or Forbidden(spot) then spot = focus end
+    pressed[spot] = true
     clientJob:Kick()
-    clientJob:Burst(1)
 end)
 
 -- Buffs have only the icon's grey bevel, so the theme adds the thin rim as on action buttons; debuff borders stay.

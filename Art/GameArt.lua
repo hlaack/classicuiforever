@@ -117,7 +117,7 @@ local isRoot = setmetatable({}, { __mode = "k" })
 
 local Walk
 local function Child(child, depth)
-    if not isRoot[child] then Walk(child, depth) end
+    if not isRoot[child] and not ns.bronze.PlainTree(child) then Walk(child, depth) end
 end
 Walk = function(frame, depth)
     ns.EachRegion(frame, Match)
