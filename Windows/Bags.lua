@@ -348,9 +348,22 @@ local function LayoutItems(frame, backpackExtra, combined, plusTwo)
     if made then for j = blanks + 1, #made do made[j]:Hide() end end
 end
 
+local function PlaceSearch(frame)
+    if BagItemSearchBox and BagItemSearchBox:GetParent() == frame then
+        ns.SetPointOnce(BagItemSearchBox, "TOPLEFT", frame, "TOPLEFT", 52, -31)
+        BagItemSearchBox:SetSize(104, 16)
+    end
+    if BagItemAutoSortButton and BagItemAutoSortButton:GetParent() == frame then
+        ns.SetPointOnce(BagItemAutoSortButton, "TOPRIGHT", frame, "TOPRIGHT", -10, -28)
+    end
+end
+
+local shape = setmetatable({}, { __mode = "k" })   -- bag frame -> { extra, plusTwo, wider } as last drawn
+
 -- Runs inside the client's layout pass: it stacks bags by height, so a deferred
 -- pass would misplace them or flash the client's layout.
-local function Skin(frame)
+-- part: what a layout step of the game's just undid ("size", "items", "trim", "search"); nil is the whole skin.
+local function Skin(frame, part)
     if not active or not frame or not frame.GetBagSize then
         if ns.debugSink then
             ns.Persist(string.format("bags: skip %s active %s hasSize %s", tostring(frame and frame:GetName()), tostring(active), tostring(frame and frame.GetBagSize ~= nil)))
@@ -360,27 +373,38 @@ local function Skin(frame)
     local combined = frame.IsCombinedBagContainer and frame:IsCombinedBagContainer() and true or false
     local size = frame:GetBagSize() or 0
     if size <= 1 then return end
-    local columns = ColumnsOf(frame)
-    local rows = math.ceil(size / columns)
-    SetBandColumns(frame, columns)
-    if ns.debugSink then
-        ns.Persist(string.format("bags: skin %s size %d rows %d backpack %s", tostring(frame:GetName()), size, rows, tostring(frame.IsBackpack and frame:IsBackpack())))
-    end
-    FadeArt(frame)
+    local main = combined or (frame.IsBackpack and frame:IsBackpack())
+    local at = shape[frame]
+    -- Nothing drawn yet to place by: the whole skin.
+    if not at then part = nil end
+    if part == "items" then return LayoutItems(frame, at.extra, combined, at.plusTwo) end
+    if part == "search" then return PlaceSearch(frame) end
     local keyring = frame.MatchesBagID and frame:MatchesBagID(KEYRING)
-    Pieces(frame).sheet = keyring and "bagComponentsKeyring" or "bagComponents"
-    local height, extra
-    local plusTwo = false
-    local tokenRow = (combined or (frame.IsBackpack and frame:IsBackpack())) and TokenRow(frame)
-    if combined or (frame.IsBackpack and frame:IsBackpack()) then
-        height, extra = DrawBackpack(frame, rows, tokenRow ~= nil)
-    else
-        plusTwo = size % COLUMNS == 2
-        height = DrawBag(frame, rows, plusTwo)
+    local tokenRow = main and TokenRow(frame)
+    if part ~= "trim" then
+        local columns = ColumnsOf(frame)
+        local rows = math.ceil(size / columns)
+        SetBandColumns(frame, columns)
+        if ns.debugSink then
+            ns.Persist(string.format("bags: skin %s size %d rows %d backpack %s", tostring(frame:GetName()), size, rows, tostring(frame.IsBackpack and frame:IsBackpack())))
+        end
+        FadeArt(frame)
+        Pieces(frame).sheet = keyring and "bagComponentsKeyring" or "bagComponents"
+        local height
+        at = at or {}
+        shape[frame] = at
+        at.plusTwo = false
+        if main then
+            height, at.extra = DrawBackpack(frame, rows, tokenRow ~= nil)
+        else
+            at.plusTwo = size % COLUMNS == 2
+            height, at.extra = DrawBag(frame, rows, at.plusTwo), nil
+        end
+        at.wider = (columns - COLUMNS) * COL
+        frame:SetSize(WIDTH + at.wider, height)
     end
-    local wider = (columns - COLUMNS) * COL
-    frame:SetSize(WIDTH + wider, height)
-    LayoutItems(frame, extra, combined, plusTwo)
+    local extra, wider = at.extra, at.wider
+    if part == nil then LayoutItems(frame, extra, combined, at.plusTwo) end
     -- Old spots for portrait, name, close, money, search. Move the portrait's
     -- container so its round mask follows; the backpack gets the old bag icon.
     local pc = frame.PortraitContainer
@@ -394,7 +418,7 @@ local function Skin(frame)
         portrait:ClearAllPoints()
         portrait:SetAllPoints(pc)
         portrait:SetDrawLayer("BACKGROUND", -8)
-        if combined or (frame.IsBackpack and frame:IsBackpack()) then
+        if main then
             ns.SetTex(portrait, "backpackIcon")
             portrait:SetTexCoord(0, 1, 0, 1)
         elseif keyring then
@@ -412,7 +436,6 @@ local function Skin(frame)
     local close = frame.CloseButton
     if close then
         ns.SkinCloseButton(close, true)
-        local main = combined or (frame.IsBackpack and frame:IsBackpack())
         ns.SetPointOnce(close, "TOPRIGHT", frame, "TOPRIGHT", main and BACKPACK_CLOSE_BUTTON_X or BAG_CLOSE_BUTTON_X,
             main and BACKPACK_CLOSE_BUTTON_Y or BAG_CLOSE_BUTTON_Y)
     end
@@ -430,23 +453,20 @@ local function Skin(frame)
         tokenRow:SetPoint("TOPRIGHT", frame, "TOPRIGHT", STRIP_RIGHT, y)
         if tokenRow.Border then ns.FadeTextures(tokenRow.Border) end
     end
-    if BagItemSearchBox and BagItemSearchBox:GetParent() == frame then
-        ns.SetPointOnce(BagItemSearchBox, "TOPLEFT", frame, "TOPLEFT", 52, -31)
-        BagItemSearchBox:SetSize(104, 16)
-    end
-    if BagItemAutoSortButton and BagItemAutoSortButton:GetParent() == frame then
-        ns.SetPointOnce(BagItemAutoSortButton, "TOPRIGHT", frame, "TOPRIGHT", -10, -28)
-    end
+    if part == nil then PlaceSearch(frame) end
 end
 
-local LAYOUT_METHODS = { "UpdateFrameSize", "UpdateItemLayout", "UpdateSearchBox", "UpdateMiscellaneousFrames" }
+-- The game's layout steps and the part of the skin each undoes (ContainerFrame.lua; a bag opening runs all four
+-- after its show, and the whole skin after each cost five skins a bag).
+local LAYOUT_PARTS = { UpdateFrameSize = "size", UpdateItemLayout = "items", UpdateSearchBox = "search",
+    UpdateMiscellaneousFrames = "trim" }
 
 local function Hook(frame)
     if hooked[frame] then return end
     hooked[frame] = true
-    for _, method in ipairs(LAYOUT_METHODS) do
+    for method, part in pairs(LAYOUT_PARTS) do
         if type(rawget(frame, method)) == "function" then
-            hooksecurefunc(frame, method, function(self) Skin(self) end)
+            ns.HookMethod(frame, method, function(self) Skin(self, part) end)
         end
     end
     frame:HookScript("OnShow", function(self) Skin(self) end)
