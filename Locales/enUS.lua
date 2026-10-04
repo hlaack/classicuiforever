@@ -497,6 +497,10 @@ L["SKILL_COLLECTIONS"] = "Collections"
 -- Skills/Talents.lua
 L["SKILL_APPLY_CHANGES"] = "Apply Changes"
 
+-- Skills/TradeSkillRetail.lua
+L["SKILL_MORE_IN_THE_GAME_WINDOW"] = "More in the game's window"
+L["SKILL_MADE_IN_THE_GAME_WINDOW"] = "Made in the game's window"
+
 -- Social/GuildRoster.lua
 L["SOCIAL_GUILD_MESSAGE_OF_THE_DAY"] = "Guild Message Of The Day:"
 

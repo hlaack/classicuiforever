@@ -118,7 +118,8 @@ local WINDOWS = {
     { "CollectionsJournal", addon = "Blizzard_Collections", after = A.CollectionsJournal },
     { "EncounterJournal", addon = "Blizzard_EncounterJournal" },
     { "AchievementFrame", addon = "Blizzard_AchievementUI" },
-    { "ProfessionsFrame", addon = "Blizzard_Professions" },
+    -- Retail's has a tab row: no lift there (its layout puts a lifted tab back).
+    { "ProfessionsFrame", addon = "Blizzard_Professions", lift = not ns.OnForever() and 0 or nil },
     { "ProfessionsBookFrame", addon = "Blizzard_ProfessionsBook" },
     { "GuildBankFrame", addon = "Blizzard_GuildBankUI" },
     { "CalendarFrame", addon = "Blizzard_Calendar", portrait = false },

@@ -51,5 +51,6 @@ return {
     showMinimapDifficulty = "hidden for everyone: 1.x had no difficulty banner; Shown brings it back",
     hoverMinimapDifficulty = "hidden for everyone: 1.x had no difficulty banner; Shown brings it back",
     hideMinimapDifficulty = "hidden for everyone: 1.x had no difficulty banner; Shown brings it back",
+    tradeSkillFull = "same for everyone: off by default; retail's size button on a profession's window sets it",
     barArtHidden = "kept as before: a dbVersion 9 migration (ns.KeepBarArt) takes bar art hidden in our layout as the player's own tick",
 }

@@ -37,6 +37,10 @@ function ns.TradeSkillFilterEntries()
     }
     local slots = api.GetAllFilterableInventorySlotsCount and api.GetAllFilterableInventorySlotsCount() or 0
     if slots > 0 then entries[#entries + 1] = { TRADESKILL_FILTER_SLOTS or "Slots", sub = SlotEntries } end
+    local R = ns.tradeReagents
+    if not ns.OnForever() then
+        entries[#entries + 1] = { _G.PROFESSION_RECIPES_SHOW_UNLEARNED or "", check = R.Unlearned, toggle = R.ToggleUnlearned }
+    end
     return entries
 end
 

@@ -244,6 +244,7 @@ return {
     threatNumber = true,
     threatNumberGrouped = false,
     tradeSkill = true,
+    tradeSkillFull = false,
     tradeSkillSearch = true,
     trainer = true,
     unitFrameFocus = true,
