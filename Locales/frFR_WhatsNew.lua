@@ -3,6 +3,8 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
+L["WN24_1_TITLE"] = "Sacs"
+L["WN24_1_TEXT"] = "Les sacs ouverts ne sautent plus sur le côté quand vous équipez un objet par clic droit, en combat comme hors combat."
 L["WN23_1_TITLE"] = "Minuteurs d'attaque"
 L["WN23_1_TEXT"] = "Changer d'arme en combat ne déclenche plus d'erreur Lua à chaque image où la barre d'attaque est affichée, et l'éclair à chaque coup continue de fonctionner après le changement."
 L["WN22_1_TITLE"] = "Métiers"

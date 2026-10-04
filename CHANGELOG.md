@@ -2,6 +2,11 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.20.2] - 2026-10-04
+
+### Fixed
+- Open bags no longer jump sideways when an item is equipped by right-click, and no longer stay shifted for the rest of a fight. It could happen with action bars on the right side of the screen.
+
 ## [0.20.1] - 2026-10-04
 
 ### Fixed

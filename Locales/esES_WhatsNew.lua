@@ -3,6 +3,8 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
+L["WN24_1_TITLE"] = "Bolsas"
+L["WN24_1_TEXT"] = "Las bolsas abiertas ya no saltan hacia un lado al equipar un objeto con clic derecho, ni en combate ni fuera de él."
 L["WN23_1_TITLE"] = "Temporizadores de golpe"
 L["WN23_1_TEXT"] = "Cambiar de arma en combate ya no provoca un error de Lua en cada fotograma en que se muestra la barra de golpe, y el destello al golpear sigue funcionando tras el cambio."
 L["WN22_1_TITLE"] = "Profesiones"

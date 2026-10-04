@@ -3,6 +3,8 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN24_1_TITLE"] = "Taschen"
+L["WN24_1_TEXT"] = "Offene Taschen springen nicht mehr zur Seite, wenn du einen Gegenstand per Rechtsklick anlegst, im Kampf wie außerhalb."
 L["WN23_1_TITLE"] = "Schlagtimer"
 L["WN23_1_TEXT"] = "Ein Waffenwechsel im Kampf löst keinen Lua-Fehler mehr in jedem Bild aus, in dem die Schlagleiste zu sehen ist, und das Aufblitzen beim Schlag funktioniert nach dem Wechsel weiter."
 L["WN22_1_TITLE"] = "Berufe"

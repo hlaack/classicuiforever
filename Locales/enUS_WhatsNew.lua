@@ -2,6 +2,8 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN24_1_TITLE"] = "Bags"
+L["WN24_1_TEXT"] = "Open bags no longer jump sideways when you right-click an item to equip it, in or out of a fight."
 L["WN23_1_TITLE"] = "Swing timers"
 L["WN23_1_TEXT"] = "Changing a weapon in a fight no longer sets off a Lua error on every frame the swing bar shows, and the flash as a swing lands keeps working after the change."
 L["WN22_1_TITLE"] = "Professions"

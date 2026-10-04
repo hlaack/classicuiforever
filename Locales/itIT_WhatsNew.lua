@@ -3,6 +3,8 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN24_1_TITLE"] = "Borse"
+L["WN24_1_TEXT"] = "Le borse aperte non saltano più di lato quando equipaggi un oggetto con il clic destro, in combattimento o fuori."
 L["WN23_1_TITLE"] = "Timer dei colpi"
 L["WN23_1_TEXT"] = "Cambiare arma in combattimento non provoca più un errore Lua a ogni fotogramma in cui la barra dei colpi è visibile, e il lampo a ogni colpo continua a funzionare dopo il cambio."
 L["WN22_1_TITLE"] = "Professioni"
