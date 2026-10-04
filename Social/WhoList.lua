@@ -457,7 +457,10 @@ local function Apply()
         if not panel then Build() end
         BuildTab()
         RenameFirstTab()
-        if tab then tab:Show() end
+        if tab then
+            tab:Show()
+            S.ClientWhoTab(true)
+        end
         S.PlaceTabs()
     end)
 end
@@ -466,6 +469,7 @@ local function Restore()
     SetActive(false)
     HideWho()
     if tab then tab:Hide() end
+    if S.ClientWhoTab(false) then S.PlaceTabs() end
 end
 
 ns.RegisterModule("whoList", { apply = Apply, restore = Restore })

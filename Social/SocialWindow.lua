@@ -75,8 +75,26 @@ local SOCIAL_TAB_PAD = 38
 -- Foot tab row, placed from the window's foot; its faces are Era's (Windows/Tabs.lua).
 local SOCIAL_TAB_X = 5          -- first tab: its left from the window's left (+ right)
 local SOCIAL_TAB_Y = 2          -- tab row: its top above the window's foot (+ up; moves the picked tab too)
+-- Retail's client has a Who tab of its own (Forever's has none): unseen and off the row while ours stands in it.
+local clientWhoOff = false
+local function ClientWho() return FRIEND_TAB_WHO and _G["FriendsFrameTab" .. FRIEND_TAB_WHO] or nil end
+local function ClientWhoMouse()
+    local tab = ClientWho()
+    if tab then tab:EnableMouse(not clientWhoOff) end
+end
+-- True when the tab changed hands.
+function S.ClientWhoTab(off)
+    local tab = ClientWho()
+    if not tab or off == clientWhoOff then return false end
+    clientWhoOff = off
+    ns.SetAlphaIf(tab, off and 0 or 1)
+    ns.WhenCalm("social.clientWho", ClientWhoMouse)
+    return true
+end
+
 function S.PlaceTabs()
     local blizzard = S.FriendsFrameTabs()
+    local clientWho = clientWhoOff and ClientWho() or nil
     local order = {}
     if blizzard[1] then order[#order + 1] = blizzard[1] end
     local whoTab = S.whoTab
@@ -86,7 +104,7 @@ function S.PlaceTabs()
     local communitiesTab = _G["ClassicUIForeverCommunitiesTab"]
     if communitiesTab then order[#order + 1] = communitiesTab end
     for i = 2, #blizzard do
-        if blizzard[i] then order[#order + 1] = blizzard[i] end
+        if blizzard[i] ~= clientWho then order[#order + 1] = blizzard[i] end
     end
     -- Five tabs where 1.x had four: 19 either side of the label, not 25.
     for _, entry in ipairs(order) do
