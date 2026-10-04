@@ -2,7 +2,7 @@ local _, ns = ...
 local L = ns.L
 
 ns.DB_DEFAULTS = {
-    dbVersion = 13,
+    dbVersion = 14,
     classicBar = true,
     oneBar = false,
     classicBarSize = false,
@@ -12,7 +12,7 @@ ns.DB_DEFAULTS = {
     hideMicroKeepWidth = false,
     bandHoldsBars = false,
     hideMicroSpread = false,
-    hideMicroAchievements = false, hideMicroLegacy = true,
+    hideMicroAchievements = true, hideMicroLegacy = true,
     hideMicroHelp = false,
     hideMicroCharacter = false,
     hideMicroSpellbook = false,
@@ -22,7 +22,7 @@ ns.DB_DEFAULTS = {
     hideMicroGuild = false,
     hideMicroGroupFinder = true,
     hideMicroCollections = true,
-    hideMicroHousing = true,
+    hideMicroHousing = true, hideMicroJournal = true,
     hideMicroGameMenu = false,
     hideMicroShop = false,
     oneBag = false,

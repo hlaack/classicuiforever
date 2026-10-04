@@ -258,17 +258,23 @@ if not ns.ENGLISH_CLIENT then
     for _, row in ipairs(ENGLISH_ROWS) do ns.TOGGLES[#ns.TOGGLES + 1] = row end
 end
 
--- Retail's housing button, in both micro lists after Collections; Forever's game rule holds that button off.
-local HOUSING_ROWS = {
-    hideMicroCollections = { "hideMicroHousing", L["OPT_hideMicroHousing"], L["OPT_hideMicroHousing_TIP"], parent = "hideMicroButtons",
-        checks = "hideMicroList", drop = true },
-    collectionsMinimapButton = { "housingMinimapButton", L["OPT_hideMicroHousing"], nil, parent = "microMinimapButtons",
-        checks = "microMinimapList", drop = true },
+-- Retail's adventure guide and housing buttons, in the micro lists after Collections; Forever holds both off itself.
+local RETAIL_ROWS = {
+    hideMicroCollections = {
+        { "hideMicroJournal", L["OPT_hideMicroJournal"], L["OPT_hideMicroJournal_TIP"], parent = "hideMicroButtons",
+            checks = "hideMicroList", drop = true },
+        { "hideMicroHousing", L["OPT_hideMicroHousing"], L["OPT_hideMicroHousing_TIP"], parent = "hideMicroButtons",
+            checks = "hideMicroList", drop = true },
+    },
+    collectionsMinimapButton = {
+        { "housingMinimapButton", L["OPT_hideMicroHousing"], nil, parent = "microMinimapButtons", checks = "microMinimapList",
+            drop = true },
+    },
 }
 if not ns.OnForever() then
     for i = #ns.TOGGLES, 1, -1 do
-        local row = HOUSING_ROWS[ns.TOGGLES[i][1]]
-        if row then table.insert(ns.TOGGLES, i + 1, row) end
+        local rows = RETAIL_ROWS[ns.TOGGLES[i][1]]
+        for n = #(rows or {}), 1, -1 do table.insert(ns.TOGGLES, i + 1, rows[n]) end
     end
 end
 

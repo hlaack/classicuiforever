@@ -11,7 +11,7 @@ local GAME_HIDE = {
     GuildMicroButton = "hideMicroGuild", LFDMicroButton = "hideMicroGroupFinder",
     CollectionsMicroButton = "hideMicroCollections", HelpMicroButton = "hideMicroHelp",
     StoreMicroButton = "hideMicroShop", MainMenuMicroButton = "hideMicroGameMenu",
-    HousingMicroButton = "hideMicroHousing",
+    HousingMicroButton = "hideMicroHousing", EJMicroButton = "hideMicroJournal",
 }
 local hidden = setmetatable({}, { __mode = "k" })   -- buttons we hid, shown again on hand-back
 
@@ -48,3 +48,14 @@ local function Sync()
 end
 
 ns.RegisterModule("hideMicroButtons", { apply = Sync, restore = Sync })
+
+-- The achievements button (retail's; 1.x had none) became hidden by default: an install from before keeps it showing, in
+-- the account and every profile, until a classic layout reset. Runs before the defaults fill.
+function ns.KeepAchievementsButton()
+    local db = ns.db
+    if db.hideMicroAchievements == nil then db.hideMicroAchievements = false end
+    for _, shot in pairs(type(db.profiles) == "table" and db.profiles or {}) do
+        if type(shot) == "table" and shot.hideMicroAchievements == nil then shot.hideMicroAchievements = false end
+    end
+    db.dbVersion = 14
+end

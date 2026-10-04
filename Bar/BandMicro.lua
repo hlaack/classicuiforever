@@ -144,7 +144,7 @@ local MICRO_HIDE = {
     GuildMicroButton = "hideMicroGuild", LFDMicroButton = "hideMicroGroupFinder",
     CollectionsMicroButton = "hideMicroCollections", MainMenuMicroButton = "hideMicroGameMenu",
     PlayerSpellsMicroButton = "hideMicroTalents", AchievementMicroButton = "hideMicroAchievements",
-    LegacyMicroButton = "hideMicroLegacy", HousingMicroButton = "hideMicroHousing",
+    LegacyMicroButton = "hideMicroLegacy", HousingMicroButton = "hideMicroHousing", EJMicroButton = "hideMicroJournal",
     HelpMicroButton = "hideMicroHelp",
 }
 

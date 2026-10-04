@@ -92,15 +92,18 @@ durabilityScale = 1
 local classicActive = ns.ClassicLayoutActive
 ns.ClassicLayoutActive = function() return true end
 function InCombatLockdown() return false end
-ns.DB_DEFAULTS = {}
+ns.DB_DEFAULTS = { hideMicroAchievements = true, hideMicroJournal = true, hideMicroHousing = true, housingMinimapButton = true }
 ns.WINDOW_LIST = { { key = "minimapAddonBag", ringKey = "minimapCollectorAngle" }, { key = "character" } }
-ns.db = { layoutJobs = { reset = true }, minimapCollectorAngle = 7.4, windowPos = { character = {} } }
+ns.db = { layoutJobs = { reset = true }, minimapCollectorAngle = 7.4, windowPos = { character = {} },
+    hideMicroAchievements = false, hideMicroJournal = false, hideMicroHousing = false, housingMinimapButton = false }
 -- The rest of the reset is other files' work.
 setmetatable(ns, { __index = function() return noop end })
 ns.RunLayoutJobsBeforePin()
 setmetatable(ns, nil)
 ns.ClassicLayoutActive = classicActive
 Check(ns.db.minimapCollectorAngle == nil and ns.db.windowPos == nil, "the reset clears ring spots and window places")
+Check(ns.db.hideMicroAchievements == true and ns.db.hideMicroJournal == true and ns.db.hideMicroHousing == true
+    and ns.db.housingMinimapButton == true, "the reset takes the buttons 1.x never had off the micro menu again")
 ns.db = {}
 
 -- Another layout, or outside the session's end write: nothing.

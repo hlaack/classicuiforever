@@ -423,6 +423,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         if saved and saved < 11 then ns.OneTrackerChoice() end
         if saved and saved < 12 then ns.FreeOptionsButton() end
         if saved and saved < 13 then ns.FreeAddonBag() end
+        if saved and saved < 14 then ns.KeepAchievementsButton() end
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
         ns.BarSizeKey()
