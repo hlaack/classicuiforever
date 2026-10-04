@@ -26,6 +26,8 @@ local MERCHANT_TAB_LIFT = 1
 -- Mail tabs: the client's spot already has their tops on the line (+ up); Send Mail 8 into Inbox, as Era's.
 local MAIL_TAB_LIFT = 0
 local MAIL_TAB_STEP = -8
+-- A tab row window's border: the corners start 8 low on both clients, the client's own line is 3 low.
+local CLIENT_FOOT_LIFT = 5
 
 -- Era's inset border on the game's own social tabs (Friends, Raid) and the quest and gossip windows; Who and Guild
 -- (ours) draw their own, and the skin keeps every other inset border faded.
@@ -118,8 +120,9 @@ local WINDOWS = {
     { "CollectionsJournal", addon = "Blizzard_Collections", after = A.CollectionsJournal },
     { "EncounterJournal", addon = "Blizzard_EncounterJournal" },
     { "AchievementFrame", addon = "Blizzard_AchievementUI" },
-    -- Retail's has a tab row: no lift there (its layout puts a lifted tab back).
-    { "ProfessionsFrame", addon = "Blizzard_Professions", lift = not ns.OnForever() and 0 or nil },
+    -- Retail's has a tab row: the client's foot line, tabs unlifted.
+    { "ProfessionsFrame", addon = "Blizzard_Professions", lift = not ns.OnForever() and CLIENT_FOOT_LIFT or nil,
+        tabLift = not ns.OnForever() and 0 or nil },
     { "ProfessionsBookFrame", addon = "Blizzard_ProfessionsBook" },
     { "GuildBankFrame", addon = "Blizzard_GuildBankUI" },
     { "CalendarFrame", addon = "Blizzard_Calendar", portrait = false },
@@ -138,10 +141,10 @@ local WINDOWS = {
     { "CooldownViewerSettings", lift = 5, scrollBars = false, after = A.CooldownViewerSettings },
 }
 -- Retail's talents are the game's spells window; Forever's are our own (Skills/Talents.lua), its row either way.
--- No lift: its pages run to the client's border line, and its tab row's layout puts a lifted tab back.
+-- The client's foot line: its pages run to it, and its tab row's layout puts a lifted tab back.
 if not ns.OnForever() then
-    WINDOWS[#WINDOWS + 1] = { "PlayerSpellsFrame", addon = "Blizzard_PlayerSpells", toggle = "talents", lift = 0,
-        scrollBars = false, after = A.PlayerSpellsFrame }
+    WINDOWS[#WINDOWS + 1] = { "PlayerSpellsFrame", addon = "Blizzard_PlayerSpells", toggle = "talents",
+        lift = CLIENT_FOOT_LIFT, tabLift = 0, scrollBars = false, after = A.PlayerSpellsFrame }
 end
 
 P.WINDOWS = WINDOWS

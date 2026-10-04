@@ -112,7 +112,7 @@ do
     Check(entry and entry.addon == "Blizzard_PlayerSpells", "retail: it is dressed as its addon loads")
     Check(entry and entry.after == ns.panels.after.PlayerSpellsFrame, "retail: its after is the spells window's")
     -- Its pages end 4 above the frame's foot, where the client's border line stands; a lifted line bared them.
-    Check(entry and entry.lift == 0 and entry.tabLift == nil, "retail: border and tabs stay on the client's foot line")
+    Check(entry and entry.lift == 5 and entry.tabLift == 0, "retail: border and tabs stay on the client's foot line")
 
     local frame, specs = SpellsWindow()
     PlayerSpellsFrame = frame

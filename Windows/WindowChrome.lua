@@ -66,6 +66,33 @@ local function Lines(slice)
     }
 end
 
+-- Forever hangs the standard metal's right corners 2 further in and its bottom ones at -8 (retail: 4 and -3). Every lift
+-- and list edge is measured from Forever's, so retail's corners start from the same spots.
+local FOREVER_CORNER = {
+    ["ui-frame-metal-cornertopright"] = { dx = -2 },
+    ["ui-frame-metal-cornertoprightdouble"] = { dx = -2 },
+    ["ui-frame-metal-cornerbottomleft"] = { y = -8 },
+    ["ui-frame-metal-cornerbottomright"] = { dx = -2, y = -8 },
+}
+local cornerHome = setmetatable({}, { __mode = "k" })
+
+-- A corner's own x and y, read once while it still wears the client's art.
+local function CornerHome(tex)
+    local home = cornerHome[tex]
+    if home then return home end
+    local point, _, _, x, y = tex:GetPoint(1)
+    if not point then return end
+    home = { x = x or 0, y = y or 0 }
+    local atlas = not ns.OnForever() and tex.GetAtlas and tex:GetAtlas()
+    local fix = type(atlas) == "string" and FOREVER_CORNER[atlas:lower()]
+    if fix then
+        home.x = home.x + (fix.dx or 0)
+        home.y = fix.y or home.y
+    end
+    cornerHome[tex] = home
+    return home
+end
+
 -- Dresses the border; returns Lines() for it, or nil without a NineSlice.
 local function NineSlice(frame, style, lift, keepLeft, left)
     local slice = frame.NineSlice
@@ -74,7 +101,12 @@ local function NineSlice(frame, style, lift, keepLeft, left)
     for key, coords in pairs(corners) do
         local tex = slice[key]
         if tex then
+            local home = CornerHome(tex)
             ns.Dress(tex, METAL, CORNER_SIZE, nil, nil, nil, nil, nil, coords)
+            if home and key == "TopRightCorner" then
+                local point, rel, relPoint, _, y = tex:GetPoint(1)
+                if point then tex:SetPoint(point, rel, relPoint, home.x, y or 0) end
+            end
             -- Plain corner on a portrait layout: 8px out (or the window's left), not the portrait's 13; bottom left too.
             if style == "plain" and not keepLeft and (key == "TopLeftCorner" or key == "BottomLeftCorner") then
                 local point, rel, relPoint, x, y = tex:GetPoint(1)
@@ -83,10 +115,10 @@ local function NineSlice(frame, style, lift, keepLeft, left)
             -- Client hangs bottom corners 3px low and the old metal's line sits at the
             -- foot of a taller piece: lift them to the content (the bottom edge follows).
             if key == "BottomLeftCorner" or key == "BottomRightCorner" then
-                local point, rel, relPoint, x, y = tex:GetPoint(1)
-                if point then
-                    if tex.fcuiBaseY == nil then tex.fcuiBaseY = y or 0 end
-                    tex:SetPoint(point, rel, relPoint, x or 0, tex.fcuiBaseY + (tonumber(lift) or P.BOTTOM_LIFT))
+                local point, rel, relPoint, x = tex:GetPoint(1)
+                if point and home then
+                    if key == "BottomRightCorner" then x = home.x end
+                    tex:SetPoint(point, rel, relPoint, x or 0, home.y + (tonumber(lift) or P.BOTTOM_LIFT))
                 end
             end
         end
