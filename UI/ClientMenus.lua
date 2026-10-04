@@ -6,11 +6,9 @@ local _, ns = ...
 
 local ART = ns.ART
 local pairs, rawget, select = pairs, rawget, select
-local EnumerateFrames = _G.EnumerateFrames
 
 local ATLAS = "common-dropdown-bg"
 local BG_ALPHA = 0.925       -- MenuStyle1Mixin:Generate
-local SCAN_BUDGET = 500      -- frames walked per tick while catching up
 local GRACE = 3              -- ticks a click keeps the watch up with no menu open yet
 
 local weak = { __mode = "k" }
@@ -24,8 +22,6 @@ local placed = setmetatable({}, weak)  -- menu frame -> { anchor frame, x, y } a
 local active = false
 local theme = {}             -- ThemeTurned state
 local clientArt              -- last painted: true Forever's own, false our rim, nil never
-local cursor, caught         -- EnumerateFrames position; caught once it reached the end
-local first, head, swept     -- first menu frame seen; sweep from the start up to it, once
 local grace = 0
 local events, host, job
 
@@ -40,46 +36,15 @@ local function IsMenuFrame(f)
         and rawget(f, "InitScrollLayout") == mixin.InitScrollLayout
 end
 
-local function Learn(f)
-    if known[f] then return end
-    known[f] = true
-    if not cursor then cursor, first = f, f end
-end
-
--- New pool frames come after the first one we saw; the pool can hand out an older one first.
-local function Scan()
-    if not cursor or not EnumerateFrames then return end
-    local budget = SCAN_BUDGET
-    while budget > 0 do
-        budget = budget - 1
-        local f = EnumerateFrames(cursor)
-        if not f then
-            caught = true
-            break
-        end
-        cursor = f
-        if IsMenuFrame(f) then Learn(f) end
-    end
-    while budget > 0 and not swept do
-        budget = budget - 1
-        local f = EnumerateFrames(head)
-        if not f or f == first then
-            swept = true
-            break
-        end
-        head = f
-        if IsMenuFrame(f) then Learn(f) end
-    end
-end
-
--- Until the scan catches up, a hovered submenu is found from the mouse.
+-- A submenu's frame is learned from the mouse the first time it is hovered; the pool hands the same frames out again,
+-- so it is dressed as it opens from then on. Never by walking the game's frames (70 ms a frame on retail).
 local function UnderMouse()
     local foci = GetMouseFoci and GetMouseFoci()
     local f = foci and foci[1]
     for _ = 1, 6 do
         if type(f) ~= "table" or not f.GetParent then return end
         if IsMenuFrame(f) then
-            Learn(f)
+            known[f] = true
             return
         end
         f = f:GetParent()
@@ -230,11 +195,10 @@ local function Tick()
     local root = m:GetOpenMenu()
     local iron = false
     if IsMenuFrame(root) then
-        Learn(root)
+        known[root] = true
         iron = FromDropdown(root)
     end
-    Scan()
-    if not (caught and swept) then UnderMouse() end
+    UnderMouse()
     -- One menu tree opens at a time: its submenus wear the root's style.
     for frame in pairs(known) do
         if frame:IsShown() then Dress(frame, iron, frame == root) end

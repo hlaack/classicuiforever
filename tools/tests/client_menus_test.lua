@@ -78,7 +78,8 @@ local openMenu
 Menu = { GetManager = function()
     return { IsAnyMenuOpen = function() return openMenu ~= nil end, GetOpenMenu = function() return openMenu end }
 end }
-EnumerateFrames = function() end
+-- The watcher never walks the game's frames (70 ms a frame on retail with a menu open, read live 2026-10-04).
+EnumerateFrames = function() error("the menu watcher walked the game's frames") end
 CreateFrame = function() return { SetScript = function() end, UnregisterAllEvents = function() end } end
 UIParent = {}
 

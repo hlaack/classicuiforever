@@ -39,10 +39,10 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "POINTEXACT", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "POINTEXACT", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE", "FRAMEWALK", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
-LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
+LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "FRAMEWALK", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
@@ -227,6 +227,8 @@ FIX = {
     "HOOK": "use ns.HookMethod / ns.HookGlobal / ns.HookScriptOnce (Core/Hooks.lua), and prefer a watch (ns.Sched)",
     "ONUPDATE": "use ns.Sched.OnFrame(frame, spec) or ns.Sched.Job(spec) (Core/Scheduler.lua)",
     "LOADADDON": "never load a client addon from our code; wait for its ADDON_LOADED (ns.RegisterEvents)",
+    "FRAMEWALK": "never walk the game's frames; reach the frame from what the client hands out (a manager, the mouse, "
+                 "a parent's children)",
     "PANELMGR": "never drive the client window manager from our code (it then runs in our name and in combat can "
                 "neither close nor place windows); open and close through ns.ShowPanel / ns.HidePanel",
     "EDITMODE": "never write layouts mid-session; writes run only as the session ends: the ns.sessionEnding jobs in "
@@ -260,6 +262,7 @@ USE_PATTERNS = {
         r"\b(?:EventRegistry|CVarCallbackRegistry)\b(?:\s*[.:]\s*[A-Za-z_]\w*)?"
         r"|\b(?:RegisterCallback|RegisterCallbackWithHandle|UnregisterCallback|TriggerEvent)\b"),
     "LOADADDON": re.compile(r"\b(?:UIParent)?LoadAddOn\b"),
+    "FRAMEWALK": re.compile(r"(?<![\w.:])EnumerateFrames\b|_G\.EnumerateFrames\b"),
     "PANELMGR": re.compile(
         r"\b(?:UpdateUIPanelPositions|FramePositionDelegate|SetUIPanelAttribute|UpdateContainerFrameAnchors)\b"),
     "EDITMODE": re.compile(
@@ -413,6 +416,7 @@ MESSAGES = {
     "SINCE": "hand-written elapsed accumulator",
     "TIMER": "C_Timer.After(0, ...), NewTicker, NewTimer or RunNextFrame outside Core/Scheduler.lua",
     "LOADADDON": "client addon loaded from our code",
+    "FRAMEWALK": "EnumerateFrames: a walk over every frame in the game (70 ms a frame on retail)",
     "PANELMGR": "client window manager driven from our code",
     "EDITMODE": "edit mode layout write",
     "EDITQUERY": "raw edit mode query outside Core/EditMode.lua",
