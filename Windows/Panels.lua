@@ -85,6 +85,7 @@ local WINDOWS = {
         P.ShadeFloor(frame)
         GameSocialTabs()
         if ns.PlaceRecentAllyRows then ns.PlaceRecentAllyRows() end
+        if ns.SocialQuickJoin then ns.SocialQuickJoin() end
         ns.KeepScrollIcon(_G["FriendsFrameIcon"])
     end },
     -- The contacts tab's pop-out ignore list: no portrait, its button in the old red.

@@ -102,14 +102,17 @@ p = second.points[1]
 Check(#second.points == 1 and p.point == "LEFT" and p.rel == first and p.relPoint == "RIGHT" and p.x == 0 and p.y == 0,
     "the character tab starts at the general tab's right edge")
 
--- Era's label: over the tab's middle, 3 lower on the picked tab, 2 higher on the other.
+-- Era's label: a 13 high box 5 above the tab's foot, the same on the picked tab and the other (the art has no room
+-- higher on the unpicked face: its body starts 11 down the 32).
 first.LeftActive.shown, second.LeftActive.shown = true, false
 hooks.PanelTemplates_SelectTab(first)
 hooks.PanelTemplates_DeselectTab(second)
-p = first.Text.points[1]
-Check(p.point == "CENTER" and p.rel == first and p.y == -3, "the picked tab's label is 3 under its middle")
-p = second.Text.points[1]
-Check(p.point == "CENTER" and p.rel == second and p.y == 2, "the other tab's label is 2 over its middle")
+for _, tab in ipairs({ first, second }) do
+    p = tab.Text.points[1]
+    Check(#tab.Text.points == 1 and p.point == "BOTTOM" and p.rel == tab and p.relPoint == "BOTTOM" and p.y == 5,
+        tab.name .. " label stands 5 above the tab foot")
+    Check(tab.Text.height == 13, tab.name .. " label box is 13 high")
+end
 
 -- Era's hover glow: the old tab highlight, the tab's width, 2 right and 8 under its foot.
 local glow = first.own.glow

@@ -92,9 +92,17 @@ function S.ClientWhoTab(off)
     return true
 end
 
+-- Retail's Quick Join tab stood past the window's edge: off the row, its list reached from Recent Allies (below).
+local quickOff = false
+local function ClientQuick()
+    local id = _G.FRIEND_TAB_QUICK_JOIN
+    return id and _G["FriendsFrameTab" .. id] or nil
+end
+
 function S.PlaceTabs()
     local blizzard = S.FriendsFrameTabs()
     local clientWho = clientWhoOff and ClientWho() or nil
+    local clientQuick = quickOff and ClientQuick() or nil
     local order = {}
     if blizzard[1] then order[#order + 1] = blizzard[1] end
     local whoTab = S.whoTab
@@ -104,7 +112,7 @@ function S.PlaceTabs()
     local communitiesTab = _G["ClassicUIForeverCommunitiesTab"]
     if communitiesTab then order[#order + 1] = communitiesTab end
     for i = 2, #blizzard do
-        if blizzard[i] ~= clientWho then order[#order + 1] = blizzard[i] end
+        if blizzard[i] ~= clientWho and blizzard[i] ~= clientQuick then order[#order + 1] = blizzard[i] end
     end
     -- Five tabs where 1.x had four: 19 either side of the label, not 25.
     for _, entry in ipairs(order) do
@@ -372,6 +380,93 @@ end
 
 local function PlaceAllies(job)
     ns.EachChild(job.target, PlaceAllyRow)
+end
+
+---------------------------------------------------------------- quick join
+
+-- Two buttons in the foot band of the Recent Allies list and of the Quick Join list swap between the two, through
+-- the client's own tabs (a pad over ours presses them, so the lists stay the game's). Out of a fight.
+local SWAP_X, SWAP_Y = 2, 2    -- the first tab's left from the list box's left, its top above the box's foot
+local JOIN_W = 112             -- the game's Request to Join button (135 wide): narrower, clear of the tabs
+local ALLIES_PROXY = "ForeverClassicUIRecentAlliesTab"
+local alliesProxy
+local quickTabs = {}
+
+local function NoOp() end
+local function SwapWanted() return ns.panels and ns.panels.active end
+
+local function AlliesTab()
+    local header = _G.FriendsTabHeader
+    return header and header.GetTabButton and header.recentAlliesTabID and header:GetTabButton(header.recentAlliesTabID)
+end
+
+-- Back to Recent Allies: the Friends tab, then its Recent Allies tab.
+local function AlliesMacro()
+    local tab = AlliesTab()
+    if not tab then return "/click FriendsFrameTab1" end
+    if not InCombatLockdown() then
+        alliesProxy = alliesProxy or ns.ClickProxy(ALLIES_PROXY)
+        ns.SetAttributeIf(alliesProxy, "clickbutton", tab)
+    end
+    return "/click FriendsFrameTab1\n/click " .. ALLIES_PROXY
+end
+
+-- Our Quick Join tabs wear the client tab's text, which carries the count; the resize fits them to it.
+local function QuickText()
+    local tab = ClientQuick()
+    local text = tab and tab:GetText() or _G.QUICK_JOIN
+    for i = 1, #quickTabs do
+        quickTabs[i]:SetText(text)
+        PanelTemplates_TabResize(quickTabs[i], 0)
+    end
+end
+
+local function QuickMouse()
+    local tab = ClientQuick()
+    if tab then tab:EnableMouse(not quickOff) end
+end
+
+-- One of the macro window's tabs, turned over to hang from the list box's foot; the pad over it takes the click.
+local function SwapTab(pane, name, text)
+    local tab = ns.NewFrame("Button", name, pane, "PanelTopTabButtonTemplate")
+    tab:SetScript("OnClick", nil)
+    tab:SetText(text)
+    ns.SkinHangTab(tab)
+    return tab
+end
+
+-- onAllies: the pair under the Recent Allies list (its own tab picked), else under the Quick Join list.
+local function SwapPair(pane, onAllies)
+    local label = AlliesTab()
+    local suffix = onAllies and "Allies" or "Quick"
+    local allies = SwapTab(pane, "ForeverClassicUISwapAllies" .. suffix, label and label:GetText() or _G.CONTACTS_RECENT_ALLIES_TITLE)
+    local quick = SwapTab(pane, "ForeverClassicUISwapQuick" .. suffix, _G.QUICK_JOIN)
+    allies:SetPoint("TOPLEFT", _G.FriendsFrameInset, "BOTTOMLEFT", SWAP_X, SWAP_Y)
+    quick:SetPoint("LEFT", allies, "RIGHT", 0, 0)
+    quickTabs[#quickTabs + 1] = quick
+    PanelTemplates_SelectTab(onAllies and allies or quick)
+    PanelTemplates_DeselectTab(onAllies and quick or allies)
+    if onAllies then
+        ns.MapPad(quick, "HIGH", NoOp, ClientQuick(), SwapWanted)
+    else
+        ns.MapPad(allies, "HIGH", NoOp, AlliesMacro, SwapWanted)
+    end
+    ns.Sched.OnVisible(pane, "social.quickJoin", QuickText)
+end
+
+-- Once the window is dressed on a client with both lists.
+function ns.SocialQuickJoin()
+    local allies, quick, tab = _G.RecentAlliesFrame, _G.QuickJoinFrame, ClientQuick()
+    if quickOff or not (allies and quick and tab) then return end
+    quickOff = true
+    ns.SetAlphaIf(tab, 0)
+    ns.WhenCalm("social.clientQuick", QuickMouse)
+    SwapPair(allies, true)
+    SwapPair(quick, false)
+    if quick.JoinQueueButton then quick.JoinQueueButton:SetWidth(JOIN_W) end
+    ns.EventFrame("SOCIAL_QUEUE_UPDATE", QuickText)
+    QuickText()
+    S.PlaceTabs()
 end
 
 -- The watch hangs under the list, so it only runs while the tab shows.

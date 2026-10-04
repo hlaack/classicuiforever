@@ -200,11 +200,20 @@ local function PlaceText(tab)
 end
 -- The client shows and hides the faces on select and deselect; their body and rim follow.
 local FACE_FIELDS = { "LeftActive", "MiddleActive", "RightActive", "Left", "Middle", "Right" }
--- A top tab's label: over the tab's middle, lower on the picked one (Era's -3 and 2).
-local TOP_TEXT_PICKED_Y, TOP_TEXT_OFF_Y = -3, 2
+-- A top tab's label: a 13 high box 5 above the tab's foot, picked or not (Era's TabButtonTemplate). Its select and
+-- deselect also name a middle spot (-3 and 2), which that foot anchor outranks: 2 put the label on the unpicked
+-- face's top edge (the face starts 11 down its 32).
+local TOP_TEXT_Y, TOP_TEXT_H = 5, 13
 local function PlaceTopText(tab)
     local text = tab.Text
-    if text then ns.SetPointOnce(text, "CENTER", tab, "CENTER", 0, PickedFace(tab) and TOP_TEXT_PICKED_Y or TOP_TEXT_OFF_Y) end
+    if not text then return end
+    text:SetHeight(TOP_TEXT_H)
+    -- A tab turned over (hanging under a list) takes the same spot from its top.
+    if topFit[tab] and topFit[tab].hang then
+        ns.SetPointOnce(text, "TOP", tab, "TOP", 0, -TOP_TEXT_Y)
+    else
+        ns.SetPointOnce(text, "BOTTOM", tab, "BOTTOM", 0, TOP_TEXT_Y)
+    end
 end
 local function TextAfterClient(tab)
     if tab and topFit[tab] then
@@ -271,5 +280,35 @@ function ns.SkinTopTab(tab, padding, widest)
     glow:ClearAllPoints()
     glow:SetPoint("BOTTOMLEFT", tab, "BOTTOMLEFT", TOP_GLOW_X, TOP_GLOW_Y)
     glow:SetPoint("BOTTOMRIGHT", tab, "BOTTOMRIGHT", TOP_GLOW_X, TOP_GLOW_Y)
+    PlaceTopText(tab)
+end
+
+-- The same tab turned over, to hang under a list: faces on the tab's top edge, the picked one 3 higher.
+local HANG_COORDS = { { 0, 0.25, 1, 0 }, { 0.25, 0.75, 1, 0 }, { 0.75, 1, 1, 0 } }
+local HANG_ACTIVE = {
+    fields = { "LeftActive", "MiddleActive", "RightActive" }, key = "topTabActive", cap = TOP_CAP, height = TOP_HEIGHT,
+    edge = "TOP", middle = "edge", horizTile = false, coords = HANG_COORDS, oy = -TOP_PICKED_Y,
+}
+local HANG_INACTIVE = {
+    fields = { "Left", "Middle", "Right" }, key = "topTabInactive", cap = TOP_CAP, height = TOP_HEIGHT,
+    edge = "TOP", middle = "edge", horizTile = false, coords = HANG_COORDS,
+}
+
+function ns.SkinHangTab(tab)
+    if not tab or not tab.Left then return end
+    ns.ThreeSlice(tab, nil, HANG_ACTIVE)
+    ns.ThreeSlice(tab, nil, HANG_INACTIVE)
+    ns.FadeKeys(tab, ns.KEYS.TAB_GLOW)
+    topFit[tab] = { 0, hang = true }
+    tab:SetHeight(TOP_HEIGHT)
+    FitTopTab(tab)
+    local glow = ns.OwnTexture(tab, "glow", "HIGHLIGHT")
+    ns.SetTex(glow, "topTabHighlight")
+    glow:SetBlendMode("ADD")
+    glow:SetTexCoord(0, 1, 1, 0)
+    glow:SetHeight(TOP_HEIGHT)
+    glow:ClearAllPoints()
+    glow:SetPoint("TOPLEFT", tab, "TOPLEFT", TOP_GLOW_X, -TOP_GLOW_Y)
+    glow:SetPoint("TOPRIGHT", tab, "TOPRIGHT", TOP_GLOW_X, -TOP_GLOW_Y)
     PlaceTopText(tab)
 end
