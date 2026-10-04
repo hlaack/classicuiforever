@@ -219,6 +219,19 @@ do
     Check(focus ~= nil and link ~= nil and focus < link, "the macro text is tried before the chat link")
 end
 
+-- A link click on a profession's button casts nothing, so neither the secure wrap nor the click shuts the book (a
+-- shift-click into a macro closed it; an ability's did not).
+do
+    local file = assert(io.open(ROOT .. "/Spells/SpellBook.lua", "r"))
+    local text = file:read("a")
+    file:close()
+    local pre = text:match("local TRADE_PRE = %[%[(.-)%]%]")
+    Check(pre ~= nil and pre:find('not IsModifiedClick("CHATLINK")', 1, true) ~= nil, "the profession wrap leaves a link click alone")
+    local click = text:match("local function Button_PostClick%(.-\nend\n")
+    Check(click ~= nil and click:find("if not linking and self:GetAttribute(\"trade\")", 1, true) ~= nil,
+        "the click does not shut the book on a link click")
+end
+
 -- The classic talents window the same way: the talent's spell by name, tried before the link, never a passive.
 do
     local file = assert(io.open(ROOT .. "/Skills/Talents.lua", "r"))

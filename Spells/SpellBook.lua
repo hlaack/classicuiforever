@@ -482,9 +482,10 @@ end
 -- Fires on press and release; links on release.
 local function Button_PostClick(self, _, down)
     if down or not self.slot then return end
-    -- The wrap hid the layer for a profession cast; the book follows.
-    if self:GetAttribute("trade") and ns.HideSpellBook then ns.HideSpellBook() end
-    if IsModifiedClick("CHATLINK") then
+    local linking = IsModifiedClick("CHATLINK")
+    -- The wrap hid the layer for a profession cast; the book follows. Not on a link click: nothing was cast.
+    if not linking and self:GetAttribute("trade") and ns.HideSpellBook then ns.HideSpellBook() end
+    if linking then
         local macro = _G.MacroFrameText
         if macro and macro:HasFocus() then
             local text = MacroText(self.macroName, self.macroRank, self.isPassive)
@@ -942,8 +943,11 @@ local function CreateBook()
         layer:ClearBindings()
     ]]
     SecureHandlerWrapScript(layerOff, "OnClick", layerWrap, LAYER_OFF)
-    -- A profession's spell button: after its cast, the layer goes as the "none" writers take it.
-    local TRADE_PRE = [[ if not down and self:GetAttribute("trade") then return nil, "trade" end ]]
+    -- A profession's spell button: after its cast, the layer goes as the "none" writers take it. A link click casts
+    -- nothing, so the book stays.
+    local TRADE_PRE = [[
+        if not down and self:GetAttribute("trade") and not IsModifiedClick("CHATLINK") then return nil, "trade" end
+    ]]
     local TRADE_POST = [[
         local layer = control:GetFrameRef("clicks")
         layer:SetAttribute("unit", "none")
