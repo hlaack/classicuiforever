@@ -39,7 +39,7 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "POINTEXACT", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE", "FRAMEWALK", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "POINTEXACT", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "SECRETBAR", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE", "FRAMEWALK", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
 LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "FRAMEWALK", "EDITMODE", "PANELMGR",
@@ -48,7 +48,7 @@ LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "FRAMEWALK", 
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
               "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST",
               "POINTEXACT",
-              "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE")
+              "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "SECRETBAR", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -155,6 +155,7 @@ FIX = {
     "FADEDPIECE": "hide the client's cap in a hidden frame of ours (StashCap in Bar/BandArt.lua): edit mode snaps other "
                   "pieces only to what is visible, and a snap to an unnamed cap is saved at the screen's top",
     "SECRETLAYER": "test it with ns.AnySecret(layer, sub) before any compare or math, and skip that region when secret",
+    "SECRETBAR": "test it with ns.IsSecret / ns.AnySecret before any compare or math, and skip the work when secret",
     "NAMEDTEMPLATE": "give the frame a name of ours: retail's copy of the template anchors its pieces by $parent names",
     "PCALLMANY": "pcall a function of ours that walks them and returns one value (ns.EachChildProtected, "
                  "ns.EachRegionProtected in Core/Util.lua), never the getter itself",
@@ -400,6 +401,7 @@ MESSAGES = {
     "NAMEDTEMPLATE": "a nameless frame from a client template that anchors by $parent names on retail (the profession "
                      "bars' backs ran from one bar to another: a black box over the book)",
     "SECRETLAYER": "a draw layer read with no secret test beside it (a nameplate's pieces answer secret: 0.16.1, 1381 errors)",
+    "SECRETBAR": "a client bar's value read in Units/ with no secret test beside it (the swing bar answered secret: 351 errors)",
     "ERASPOT": "Era's old-frame shift on a window Era leaves on 16, -116 (the social window flush on the screen edge)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",
@@ -1114,6 +1116,21 @@ def secret_layer_hits(lx):
     return found
 
 
+SECRET_BAR_READ = re.compile(r":\s*(?:GetValue|GetMinMaxValues)\s*\(")
+
+
+def secret_bar_hits(path, lx):
+    """In Units/, a status bar's GetValue or GetMinMaxValues with no IsSecret/AnySecret on its line or the next two."""
+    found = set()
+    if not path.startswith("Units/"):
+        return found
+    lines = lx.blank
+    for i, line in enumerate(lines):
+        if SECRET_BAR_READ.search(line) and not SECRET_TEST.search(" ".join(lines[i:i + 3])):
+            found.add(("SECRETBAR", i + 1))
+    return found
+
+
 def self_box_hits(lx):
     """A client Selection (frame.Selection, or a local holding one) anchored to anything but its own frame."""
     found = set()
@@ -1297,6 +1314,7 @@ def pattern_hits(path, lx, funcs):
     found |= point_exact_hits(lx)
     found |= pad_list_hits(path, lx)
     found |= secret_layer_hits(lx)
+    found |= secret_bar_hits(path, lx)
     found |= cvar_login_hits(lx, funcs)
     found |= held_cvar_hits(lx, funcs)
     if not allowed("THROTTLEFRAME", path):

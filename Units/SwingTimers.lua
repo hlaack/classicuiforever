@@ -34,11 +34,13 @@ local SHADE_COLS = { CUT_LEFT / 256, (CUT_LEFT + SHADE) / 256, (CUT_RIGHT - SHAD
 local SHADE_ROWS = { CUT_TOP / 64, (CUT_TOP + SHADE) / 64, (CUT_FOOT - SHADE) / 64, CUT_FOOT / 64 }
 local IN_X, IN_H = CUT_LEFT - OUT_X, CUT_FOOT - CUT_TOP
 local FLASH_TIME = 0.3
-local RESET_DROP = 0.5   -- a fall of this much of the bar is a new swing
+local RESET_DROP = 0.5   -- a swing cut short past this much of its time still flashes
+local STALE = 0.25       -- a swing that ran out longer ago than this flashes no more
+local SWING_EVENTS = { "PLAYER_SWING", "WEAPON_SLOT_CHANGED" }
 local FRAMES = {
-    { name = "SwingTimerMainHandFrame", key = "swingColorMain", default = "cast" },
-    { name = "SwingTimerOffHandFrame", key = "swingColorOff", default = "darkGold" },
-    { name = "SwingTimerRangedFrame", key = "swingColorRanged", default = "channel" },
+    { name = "SwingTimerMainHandFrame", key = "swingColorMain", default = "cast", hand = "MainHand" },
+    { name = "SwingTimerOffHandFrame", key = "swingColorOff", default = "darkGold", hand = "OffHand" },
+    { name = "SwingTimerRangedFrame", key = "swingColorRanged", default = "channel", hand = "Ranged" },
 }
 
 local function Color(entry)
@@ -211,36 +213,71 @@ local function Resized(bar)
     end
 end
 
--- While a timer shows: the bar falling back is a swing landing, which flashes as a cast finishing (unless turned off).
-local lastValue = setmetatable({}, { __mode = "k" })
-local function WatchSwing(job)
-    local bar = job.bar
-    local value = active and bar:GetValue() or nil
-    local last = lastValue[bar]
-    lastValue[bar] = value
+-- Each swing timed by our own clock from the game's swing event: the bar's value answers secret for the rest of the
+-- session once a weapon changes in a fight, so nothing is read from it.
+local clock = setmetatable({}, { __mode = "k" })   -- status bar -> { halfAt, endsAt } of its running swing
+local barOf = {}                                   -- swing type -> status bar
+local driver
+
+local function Flash(bar)
     local parts = own[bar]
-    if value and last and parts and last - value >= RESET_DROP and ns.db.swingFlash ~= false then
+    if parts and ns.db.swingFlash ~= false then
         parts.anim:Stop()
         parts.anim:Play()
     end
 end
 
+-- While a timer shows: its swing running out flashes as a cast finishing (unless turned off).
+local function WatchSwing(job)
+    local at = clock[job.bar]
+    local ends = active and at and at.endsAt
+    if not ends or GetTime() < ends then return end
+    at.endsAt = nil
+    -- One that ran out while the timer was hidden is old news.
+    if GetTime() - ends <= STALE then Flash(job.bar) end
+end
+
+-- A new swing with the last one past half its time flashes too; a weapon change restarts the game's bar on a time we
+-- cannot read in a fight, so the clocks stop until the next swing.
+local function OnSwing(_, event, duration, hand)
+    if not active then return end
+    if event ~= "PLAYER_SWING" or ns.AnySecret(duration, hand) then
+        for _, at in pairs(clock) do at.endsAt = nil end
+        return
+    end
+    local bar = barOf[hand]
+    if not bar or type(duration) ~= "number" or duration <= 0 then return end
+    local at = clock[bar] or {}
+    clock[bar] = at
+    local now = GetTime()
+    if at.endsAt and now >= at.halfAt and now < at.endsAt then Flash(bar) end
+    at.halfAt, at.endsAt = now + duration * RESET_DROP, now + duration
+end
+
 local function Apply()
     active = true
+    local hands = Enum.PlayerSwingType
+    local found = false
     for _, entry in ipairs(FRAMES) do
         local timer = _G[entry.name]
         if timer and timer.StatusBar then
+            found = true
+            local hand = hands and hands[entry.hand]
+            if hand then barOf[hand] = timer.StatusBar end
             ns.HookScriptOnce(timer.StatusBar, "OnSizeChanged", Resized)
             local job = ns.Sched.Attach(timer, { name = "swing.flash", every = 0, fn = WatchSwing })
             if job then job.bar = timer.StatusBar end
             ns.SafeCall(Dress, entry)
         end
     end
+    if not found then return end
+    if driver then ns.RegisterEvents(driver, SWING_EVENTS) else driver = ns.EventFrame(SWING_EVENTS, OnSwing) end
 end
 
 local function Restore()
     if not active then return end
     active = false
+    if driver then driver:UnregisterAllEvents() end
     for _, entry in ipairs(FRAMES) do ns.SafeCall(Undress, entry) end
 end
 
