@@ -239,6 +239,14 @@ local function Button_OnClick(self, mouse)
     local talent, tree = self.talent, frame.tree
     -- Shift-click links it in chat, in a fight and on an inspected tree too, as the game's window does.
     if talent and talent.spellID and mouse == "LeftButton" and IsModifiedClick("CHATLINK") then
+        -- Into a macro: the spell's name as text, no rank (a link there is no spell to /cast, #124); never a passive.
+        local macro = _G.MacroFrameText
+        if macro and macro:HasFocus() then
+            local name, passive = C_Spell.GetSpellName(talent.spellID), C_Spell.IsSpellPassive(talent.spellID)
+            if IsSecret(passive) then passive = false end
+            if not passive and type(name) == "string" and not IsSecret(name) then ChatFrameUtil.InsertLink(name) end
+            return
+        end
         local link = C_Spell.GetSpellLink(talent.spellID)
         if link and not IsSecret(link) then ChatFrameUtil.InsertLink(link) end
         return

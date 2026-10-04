@@ -186,6 +186,52 @@ do
     Check(text:find('bindButton:SetScript("PostClick", FollowLayer)', 1, true) ~= nil, "the key's path follows the layer the same way")
 end
 
+------------------------------------------------------------------ a spell shift-clicked into a macro
+
+-- With the macro box focused the book hands it the spell's name and rank as text, as the client's own book does
+-- ("Serpent Sting(Rank 2)"); it handed a chat link, which is no spell to /cast (#124).
+do
+    local file = assert(io.open(ROOT .. "/Spells/SpellBook.lua", "r"))
+    local text = file:read("a")
+    file:close()
+    local source = text:match("(local function MacroText%(.-\nend)\n")
+    Check(source ~= nil, "MacroText is found")
+    if source then
+        local secret = {}
+        local MacroText = assert(load("local IsSecret = ...\n" .. source .. "\nreturn MacroText"))(function(v) return v == secret end)
+        Check(MacroText("Serpent Sting", "Rank 2", false) == "Serpent Sting(Rank 2)", "a ranked spell goes in as Name(Rank)")
+        Check(MacroText("Auto Shot", "", false) == "Auto Shot", "a spell with no rank goes in by its name")
+        Check(MacroText("Auto Shot", nil, false) == "Auto Shot", "a missing rank is no rank")
+        Check(MacroText("Dodge", "", true) == nil, "a passive is not put into a macro")
+        Check(MacroText(secret, "Rank 1", false) == nil, "a secret name is never written")
+        Check(MacroText("Raptor Strike", secret, false) == "Raptor Strike", "a secret rank is left off")
+    end
+    -- The click lands on the casting button, which ArmSpell fills: the name and rank must be put there (set on the
+    -- slot under it, the click found none and wrote nothing at all).
+    local arm = text:match("local function ArmSpell%(.-\nend\n")
+    Check(arm ~= nil and arm:find("btn.macroName, btn.macroRank =", 1, true) ~= nil, "the casting button keeps the name and rank")
+    local _, sets = text:gsub("%.macroName, [%w_]+%.macroRank =", "")
+    Check(sets == 1, "the name and rank are set in one place only (" .. sets .. ")")
+    local click = text:match("local function Button_PostClick%(.-\nend\n")
+    Check(click ~= nil and click:find("MacroFrameText", 1, true) ~= nil and click:find("HasFocus", 1, true) ~= nil,
+        "the click asks whether the macro box has the focus")
+    local focus, link = click and click:find("HasFocus", 1, true), click and click:find("GetSpellBookItemLink", 1, true)
+    Check(focus ~= nil and link ~= nil and focus < link, "the macro text is tried before the chat link")
+end
+
+-- The classic talents window the same way: the talent's spell by name, tried before the link, never a passive.
+do
+    local file = assert(io.open(ROOT .. "/Skills/Talents.lua", "r"))
+    local text = file:read("a")
+    file:close()
+    local click = text:match("local function Button_OnClick%(.-\nend\n")
+    Check(click ~= nil, "the talent button's click is found")
+    local focus, link = click and click:find("HasFocus", 1, true), click and click:find("GetSpellLink", 1, true)
+    Check(focus ~= nil and link ~= nil and focus < link, "a talent's macro text is tried before its chat link")
+    Check(click ~= nil and click:find("GetSpellName", 1, true) ~= nil and click:find("IsSpellPassive", 1, true) ~= nil,
+        "a talent goes into a macro by its spell's name, a passive not at all")
+end
+
 if failed > 0 then
     print(failed .. " check(s) failed")
     os.exit(1)

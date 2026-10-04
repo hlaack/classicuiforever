@@ -320,6 +320,8 @@ local function ArmSpell(btn, slot, bank)
     btn.bank = bank
     btn.isPassive = info and info.isPassive or nil
     btn.spellOnly = info and info.fromSpell and info.actionID or nil
+    -- For a shift-click into a macro (the click lands on this button, not the slot under it).
+    btn.macroName, btn.macroRank = info and info.name or nil, info and info.subName or nil
     local id = info and not info.isPassive and info.itemType ~= ITEM_FLYOUT and CastID(info, bank) or nil
     if id and not IsSecret(id) then
         btn:SetAttribute("type1", "spell")
@@ -469,12 +471,26 @@ local function Button_OnDragStart(self)
     end
 end
 
+-- What a shift-click hands the macro box: the spell's name and rank as text, as the client's book writes them
+-- ("Serpent Sting(Rank 2)"); a link there is no spell to /cast (#124). Nil for a passive.
+local function MacroText(name, rank, passive)
+    if passive or type(name) ~= "string" or IsSecret(name) then return nil end
+    if type(rank) == "string" and not IsSecret(rank) and rank ~= "" then return name .. "(" .. rank .. ")" end
+    return name
+end
+
 -- Fires on press and release; links on release.
 local function Button_PostClick(self, _, down)
     if down or not self.slot then return end
     -- The wrap hid the layer for a profession cast; the book follows.
     if self:GetAttribute("trade") and ns.HideSpellBook then ns.HideSpellBook() end
     if IsModifiedClick("CHATLINK") then
+        local macro = _G.MacroFrameText
+        if macro and macro:HasFocus() then
+            local text = MacroText(self.macroName, self.macroRank, self.isPassive)
+            if text then ChatEdit_InsertLink(text) end
+            return
+        end
         -- Trade link first, as the client does: a profession links its recipe list.
         local bank = self.bank or state.bank
         local ok, link = pcall(C_SpellBook.GetSpellBookItemTradeSkillLink, self.slot, bank)
