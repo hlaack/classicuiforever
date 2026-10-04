@@ -9,7 +9,8 @@ local P = ns.panels
 local function LiftTab(tab)
     local point, rel, relPoint, x, y = tab:GetPoint(1)
     if not point or rel ~= tab:GetParent() then return end
-    if tab.fcuiLiftedY == y then return end
+    -- Within a hair: the game hands an offset back inexact, and an exact test lifted the tab again on every fit.
+    if tab.fcuiLiftedY and ns.Near(y, tab.fcuiLiftedY, 0.5) then return end
     tab.fcuiLiftedY = (y or 0) + (tonumber(tab.fcuiLift) or P.BOTTOM_LIFT)
     tab:SetPoint(point, rel, relPoint, x or 0, tab.fcuiLiftedY)
 end

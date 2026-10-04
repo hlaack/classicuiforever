@@ -382,7 +382,7 @@ MESSAGES = {
     "KEYUP": "a key bound straight to a release-acting button (it opens on release; the game's windows on press)",
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "MOUSEORDER": "a mouse script set after the frame's clicks were switched off (setting it turns clicks back on)",
-    "POINTEXACT": "an offset read from GetPoint compared exactly with a number or constant (the test failed every "
+    "POINTEXACT": "an offset read from GetPoint compared exactly with a number, constant or saved value (the test failed every "
                   "frame, and the hidden guild window was anchored again each one: 5 % CPU with the roster open)",
     "SELFBOX": "an edit mode Selection anchored to another frame than its own (the bars launched to the screen top)",
     "PADLIST": "a pad-clicked client list sized, placed or measured in our Lua (rows it rebuilds in our name are "
@@ -1128,7 +1128,7 @@ POINT_REACH = 12
 
 
 def point_exact_hits(lx):
-    """An offset read from GetPoint compared with == or ~= to a number or an upper-case constant."""
+    """An offset read from GetPoint compared with == or ~= to a number, a constant or a saved value."""
     found = set()
     lines = lx.blank
     for no, line in enumerate(lines, 1):
@@ -1140,7 +1140,8 @@ def point_exact_hits(lx):
         if not offsets:
             continue
         name = r"(?:%s)" % "|".join(offsets)
-        value = r"(?:-?\d[\d.]*|[A-Z][A-Z0-9_]*)"
+        # A number, a constant, or a saved value (a field or local): anything but nil.
+        value = r"(?:-?\d[\d.]*|(?!nil\b)[A-Za-z_][\w.]*)"
         rx = re.compile(r"(?<![\w.])%s\s*(?:==|~=)\s*%s\b|(?<![\w.])%s\s*(?:==|~=)\s*%s\b" % (name, value, value, name))
         for at in range(no, min(no + POINT_REACH, len(lines)) + 1):
             if rx.search(lines[at - 1]):
