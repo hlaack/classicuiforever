@@ -2,6 +2,8 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN23_1_TITLE"] = "Swing timers"
+L["WN23_1_TEXT"] = "Changing a weapon in a fight no longer sets off a Lua error on every frame the swing bar shows, and the flash as a swing lands keeps working after the change."
 L["WN22_1_TITLE"] = "Professions"
 L["WN22_1_TEXT"] = "A profession opens in the classic trade skill window, and the professions book is the old small one in the spellbook's frame. The size button beside the close button switches either to the game's full window."
 L["WN22_2_TITLE"] = "Spellbook and talents"

@@ -2,6 +2,11 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.20.1] - 2026-10-04
+
+### Fixed
+- Swing timers: changing a weapon in a fight no longer sets off a Lua error on every frame the swing bar shows. The flash as a swing lands keeps working after the change too.
+
 ## [0.20.0] - 2026-10-04
 
 ### Added

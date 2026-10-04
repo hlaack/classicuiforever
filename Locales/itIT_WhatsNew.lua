@@ -3,6 +3,8 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN23_1_TITLE"] = "Timer dei colpi"
+L["WN23_1_TEXT"] = "Cambiare arma in combattimento non provoca più un errore Lua a ogni fotogramma in cui la barra dei colpi è visibile, e il lampo a ogni colpo continua a funzionare dopo il cambio."
 L["WN22_1_TITLE"] = "Professioni"
 L["WN22_1_TEXT"] = "Una professione si apre nella finestra classica delle abilità commerciali, e il libro delle professioni è quello vecchio e piccolo, nella cornice del grimorio. Il pulsante della dimensione accanto a quello di chiusura porta l'uno o l'altro alla finestra completa del gioco."
 L["WN22_2_TITLE"] = "Grimorio e talenti"

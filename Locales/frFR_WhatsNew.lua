@@ -3,6 +3,8 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
+L["WN23_1_TITLE"] = "Minuteurs d'attaque"
+L["WN23_1_TEXT"] = "Changer d'arme en combat ne déclenche plus d'erreur Lua à chaque image où la barre d'attaque est affichée, et l'éclair à chaque coup continue de fonctionner après le changement."
 L["WN22_1_TITLE"] = "Métiers"
 L["WN22_1_TEXT"] = "Un métier s'ouvre dans la fenêtre d'artisanat classique, et le livre des métiers est l'ancien petit livre, dans le cadre du grimoire. Le bouton de taille à côté du bouton de fermeture fait passer l'un ou l'autre à la fenêtre complète du jeu."
 L["WN22_2_TITLE"] = "Grimoire et talents"

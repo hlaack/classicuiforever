@@ -3,6 +3,8 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN23_1_TITLE"] = "Schlagtimer"
+L["WN23_1_TEXT"] = "Ein Waffenwechsel im Kampf löst keinen Lua-Fehler mehr in jedem Bild aus, in dem die Schlagleiste zu sehen ist, und das Aufblitzen beim Schlag funktioniert nach dem Wechsel weiter."
 L["WN22_1_TITLE"] = "Berufe"
 L["WN22_1_TEXT"] = "Ein Beruf öffnet sich im klassischen Berufsfenster, und das Berufebuch ist das alte kleine im Rahmen des Zauberbuchs. Die Größentaste neben der Schließen-Taste wechselt jeweils zum vollen Fenster des Spiels."
 L["WN22_2_TITLE"] = "Zauberbuch und Talente"
