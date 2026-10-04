@@ -404,6 +404,7 @@ local function ResetNow()
     -- Windows and gryphons placed or sized in the windows edit mode (the map included) back to their own; Movable
     -- anytime is kept.
     ns.db.windowPos, ns.db.windowScale = nil, nil
+    ns.HomeLayoutSpots(LAYOUT_NAME, true)
     -- Pieces dragged round the minimap ring too.
     for _, entry in ipairs(ns.WINDOW_LIST or {}) do
         if entry.ringKey then ns.db[entry.ringKey] = nil end
@@ -607,6 +608,8 @@ local function ClassicNow(job)
         if C_EditMode.OnLayoutAdded then C_EditMode.OnLayoutAdded(index, true, false) end
     end
     C_EditMode.SetActiveLayout(index)
+    -- The gryphons on the band ends there, unless the player saved them elsewhere on this layout.
+    ns.HomeLayoutSpots(LAYOUT_NAME)
     -- Next login checks the switch held.
     ns.db.layoutSelectPending = true
     return true

@@ -127,13 +127,18 @@ end
 local function Save() saved = Snapshot() end
 local function RevertAll() if saved then Restore(saved, true) end end
 
--- gameEdit pieces (the gryphons) move in the game's own edit mode: their boxes up while it is, and its Save and Revert
--- All settle them too. Left without either, a change is kept (as the micro menu's).
+-- gameEdit pieces (the gryphons) move in the game's own edit mode, and are kept as its own pieces are: per layout
+-- (UI/WindowLayouts.lua), written by its Save, put back by Revert All, dropped when the mode shuts with them unsaved.
 local gameSaved
 
 -- A classic layout reset settles both snapshots: else the mode left open put the old places back at logout.
 function ns.SettleWindowEdits()
     if saved then saved = Snapshot() end
+    if gameSaved then gameSaved = Snapshot() end
+end
+
+-- A layout's record just worn (another layout picked): that is the saved state now.
+function W.GameSettled()
     if gameSaved then gameSaved = Snapshot() end
 end
 
@@ -147,12 +152,29 @@ end
 
 local function GameFootClick(revert)
     if not gameSaved then return end
-    if revert and Dirty(gameSaved) then Restore(gameSaved, true) end
+    if revert then
+        if Dirty(gameSaved) then Restore(gameSaved, true) end
+    elseif not W.SaveLayoutSpots() then
+        -- A preset: the game asks for a new layout's name, and the change stays unsaved until one is made.
+        return
+    end
     gameSaved = Snapshot()
 end
 
 local function SyncGameFoot()
     if gameSaved and Dirty(gameSaved) then ns.LightEditFoot("windowsHooked", GameFootClick) end
+end
+
+-- The game's own prompt (it has changes of its own too): Save and Exit shuts the mode inside its click, so ours are
+-- written before it; on a preset they wait for the new layout.
+local function SaveBeforeExit()
+    if gameSaved and Dirty(gameSaved) and W.SaveLayoutSpots() then gameSaved = Snapshot() end
+end
+
+local function HookExitPrompt()
+    local prompt = _G["EditModeUnsavedChangesDialog"]
+    local button = prompt and prompt.SaveAndProceedButton
+    if button and ns.Once(button, "windowsHooked") then button:HookScript("PreClick", SaveBeforeExit) end
 end
 
 -- data: "close" when the close button asked; Back stays up (the choice made, it goes back on the next press).
@@ -405,11 +427,20 @@ local function OnEditMode()
     if ns.EditMode.Live() then
         closing = false
         if mode and mode:IsShown() then mode:Hide() end
-        gameSaved = gameSaved or Snapshot()
+        if not gameSaved then
+            W.LayoutEditBegan()
+            gameSaved = Snapshot()
+        end
+        HookExitPrompt()
         GameBoxes(true)
         return
     end
     GameBoxes(false)
+    -- Shut with a change unsaved: dropped, as the game drops its own (a layout made in the same press still takes it).
+    if gameSaved and Dirty(gameSaved) then
+        W.LayoutEditLeft()
+        Restore(gameSaved, true)
+    end
     gameSaved = nil
     if closing then
         closing = false

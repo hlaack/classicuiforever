@@ -44,7 +44,7 @@ return {
     comboPoints = true,
     damageMeter = true,
     damageNumbersRepaired = false,
-    dbVersion = 14,
+    dbVersion = 15,
     druidMana = true,
     eliteFrameFocus = true,
     eliteFramePlayer = true,

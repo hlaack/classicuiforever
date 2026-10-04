@@ -51,6 +51,7 @@ UI\FriendsWindow.lua
 UI\Windows.lua
 UI\WindowList.lua
 UI\WindowHandles.lua
+UI\WindowLayouts.lua
 UI\WindowsEditMode.lua
 UI\WindowLocks.lua
 UI\Portraits.lua
