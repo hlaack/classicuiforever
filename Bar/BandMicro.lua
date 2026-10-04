@@ -116,6 +116,35 @@ local function SpellbookMacro()
     return "/click PlayerSpellsMicroButton\n/click " .. SPELL_TAB_PROXY
 end
 
+-- The game's Talents button while our spellbook is on: its window keeps the tab it was last on, so a press could
+-- open it on its own big spellbook. The pad sends it to Talents (Specialization where there are none), through the
+-- game's own tab button; with neither tab it opens our book. No pad while our book is off.
+local TALENT_TAB_PROXY = "ForeverClassicUITalentTab"
+local talentTabProxy
+
+local function TalentsMacro()
+    local ours = ns.BookPadMacro and ns.BookPadMacro()
+    if not ours then return nil end
+    local frame = _G.PlayerSpellsFrame
+    -- Not loaded yet: the first press loads it on its default tab, Talents where the character has them.
+    if not (frame and frame.GetTabButton and frame.talentTabID) then return "/click PlayerSpellsMicroButton" end
+    local id = frame.talentTabID
+    local tab = frame:GetTabButton(id)
+    if not (tab and tab:IsShown()) then
+        id = frame.specTabID
+        tab = id and frame:GetTabButton(id)
+    end
+    if not (tab and tab:IsShown()) then return ours end
+    if not InCombatLockdown() then
+        talentTabProxy = talentTabProxy or ns.ClickProxy(TALENT_TAB_PROXY)
+        ns.SetAttributeIf(talentTabProxy, "clickbutton", tab)
+    end
+    if not frame:IsShown() then return "/click PlayerSpellsMicroButton\n/click " .. TALENT_TAB_PROXY end
+    -- Open on that tab: the toggle shuts it. Open on another: the tab alone, or the toggle would shut the window.
+    if frame.GetTab and frame:GetTab() == id then return "/click PlayerSpellsMicroButton" end
+    return "/click " .. TALENT_TAB_PROXY
+end
+
 local function SpellbookMicroButton()
     if ns.SpellbookMicroButton then return ns.SpellbookMicroButton end
     if _G.SpellbookMicroButton or not _G.PlayerSpellsMicroButton then return nil end
@@ -131,6 +160,7 @@ local function SpellbookMicroButton()
         if name == "Blizzard_PlayerSpells" then AimSpellTab() end
     end)
     ns.MapPad(button, nil, nil, SpellbookMacro)
+    ns.MapPad(_G.PlayerSpellsMicroButton, nil, nil, TalentsMacro)
     return button
 end
 
