@@ -46,7 +46,7 @@ end
 
 -- on: the book page up at the small size. Out of combat only (the close button's window is protected).
 function T.SmallFrame(on)
-    local frame = ProfessionsFrame
+    local frame = T.Host()
     if not frame or not ns.SPELLBOOK_QUARTERS or InCombatLockdown() then return end
     local art = Holder(frame)
     -- Under every piece of the window, the chrome's textures included.

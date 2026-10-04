@@ -35,7 +35,7 @@ end
 -- From the tabs' fixed layout, so a shut window places them too. From the window's top: the tabs hang from the shape's
 -- foot, a book's height down, and in a fight the shape stands past the window's foot.
 local function PlaceBookPads()
-    local frame = ProfessionsFrame
+    local frame = T.Host()
     if not bookPads or not frame or InCombatLockdown() then return end
     local k = frame:GetEffectiveScale()
     if not (k and k > 0) then return end
@@ -73,7 +73,7 @@ function T.SyncBookPads()
 end
 
 function T.BookTabs()
-    local frame, page = ProfessionsFrame, Page()
+    local frame, page = T.Host(), Page()
     if not frame or not page or not ns.NewBookTab then return end
     local on = ns.SpellBookActive and ns.SpellBookActive() and true or false
     if not bookTabs then

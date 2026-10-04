@@ -9,7 +9,8 @@ local L = ns.L
 ns.WINDOW_LIST = {
     { key = "character", label = L["UI_CHARACTER"], name = "CharacterFrame", w = 354, h = 467, cut = { 30, 45 }, client = true },
     -- The classic professions book wears the spellbook's frame, its corner on the book's art (homes 0, -104 and 12, -118).
-    { key = "professions", label = L["UI_PROFESSIONS"], name = "ProfessionsFrame", w = 550, h = 525, client = true,
+    { key = "professions", label = L["UI_PROFESSIONS"], name = ns.OnForever() and "ProfessionsFrame" or "ProfessionsBookFrame",
+        w = 550, h = 525, client = true,
         follows = "spellBook", followIf = "professionsBook", followX = 12, followY = -14 },
     { key = "talents", label = L["UI_TALENTS"], name = "ClassicUIForeverTalents", w = 354, h = 467, cut = { 30, 45 },
         padHost = true },
