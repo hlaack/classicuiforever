@@ -3,6 +3,8 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN25_1_TITLE"] = "Greifen"
+L["WN25_1_TEXT"] = "Die Greifen werden jetzt mit dem Layout des Bearbeitungsmodus gespeichert, wie die eigenen Elemente des Spiels: Jedes Layout behält seine eigenen Plätze für sie, und Speichern auf einer Spielvorlage fragt nach einem neuen Layout, das sie übernimmt. Eine nicht gespeicherte Verschiebung wird beim Schließen des Bearbeitungsmodus verworfen. Das klassische Layout in den Optionen setzt sie wieder an die Enden der Leiste."
 L["WN24_1_TITLE"] = "Taschen"
 L["WN24_1_TEXT"] = "Offene Taschen springen nicht mehr zur Seite, wenn du einen Gegenstand per Rechtsklick anlegst, im Kampf wie außerhalb."
 L["WN23_1_TITLE"] = "Schlagtimer"

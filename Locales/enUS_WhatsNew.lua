@@ -2,6 +2,8 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN25_1_TITLE"] = "Gryphons"
+L["WN25_1_TEXT"] = "The gryphons are now saved with the edit mode layout, like the game's own pieces: each layout keeps its own places for them, and Save on a game preset asks for a new layout, which takes them. A move left unsaved is dropped when edit mode closes. The classic layout in the options puts them back on the ends of the bar."
 L["WN24_1_TITLE"] = "Bags"
 L["WN24_1_TEXT"] = "Open bags no longer jump sideways when you right-click an item to equip it, in or out of a fight."
 L["WN23_1_TITLE"] = "Swing timers"

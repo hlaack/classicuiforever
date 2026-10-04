@@ -3,6 +3,8 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN25_1_TITLE"] = "Grifoni"
+L["WN25_1_TEXT"] = "I grifoni ora vengono salvati con il layout della modalità modifica, come gli elementi del gioco: ogni layout mantiene i propri posti per loro, e Salva su un layout predefinito del gioco chiede un nuovo layout, che li riceve. Uno spostamento non salvato viene scartato alla chiusura della modalità modifica. Il layout classico nelle opzioni li riporta alle estremità della barra."
 L["WN24_1_TITLE"] = "Borse"
 L["WN24_1_TEXT"] = "Le borse aperte non saltano più di lato quando equipaggi un oggetto con il clic destro, in combattimento o fuori."
 L["WN23_1_TITLE"] = "Timer dei colpi"

@@ -3,6 +3,8 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
+L["WN25_1_TITLE"] = "Grifos"
+L["WN25_1_TEXT"] = "Los grifos se guardan ahora con el diseño del modo de edición, como las piezas propias del juego: cada diseño conserva sus propios lugares para ellos, y Guardar en un diseño predefinido del juego pide un diseño nuevo, que los recibe. Un movimiento sin guardar se descarta al cerrar el modo de edición. El diseño clásico de las opciones los devuelve a los extremos de la barra."
 L["WN24_1_TITLE"] = "Bolsas"
 L["WN24_1_TEXT"] = "Las bolsas abiertas ya no saltan hacia un lado al equipar un objeto con clic derecho, ni en combate ni fuera de él."
 L["WN23_1_TITLE"] = "Temporizadores de golpe"

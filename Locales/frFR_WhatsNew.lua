@@ -3,6 +3,8 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
+L["WN25_1_TITLE"] = "Griffons"
+L["WN25_1_TEXT"] = "Les griffons sont maintenant enregistrés avec la disposition du mode Édition, comme les éléments du jeu : chaque disposition garde ses propres emplacements pour eux, et Enregistrer sur une disposition prédéfinie du jeu demande une nouvelle disposition, qui les reprend. Un déplacement non enregistré est abandonné à la fermeture du mode Édition. La disposition classique des options les remet aux extrémités de la barre."
 L["WN24_1_TITLE"] = "Sacs"
 L["WN24_1_TEXT"] = "Les sacs ouverts ne sautent plus sur le côté quand vous équipez un objet par clic droit, en combat comme hors combat."
 L["WN23_1_TITLE"] = "Minuteurs d'attaque"

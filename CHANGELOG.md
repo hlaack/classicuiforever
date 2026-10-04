@@ -2,6 +2,15 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.20.3] - 2026-10-04
+
+### Changed
+- The gryphons are saved with the edit mode layout, as the game's own pieces are. Each layout keeps its own places and sizes for them, picking a layout puts them there, and Save writes them into the active layout. On a game preset (Modern, Classic) Save asks for a new layout's name, and that layout takes them. Leaving edit mode without saving drops the move; it was kept (#126).
+- A gryphon you moved before this version keeps its place on your own layouts until you move and save it there. On the game's presets the gryphons stand on the ends of the bar.
+
+### Fixed
+- Classic layout, in the options, puts the gryphons on the ends of the bar when it sets up or switches to the ClassicUI Forever layout. They stayed wherever they had been moved.
+
 ## [0.20.2] - 2026-10-04
 
 ### Fixed
