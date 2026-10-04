@@ -84,6 +84,56 @@ local function WorldMapMicroButton()
     return button
 end
 
+-- Retail keeps its spellbook inside the spells window and has no button for it: 1.x's, beside Character. Its pad opens
+-- our spellbook while that is on, else the game's window on its Spellbook tab (the window's own toggle, then the tab).
+local SPELL_TAB_PROXY = "ForeverClassicUISpellbookTab"
+local spellTabProxy
+
+local function SpellbookButtonTip()
+    local name = _G.SPELLBOOK or "Spellbook"
+    return MicroButtonTooltipText and MicroButtonTooltipText(name, "TOGGLESPELLBOOK") or name
+end
+local SPELLBOOK_TIP = { text = SpellbookButtonTip, r = 1, g = 1, b = 1 }
+
+-- The proxy on the game's Spellbook tab once its window is loaded; out of a fight (a secure button's attribute).
+local function AimSpellTab()
+    local frame = _G.PlayerSpellsFrame
+    local tab = frame and frame.GetTabButton and frame.spellBookTabID and frame:GetTabButton(frame.spellBookTabID)
+    if not tab or InCombatLockdown() then return end
+    spellTabProxy = spellTabProxy or ns.ClickProxy(SPELL_TAB_PROXY)
+    ns.SetAttributeIf(spellTabProxy, "clickbutton", tab)
+end
+
+local function SpellbookMacro()
+    local ours = ns.BookClickName and ns.BookClickName()
+    if ours then return "/click " .. ours end
+    AimSpellTab()
+    local frame = _G.PlayerSpellsFrame
+    -- Open on another tab: the tab alone, or the toggle would shut the window.
+    if frame and frame:IsShown() and frame.GetTab and frame:GetTab() ~= frame.spellBookTabID then
+        return "/click " .. SPELL_TAB_PROXY
+    end
+    return "/click PlayerSpellsMicroButton\n/click " .. SPELL_TAB_PROXY
+end
+
+local function SpellbookMicroButton()
+    if ns.SpellbookMicroButton then return ns.SpellbookMicroButton end
+    if _G.SpellbookMicroButton or not _G.PlayerSpellsMicroButton then return nil end
+    local button = CreateFrame("Button", "ForeverClassicUISpellbookMicroButton", B.art or UIParent)
+    button:SetSize(MICRO_W, MICRO_H)
+    button:SetNormalTexture((ns.TexPath("microSpellbookUp")))
+    button:SetPushedTexture((ns.TexPath("microSpellbookDown")))
+    button:SetHighlightTexture((ns.TexPath("microHighlight")))
+    ns.AttachTip(button, SPELLBOOK_TIP)
+    ns.SpellbookMicroButton = button
+    -- The window loads inside the first press: aimed then, so that press already lands on the tab.
+    ns.EventFrame({ "ADDON_LOADED" }, function(_, _, name)
+        if name == "Blizzard_PlayerSpells" then AimSpellTab() end
+    end)
+    ns.MapPad(button, nil, nil, SpellbookMacro)
+    return button
+end
+
 local function AddMicroChild(child, found)
     if child.layoutIndex and child.PostAddButtonCallback then found[#found + 1] = child end
 end
@@ -110,6 +160,14 @@ local function MicroButtonList()
     end
     local help = HelpMicroButton()
     if help then found[#found + 1] = help end
+    local book = SpellbookMicroButton()
+    if book then
+        local at = 1
+        for i, button in ipairs(found) do
+            if button == _G.CharacterMicroButton then at = i + 1 break end
+        end
+        table.insert(found, at, book)
+    end
     microButtons = found
     return found
 end
@@ -140,7 +198,7 @@ local MICRO_HIDE = {
     CharacterMicroButton = "hideMicroCharacter", SpellbookMicroButton = "hideMicroSpellbook",
     TalentMicroButton = "hideMicroTalents", ProfessionMicroButton = "hideProfessionsButton",
     QuestLogMicroButton = "hideMicroQuestLog", ForeverClassicUIWorldMapMicroButton = "hideMicroWorldMap",
-    ForeverClassicUIHelpMicroButton = "hideMicroHelp",
+    ForeverClassicUIHelpMicroButton = "hideMicroHelp", ForeverClassicUISpellbookMicroButton = "hideMicroSpellbook",
     GuildMicroButton = "hideMicroGuild", LFDMicroButton = "hideMicroGroupFinder",
     CollectionsMicroButton = "hideMicroCollections", MainMenuMicroButton = "hideMicroGameMenu",
     PlayerSpellsMicroButton = "hideMicroTalents", AchievementMicroButton = "hideMicroAchievements",
@@ -194,7 +252,7 @@ local MICRO_TIPS = {
     CharacterMicroButton = "NEWBIE_TOOLTIP_CHARACTER", SpellbookMicroButton = "NEWBIE_TOOLTIP_SPELLBOOK",
     TalentMicroButton = "NEWBIE_TOOLTIP_TALENTS", QuestLogMicroButton = "NEWBIE_TOOLTIP_QUESTLOG",
     ForeverClassicUIWorldMapMicroButton = "NEWBIE_TOOLTIP_WORLDMAP", GuildMicroButton = "NEWBIE_TOOLTIP_GUILDTAB",
-    ForeverClassicUIHelpMicroButton = "NEWBIE_TOOLTIP_HELP",
+    ForeverClassicUIHelpMicroButton = "NEWBIE_TOOLTIP_HELP", ForeverClassicUISpellbookMicroButton = "NEWBIE_TOOLTIP_SPELLBOOK",
     LFDMicroButton = "NEWBIE_TOOLTIP_LFGPARENT", CollectionsMicroButton = "NEWBIE_TOOLTIP_MOUNTS_AND_PETS",
     AchievementMicroButton = "NEWBIE_TOOLTIP_ACHIEVEMENT",
     EJMicroButton = "NEWBIE_TOOLTIP_ENCOUNTER_JOURNAL", HousingMicroButton = "NEWBIE_TOOLTIP_HOUSING",

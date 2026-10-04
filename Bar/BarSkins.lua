@@ -19,6 +19,7 @@ local MICRO_ART = {
     -- and the world map button are ours: Forever's picture redrawn at the old size, and BandMicro's.
     LegacyMicroButton = "Achievement", ProfessionMicroButton = "Professions",
     ForeverClassicUIWorldMapMicroButton = "World", ForeverClassicUIHelpMicroButton = "Help",
+    ForeverClassicUISpellbookMicroButton = "Spellbook",
 }
 -- The classic sheets are 32x64; Era draws the lower 41 rows into its 29x37 buttons.
 local MICRO_CROP = 23 / 64
@@ -297,6 +298,7 @@ local MICRO_WINDOWS = {
     MainMenuMicroButton = { "GameMenuFrame", "SettingsPanel", "KeyBindingFrame", "MacroFrame" },
     ForeverClassicUIWorldMapMicroButton = { "WorldMapFrame" },
     ForeverClassicUIHelpMicroButton = { "HelpFrame" },
+    ForeverClassicUISpellbookMicroButton = { "ForeverClassicUISpellBook" },
 }
 -- The client's one window for spells and talents, where ours is not on.
 local SHARED = { SpellbookMicroButton = true, TalentMicroButton = true, PlayerSpellsMicroButton = true }

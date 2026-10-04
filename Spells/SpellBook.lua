@@ -1878,6 +1878,10 @@ local function TakeButton(on)
 end
 
 local BIND_NAME = "ForeverClassicUISpellBookBind"
+-- The book's secure toggle by name, for a pad's macro (retail's spellbook micro button); nil while the book is off.
+function ns.BookClickName()
+    return active and _G[BIND_NAME] ~= nil and BIND_NAME or nil
+end
 local bindButton
 -- The professions key and micro button: our layer down first (our code cannot in a fight), then the client's opener; the
 -- book then goes as a client window replaces ours.
