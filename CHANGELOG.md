@@ -12,6 +12,16 @@ All notable changes to ClassicUI Forever are documented here.
   - Background under Legacy window: each tree's Era talent art, or parchment, marble or stone.
 - `/fcui legacy` opens the classic Legacy window.
 
+## [0.20.4] - 2026-10-04
+
+### Added
+- Class colored health and Class colored name box, under Unit frames, are picked per frame: Player, Target and Focus in a drop-down under each option. All three are checked, so each option colors every frame as before; uncheck one to leave that frame as it was. The target can wear its class color while your own frame stays green.
+- Name box color, under Unit frames: which frames' name box takes the game's color for the unit, blue for a friendly player and red for an enemy. Target and Focus are checked and Player is not, as in Classic Era. Uncheck Target for a plain name box there, or check Player to color your own.
+
+### Fixed
+- Thick health bars in the style over the name: the player frame's name box no longer shows behind the bar. The target and focus frames already hid theirs.
+- Unchecking Class colored name box puts the game's own color back on the target's and focus's name box at once. They stayed class colored until the target changed.
+
 ## [0.20.3] - 2026-10-04
 
 ### Changed

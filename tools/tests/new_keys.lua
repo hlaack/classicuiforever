@@ -4,6 +4,15 @@
 -- luacheck: std lua54
 return {
     hideThreatGlow = "same for everyone: opt-in, off by default",
+    nameBoxPlayer = "same for everyone: off by default; the player's name box stays plain as in 1.x unless picked",
+    nameBoxTarget = "same for everyone: on by default, the game's color on the target's name box as before; unchecked makes it plain",
+    nameBoxFocus = "same for everyone: on by default, the game's color on the focus's name box as before; unchecked makes it plain",
+    classColorNamesPlayer = "same for everyone: on by default under Class colored name box, which colors every frame as before; unchecked leaves that frame the game's color",
+    classColorNamesTarget = "same for everyone: on by default under Class colored name box, which colors every frame as before; unchecked leaves that frame the game's color",
+    classColorNamesFocus = "same for everyone: on by default under Class colored name box, which colors every frame as before; unchecked leaves that frame the game's color",
+    classColorHealthPlayer = "same for everyone: on by default under Class colored health, which colors every frame as before; unchecked leaves that frame green",
+    classColorHealthTarget = "same for everyone: on by default under Class colored health, which colors every frame as before; unchecked leaves that frame green",
+    classColorHealthFocus = "same for everyone: on by default under Class colored health, which colors every frame as before; unchecked leaves that frame green",
     plainQuestItems = "same for everyone: opt-in, off by default",
     plainNumbers = "same for everyone: mirrors the game's own setting, which only the player changes",
     hideMicroShop = "same for everyone: opt-in, off by default; the classic bar never shows the shop",

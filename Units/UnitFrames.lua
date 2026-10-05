@@ -263,13 +263,24 @@ end
 
 -- The client writes no name for your own character with UnitSurnameOwn at 0 and no surname part
 -- (NameUtil.GetUnitFirstName), and "Unknown" before names load: filled from UnitName, never over a real name.
--- The enemy health colour picked in the options: shown bars refilled.
-function ns.SetEnemyHealthColor(key, value)
-    ns.db[key] = value
+local function RefillHealth()
     for _, entry in pairs(UF.frames) do
         if entry.health and entry.unit and UnitExists(entry.unit) then ns.SetHealth(entry.health, entry.unit) end
     end
 end
+
+-- The enemy health colour picked in the options: shown bars refilled.
+function ns.SetEnemyHealthColor(key, value)
+    ns.db[key] = value
+    RefillHealth()
+end
+
+-- Class colored health turned, or a frame picked under it: at once, in a fight too (the options pass waits one out).
+local CLASS_HEALTH = { classColorHealth = true, classColorHealthPlayer = true, classColorHealthTarget = true,
+    classColorHealthFocus = true }
+ns.OnToggle(function(key)
+    if CLASS_HEALTH[key] and UF.active then RefillHealth() end
+end)
 
 -- The name size picked in the options.
 function ns.SetUnitNameSize(value)

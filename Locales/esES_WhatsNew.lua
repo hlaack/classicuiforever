@@ -3,6 +3,12 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
+L["WN26_1_TITLE"] = "Colores de clase por marco"
+L["WN26_1_TEXT"] = "Salud con color de clase y Recuadro de nombre con color de clase están desactivadas por defecto; actívalas en las opciones (/fcui), en Marcos de unidad. Cada una tiene ahora debajo un desplegable de marcos: Jugador, Objetivo y Foco, así el objetivo puede llevar su color de clase mientras tu propio marco sigue como estaba."
+L["WN26_2_TITLE"] = "Color del recuadro de nombre"
+L["WN26_2_TEXT"] = "Un nuevo desplegable Color del recuadro de nombre, en Marcos de unidad, elige en qué marcos el recuadro de nombre toma el color del juego para la unidad (azul para un jugador amistoso). Objetivo y Foco están marcados, como en Classic Era; desmarca uno para un recuadro sin color. Jugador está desactivado por defecto; actívalo en las opciones (/fcui) para colorear el tuyo."
+L["WN26_3_TITLE"] = "Correcciones"
+L["WN26_3_TEXT"] = "Con la barra de salud gruesa sobre el nombre, el recuadro de nombre del marco del jugador ya no se ve detrás de la barra. Al desmarcar el recuadro de nombre con color de clase, el color desaparece del objetivo y del foco al instante."
 L["WN25_1_TITLE"] = "Grifos"
 L["WN25_1_TEXT"] = "Los grifos se guardan ahora con el diseño del modo de edición, como las piezas propias del juego: cada diseño conserva sus propios lugares para ellos, y Guardar en un diseño predefinido del juego pide un diseño nuevo, que los recibe. Un movimiento sin guardar se descarta al cerrar el modo de edición. El diseño clásico de las opciones los devuelve a los extremos de la barra."
 L["WN24_1_TITLE"] = "Bolsas"

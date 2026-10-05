@@ -2,6 +2,12 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN26_1_TITLE"] = "Class colors per frame"
+L["WN26_1_TEXT"] = "Class colored health and Class colored name box are off by default; turn them on in the options (/fcui), under Unit frames. Each now has a Frames drop-down under it: Player, Target and Focus, so the target can wear its class color while your own frame stays as it was."
+L["WN26_2_TITLE"] = "Name box color"
+L["WN26_2_TEXT"] = "A new Name box color drop-down under Unit frames picks which frames' name box takes the game's color for the unit (blue for a friendly player). Target and Focus are checked, as in Classic Era; uncheck one for a plain box. Player is off by default; turn it on in the options (/fcui) to color your own."
+L["WN26_3_TITLE"] = "Fixes"
+L["WN26_3_TEXT"] = "With thick health over the name, the player frame's name box no longer shows behind the bar. Unchecking the class colored name box clears it from the target and focus at once."
 L["WN25_1_TITLE"] = "Gryphons"
 L["WN25_1_TEXT"] = "The gryphons are now saved with the edit mode layout, like the game's own pieces: each layout keeps its own places for them, and Save on a game preset asks for a new layout, which takes them. A move left unsaved is dropped when edit mode closes. The classic layout in the options puts them back on the ends of the bar."
 L["WN24_1_TITLE"] = "Bags"
