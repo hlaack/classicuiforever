@@ -33,6 +33,8 @@ return {
     characterMinimapButton = "same for everyone: opt-in, off by default; no icon as before",
     spellbookMinimapButton = "same for everyone: opt-in, off by default; no icon as before",
     talentsMinimapButton = "same for everyone: opt-in, off by default; no icon as before",
+    legacyWindow = "on for everyone, as the talents window: the classic Legacy window in place of the game's",
+    legacyBackground = "same for everyone: each tree's Era talent art; it only applies with the classic Legacy window",
     professionsMinimapButton = "same for everyone: opt-in, off by default; no icon as before",
     questLogMinimapButton = "same for everyone: opt-in, off by default; no icon as before",
     worldMapMinimapButton = "same for everyone: opt-in, off by default; no icon as before",

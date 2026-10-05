@@ -60,6 +60,8 @@ ns.DB_DEFAULTS = {
     trainer = true,
     tradeSkillSearch = true,
     talents = true,
+    legacyWindow = true,
+    legacyBackground = "era",
     professionTabs = false,
     whoTabs = false,
     whoColumn = "zone",
@@ -236,7 +238,7 @@ ns.MODULE_ORDER = {
     "fullPlates", "classicFonts", "questTracker", "hideObjectiveTracker", "questWatch", "questLog", "questLogDual", "questLevels", "questMapPane", "panels", "worldMap", "lootWindow", "classicChat", "lootRoll",
     "guildRoster", "whoList", "groupFinder", "hideLastNames", "mapFade", "oneBag", "bags", "characterSheet", "statPanes",
     "spellBook", "spellBookTopRank", "spellBookSearch", "professionsBook", "tradeSkillSearch", "tradeSkill",
-    "trainer", "talents", "options", "gameMenu", "tooltips", "clientMenus", "settingsPanel", "damageMeter", "gameArt",
+    "trainer", "talents", "legacyWindow", "options", "gameMenu", "tooltips", "clientMenus", "settingsPanel", "damageMeter", "gameArt",
 }
 
 -- Reload-only toggles per direction with popup text; unlisted apply live. Owed for art or anchors left on client frames,
@@ -258,6 +260,8 @@ ns.RELOAD_KEYS = {
     spellBook = { off = L["CORE_THE_GAME_S_OWN_SPELLBOOK"] },
     -- The micro button's click is handed back by our SetScript, so it runs tainted (Talents TakeButton).
     talents = { off = L["CORE_THE_TALENTS_BUTTON_OPENS_THE"] },
+    -- Same for the Legacy button's click (Legacy/LegacyWindow.lua TakeButton).
+    legacyWindow = { off = L["CORE_LEGACY_BUTTON_OPENS_THE"] },
     -- Same for QuestLogMicroButton's click (QuestLog Restore).
     questLog = { off = L["CORE_THE_QUEST_LOG_BUTTON_OPENS"] },
     -- ToggleGuildFrame stays our wrapper once taken (Guild WrapGuildToggle).

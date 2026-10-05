@@ -170,24 +170,72 @@ local function Build()
     return frame
 end
 
--- The Legacy system needs its trees' configs; a client without them has no Legacy window.
+-- Forever's Legacy system, with its trees' configs; retail has the same tree calls but no Legacy system.
 local function Supported()
-    return type(C_Traits) == "table" and type(C_Traits.GetConfigIDByTreeID) == "function"
+    return ns.OnForever() and type(C_Traits) == "table" and type(C_Traits.GetConfigIDByTreeID) == "function"
         and type(C_Traits.GetTreeNodes) == "function"
 end
 
--- Opens or closes the window; false when this client or session cannot show it (said in chat).
+local active = false
+
+local function Toggle()
+    Build()
+    frame:SetShown(not frame:IsShown())
+end
+
+-- The Legacy micro button opens this window while on, and the minimap icon with it (it presses the button). Its own
+-- click goes back on turn-off, run in our name until a reload (RELOAD_KEYS).
+local MICRO = "LegacyMicroButton"
+local microClick, taken
+local function TakeButton(on)
+    local button = _G[MICRO]
+    if taken == on or not (button and button.GetScript) then return end
+    taken = on
+    if on then
+        if microClick == nil then microClick = button:GetScript("OnClick") or false end
+        button:SetScript("OnClick", function()
+            if KeybindFrames_InQuickKeybindMode and KeybindFrames_InQuickKeybindMode() then return end
+            Toggle()
+        end)
+    elseif microClick then
+        button:SetScript("OnClick", microClick)
+    end
+end
+
+-- The game's Legacy key opens this window too.
+local key = ns.WindowKey("ClassicUIForeverLegacyBind", "TOGGLELEGACYSYSTEM", Toggle, "legacy")
+
+local function Apply()
+    if not Supported() then return end
+    active = true
+    TakeButton(true)
+    key:Set(true)
+end
+
+local function Restore()
+    active = false
+    TakeButton(false)
+    key:Set(false)
+    if frame and frame:IsShown() then frame:Hide() end
+end
+
+-- The gamepad cannot navigate our windows (Core/Gamepad.lua): with it on at login the game's window stays.
+ns.RegisterModule("legacyWindow", { apply = Apply, restore = Restore, padLogin = true })
+
+-- Opens or closes the window (/fcui legacy); false when this client or session cannot show it (said in chat).
 function ns.ToggleLegacy()
     if not Supported() then
         ns.Print(L["CHAT_LEGACY_NOT_HERE"])
         return false
     end
-    -- The gamepad cannot navigate our windows (Core/Gamepad.lua).
     if ns.padSession then
         ns.Print(L["CHAT_LEGACY_NO_GAMEPAD"])
         return false
     end
-    Build()
-    frame:SetShown(not frame:IsShown())
+    if not active then
+        ns.Print(L["CHAT_LEGACY_OFF"])
+        return false
+    end
+    Toggle()
     return true
 end

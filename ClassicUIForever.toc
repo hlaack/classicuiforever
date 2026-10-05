@@ -66,6 +66,7 @@ UI\EditModeLook.lua
 UI\ClientDialogs.lua
 UI\ListPieces.lua
 UI\DividerBar.lua
+UI\WindowKey.lua
 UI\Menus.lua
 UI\ClientMenus.lua
 UI\Escape.lua

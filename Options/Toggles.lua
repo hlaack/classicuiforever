@@ -258,6 +258,13 @@ if not ns.ENGLISH_CLIENT then
     for _, row in ipairs(ENGLISH_ROWS) do ns.TOGGLES[#ns.TOGGLES + 1] = row end
 end
 
+-- Forever's Legacy system, after Talents; retail has none.
+local FOREVER_ROWS = {
+    talents = {
+        { "legacyWindow", L["OPT_legacyWindow"], L["OPT_legacyWindow_TIP"], search = "legacy points perks tree challenges rewards track" },
+    },
+}
+
 -- Retail's adventure guide and housing buttons, in the micro lists after Collections; Forever holds both off itself.
 local RETAIL_ROWS = {
     hideMicroCollections = {
@@ -275,9 +282,10 @@ local RETAIL_ROWS = {
             drop = true },
     },
 }
-if not ns.OnForever() then
+do
+    local extra = ns.OnForever() and FOREVER_ROWS or RETAIL_ROWS
     for i = #ns.TOGGLES, 1, -1 do
-        local rows = RETAIL_ROWS[ns.TOGGLES[i][1]]
+        local rows = extra[ns.TOGGLES[i][1]]
         for n = #(rows or {}), 1, -1 do table.insert(ns.TOGGLES, i + 1, rows[n]) end
     end
 end

@@ -2,6 +2,16 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [Unreleased]
+
+### Added
+- Legacy window under Character and spells, on WoW Forever: the Legacy system in the old talent window's look, opened by the Legacy button, its minimap icon and the Legacy key. On by default.
+  - Legacy Tree: Professions, Adventure and Resourcefulness as the window's foot tabs, the perks as classic talent buttons with rank plates and arrows. Click to stage a point, Apply Changes to keep it.
+  - Challenges: the challenge categories as folding headers in Classic Era's trade skill list, with each challenge's Legacy Points, a filter for completed ones, and the picked challenge's steps below.
+  - Reward Track: each milestone's rewards in Classic's quest reward buttons, and a bar to the next one.
+  - Background under Legacy window: each tree's Era talent art, or parchment, marble or stone.
+- `/fcui legacy` opens the classic Legacy window.
+
 ## [0.20.3] - 2026-10-04
 
 ### Changed
