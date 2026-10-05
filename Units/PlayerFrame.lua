@@ -181,10 +181,12 @@ end
 
 local function KeepClassBand()
     if not UF.active or not nameBg or not On("player") then return end
+    -- Thick health over the name: the bar stands on the name box, which stays unseen (a vertex color carries its alpha).
+    local alpha = UF.Thick("player") == "name" and 0 or 1
     local cr, cg, cb = ns.NameBoxColor("player")
     if cr then
         SetShownIf(nameBg, true)
-        SetVertexColorIf(nameBg, cr, cg, cb, 1)
+        SetVertexColorIf(nameBg, cr, cg, cb, alpha)
         return
     end
     if not classBand then
@@ -203,7 +205,7 @@ local function KeepClassBand()
     if shown then
         -- Its colour without its alpha: a texture's alpha is its vertex alpha, and the strip's is ours at 0.
         local r, g, b = classBand:GetVertexColor()
-        SetVertexColorIf(nameBg, r, g, b, 1)
+        SetVertexColorIf(nameBg, r, g, b, alpha)
     end
 end
 
