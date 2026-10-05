@@ -33,9 +33,12 @@ local env = setmetatable({
     nameBg = box,
     classBand = band,
     ns = {
+        db = {},
         NameBoxColor = function() if nameColor then return 0.9, 0.8, 0.7 end end,
         SetAlphaIf = function() end,
+        AnySecret = function() return false end,
     },
+    UnitSelectionColor = function() return 0, 0, 1, 1 end,
     SetShownIf = function(region, shown) region.shown = shown end,
     SetVertexColorIf = function(region, r, g, b, a) region.r, region.alpha = r, a end,
 }, { __index = _G })
@@ -57,6 +60,22 @@ Check(box.alpha == 1, "thick health over the mana: the name box shows as before"
 thick = nil
 Keep()
 Check(box.shown and box.alpha == 1 and box.r == 0.2, "regular bars: the box in the game's band color")
+
+-- Player picked under Name box color: the game's color for you (blue), as the target frame shows it; unpicked is
+-- 1.x's plain box.
+band.shown = false
+Keep()
+Check(not box.shown, "the option off, no band of the game's: no box, as in 1.x")
+env.ns.db.nameBoxPlayer = true
+Keep()
+Check(box.shown and box.r == 0 and box.alpha == 1, "the option on: the box in the game's color for you")
+nameColor = true
+Keep()
+Check(box.r == 0.9, "class colored name box on too: the class color wins")
+nameColor = false
+thick = "name"
+Keep()
+Check(box.alpha == 0, "thick health over the name: unseen whatever colors it")
 
 if failed > 0 then
     print(failed .. " check(s) failed")

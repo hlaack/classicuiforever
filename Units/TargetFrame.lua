@@ -91,6 +91,7 @@ end
 -- The game colours the name box only as the unit changes (its CheckFaction): grey on a tapped mob, else the unit's
 -- selection colour. Ours taken off puts that back at once.
 local classBoxed = setmetatable({}, { __mode = "k" })   -- frame -> its name box wears a class colour of ours
+local NAME_BOX = { target = "nameBoxTarget", focus = "nameBoxFocus" }
 local function GameBoxColor(box, unit)
     local controlled, denied = UnitPlayerControlled(unit), UnitIsTapDenied(unit)
     if ns.AnySecret(controlled, denied) then return end
@@ -127,10 +128,12 @@ local function ApplyClassification(frame)
     UF.LayBars(frame, style)
     if entry.power then entry.power:SetAlpha(minus and 0 or 1) end
     if entry.bg and minus then entry.bg:SetSize(BAR_W, 12) end
-    if main and main.ReputationColor then SetShownIf(main.ReputationColor, not minus and style ~= "name") end
     if main then UF.NameFont(main.Name) end
     local box = main and main.ReputationColor
     local r, g, b = ns.NameBoxColor(entry.unit)
+    -- Unchecked under Name box color: plain, as the player frame's is, unless a class color of ours stands in it.
+    local plain = not r and ns.db[NAME_BOX[entry.unit]] == false
+    if box then SetShownIf(box, not minus and style ~= "name" and not plain) end
     if box and r then
         ns.SetVertexColorIf(box, r, g, b, 1)
         classBoxed[frame] = true

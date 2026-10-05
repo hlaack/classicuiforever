@@ -184,6 +184,11 @@ local function KeepClassBand()
     -- Thick health over the name: the bar stands on the name box, which stays unseen (a vertex color carries its alpha).
     local alpha = UF.Thick("player") == "name" and 0 or 1
     local cr, cg, cb = ns.NameBoxColor("player")
+    -- Picked under Name box color: the game's own color for you, as the target frame's box shows it (1.x: plain).
+    if not cr and ns.db.nameBoxPlayer == true then
+        local r, g, b = UnitSelectionColor("player")
+        if r ~= nil and not ns.AnySecret(r, g, b) then cr, cg, cb = r, g, b end
+    end
     if cr then
         SetShownIf(nameBg, true)
         SetVertexColorIf(nameBg, cr, cg, cb, alpha)

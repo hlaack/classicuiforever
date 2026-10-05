@@ -55,12 +55,11 @@ players.target = true
 local box = {}
 local tapped, controlled = false, true
 local frame = { }
+ns.AnySecret = function() return false end
+ns.SetVertexColorIf = function(region, r, g, b) region.r, region.g, region.b = r, g, b end
 local env2 = setmetatable({
-    ns = {
-        NameBoxColor = ns.NameBoxColor,
-        AnySecret = function() return false end,
-        SetVertexColorIf = function(region, r, g, b) region.r, region.g, region.b = r, g, b end,
-    },
+    ns = ns,
+    SetShownIf = function(region, shown) region.shown = shown end,
     UnitPlayerControlled = function() return controlled end,
     UnitIsTapDenied = function() return tapped end,
     UnitSelectionColor = function() return 0, 0, 1, 1 end,
@@ -69,7 +68,7 @@ local env2 = setmetatable({
 -- The two locals above the frame pass, and its name box lines as one function.
 local body = Cut("/Units/TargetFrame.lua", "local classBoxed = ", "local function ApplyClassification")
 local lines = Cut("/Units/TargetFrame.lua", "    local box = main and main.ReputationColor", "    -- CastBars reads this")
-local Pass = assert(load(body .. "\nreturn function(frame, entry, main)\n" .. lines .. "\nend", "target name box", "t", env2))()
+local Pass = assert(load(body .. "\nreturn function(frame, entry, main, minus, style)\n" .. lines .. "\nend", "target name box", "t", env2))()
 local main = { ReputationColor = box }
 local entry = { unit = "target" }
 
@@ -91,6 +90,27 @@ ns.db.classColorNamesTarget = false
 tapped, controlled = true, false
 Pass(frame, entry, main)
 Check(box.r == 0.5 and box.g == 0.5 and box.b == 0.5, "taken off on a tapped mob: the game's grey")
+
+------------------------------------------------------------------ Name box color: the game's color per frame
+
+tapped, controlled = false, true
+ns.db = {}
+Pass(frame, entry, main)
+Check(box.shown == true, "Target picked (the default, as Classic Era): the game's colored box shows")
+ns.db.nameBoxTarget = false
+Pass(frame, entry, main)
+Check(box.shown == false, "Target unchecked: no colored box, plain as the player frame's")
+ns.db.classColorNames = true
+Pass(frame, entry, main)
+Check(box.shown == true and box.r == 0.5, "a class color of ours still shows there")
+ns.db.classColorNames = false
+Pass(frame, entry, main)
+Check(box.shown == false, "and the box is plain again once the class color goes")
+ns.db.nameBoxTarget = true
+Pass(frame, entry, main, false, "name")
+Check(box.shown == false, "thick health over the name: hidden whatever is picked")
+Pass({}, { unit = "focus" }, main)
+Check(box.shown == true, "the focus frame follows its own pick")
 
 if failed > 0 then
     print(failed .. " check(s) failed")

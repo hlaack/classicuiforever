@@ -96,6 +96,7 @@ ns.DB_DEFAULTS = {
     thickHealthPlayer = true, thickHealthTarget = true, thickHealthFocus = true, thickEnemyColor = "green",
     classColorNames = false,
     classColorNamesPlayer = true, classColorNamesTarget = true, classColorNamesFocus = true,
+    nameBoxPlayer = false, nameBoxTarget = true, nameBoxFocus = true,
     profBookBig = false,
     tradeSkillFull = false,
     reagentBagSlot = false,
