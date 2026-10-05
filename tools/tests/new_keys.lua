@@ -4,6 +4,9 @@
 -- luacheck: std lua54
 return {
     hideThreatGlow = "same for everyone: opt-in, off by default",
+    classColorNamesPlayer = "same for everyone: on by default under Class colored name box, which colors every frame as before; unchecked leaves that frame the game's color",
+    classColorNamesTarget = "same for everyone: on by default under Class colored name box, which colors every frame as before; unchecked leaves that frame the game's color",
+    classColorNamesFocus = "same for everyone: on by default under Class colored name box, which colors every frame as before; unchecked leaves that frame the game's color",
     classColorHealthPlayer = "same for everyone: on by default under Class colored health, which colors every frame as before; unchecked leaves that frame green",
     classColorHealthTarget = "same for everyone: on by default under Class colored health, which colors every frame as before; unchecked leaves that frame green",
     classColorHealthFocus = "same for everyone: on by default under Class colored health, which colors every frame as before; unchecked leaves that frame green",

@@ -197,9 +197,14 @@ function ns.HealthColor(unit)
     return 0, 1, 0
 end
 
--- A player's class colour for the name box (option), or nil: NPCs and hidden units keep the client's.
+-- A player's class colour for the name box (option, each frame picked under it), or nil: NPCs and hidden units
+-- keep the client's.
+local NAME_FRAMES = { player = "classColorNamesPlayer", target = "classColorNamesTarget", focus = "classColorNamesFocus" }
 function ns.NameBoxColor(unit)
-    if not (ns.db and ns.db.classColorNames == true and unit) then return nil end
+    local db = ns.db
+    if not (db and db.classColorNames == true and unit) then return nil end
+    local key = NAME_FRAMES[unit]
+    if key and db[key] == false then return nil end
     local isPlayer = UnitIsPlayer(unit)
     if IsSecret(isPlayer) or not isPlayer then return nil end
     local _, class = UnitClass(unit)

@@ -88,6 +88,21 @@ local function ForcedElite(unit, classification)
     return FORCED[classification] or classification
 end
 
+-- The game colours the name box only as the unit changes (its CheckFaction): grey on a tapped mob, else the unit's
+-- selection colour. Ours taken off puts that back at once.
+local classBoxed = setmetatable({}, { __mode = "k" })   -- frame -> its name box wears a class colour of ours
+local function GameBoxColor(box, unit)
+    local controlled, denied = UnitPlayerControlled(unit), UnitIsTapDenied(unit)
+    if ns.AnySecret(controlled, denied) then return end
+    if not controlled and denied then
+        ns.SetVertexColorIf(box, 0.5, 0.5, 0.5, 1)
+        return
+    end
+    local r, g, b = UnitSelectionColor(unit)
+    if r == nil or ns.AnySecret(r, g, b) then return end
+    ns.SetVertexColorIf(box, r, g, b, 1)
+end
+
 local function ApplyClassification(frame)
     local entry = UF.frames[frame]
     if not entry or not UF.active then return end
@@ -114,8 +129,15 @@ local function ApplyClassification(frame)
     if entry.bg and minus then entry.bg:SetSize(BAR_W, 12) end
     if main and main.ReputationColor then SetShownIf(main.ReputationColor, not minus and style ~= "name") end
     if main then UF.NameFont(main.Name) end
+    local box = main and main.ReputationColor
     local r, g, b = ns.NameBoxColor(entry.unit)
-    if r and main and main.ReputationColor then ns.SetVertexColorIf(main.ReputationColor, r, g, b, 1) end
+    if box and r then
+        ns.SetVertexColorIf(box, r, g, b, 1)
+        classBoxed[frame] = true
+    elseif box and classBoxed[frame] then
+        classBoxed[frame] = nil
+        GameBoxColor(box, entry.unit)
+    end
     -- CastBars reads this to drop the spell bar.
     frame.haveElite = (classification == "elite" or classification == "worldboss" or classification == "rare" or classification == "rareelite") or nil
 end
