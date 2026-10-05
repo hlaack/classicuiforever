@@ -3,6 +3,12 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN26_1_TITLE"] = "Colori di classe per riquadro"
+L["WN26_1_TEXT"] = "Salute col colore della classe e Riquadro del nome col colore della classe sono disattivate di base; attivale nelle opzioni (/fcui), in Riquadri delle unità. Ognuna ha ora sotto un menu dei riquadri: Giocatore, Bersaglio e Focus, così il bersaglio può portare il colore della sua classe mentre il tuo riquadro resta com'era."
+L["WN26_2_TITLE"] = "Colore del riquadro del nome"
+L["WN26_2_TEXT"] = "Un nuovo menu Colore del riquadro del nome, in Riquadri delle unità, sceglie in quali riquadri il riquadro del nome prende il colore del gioco per l'unità (blu per un giocatore amico). Bersaglio e Focus sono spuntati, come in Classic Era; togli la spunta per un riquadro senza colore. Giocatore è disattivato di base; attivalo nelle opzioni (/fcui) per colorare il tuo."
+L["WN26_3_TITLE"] = "Correzioni"
+L["WN26_3_TEXT"] = "Con la barra della salute spessa sopra il nome, il riquadro del nome del giocatore non si vede più dietro la barra. Togliendo la spunta al riquadro del nome col colore della classe, il colore sparisce subito dal bersaglio e dal focus."
 L["WN25_1_TITLE"] = "Grifoni"
 L["WN25_1_TEXT"] = "I grifoni ora vengono salvati con il layout della modalità modifica, come gli elementi del gioco: ogni layout mantiene i propri posti per loro, e Salva su un layout predefinito del gioco chiede un nuovo layout, che li riceve. Uno spostamento non salvato viene scartato alla chiusura della modalità modifica. Il layout classico nelle opzioni li riporta alle estremità della barra."
 L["WN24_1_TITLE"] = "Borse"

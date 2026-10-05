@@ -3,6 +3,12 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN26_1_TITLE"] = "Klassenfarben je Fenster"
+L["WN26_1_TEXT"] = "Gesundheit in Klassenfarbe und Namensfeld in Klassenfarbe sind standardmäßig aus; schalte sie in den Optionen (/fcui) unter Einheitenfenster ein. Beide haben jetzt darunter eine Auswahl der Fenster: Spieler, Ziel und Fokus, so kann das Ziel seine Klassenfarbe tragen, während dein eigenes Fenster bleibt, wie es war."
+L["WN26_2_TITLE"] = "Namensfeldfarbe"
+L["WN26_2_TEXT"] = "Eine neue Auswahl Namensfeldfarbe unter Einheitenfenster bestimmt, bei welchen Fenstern das Namensfeld die Farbe des Spiels für die Einheit annimmt (Blau für einen freundlichen Spieler). Ziel und Fokus sind angehakt, wie in Classic Era; ohne Haken bleibt das Feld schlicht. Spieler ist standardmäßig aus; schalte es in den Optionen (/fcui) ein, um dein eigenes zu färben."
+L["WN26_3_TITLE"] = "Korrekturen"
+L["WN26_3_TEXT"] = "Mit der dicken Gesundheitsleiste über dem Namen ist das Namensfeld des Spielerfensters nicht mehr hinter der Leiste zu sehen. Wird das Namensfeld in Klassenfarbe abgewählt, verschwindet die Farbe bei Ziel und Fokus sofort."
 L["WN25_1_TITLE"] = "Greifen"
 L["WN25_1_TEXT"] = "Die Greifen werden jetzt mit dem Layout des Bearbeitungsmodus gespeichert, wie die eigenen Elemente des Spiels: Jedes Layout behält seine eigenen Plätze für sie, und Speichern auf einer Spielvorlage fragt nach einem neuen Layout, das sie übernimmt. Eine nicht gespeicherte Verschiebung wird beim Schließen des Bearbeitungsmodus verworfen. Das klassische Layout in den Optionen setzt sie wieder an die Enden der Leiste."
 L["WN24_1_TITLE"] = "Taschen"
