@@ -173,10 +173,20 @@ local function EnemyColor(unit)
     return pick
 end
 
+-- Class colored health: the player, target and focus frames each picked under the option (on unless unchecked); any
+-- other bar follows the option alone.
+local CLASS_FRAMES = { player = "classColorHealthPlayer", target = "classColorHealthTarget", focus = "classColorHealthFocus" }
+local function ClassColored(unit)
+    local db = ns.db
+    if not (db and db.classColorHealth and unit) then return false end
+    local key = CLASS_FRAMES[unit]
+    return key == nil or db[key] ~= false
+end
+
 function ns.HealthColor(unit)
     local enemy = unit and EnemyColor(unit)
     if enemy then return enemy[1], enemy[2], enemy[3] end
-    if ns.db and ns.db.classColorHealth and unit and UnitIsPlayer then
+    if ClassColored(unit) and UnitIsPlayer then
         local isPlayer = UnitIsPlayer(unit)
         if not IsSecret(isPlayer) and isPlayer then
             local _, class = UnitClass(unit)

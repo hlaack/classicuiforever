@@ -4,6 +4,9 @@
 -- luacheck: std lua54
 return {
     hideThreatGlow = "same for everyone: opt-in, off by default",
+    classColorHealthPlayer = "same for everyone: on by default under Class colored health, which colors every frame as before; unchecked leaves that frame green",
+    classColorHealthTarget = "same for everyone: on by default under Class colored health, which colors every frame as before; unchecked leaves that frame green",
+    classColorHealthFocus = "same for everyone: on by default under Class colored health, which colors every frame as before; unchecked leaves that frame green",
     plainQuestItems = "same for everyone: opt-in, off by default",
     plainNumbers = "same for everyone: mirrors the game's own setting, which only the player changes",
     hideMicroShop = "same for everyone: opt-in, off by default; the classic bar never shows the shop",
