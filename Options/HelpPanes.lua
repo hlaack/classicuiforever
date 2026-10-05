@@ -18,23 +18,56 @@ local function KeyOf(binding)
     return Text and Text(key) or key
 end
 
--- Question, answer, and the answer's values.
+-- The game's own name for the Recent Allies tab.
+local function RecentAllies()
+    local header = _G.FriendsTabHeader
+    local tab = header and header.GetTabButton and header.recentAlliesTabID and header:GetTabButton(header.recentAlliesTabID)
+    return tab and tab:GetText() or _G.CONTACTS_RECENT_ALLIES_TITLE or ""
+end
+
+-- Question, answer, and the answer's values. ask: the question's values (else the addon's name). on = "forever" or
+-- on = "retail": that client's alone.
 local FAQ = {
-    { "FAQ_LFG_Q", "FAQ_LFG_A",
+    { "FAQ_LFG_Q", "FAQ_LFG_A", on = "forever",
         function() return KeyOf("TOGGLEGROUPFINDER"), L["OPT_hideMicroGroupFinder"], L["OPT_hideMicroButtons"] end },
-    { "FAQ_LEGACY_Q", "FAQ_LEGACY_A",
+    -- Retail has no finder tabs on the Who tab.
+    { "FAQ_LFG_Q", "FAQ_LFG_RETAIL_A", on = "retail",
+        function() return KeyOf("TOGGLEGROUPFINDER"), L["OPT_hideMicroGroupFinder"], L["OPT_hideMicroButtons"] end },
+    -- Only Forever has a Legacy button.
+    { "FAQ_LEGACY_Q", "FAQ_LEGACY_A", on = "forever",
         function() return L["OPT_hideMicroLegacy"], L["OPT_hideMicroButtons"], L["OPT_microMinimapButtons"] end },
     { "FAQ_PROFESSIONS_Q", "FAQ_PROFESSIONS_A",
         function() return KeyOf("TOGGLEPROFESSIONBOOK"), L["OPT_hideProfessionsButton"], L["OPT_hideMicroButtons"] end },
     { "FAQ_COLLECTIONS_Q", "FAQ_COLLECTIONS_A",
-        function() return KeyOf("TOGGLECOLLECTIONS"), L["OPT_hideMicroCollections"], L["OPT_hideMicroButtons"] end },
-    { "FAQ_REAGENT_Q", "FAQ_REAGENT_A", function() return L["OPT_reagentBagRound"], L["OPT_reagentBagSlot"] end },
+        function()
+            return L["SKILL_COLLECTIONS"], KeyOf("TOGGLECOLLECTIONS"), L["OPT_hideMicroCollections"], L["OPT_hideMicroButtons"]
+        end },
+    -- Retail's own buttons that leave the micro menu.
+    { "FAQ_RETAILBUTTONS_Q", "FAQ_RETAILBUTTONS_A", on = "retail",
+        function()
+            return L["OPT_hideMicroAchievements"], KeyOf("TOGGLEACHIEVEMENT"), L["OPT_hideMicroJournal"],
+                KeyOf("TOGGLEENCOUNTERJOURNAL"), L["OPT_hideMicroButtons"]
+        end,
+        ask = function() return L["OPT_hideMicroAchievements"], L["OPT_hideMicroJournal"], L["OPT_hideMicroHousing"] end },
+    { "FAQ_QUICKJOIN_Q", "FAQ_QUICKJOIN_A", function()
+        local allies = RecentAllies()
+        return _G.FRIENDS, allies, _G.QUICK_JOIN, allies
+    end, ask = function() return _G.QUICK_JOIN end, on = "retail" },
+    -- Forever's round bag beside the key ring; retail has no key ring, so the bag takes its slot.
+    { "FAQ_REAGENT_Q", "FAQ_REAGENT_A", on = "forever",
+        function() return L["OPT_reagentBagRound"], L["OPT_reagentBagSlot"] end },
+    { "FAQ_REAGENT_Q", "FAQ_REAGENT_RETAIL_A", on = "retail", function() return L["OPT_reagentBagSlot"] end },
     { "FAQ_BARS_Q", "FAQ_BARS_A" },
     { "FAQ_MOVE_Q", "FAQ_MOVE_A", function() return L["UI_CLASSICUI_FOREVER_WINDOWS"] end },
     { "FAQ_SETTING_Q", "FAQ_SETTING_A", function() return L["OPTWIN_TAB_TOGGLES"] end },
-    { "FAQ_FOREVER_Q", "FAQ_FOREVER_A", function() return L["OPTWIN_TAB_TOGGLES"] end },
+    { "FAQ_FOREVER_Q", "FAQ_FOREVER_A", on = "forever", function() return L["OPTWIN_TAB_TOGGLES"] end },
+    { "FAQ_OWNLOOK_Q", "FAQ_OWNLOOK_A", on = "retail", function() return L["OPTWIN_TAB_TOGGLES"] end },
     { "FAQ_OTHER_ADDON_Q", "FAQ_OTHER_ADDON_A" },
 }
+for i = #FAQ, 1, -1 do
+    local on = FAQ[i].on
+    if on and (on == "forever") ~= ns.OnForever() then table.remove(FAQ, i) end
+end
 
 local function Pane(frame, search, list)
     local pane = ns.NewFrame("Frame", nil, frame)
@@ -110,7 +143,12 @@ function O.FaqPane(frame, search, list, setRange)
         local any = false
         for i, item in ipairs(FAQ) do
             local row = rows[i]
-            row.question:SetText(L[item[1]]:format(TITLE))
+            -- Not an and/or: that keeps only ask's first value.
+            if item.ask then
+                row.question:SetText(L[item[1]]:format(item.ask()))
+            else
+                row.question:SetText(L[item[1]]:format(TITLE))
+            end
             row.answer:SetText(item[3] and L[item[2]]:format(item[3]()) or L[item[2]])
             local hit = Matches(row, words)
             row.question:SetShown(hit)

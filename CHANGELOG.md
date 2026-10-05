@@ -2,6 +2,68 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.20.3] - 2026-10-04
+
+### Changed
+- The gryphons are saved with the edit mode layout, as the game's own pieces are. Each layout keeps its own places and sizes for them, picking a layout puts them there, and Save writes them into the active layout. On a game preset (Modern, Classic) Save asks for a new layout's name, and that layout takes them. Leaving edit mode without saving drops the move; it was kept (#126).
+- A gryphon you moved before this version keeps its place on your own layouts until you move and save it there. On the game's presets the gryphons stand on the ends of the bar.
+
+### Fixed
+- Classic layout, in the options, puts the gryphons on the ends of the bar when it sets up or switches to the ClassicUI Forever layout. They stayed wherever they had been moved.
+
+## [0.20.2] - 2026-10-04
+
+### Fixed
+- Open bags no longer jump sideways when an item is equipped by right-click, and no longer stay shifted for the rest of a fight. It could happen with action bars on the right side of the screen.
+
+## [0.20.1] - 2026-10-04
+
+### Fixed
+- Swing timers: changing a weapon in a fight no longer sets off a Lua error on every frame the swing bar shows. The flash as a swing lands keeps working after the change too.
+
+## [0.20.0] - 2026-10-04
+
+### Added
+- Retail: a profession opens in the classic trade skill window: the recipes of the picked expansion, a rank bar, reagent counts across all qualities and the game's Use Best Quality check. Recipes with optional reagents and enchants are made in the game's window, one button away, and a size button beside the close button switches to the game's full window.
+- Retail: the classic professions book, in the spellbook's frame. Its size button switches to the game's two-page book.
+- Retail: a Spellbook button on the micro menu, beside Character, opens the classic spellbook.
+- Retail: the game's talent window wears the classic frame: metal border, old tabs, buttons and drop-down.
+- Retail: Achievements, Adventure Guide and Housing each have an icon on the minimap, on by default. They are under Micro buttons on the minimap, and each can be shown whether or not its button is on the micro menu.
+- Retail: Quick Join is a tab under the Recent Allies list in the social window. Open Friends, then Recent Allies; the Quick Join tab under the list swaps to it and the Recent Allies tab swaps back.
+- Retail's Help tab says where the Quick Join tab and the Achievements, Adventure Guide and Housing buttons went.
+
+### Changed
+- Color themes use far less CPU. The colored art follows the game's art only when something changes; it was checked piece by piece every frame, and opened windows were walked again on a timer.
+- Right-click menus on portraits, bags and windows open without a stutter. The game's menus were searched for among all of its frames, bags were dressed several times per opening, and the talent tree's nodes were walked with every window.
+- The macro window's tabs are Classic Era's.
+- Retail: Achievements, Adventure Guide and Housing are off the micro menu by default, as 1.x had none. Uncheck one under Hide micro buttons to bring it back. An install that already showed the Achievements button keeps it.
+- Retail: Quick Join is off the social window's tab row.
+- The Help tab's questions and What's New list only what applies to the game version you play. A version with nothing new for yours stays silent there.
+- The Help tab's answer on collections names the Collections tab at the foot of the spellbook as a way in.
+
+### Fixed
+- A spell shift-clicked from the classic spellbook into a macro goes in by name and rank, as from the game's book. It went in as a chat link, which a macro cannot cast. A talent shift-clicked from the classic talent window goes in by name too (#124).
+- Shift-clicking a profession in the classic spellbook, to link it or put it in a macro, leaves the spellbook open.
+- The game's drop-down menus, such as the status menu (Available, Away, Busy) and the minimap's tracking menu, have Classic Era's iron frame. 0.18.0 listed this, but those menus kept the plain border.
+- A drop-down menu's border holds its rows' icons, arrows and highlight. On the minimap's tracking menu the icons stood outside it.
+- The tabs under a window stay on its bottom border. At some interface sizes they climbed higher with every update, most of all on the Collections window, where they now also stand clear of the Mount button.
+- Druid: the mana bar shown in forms follows the game's Status Text setting. With it off, the numbers show on hover only; they stayed up.
+- Classic layout carries out every step even when one of them fails, and reports the one that failed. A failing step skipped the rest without a word.
+- Retail: the Talents button opens the game's window on its talents, never on its own spellbook while the classic spellbook is on.
+- Retail: the reputation and currency tabs keep the classic rows: even spacing, the old headers, bars in one column and no doubled bar art. A group of factions has its plus or minus button and its factions indented under it, the filter is a small arrow button at the top right, clear of the transfer log button, and the faction detail box is no longer doubled.
+- Retail: the reagent bag stands in the key ring's old slot at the end of the bags, clear of the latency bar.
+- Retail: no thin lines round the model in the character window, and one Who tab in the social window.
+- Retail: window borders and corners stand where Forever's do.
+
+## [0.19.1] - 2026-10-03
+
+### Fixed
+- Guild roster: clicking a member opens their notes and options for every member. In larger guilds many members opened nothing.
+- Guild roster: far less CPU while it is open. The game's guild window, kept out of sight for member notes, was placed again every frame.
+- Share Quest in the classic quest log works for any quest, right after logging in too. It worked only for quests of the zone the world map last showed, and otherwise said to open the map.
+- An opened letter has the classic window frame, as the inbox does.
+- Character sheet's side panel: no thin see-through line across it at some interface sizes.
+
 ## [0.19.0] - 2026-10-03
 
 ### Added

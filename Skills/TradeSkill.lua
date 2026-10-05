@@ -13,6 +13,7 @@ local REAGENTS_MAX = 8
 local IsSecret = ns.IsSecret
 local SkillList = ns.SkillList
 local EMPTY = ns.EMPTY
+local R = ns.tradeReagents
 
 local selected          -- recipe id
 local collapsed = {}    -- category id -> true
@@ -27,48 +28,23 @@ local DIFFICULTY = {
 
 function ns.TradeSkillActive() return active end
 
--- Bags only: counting the bank offered crafts from materials crafting cannot reach.
-local function ItemCountOf(itemID)
-    if C_Item and C_Item.GetItemCount then return C_Item.GetItemCount(itemID, false, false, false) or 0 end
-    return GetItemCount and GetItemCount(itemID, false) or 0
-end
-
-local function IsBasic(slot)
-    return not Enum or not Enum.CraftingReagentType or slot.reagentType == Enum.CraftingReagentType.Basic
-end
-
--- Basic reagents as { itemID, quantity } (quantity may be 0), nil if the
--- schematic is unreadable. A recipe's needs never change.
+-- A recipe's needs (R.Read) never change; false: unreadable.
 local reagentsOf = {}
-local function ReadReagents(recipeID)
-    local ok, schematic = pcall(C_TradeSkillUI.GetRecipeSchematic, recipeID, false)
-    if not ok or not schematic or not schematic.reagentSlotSchematics then return nil end
-    local list = {}
-    for _, slot in ipairs(schematic.reagentSlotSchematics) do
-        local basic = IsBasic(slot)
-        local reagent = slot.reagents and slot.reagents[1]
-        if basic and reagent and reagent.itemID then
-            list[#list + 1] = { reagent.itemID, slot.quantityRequired or 0 }
-        end
-    end
-    return list
-end
 
--- Craftable count from reagents in bags. The client's numAvailable is empty on
--- this client (no counts, Create grey) and may count the bank: fallback only.
+-- Craftable count from reagents in reach. The client's numAvailable is empty on Forever (no counts, Create grey): fallback only.
 local function Craftable(info)
     if not info or not info.recipeID then return 0 end
     local best = info.numAvailable or 0
     local needs = reagentsOf[info.recipeID]
     if needs == nil then
-        needs = ReadReagents(info.recipeID) or false
+        needs = R.Read(info.recipeID) or false
         reagentsOf[info.recipeID] = needs
     end
     if not needs then return best end
     local count
     for _, need in ipairs(needs) do
         if need[2] > 0 then
-            local makes = math.floor(ItemCountOf(need[1]) / need[2])
+            local makes = math.floor(R.Have(need[3]) / need[2])
             if not count or makes < count then count = makes end
         end
     end
@@ -93,7 +69,8 @@ local function GroupOrder(a, b)
 end
 
 local function RecipeOrder(a, b)
-    local da, db = a.relativeDifficulty or 3, b.relativeDifficulty or 3
+    -- Not learned (retail, on request): after the rest.
+    local da, db = a.learned == false and 4 or a.relativeDifficulty or 3, b.learned == false and 4 or b.relativeDifficulty or 3
     if da ~= db then return da < db end
     return (a.name or "") < (b.name or "")
 end
@@ -107,10 +84,13 @@ local function Collect()
     if not api or not api.GetFilteredRecipeIDs then return end
     local ids = api.GetFilteredRecipeIDs() or {}
     local groups, order, cache = {}, {}, {}
+    -- Retail lists every expansion's recipes: the picked one's only.
+    local era = R.Line()
+    local unlearned = R.Unlearned()
     for _, id in ipairs(ids) do
         local info = api.GetRecipeInfo(id)
         local named = query == "" or (info and type(info.name) == "string" and info.name:lower():find(query, 1, true) ~= nil)
-        if info and info.learned ~= false and named then
+        if info and (info.learned ~= false or unlearned) and named and (not era or api.IsRecipeInSkillLine(id, era.professionID)) then
             local cat = info.categoryID or 0
             local group = groups[cat]
             if not group then
@@ -156,7 +136,7 @@ local function DrawItem(row, line)
     row.text:SetPoint("LEFT", row, "LEFT", 26, 0)
     local name = info.name or ""
     local count = Craftable(info)
-    if count > 0 then name = name .. " [" .. count .. "]" end
+    if count > 0 and info.learned ~= false then name = name .. " [" .. count .. "]" end
     row.text:SetText(name)
     SkillList.Paint(row, info.recipeID == selected, DIFFICULTY[info.relativeDifficulty or 3] or DIFFICULTY[3])
 end
@@ -222,7 +202,7 @@ local function WarmTick(job)
         local list = reagentsOf[id]
         if not list then
             -- Read again after a failed read, but a failure stays Craftable's to record.
-            list = ReadReagents(id)
+            list = R.Read(id)
             if list and reagentsOf[id] == nil then reagentsOf[id] = list end
         end
         for _, need in ipairs(list or EMPTY) do
@@ -287,7 +267,12 @@ UpdateDetail = function()
         local color = requirement.met and "|cffffffff" or "|cffff2020"
         needs[#needs + 1] = color .. (requirement.name or "") .. "|r"
     end
-    if #needs > 0 then
+    -- Not learned: where it comes from, in the requirement line.
+    local source = info.learned == false and api.GetRecipeSourceText and api.GetRecipeSourceText(info.recipeID)
+    if source then
+        detail.requires:SetText(source)
+        detail.requires:Show()
+    elseif #needs > 0 then
         detail.requires:SetText((REQUIRES_LABEL or "Requires:") .. " " .. table.concat(needs, ", "))
         detail.requires:Show()
     else
@@ -305,13 +290,13 @@ UpdateDetail = function()
 
     local shown = 0
     for _, slot in ipairs(schematic and schematic.reagentSlotSchematics or {}) do
-        local basic = IsBasic(slot)
+        local basic = R.IsBasic(slot)
         local reagent = slot.reagents and slot.reagents[1]
         if basic and reagent and reagent.itemID and shown < REAGENTS_MAX then
             shown = shown + 1
             local button = detail.reagents[shown]
             local need = slot.quantityRequired or 1
-            local have = ItemCountOf(reagent.itemID)
+            local have = R.Have(slot)
             button.itemID = reagent.itemID
             button.slotIndex = slot.dataSlotIndex or slot.slotIndex
             button.icon:SetTexture(ItemIcon(reagent.itemID))
@@ -330,9 +315,11 @@ UpdateDetail = function()
     for i = shown + 1, REAGENTS_MAX do detail.reagents[i]:Hide() end
     detail.reagentLabel:SetShown(shown > 0)
 
-    local can = Craftable(info) > 0 and not info.disabled
+    local gameOnly = R.GameOnly(info, schematic)
+    local can = Craftable(info) > 0 and not info.disabled and not gameOnly and info.learned ~= false
     panel.create:SetEnabled(can)
     panel.createAll:SetEnabled(can)
+    if panel.LayRetail then panel.LayRetail(info, schematic, gameOnly) end
 end
 
 -- Whether an item is on the chosen recipe's plates; an unreadable id counts as yes.
@@ -394,7 +381,8 @@ end
 local function Refresh()
     if not panel or not panel:IsShown() then return end
     local api = C_TradeSkillUI
-    local prof = api.GetChildProfessionInfo and api.GetChildProfessionInfo()
+    local era = R.Line()
+    local prof = era or (api.GetChildProfessionInfo and api.GetChildProfessionInfo())
     if not prof or not prof.maxSkillLevel or prof.maxSkillLevel == 0 then
         prof = api.GetBaseProfessionInfo and api.GetBaseProfessionInfo() or prof
     end
@@ -434,6 +422,8 @@ local function Refresh()
         else
             panel.rank.text:SetFormattedText("%d/%d", rank, maxRank)
         end
+        -- Retail: the picked expansion before the rank.
+        if era and era.expansionName then panel.rank.text:SetFormattedText("%s %s", era.expansionName, panel.rank.text:GetText()) end
     end
     UpdateRows()
     UpdateDetail()
@@ -454,7 +444,8 @@ local function Craft(all)
     -- The count runs down as each is made, as the old window's did.
     panel.count:SetNumber(count)
     panel.making = { recipe = info.recipeID, left = count }
-    C_TradeSkillUI.CraftRecipe(info.recipeID, count)
+    local best = panel.best and panel.best:GetChecked()
+    C_TradeSkillUI.CraftRecipe(info.recipeID, count, R.Infos(reagentsOf[info.recipeID] or nil, best))
 end
 
 local CAST_STOPPED = { "UPDATE_TRADESKILL_CAST_STOPPED" }
@@ -676,6 +667,7 @@ local function Build()
     create:SetScript("OnClick", function() Craft(false) end)
     panel.create = create
 
+    if ns.TradeSkillRetailParts then ns.TradeSkillRetailParts(panel, Refresh, SelectedInfo) end
     panel:SetScript("OnShow", Refresh)
     RunWatch()
 
@@ -719,15 +711,22 @@ end
 
 function ns.TradeSkillWindowSize() return WINDOW_W, WINDOW_H end
 
+-- Retail's driver (Skills/TradeSkillRetail.lua) parks the game's page and shows ours itself.
+function ns.TradeSkillPage()
+    if not panel and ProfessionsFrame then Build() end
+    return panel
+end
+
 local function Apply()
     active = true
-    ns.StartProfessionsWatch()
+    if ns.OnForever() then ns.StartProfessionsWatch() end
 end
 
 local function Restore()
     if not active then return end
     active = false
     if panel then panel:Hide() end
+    if not ns.OnForever() then return end
     ns.needsReload = true
     -- The running watch takes a full pass for the face without us.
     ns.StartProfessionsWatch()

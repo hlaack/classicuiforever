@@ -261,6 +261,7 @@ local function CarryMovedCap(cap, key)
     if not (left and top) then return end
     local k = home:GetEffectiveScale() / UIParent:GetEffectiveScale()
     ns.SetWindowPlace(GRYPHON_KEYS[key], left * k, top * k)
+    ns.KeepLayoutSpots()
     ns.PlaceSavedWindows()
 end
 

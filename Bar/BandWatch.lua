@@ -146,6 +146,7 @@ function B.Snapshot()
     MarkRows()
     baseline.micro, baseline.bags = Census()
     MarkStatus()
+    B.sideCalm = B.LiveSideWidth()
 end
 
 local function RowsInFight()
@@ -389,7 +390,7 @@ end
 local scaledWindows = false
 -- How far in from the screen's right edge bags start, beside the right bars (the client does so only for default bars, and
 -- one locked into the classic layout is not); a bar counts by what it is on screen: standing, shown, at the right edge.
-local function SideColumnsWidth()
+local function LiveSideWidth()
     local screenRight = UIParent:GetRight()
     if not screenRight then return 0 end
     local leftmost
@@ -403,6 +404,13 @@ local function SideColumnsWidth()
         end
     end
     return leftmost and math.max(0, screenRight - leftmost) or 0
+end
+B.LiveSideWidth = LiveSideWidth
+-- In a fight the client sends a right bar the layout holds as default to the screen's edge, and it cannot be put back
+-- till the fight ends: what stands beside the bars keeps the width our last pass left (B.Snapshot).
+local function SideColumnsWidth()
+    if B.sideCalm and InCombatLockdown() then return B.sideCalm end
+    return LiveSideWidth()
 end
 B.SideColumnsWidth = SideColumnsWidth
 local function RightColumnsWidth()
@@ -603,14 +611,11 @@ local function DividersAndDialogs(art, editing)
     if not B.dragging and not InCombatLockdown() then KeepBarShape() end
 end
 
--- Edit watch: bag windows and holders every frame, the rest on the hot or 0.25 s beat, edit mode settings on a slower one.
+-- Edit watch: holders every frame, the rest on the hot or 0.25 s beat, edit mode settings on a slower one.
 local function EditTick(elapsed, isHot, editing)
     EditEdge(editing)
-    if B.active then
-        AnchorOpenBags()
-        -- Holders moved or resized by the client (fade ends, managed frame changes): answered on the frame.
-        if not B.applying and B.hot.StatusTrip() then StatusBack() end
-    end
+    -- Holders moved or resized by the client (fade ends, managed frame changes): answered on the frame.
+    if B.active and not B.applying and B.hot.StatusTrip() then StatusBack() end
     -- Time since the last beat, skipped frames included, for the slower beat below.
     elapsed = Due(edit, elapsed, B.hot.BEAT, isHot, "cool")
     if not elapsed then return end
@@ -688,6 +693,9 @@ function B.StartWatch()
         SafeCall(EditTick, elapsed, isHot, live)
         if hot.untilAt ~= untilAt then untilAt = hot.untilAt isHot = GetTime() < untilAt or live end
         SafeCall(PlaceTick, elapsed, isHot)
+        -- Bag windows last, every frame: they stand beside the right bars, read once those are back where we put them
+        -- (an item on the cursor makes the client re-lay a right bar, and the bags followed it for a frame).
+        if B.active then SafeCall(AnchorOpenBags) end
         B.inLane = false
         if layoutMemo.known then ForgetLayout() end
         -- At rest a second: off the frame loop till something wakes it (B.WakeLane, BandSentinel.lua).

@@ -66,9 +66,9 @@ B.OnBandMicro, B.OnBandBags = OnBandMicro, OnBandBags
 
 -- The latency and key ring section at x (spans: B.TailSpan).
 local function Tail(plan, x, afterPost, beforeBags)
-    local u0, u1 = B.TailSpan(afterPost, beforeBags)
+    local u0, u1, slot = B.TailSpan(afterPost, beforeBags)
     if not u0 then return x end
-    plan.tailStart, plan.tailU0, plan.tailU1 = x, u0, u1
+    plan.tailStart, plan.tailU0, plan.tailU1, plan.tailSlot = x, u0, u1, slot
     return x + u1 - u0
 end
 

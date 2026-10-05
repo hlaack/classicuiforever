@@ -2,7 +2,7 @@ local _, ns = ...
 local L = ns.L
 
 ns.DB_DEFAULTS = {
-    dbVersion = 13,
+    dbVersion = 15,
     classicBar = true,
     oneBar = false,
     classicBarSize = false,
@@ -12,7 +12,7 @@ ns.DB_DEFAULTS = {
     hideMicroKeepWidth = false,
     bandHoldsBars = false,
     hideMicroSpread = false,
-    hideMicroAchievements = false, hideMicroLegacy = true,
+    hideMicroAchievements = true, hideMicroLegacy = true,
     hideMicroHelp = false,
     hideMicroCharacter = false,
     hideMicroSpellbook = false,
@@ -22,6 +22,7 @@ ns.DB_DEFAULTS = {
     hideMicroGuild = false,
     hideMicroGroupFinder = true,
     hideMicroCollections = true,
+    hideMicroHousing = true, hideMicroJournal = true,
     hideMicroGameMenu = false,
     hideMicroShop = false,
     oneBag = false,
@@ -94,6 +95,7 @@ ns.DB_DEFAULTS = {
     thickHealthPlayer = true, thickHealthTarget = true, thickHealthFocus = true, thickEnemyColor = "green",
     classColorNames = false,
     profBookBig = false,
+    tradeSkillFull = false,
     reagentBagSlot = false,
     reagentBagRound = false,
     reagentBagHover = true,
@@ -196,7 +198,8 @@ ns.DB_DEFAULTS = {
     characterMinimapButton = false, spellbookMinimapButton = false, talentsMinimapButton = false,
     professionsMinimapButton = false, questLogMinimapButton = false, worldMapMinimapButton = false,
     guildMinimapButton = false, collectionsMinimapButton = false, helpMinimapButton = false,
-    gameMenuMinimapButton = false, shopMinimapButton = false,
+    gameMenuMinimapButton = false, shopMinimapButton = false, housingMinimapButton = true,
+    achievementsMinimapButton = true, journalMinimapButton = true,
     hideMapQuestButton = false,
     lootWindow = true,
     gameMenu = true,

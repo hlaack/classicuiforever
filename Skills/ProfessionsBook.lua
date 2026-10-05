@@ -47,24 +47,39 @@ local BAND_STRIPS = {
     { 380, 432, 390, 442 }, -- First Aid
     { 432, 456, 442, 456 }, -- First Aid foot, squeezed to the book edge
 }
--- The x the client gives a primary card's buttons from its bottom left.
-local CLIENT_BUTTON_X = 15
+-- Retail's book is a window of its own (ProfessionsBookFrame) with the same cards under other names.
+local FOREVER = ns.OnForever()
+-- The x the client gives a primary card's buttons from its left: Forever's from the foot, retail's from our 170's right.
+local CLIENT_BUTTON_X = FOREVER and 15 or 21
 
--- What the client draws on a card, faded (see FadeCard).
-local CARD_ART = { "Background", "ProfessionName", "specialization", "missingHeader", "missingText", "Rank", "icon", "IconBorder" }
+-- What the client draws on a card, faded (see FadeCard); both clients' names.
+local CARD_ART = { "Background", "ProfessionName", "professionName", "specialization", "missingHeader", "missingText", "Rank",
+    "rank", "icon", "IconBorder" }
 
 local SetShownIf = ns.SetShownIf
 
 local rows = {}
 
+-- The window the book stands in.
+function T.Host()
+    if FOREVER then return ProfessionsFrame end
+    return _G.ProfessionsBookFrame
+end
+
 local function Page()
-    return ProfessionsFrame and ProfessionsFrame.BookPage
+    if FOREVER then return ProfessionsFrame and ProfessionsFrame.BookPage end
+    return _G.ProfessionsBookFrame
 end
 T.Page = Page
 
 local function Content()
+    if not FOREVER then return _G.ProfessionsContentFrame end
     local page = Page()
     return page and page.ProfessionsContentFrame
+end
+
+local function Card(content, name)
+    return content[name] or (not FOREVER and _G[name]) or nil
 end
 
 local function Font(fontString, name, fallback)
@@ -76,9 +91,10 @@ end
 -- The rows
 ---------------------------------------------------------------------------
 
-local function NewBar(parent)
-    -- The old bar is still a client template; made from here it is ours.
-    local ok, bar = pcall(ns.NewFrame, "StatusBar", nil, parent, "ProfessionStatusBarTemplate")
+local function NewBar(parent, index)
+    -- The old bar is still a client template; made from here it is ours. Named: retail's template hangs its
+    -- pieces by $parent names, and nameless bars' backs ran from one bar to another.
+    local ok, bar = pcall(ns.NewFrame, "StatusBar", "ClassicUIForeverProfessionBar" .. index, parent, "ProfessionStatusBarTemplate")
     if not ok or not bar then
         bar = ns.NewFrame("StatusBar", nil, parent)
         bar:SetSize(95, 16)
@@ -99,7 +115,7 @@ local function NewRow(content, primary, index)
     row.name = row:CreateFontString(nil, "ARTWORK")
     row.rank = row:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     row.rank:SetJustifyH("LEFT")
-    row.bar = NewBar(row)
+    row.bar = NewBar(row, index)
     row.missingHeader = row:CreateFontString(nil, "ARTWORK")
     row.missingText = row:CreateFontString(nil, "ARTWORK")
     Font(row.missingText, "SubSpellFont", "GameFontHighlightSmall")
@@ -192,7 +208,8 @@ local MISSING = {
     { header = "PROFESSIONS_SECOND_PROFESSION", text = "PROFESSIONS_MISSING_PROFESSION" },
     { header = "PROFESSIONS_COOKING", text = "PROFESSIONS_COOKING_MISSING" },
     { header = "PROFESSIONS_FISHING", text = "PROFESSIONS_FISHING_MISSING" },
-    { header = "PROFESSIONS_FIRST_AID", text = "PROFESSIONS_FIRST_AID_MISSING" },
+    { header = FOREVER and "PROFESSIONS_FIRST_AID" or "PROFESSIONS_ARCHAEOLOGY",
+        text = FOREVER and "PROFESSIONS_FIRST_AID_MISSING" or "PROFESSIONS_ARCHAEOLOGY_MISSING" },
 }
 
 local function FillRow(row, index, slot)
@@ -279,7 +296,10 @@ end
 -- Faded, never hidden: the client re-shows these on every fill but leaves alpha alone.
 local function FadeCard(card)
     ns.FadeKeys(card, CARD_ART)
-    local bar = card.StatusBar
+    -- Retail's emblem ring has a name only.
+    local ring = not FOREVER and card.GetName and _G[card:GetName() .. "IconBorder"]
+    if ring then ring:SetAlpha(0) end
+    local bar = card.StatusBar or card.statusBar
     if bar then
         bar:SetAlpha(0)
         if bar.EnableMouse then bar:EnableMouse(false) end
@@ -288,6 +308,11 @@ end
 
 local function DressSpellButton(button)
     if not button or not ns.Once(button, "spellPlate") then return end
+    -- Retail's button still carries the old plate and icon.
+    if not FOREVER then
+        plates[button] = _G[button:GetName() .. "NameFrame"]
+        return
+    end
     SpellPlate(button)
     -- Drop this client's square icon frame and rounded mask.
     if button.IconTextureOverlay then button.IconTextureOverlay:SetAlpha(0) end
@@ -299,15 +324,17 @@ end
 local function DressUnlearn(card, content, y, spec)
     local button = card.UnlearnButton
     if not button then return end
-    -- Just left of the bar's end cap, level with the bar.
-    ns.SetPointOnce(button, "CENTER", content, "TOPLEFT", spec.rowX + spec.textX - 15, y - 76)
+    -- Just left of the bar's end cap, level with the bar. Retail's button is scaled 0.7: its offsets and icon in its own units.
+    local scale = button:GetScale()
+    if not scale or scale <= 0 then scale = 1 end
+    ns.SetPointOnce(button, "CENTER", content, "TOPLEFT", (spec.rowX + spec.textX - 15) / scale, (y - 76) / scale)
     if button.Icon then
         button.Icon:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
-        button.Icon:SetSize(16, 16)
+        button.Icon:SetSize(16 / scale, 16 / scale)
         button.Icon:SetAlpha(0.75)
     end
     if button.Overlay then button.Overlay:SetAlpha(0) end
-    ns.SetPointOnce(card.GamepadUnlearnButton, "RIGHT", button, "LEFT", -2, 0)
+    if card.GamepadUnlearnButton then ns.SetPointOnce(card.GamepadUnlearnButton, "RIGHT", button, "LEFT", -2, 0) end
 end
 
 -- Cards hold casting buttons: placed out of combat only, retried after.
@@ -316,7 +343,7 @@ function T.PlaceCards()
     if not content or InCombatLockdown() then return false end
     local spec = Spec()
     for i = 1, 2 do
-        local card = content["PrimaryProfession" .. i]
+        local card = Card(content, "PrimaryProfession" .. i)
         if card then
             local y = spec.rowY[i]
             card:SetSize(170, PRIMARY_H)
@@ -328,7 +355,7 @@ function T.PlaceCards()
         end
     end
     for i = 1, 3 do
-        local card = content["SecondaryProfession" .. i]
+        local card = Card(content, "SecondaryProfession" .. i)
         if card then
             card:SetSize(spec.rowW, SECONDARY_H)
             ns.SetPointOnce(card, "TOPLEFT", content, "TOPLEFT", spec.rowX, spec.rowY[2 + i])
@@ -370,19 +397,23 @@ end
 function T.Build()
     local page, content = Page(), Content()
     if T.built or not page or not content then return T.built end
-    -- Our left page has First Aid's emblem where this client's has Archaeology's
-    -- (Art/Textures.lua); falls back to the client's page.
-    local left = page:CreateTexture(nil, "BACKGROUND", nil, 2)
-    if not ns.SetTex(left, "professionsBookLeft") then left:SetTexture(PAGE_LEFT) end
+    -- Forever: our left page has First Aid's emblem where the client's has Archaeology's (Art/Textures.lua).
+    -- Retail keeps the client's page, drawn on the content frame: on the window itself it lies under the chrome.
+    local function PageArt(tex)
+        if not (FOREVER and ns.SetTex(tex, "professionsBookLeft")) then tex:SetTexture(PAGE_LEFT) end
+    end
+    local artHost = FOREVER and page or content
+    local left = artHost:CreateTexture(nil, "BACKGROUND", nil, 2)
+    PageArt(left)
     left:SetSize(512, 512)
     left:SetPoint("TOPLEFT", page, "TOPLEFT", 7, -25)
-    local right = page:CreateTexture(nil, "BACKGROUND", nil, 2)
+    local right = artHost:CreateTexture(nil, "BACKGROUND", nil, 2)
     right:SetTexture(PAGE_RIGHT)
     right:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
     rows.art = { left, right }
     for _, strip in ipairs(BAND_STRIPS) do
-        local band = page:CreateTexture(nil, "BACKGROUND", nil, 3)
-        if not ns.SetTex(band, "professionsBookLeft") then band:SetTexture(PAGE_LEFT) end
+        local band = artHost:CreateTexture(nil, "BACKGROUND", nil, 3)
+        PageArt(band)
         band:SetTexCoord(BAND_X / 512, 1, strip[1] / 512, strip[2] / 512)
         -- Both corners on the page texture, so neighbouring strips share an edge exactly.
         band:SetPoint("TOPLEFT", left, "TOPLEFT", BAND_X, -strip[3])
@@ -391,15 +422,15 @@ function T.Build()
     end
     rows.small = {}
     -- Clipped to the window's inside: the page stands lower than the window, and the art ran past its foot.
-    local clip = ns.NewFrame("Frame", nil, page)
-    clip:SetPoint("TOPLEFT", ProfessionsFrame, "TOPLEFT", 4, -20)
-    clip:SetPoint("BOTTOMRIGHT", ProfessionsFrame, "BOTTOMRIGHT", -4, 4)
+    local clip = ns.NewFrame("Frame", nil, artHost)
+    clip:SetPoint("TOPLEFT", T.Host(), "TOPLEFT", 4, -20)
+    clip:SetPoint("BOTTOMRIGHT", T.Host(), "BOTTOMRIGHT", -4, 4)
     clip:SetClipsChildren(true)
-    clip:SetFrameLevel(page:GetFrameLevel())
+    clip:SetFrameLevel(artHost:GetFrameLevel())
     rows.clip = clip
     local function Piece(band, u0, u1, x)
         local tex = clip:CreateTexture(nil, "BACKGROUND", nil, 2)
-        if not ns.SetTex(tex, "professionsBookLeft") then tex:SetTexture(PAGE_LEFT) end
+        PageArt(tex)
         tex:SetTexCoord(u0 / 512, u1 / 512, band[1] / 512, band[2] / 512)
         tex:SetPoint("TOPLEFT", page, "TOPLEFT", x, -band[3])
         tex:SetSize(u1 - u0, band[2] - band[1])
@@ -441,7 +472,7 @@ function T.TightenSpells()
     local content = Content()
     if not content or InCombatLockdown() then return end
     for i = 1, 2 do
-        local card = content["PrimaryProfession" .. i]
+        local card = Card(content, "PrimaryProfession" .. i)
         local first, second = card and card.SpellButton1, card and card.SpellButton2
         if first and second and first:IsShown() and second:IsShown() then
             Tighten(first)
@@ -457,7 +488,8 @@ function T.ShowOurs(on)
     T.shown = on
     local big = T.Big()
     -- The small page's art inside the window's metal: the chrome's backing marks where the rails start.
-    local fcui = ProfessionsFrame and ProfessionsFrame.fcui
+    local host = T.Host()
+    local fcui = host and host.fcui
     local backing = fcui and fcui.backing
     if backing and rows.clipOn ~= backing then
         rows.clipOn = backing

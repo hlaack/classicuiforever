@@ -245,7 +245,13 @@ local function Restore()
     if ns.HostSpellsWindow then ns.HostSpellsWindow() end
 end
 
-ns.RegisterModule("talents", { apply = Apply, restore = Restore, padHost = true })
+-- Our window reads Forever's tree; retail keeps the game's spells window, dressed by the panels pass under this row.
+if ns.OnForever() then
+    ns.RegisterModule("talents", { apply = Apply, restore = Restore, padHost = true })
+else
+    local apply, restore = ns.panels.RowPass(function() return _G.PlayerSpellsFrame end)
+    ns.RegisterModule("talents", { apply = apply, restore = restore })
+end
 
 function ns.TalentsActive() return active end
 function ns.TalentsRefresh() if frame and frame:IsShown() then Refresh() end end

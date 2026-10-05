@@ -68,13 +68,14 @@ function ns.ReloadForLayout()
     end
     if ns.db then
         ns.sessionEnding = true
-        pcall(ns.RunLayoutJobsBeforePin)
+        -- Each step on its own, its error reported: one failing took the later ones with it unseen.
+        ns.SafeCall(ns.RunLayoutJobsBeforePin)
         if ns.db.classicBar ~= false then
-            pcall(ns.PinBandBars)
+            ns.SafeCall(ns.PinBandBars)
         elseif not ns.db.bandHandedBack then
-            pcall(ns.UnpinBandBars)
+            ns.SafeCall(ns.UnpinBandBars)
         end
-        pcall(ns.RunLayoutJobsAfterPin)
+        ns.SafeCall(ns.RunLayoutJobsAfterPin)
     end
     C_UI.Reload()
 end
@@ -395,9 +396,15 @@ local function ResetNow()
     ns.db.hideMicroButtons, ns.db.hideProfessionsButton = defaults.hideMicroButtons, defaults.hideProfessionsButton
     -- The classic look's micro buttons and bag slots too (Legacy, group finder and collections off, Era's bag slots).
     TakeClassicLook(ns.db, true)
+    -- Retail's buttons 1.x never had, off the menu as on a fresh install, each with its minimap icon.
+    for _, key in ipairs({ "hideMicroAchievements", "hideMicroJournal", "hideMicroHousing", "housingMinimapButton",
+        "achievementsMinimapButton", "journalMinimapButton" }) do
+        ns.db[key] = defaults[key]
+    end
     -- Windows and gryphons placed or sized in the windows edit mode (the map included) back to their own; Movable
     -- anytime is kept.
     ns.db.windowPos, ns.db.windowScale = nil, nil
+    ns.HomeLayoutSpots(LAYOUT_NAME, true)
     -- Pieces dragged round the minimap ring too.
     for _, entry in ipairs(ns.WINDOW_LIST or {}) do
         if entry.ringKey then ns.db[entry.ringKey] = nil end
@@ -601,6 +608,8 @@ local function ClassicNow(job)
         if C_EditMode.OnLayoutAdded then C_EditMode.OnLayoutAdded(index, true, false) end
     end
     C_EditMode.SetActiveLayout(index)
+    -- The gryphons on the band ends there, unless the player saved them elsewhere on this layout.
+    ns.HomeLayoutSpots(LAYOUT_NAME)
     -- Next login checks the switch held.
     ns.db.layoutSelectPending = true
     return true
@@ -621,16 +630,16 @@ function ns.RunLayoutJobsBeforePin()
     -- Each job is taken off before it runs: settings outlive sessions, so one that errored re-ran at every logout.
     if jobs.reset then
         jobs.reset = nil
-        ResetNow()
+        ns.SafeCall(ResetNow)
     end
     if jobs.adopt then
         jobs.adopt = nil
-        ns.AdoptBandBars()
+        ns.SafeCall(ns.AdoptBandBars)
     end
-    if jobs.eraScale then ns.EraScaleBeforePin() end
+    if jobs.eraScale then ns.SafeCall(ns.EraScaleBeforePin) end
     -- A slot-count job queued before 0.11.0 (the bar size no longer trims the bars).
     jobs.fit = nil
-    ns.ResetSizesNow(jobs)
+    ns.SafeCall(ns.ResetSizesNow, jobs)
 end
 
 function ns.RunLayoutJobsAfterPin()
@@ -640,9 +649,10 @@ function ns.RunLayoutJobsAfterPin()
     ns.db.layoutJobs = nil
     -- Legacy: only old saved data still holds "previous".
     if jobs.previous and SelectNow(jobs.previous) then ns.db.previousLayout = "" end
-    if jobs.classic then ClassicNow(jobs.classic) end
-    if jobs.select then SelectNow(LAYOUT_NAME) end
-    if jobs.eraScale then ns.EraScaleAfterPin() end
+    -- Guarded one by one: a layout that fails to build must not cost the size written after it.
+    if jobs.classic then ns.SafeCall(ClassicNow, jobs.classic) end
+    if jobs.select then ns.SafeCall(SelectNow, LAYOUT_NAME) end
+    if jobs.eraScale then ns.SafeCall(ns.EraScaleAfterPin) end
 end
 
 -- No room for another layout. Steps, not a button: edit mode opened from our code would run its setup in our name.

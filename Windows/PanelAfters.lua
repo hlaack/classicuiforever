@@ -319,15 +319,15 @@ local function SwapBarPiece(region, barFile)
     end
 end
 
--- Tabs on the list, silver text box, the foot row in an iron box (as professions),
+-- Era's tabs, silver text box, the foot row in an iron box (as professions),
 -- bottom border low under it.
 function A.MacroFrame(frame)
     local first, second = _G["MacroFrameTab1"], _G["MacroFrameTab2"]
-    local inset = frame.Inset or _G["MacroFrameInset"]
-    if first and inset then
-        ns.SetPointOnce(first, "BOTTOMLEFT", inset, "TOPLEFT", 50, -2)
-        -- 10 in from the client's spot, against the first.
-        ns.SetPointOnce(second, "BOTTOMLEFT", first, "BOTTOMRIGHT", -8, 0)
+    if first and second then
+        -- Era's spots (its Blizzard_MacroUI.xml); the character tab's label gives up 15 and stops at 130.
+        ns.SetPointOnce(first, "TOPLEFT", frame, "TOPLEFT", 51, -28)
+        ns.SetPointOnce(second, "LEFT", first, "RIGHT", 0, 0)
+        ns.SkinTopTab(second, -15, 130)
     end
     -- Slots 5 left; their bar 5 right and 8 taller at the top (it hung free of the
     -- border). The bar hangs from the slots' frame, so it offsets that 5 plus 5.
@@ -439,6 +439,55 @@ function A.CommunitiesFrame(frame)
     PlateTabs(frame, COMMUNITY_TABS)
     for _, key in ipairs(FINDERS) do PlateTabs(frame[key], FINDER_TABS) end
     TintInner(frame, 6, frame.GuildMemberDetailFrame)
+end
+
+----------------------------------------------------------- spells window
+
+local TALENT_BUTTONS = { "ApplyButton", "InspectCopyButton" }
+local FOOT_STONE = { coords = { 0, 1, 0, 1 } }
+
+-- The Activate buttons come from a pool filled as the tab first shows.
+local function DressSpecButtons()
+    local window = Named("PlayerSpellsFrame")
+    local pool = window and window.SpecFrame and window.SpecFrame.SpecContentFramePool
+    if not pool or not P.active then return end
+    for content in pool:EnumerateActive() do ns.SkinRedButton(content.ActivateButton) end
+end
+
+local function SpecShown(shown)
+    if shown then ns.Sched.NextFrame("spells.spec", DressSpecButtons) end
+end
+
+-- Our spellbook on: the dressed window's own Spellbook tab, last in its row, goes unseen. Alpha and mouse only; the
+-- row's layout stays the client's.
+function ns.GameBookTab()
+    local window = Named("PlayerSpellsFrame")
+    if not window or not P.skinned[window] then return end
+    local tab = window.spellBookTabID and window:GetTabButton(window.spellBookTabID)
+    if not tab then return end
+    local ours = ns.SpellBookActive()
+    ns.SetAlphaIf(tab, ours and 0 or 1)
+    tab:EnableMouse(not ours)
+end
+
+-- Retail's talents stay the game's window: old buttons, drop down and search box, stone under the foot row.
+function A.PlayerSpellsFrame(frame)
+    local talents = frame.TalentsFrame
+    if talents then
+        ns.EachKey(talents, TALENT_BUTTONS, ns.SkinRedButton)
+        ns.SkinDropdown(talents.LoadSystem and talents.LoadSystem.Dropdown)
+        ns.DrainInput(talents.SearchBox)
+        local bar = talents.BottomBar
+        if bar then
+            local stone = ns.TileTex(ns.OwnTexture(talents, "footStone", "BACKGROUND", 1), "rockBg", FOOT_STONE)
+            stone:SetAllPoints(bar)
+            stone:Show()
+            bar:SetAlpha(0)
+        end
+    end
+    ns.Sched.OnVisible(frame.SpecFrame, "spells.spec", SpecShown)
+    -- After the skin marks the window dressed.
+    ns.Sched.NextFrame("spells.bookTab", ns.GameBookTab)
 end
 
 ------------------------------------------------------------- collections

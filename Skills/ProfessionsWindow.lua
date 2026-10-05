@@ -16,7 +16,7 @@ local BIG_W, BIG_H, SMALL_W, SMALL_H = 550, 525, 339, 425
 local BOOK_X, BOOK_Y, SMALL_TELL_W = -4, -2, 380
 local function BookW() return T.Big() and BIG_W or SMALL_W end
 local function BookH() return T.Big() and BIG_H or SMALL_H end
-T.BookH = BookH
+T.BookW, T.BookH = BookW, BookH
 local SizeButton
 local sizeWas
 
@@ -179,7 +179,7 @@ local function PickSize(big)
 end
 
 SizeButton = function(shown)
-    local frame = ProfessionsFrame
+    local frame = T.Host()
     if not frame then return end
     if not sizeButton then
         local ok, button = pcall(ns.NewFrame, "Frame", nil, frame, "MaximizeMinimizeButtonFrameTemplate")
@@ -380,6 +380,8 @@ end
 -- Opened from the spellbook's tab via ShowUIPanel so it shows in the client's
 -- name; refused to addons in combat.
 function ns.OpenProfessionsBook()
+    -- Retail's book is a window of its own: the tab's pad presses the game's own opener.
+    if not ns.OnForever() then return false end
     if InCombatLockdown() then ns.SayNotInCombat() return false end
     if not ProfessionsFrame and C_AddOns and C_AddOns.LoadAddOn then
         pcall(C_AddOns.LoadAddOn, "Blizzard_ProfessionsBook")
@@ -633,6 +635,11 @@ end)
 
 local function Apply()
     active = true
+    -- Retail's book is its own window with no faces to turn: its driver (Skills/ProfessionsBookRetail.lua).
+    if not ns.OnForever() then
+        T.RetailBook(true, SizeButton)
+        return
+    end
     StartWatch()
     -- Three passes now: load, turn to the book and size, settle.
     local tick = watch and watch:GetScript("OnUpdate")
@@ -654,6 +661,10 @@ local function Restore()
     if not active then return end
     active = false
     ns.needsReload = true
+    if not ns.OnForever() then
+        T.RetailBook(false, SizeButton)
+        return
+    end
     SetPending(true)
 end
 

@@ -20,7 +20,7 @@ DurabilityFrame = { GetScale = function() return durabilityScale end }
 
 local noop = function() end
 local sideWidth = 98
-local layout
+local layout, reported
 local ns = {
     L = setmetatable({}, { __index = function(_, key) return key end }),
     options = { TITLE = "ClassicUI Forever" },
@@ -28,6 +28,7 @@ local ns = {
     band = { SideColumnsWidth = function() return sideWidth end },
     ActiveLayoutInfo = function() return layout end,
     ReloadPopup = noop, Popup = noop,
+    SafeCall = function(fn, ...) return xpcall(fn, function(err) reported = err end, ...) end,
 }
 assert(loadfile(ROOT .. "/Options/Layout.lua"))("ClassicUIForever", ns)
 
@@ -91,15 +92,18 @@ durabilityScale = 1
 local classicActive = ns.ClassicLayoutActive
 ns.ClassicLayoutActive = function() return true end
 function InCombatLockdown() return false end
-ns.DB_DEFAULTS = {}
+ns.DB_DEFAULTS = { hideMicroAchievements = true, hideMicroJournal = true, hideMicroHousing = true, housingMinimapButton = true }
 ns.WINDOW_LIST = { { key = "minimapAddonBag", ringKey = "minimapCollectorAngle" }, { key = "character" } }
-ns.db = { layoutJobs = { reset = true }, minimapCollectorAngle = 7.4, windowPos = { character = {} } }
+ns.db = { layoutJobs = { reset = true }, minimapCollectorAngle = 7.4, windowPos = { character = {} },
+    hideMicroAchievements = false, hideMicroJournal = false, hideMicroHousing = false, housingMinimapButton = false }
 -- The rest of the reset is other files' work.
 setmetatable(ns, { __index = function() return noop end })
 ns.RunLayoutJobsBeforePin()
 setmetatable(ns, nil)
 ns.ClassicLayoutActive = classicActive
 Check(ns.db.minimapCollectorAngle == nil and ns.db.windowPos == nil, "the reset clears ring spots and window places")
+Check(ns.db.hideMicroAchievements == true and ns.db.hideMicroJournal == true and ns.db.hideMicroHousing == true
+    and ns.db.housingMinimapButton == true, "the reset takes the buttons 1.x never had off the micro menu again")
 ns.db = {}
 
 -- Another layout, or outside the session's end write: nothing.
@@ -108,6 +112,23 @@ Check(ns.PlaceClassicSpots() == false and layout.systems[1].isInDefaultPosition 
 layout = { layoutName = "ClassicUI Forever", systems = Preset() }
 ns.sessionEnding = false
 Check(ns.PlaceClassicSpots() == false and layout.systems[2].anchorInfo.offsetX == -255, "nothing mid-session")
+
+-- The reload press: the classic layout failing to build still leaves Era's size written after it, and the error is
+-- reported, not swallowed (a first setup lost its size that way, with nothing to see).
+local sized = false
+reported = nil
+ns.sessionEnding = true
+ns.db = { layoutJobs = { classic = { counts = {} }, eraScale = true } }
+ns.BandPinAnchors = function() return {} end
+ns.EraScaleAfterPin = function() sized = true end
+EditModeManagerFrame = { layoutInfo = { layouts = {} }, GetLayouts = function() return {} end }
+C_EditMode = { SaveLayouts = noop, SetActiveLayout = noop }
+EditModePresetLayoutManager = { GetCopyOfPresetLayouts = function() error("no presets on this client") end }
+ns.RunLayoutJobsAfterPin()
+Check(sized, "Era's size is written though the layout step failed")
+Check(type(reported) == "string" and reported:find("no presets on this client", 1, true) ~= nil, "the layout step's error is reported")
+Check(ns.db.layoutJobs == nil, "the jobs are taken off, so a failing one does not run at every reload")
+ns.sessionEnding = false
 
 if failures > 0 then
     print(string.format("layout spots: %d failed", failures))

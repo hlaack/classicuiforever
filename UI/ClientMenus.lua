@@ -6,11 +6,9 @@ local _, ns = ...
 
 local ART = ns.ART
 local pairs, rawget, select = pairs, rawget, select
-local EnumerateFrames = _G.EnumerateFrames
 
 local ATLAS = "common-dropdown-bg"
 local BG_ALPHA = 0.925       -- MenuStyle1Mixin:Generate
-local SCAN_BUDGET = 500      -- frames walked per tick while catching up
 local GRACE = 3              -- ticks a click keeps the watch up with no menu open yet
 
 local weak = { __mode = "k" }
@@ -19,12 +17,11 @@ local backs = setmetatable({}, weak)   -- menu frame -> its background texture l
 local rims = setmetatable({}, weak)    -- menu frame -> our rim
 local irons = setmetatable({}, weak)   -- menu frame -> Era's drop down art
 local reclamped = setmetatable({}, weak)   -- menu frame -> clamped again this open (secret-placed)
+local placed = setmetatable({}, weak)  -- menu frame -> { anchor frame, x, y } as we last put it
 
 local active = false
 local theme = {}             -- ThemeTurned state
 local clientArt              -- last painted: true Forever's own, false our rim, nil never
-local cursor, caught         -- EnumerateFrames position; caught once it reached the end
-local first, head, swept     -- first menu frame seen; sweep from the start up to it, once
 local grace = 0
 local events, host, job
 
@@ -32,53 +29,22 @@ local function Manager()
     return Menu and Menu.GetManager and Menu.GetManager()
 end
 
--- rawget only: an open menu's metatable caches any key read through it.
+-- rawget only: an open menu's metatable copies any key of the frame's own that is read through it.
 local function IsMenuFrame(f)
     local mixin = _G.MenuProxyMixin
     return mixin and type(f) == "table" and f.IsForbidden and not f:IsForbidden()
         and rawget(f, "InitScrollLayout") == mixin.InitScrollLayout
 end
 
-local function Learn(f)
-    if known[f] then return end
-    known[f] = true
-    if not cursor then cursor, first = f, f end
-end
-
--- New pool frames come after the first one we saw; the pool can hand out an older one first.
-local function Scan()
-    if not cursor or not EnumerateFrames then return end
-    local budget = SCAN_BUDGET
-    while budget > 0 do
-        budget = budget - 1
-        local f = EnumerateFrames(cursor)
-        if not f then
-            caught = true
-            break
-        end
-        cursor = f
-        if IsMenuFrame(f) then Learn(f) end
-    end
-    while budget > 0 and not swept do
-        budget = budget - 1
-        local f = EnumerateFrames(head)
-        if not f or f == first then
-            swept = true
-            break
-        end
-        head = f
-        if IsMenuFrame(f) then Learn(f) end
-    end
-end
-
--- Until the scan catches up, a hovered submenu is found from the mouse.
+-- A submenu's frame is learned from the mouse the first time it is hovered; the pool hands the same frames out again,
+-- so it is dressed as it opens from then on. Never by walking the game's frames (70 ms a frame on retail).
 local function UnderMouse()
     local foci = GetMouseFoci and GetMouseFoci()
     local f = foci and foci[1]
     for _ = 1, 6 do
         if type(f) ~= "table" or not f.GetParent then return end
         if IsMenuFrame(f) then
-            Learn(f)
+            known[f] = true
             return
         end
         f = f:GetParent()
@@ -113,6 +79,13 @@ local function MakeRim(frame)
     return rim
 end
 
+local function Place(frame, point, rel, relPoint, x, y)
+    frame:SetPoint(point, rel, relPoint, x, y)
+    local at = placed[frame] or {}
+    at[1], at[2], at[3] = rel, x, y
+    placed[frame] = at
+end
+
 -- The client clamped the menu as it opened, before our rim; new insets don't re-clamp, so shift it by what sticks out.
 local function OnScreen(frame, rim)
     local left, right, top, bottom = rim:GetLeft(), rim:GetRight(), rim:GetTop(), rim:GetBottom()
@@ -135,18 +108,33 @@ local function OnScreen(frame, rim)
     local point, rel, relPoint, x, y = frame:GetPoint(1)
     if not point or ns.AnySecret(x, y) then return end
     local f = UIParent:GetEffectiveScale() / frame:GetEffectiveScale()
-    frame:SetPoint(point, rel, relPoint, (x or 0) + dx * f, (y or 0) + dy * f)
+    Place(frame, point, rel, relPoint, (x or 0) + dx * f, (y or 0) + dy * f)
 end
 
 -- Opened from a drop down button: Era draws those in its iron style, right-click menus in the rim (#69).
 local function FromDropdown(root)
-    local owner = rawget(root, "ownerRegion")
+    -- Written after the menu opened, so it is in the metatable's side table: rawget misses it, a plain read copies nothing.
+    local owner = root.ownerRegion
     local mixin = _G.DropdownButtonMixin
     return type(owner) == "table" and mixin ~= nil and not ns.IsForbidden(owner)
         and rawget(owner, "GenerateMenu") == mixin.GenerateMenu
 end
 
-local function Dress(frame, iron)
+-- A drop down's menu moved for the iron to sit against its button as Era's did. Every pass: one still where we put it
+-- stays, so it moves once per place the game gives it.
+local function Settle(frame)
+    local point, rel, relPoint, x, y = frame:GetPoint(1)
+    if not point or ns.AnySecret(point, rel, x, y) then return end
+    x, y = x or 0, y or 0
+    local at = placed[frame]
+    if at and at[1] == rel and ns.Near(x, at[2], 0.01) and ns.Near(y, at[3], 0.01) then return end
+    local shift = ns.IRON_SHIFT
+    local dx = point:find("LEFT") and shift.LEFT or point:find("RIGHT") and shift.RIGHT or 0
+    local dy = point:find("TOP") and shift.TOP or point:find("BOTTOM") and shift.BOTTOM or 0
+    Place(frame, point, rel, relPoint, x + dx, y + dy)
+end
+
+local function Dress(frame, iron, isRoot)
     local bg = Back(frame)
     local rim, art = rims[frame], irons[frame]
     -- Other menu styles (the barber shop's) stay as drawn.
@@ -177,6 +165,7 @@ local function Dress(frame, iron)
         pcall(frame.SetClampRectInsets, frame, wl, wr, wt, wb)
         reclamped[frame] = nil   -- a new open
     end
+    if iron and isRoot then Settle(frame) end
     OnScreen(frame, shown)
 end
 
@@ -206,14 +195,13 @@ local function Tick()
     local root = m:GetOpenMenu()
     local iron = false
     if IsMenuFrame(root) then
-        Learn(root)
+        known[root] = true
         iron = FromDropdown(root)
     end
-    Scan()
-    if not (caught and swept) then UnderMouse() end
+    UnderMouse()
     -- One menu tree opens at a time: its submenus wear the root's style.
     for frame in pairs(known) do
-        if frame:IsShown() then Dress(frame, iron) end
+        if frame:IsShown() then Dress(frame, iron, frame == root) end
     end
 end
 

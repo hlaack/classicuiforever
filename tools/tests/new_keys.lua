@@ -41,6 +41,11 @@ return {
     helpMinimapButton = "same for everyone: opt-in, off by default; no icon as before",
     gameMenuMinimapButton = "same for everyone: opt-in, off by default; no icon as before",
     shopMinimapButton = "same for everyone: opt-in, off by default; no icon as before",
+    hideMicroHousing = "on for everyone, retail only (Forever's game rule holds the housing button off): off the micro menu like Legacy; the author's call, the button left on the classic bar was the defect",
+    hideMicroJournal = "on for everyone, retail only (Forever holds the adventure guide button off itself): off the micro menu, as 1.x had none; a saved install is new to the key, so it hides there too, the author's call",
+    housingMinimapButton = "on for everyone, retail only: the housing button's way in once it is off the micro menu",
+    achievementsMinimapButton = "on for everyone, retail only: the achievements button's way in once it is off the micro menu; the author's call",
+    journalMinimapButton = "on for everyone, retail only: the adventure guide button's way in once it is off the micro menu; the author's call",
     threatNumberGrouped = "same for everyone: opt-in, off by default; the threat percent shows solo too, as before",
     themeIgnoreElite = "same for everyone: opt-in, off by default; dragons take the theme as before",
     plateDragons = "same for everyone: opt-in, off by default; nameplates show no dragon as before",
@@ -48,5 +53,6 @@ return {
     showMinimapDifficulty = "hidden for everyone: 1.x had no difficulty banner; Shown brings it back",
     hoverMinimapDifficulty = "hidden for everyone: 1.x had no difficulty banner; Shown brings it back",
     hideMinimapDifficulty = "hidden for everyone: 1.x had no difficulty banner; Shown brings it back",
+    tradeSkillFull = "same for everyone: off by default; retail's size button on a profession's window sets it",
     barArtHidden = "kept as before: a dbVersion 9 migration (ns.KeepBarArt) takes bar art hidden in our layout as the player's own tick",
 }

@@ -36,6 +36,7 @@ local function HidePads()
     for _, pad in ipairs(bridge.pads) do
         if pad:IsShown() then pad:Hide() end
     end
+    if bridge.sensor and bridge.sensor:IsShown() then bridge.sensor:Hide() end
 end
 
 -- The member a client row or member frame shows now; nil when unreadable.
@@ -105,7 +106,7 @@ end
 local GHOST_X = 4000           -- offset past the screen's right edge
 local GHOST_LIST_OVERHEAD = 91 -- window height outside its member list
 
-local function GhostHeight()
+local function GhostHeight(tall)
     -- Only the rows the client lists (online only unless Show Offline):
     -- each is a live client row, redrawn on every roster change.
     local members, online = 0, 0
@@ -113,13 +114,14 @@ local function GhostHeight()
     members, online = Safe(members, 0), Safe(online, 0)
     if not ShowOffline() then members = online end
     -- A row per member only while the mouse is on our rows (see Tall): the client redraws every one on each update.
-    if not bridge.tall then members = 0 end
+    if not (tall or bridge.tall) then members = 0 end
     return GHOST_LIST_OVERHEAD + (math.min(members, GHOST_ROWS_MAX) + 12) * CLIENT_ROW_H
 end
 
 local function PlaceGhost(frame)
     local _, _, _, x = frame:GetPoint(1)
-    if frame:GetNumPoints() ~= 1 or x ~= GHOST_X then
+    -- Near, not equal: a scaled window hands its offset back a hair off, and it was anchored again every frame.
+    if frame:GetNumPoints() ~= 1 or not ns.Near(x, GHOST_X, 1) then
         ns.SetPointOnce(frame, "TOPLEFT", UIParent, "TOPRIGHT", GHOST_X, 0)
     end
 end
@@ -228,6 +230,54 @@ local function ShortIfGone()
 end
 local function RowsLeft() ns.Sched.AfterPerFrame("guild.short", 1, ShortIfGone) end
 
+-- The client's list builds rows for a new height only once the height is read, and rows built in our name fail a
+-- note save. So the mouse reaching the roster stretches the ghost and reads the list in a secure run of the sensor.
+local SENSOR_LEVEL, PAD_LEVEL = 1, 5
+local GROW = [[
+    local ghost, list, tall = control:GetFrameRef("ghost"), control:GetFrameRef("list"), control:GetAttribute("tall")
+    if not (ghost and list and tall) or PlayerInCombat() then return end
+    ghost:SetHeight(tall)
+    list:GetHeight() -- measured here, so the rows are built in this run
+]]
+
+-- The rows the sensor's run built are read the frame after.
+local function SensorEntered()
+    bridge.tall, bridge.stale = true, true
+    ns.Sched.NextFrame("guild.tall", TallSync)
+end
+
+-- Over the roster's rows, under the pads: hears the mouse only, clicks and hover pass to our rows.
+local function Sensor()
+    local sensor = bridge.sensor
+    if sensor then return sensor end
+    sensor = CreateFrame("Frame", "ClassicUIForeverGuildListSensor", UIParent, "SecureHandlerBaseTemplate")
+    sensor:SetFrameStrata("HIGH")
+    sensor:SetFrameLevel(SENSOR_LEVEL)
+    sensor:Hide()
+    sensor:SetFrameRef("ghost", CommunitiesFrame)
+    sensor:SetFrameRef("list", CommunitiesFrame.MemberList.ScrollBox)
+    sensor:SetScript("OnEnter", SensorEntered)
+    sensor:SetScript("OnLeave", RowsLeft)
+    SecureHandlerWrapScript(sensor, "OnEnter", sensor, GROW)
+    sensor:SetMouseClickEnabled(false)
+    sensor:SetMouseMotionEnabled(true)
+    sensor:SetPropagateMouseMotion(true)
+    bridge.sensor = sensor
+    return sensor
+end
+
+local function PlaceSensor(scale)
+    local list = G.panel.list
+    local left, bottom = list:GetLeft(), list:GetBottom()
+    if not left or not bottom then return end
+    local sensor = Sensor()
+    local ratio = list:GetEffectiveScale() / scale
+    ns.SetPointOnce(sensor, "BOTTOMLEFT", UIParent, "BOTTOMLEFT", left * ratio, bottom * ratio)
+    sensor:SetSize(list:GetWidth() * ratio, list:GetHeight() * ratio)
+    ns.SetAttributeIf(sensor, "tall", GhostHeight(true))
+    if not sensor:IsShown() then sensor:Show() end
+end
+
 local lastPadClick = {}
 local function Pad(index)
     local pad = bridge.pads[index]
@@ -274,6 +324,7 @@ local function PlacePads()
     if InCombatLockdown() or not G.panel then return end
     local scale = UIParent:GetEffectiveScale()
     bridge.padLeft, bridge.padTop = G.panel.list:GetLeft(), G.panel.list:GetTop()
+    PlaceSensor(scale)
     for index, row in ipairs(G.panel.rows) do
         local entry = row:IsVisible() and row.entry
         local theirs = entry and entry.guid and bridge.rows[entry.guid]
@@ -290,6 +341,7 @@ local function PlacePads()
             -- HIGH strata, not a level above the row: the social window raises
             -- itself in its strata on every click, over a level-matched pad.
             pad:SetFrameStrata("HIGH")
+            pad:SetFrameLevel(PAD_LEVEL)
             ns.SetPointOnce(pad, "BOTTOMLEFT", UIParent, "BOTTOMLEFT", left * ratio, bottom * ratio)
             pad:SetSize(row:GetWidth() * ratio, row:GetHeight() * ratio)
             if not pad:IsShown() then pad:Show() end

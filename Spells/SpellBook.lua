@@ -319,6 +319,8 @@ local function ArmSpell(btn, slot, bank)
     btn.bank = bank
     btn.isPassive = info and info.isPassive or nil
     btn.spellOnly = info and info.fromSpell and info.actionID or nil
+    -- For a shift-click into a macro (the click lands on this button, not the slot under it).
+    btn.macroName, btn.macroRank = info and info.name or nil, info and info.subName or nil
     local id = info and not info.isPassive and info.itemType ~= ITEM_FLYOUT and CastID(info, bank) or nil
     if id and not IsSecret(id) then
         btn:SetAttribute("type1", "spell")
@@ -468,12 +470,27 @@ local function Button_OnDragStart(self)
     end
 end
 
+-- What a shift-click hands the macro box: the spell's name and rank as text, as the client's book writes them
+-- ("Serpent Sting(Rank 2)"); a link there is no spell to /cast (#124). Nil for a passive.
+local function MacroText(name, rank, passive)
+    if passive or type(name) ~= "string" or IsSecret(name) then return nil end
+    if type(rank) == "string" and not IsSecret(rank) and rank ~= "" then return name .. "(" .. rank .. ")" end
+    return name
+end
+
 -- Fires on press and release; links on release.
 local function Button_PostClick(self, _, down)
     if down or not self.slot then return end
-    -- The wrap hid the layer for a profession cast; the book follows.
-    if self:GetAttribute("trade") and ns.HideSpellBook then ns.HideSpellBook() end
-    if IsModifiedClick("CHATLINK") then
+    local linking = IsModifiedClick("CHATLINK")
+    -- The wrap hid the layer for a profession cast; the book follows. Not on a link click: nothing was cast.
+    if not linking and self:GetAttribute("trade") and ns.HideSpellBook then ns.HideSpellBook() end
+    if linking then
+        local macro = _G.MacroFrameText
+        if macro and macro:HasFocus() then
+            local text = MacroText(self.macroName, self.macroRank, self.isPassive)
+            if text then ChatEdit_InsertLink(text) end
+            return
+        end
         -- Trade link first, as the client does: a profession links its recipe list.
         local bank = self.bank or state.bank
         local ok, link = pcall(C_SpellBook.GetSpellBookItemTradeSkillLink, self.slot, bank)
@@ -912,8 +929,11 @@ local function CreateBook()
         layer:ClearBindings()
     ]]
     SecureHandlerWrapScript(layerOff, "OnClick", layerWrap, LAYER_OFF)
-    -- A profession's spell button: after its cast, the layer goes as the "none" writers take it.
-    local TRADE_PRE = [[ if not down and self:GetAttribute("trade") then return nil, "trade" end ]]
+    -- A profession's spell button: after its cast, the layer goes as the "none" writers take it. A link click casts
+    -- nothing, so the book stays.
+    local TRADE_PRE = [[
+        if not down and self:GetAttribute("trade") and not IsModifiedClick("CHATLINK") then return nil, "trade" end
+    ]]
     local TRADE_POST = [[
         local layer = control:GetFrameRef("clicks")
         layer:SetAttribute("unit", "none")
@@ -1864,7 +1884,37 @@ local function TakeButton(on)
 end
 
 local BIND_NAME = "ForeverClassicUISpellBookBind"
+local CLICK_NAME = "ForeverClassicUISpellBookClick"
 local bindButton
+local clickProxy
+-- After the layer's click the book follows it. Fires on press and release; acts on release.
+local function FollowLayer(_, _, down)
+    if not active or down then return end
+    local layer = book and book.Clicks
+    if layer and layer.fcuiLinked then
+        if book:LayerUp() then
+            Show()
+        elseif book:IsShown() then
+            Hide()
+        end
+    else
+        Toggle()
+    end
+end
+
+-- A pad's macro for the book (retail's spellbook micro button); nil while the book is off. The layer's click, then a
+-- sized button that lets the book follow: never the bind button, whose own macro, pressed from a macro, never reached
+-- the layer on retail. Out of combat.
+function ns.BookPadMacro()
+    if not active or not bindButton then return nil end
+    if not clickProxy then
+        clickProxy = ns.ClickProxy(CLICK_NAME)
+        clickProxy:SetScript("PostClick", FollowLayer)
+    end
+    local layer = book and book.Clicks
+    if layer and layer.fcuiLinked then return "/click ForeverClassicUISpellBookClicks\n/click " .. CLICK_NAME end
+    return "/click " .. CLICK_NAME
+end
 -- The professions key and micro button: our layer down first (our code cannot in a fight), then the client's opener; the
 -- book then goes as a client window replaces ours.
 local PROF_BIND_NAME = "ForeverClassicUIProfessionsBind"
@@ -1938,20 +1988,7 @@ local function Init()
     if ns.EscDisarmOnClick then ns.EscDisarmOnClick(bindButton) end
     bindButton:RegisterForClicks("AnyDown", "AnyUp")
     bindButton:SetAttribute("useOnKeyDown", false)
-    bindButton:SetScript("PostClick", function(_, _, down)
-        -- Fires on press and release; acts on release.
-        if not active or down then return end
-        local layer = book and book.Clicks
-        if layer and layer.fcuiLinked then
-            if book:LayerUp() then
-                Show()
-            elseif book:IsShown() then
-                Hide()
-            end
-        else
-            Toggle()
-        end
-    end)
+    bindButton:SetScript("PostClick", FollowLayer)
     bindButton:RegisterEvent("UPDATE_BINDINGS")
     bindButton:RegisterEvent("PLAYER_REGEN_ENABLED")
     bindButton:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -1987,6 +2024,7 @@ local function Apply()
     end
     -- Enabled mid-session: world entry has passed.
     if IsLoggedIn and IsLoggedIn() then ns.SafeCall(Prebuild) end
+    ns.GameBookTab()
 end
 
 local function Restore()
@@ -1994,6 +2032,7 @@ local function Restore()
     TakeOver(false)
     TakeButton(false)
     UpdateBinding()
+    ns.GameBookTab()
     if book and book:IsShown() then Hide() end
     if ns.HostSpellsWindow then ns.HostSpellsWindow() end
 end

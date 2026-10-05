@@ -23,6 +23,7 @@ local RIGHT_SLOTS = { "CharacterHandsSlot", "CharacterWaistSlot", "CharacterLegs
     "CharacterFinger0Slot", "CharacterFinger1Slot", "CharacterTrinket0Slot", "CharacterTrinket1Slot" }
 local WEAPON_SLOTS = { "CharacterMainHandSlot", "CharacterSecondaryHandSlot", "CharacterRangedSlot" }
 local DOLL_BG = { "BackgroundTopLeft", "BackgroundTopRight", "BackgroundBotLeft", "BackgroundBotRight", "BackgroundOverlay" }
+local INNER_BORDER = { "TopLeft", "TopRight", "BottomLeft", "BottomRight", "Left", "Right", "Top", "Bottom", "Bottom2" }
 local SIDE_PIECES = { "CharacterStatsPane", "CharacterStatsPaneScrollBox", "PaperDollSidebarTabs", "PaperDollLevelInfo" }
 
 -- Short labels so the tabs fit the 384px window.
@@ -421,17 +422,17 @@ local function LayoutNow()
     frame:SetSize(T.WIDTH, T.HEIGHT)
     Take(doll, "points")
     ns.SetTwoPointsIf(doll, "TOPLEFT", frame, "TOPLEFT", DOLL_X, DOLL_Y, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", DOLL_X, DOLL_Y)
-    -- Never a panel attribute: the panel manager reads it mid-pass and party/raid frames then
-    -- error on secrets for the session. Windows opened beside it stand off by the old width.
+    -- Never a panel attribute: the manager reads it mid-pass and group frames then error on secrets all session.
     Fade(frame.NineSlice)
     Fade(frame.Bg)
-    -- Retail's dark panel fill over its inset (Forever's window has none).
-    Fade(frame.Background)
+    Fade(frame.Background)   -- retail's dark fill over its inset
     Fade(frame.TopTileStreaks)
     Fade(frame.Inset)
     Fade(frame.InsetRight)
     ns.EachKey(doll, DOLL_BG, Fade)
     ns.EachKey(CharacterModelScene, DOLL_BG, Fade)
+    -- Retail's thin frame round the model hangs on the faded inset, taller than the old window.
+    for _, name in ipairs(INNER_BORDER) do Fade(_G["PaperDollInnerBorder" .. name]) end
     -- Client zoom/rotate controls give way to the old buttons; the client reshows them with the doll.
     local controls = CharacterModelScene and CharacterModelScene.ControlFrame
     if controls then
@@ -441,8 +442,7 @@ local function LayoutNow()
         controls:EnableMouse(false)
         ns.HookScriptOnce(controls, "OnShow", HideControls)
     end
-    -- Forever: every tab hangs off the left pane, wider than the old window; squeezed into
-    -- the art, else the stats pane (off its right edge) lands outside the window.
+    -- Forever: every tab hangs off the left pane, wider than the old window: squeezed into the art.
     local pane = frame.LeftPaneHost
     if pane then
         Take(pane, "size", "points")
@@ -613,9 +613,9 @@ local function HideSidePane(frame)
         local keep = SkillsFrame and pane == SkillsFrame.SkillDetailFrame and SkillsFrame:IsShown()
         if keep then Keep(pane) else Quiet(pane) end
     end
-    for _, name in ipairs(SIDE_PIECES) do
-        Quiet(_G[name])
-    end
+    for _, name in ipairs(SIDE_PIECES) do Quiet(_G[name]) end
+    -- Retail's faction pane hangs on the reputation frame, not in the side panes: it opened beside our box.
+    if ReputationFrame then Quiet(ReputationFrame.ReputationDetailFrame) end
     if type(GetPaperDollSideBarFrame) == "function" and type(PAPERDOLL_SIDEBARS) == "table" then
         for i = 1, #PAPERDOLL_SIDEBARS do
             local bar = GetPaperDollSideBarFrame(i)

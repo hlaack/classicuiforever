@@ -126,8 +126,36 @@ local function HookLinks()
 end
 
 -- What's New: each version's changelog in short, most important first, similar fixes grouped. A player gets the chat
--- line once per new version, and the box shows only the versions since the one they saw last.
+-- line once per new version, and the box shows only the versions since the one they saw last. An entry marked
+-- on = "forever" or on = "retail" is that client's alone; unmarked is both.
 local WHATSNEW = {
+    { id = 25, version = "0.20.3",
+        { L["WN25_1_TITLE"], L["WN25_1_TEXT"] },
+    },
+    { id = 24, version = "0.20.2",
+        { L["WN24_1_TITLE"], L["WN24_1_TEXT"] },
+    },
+    { id = 23, version = "0.20.1",
+        { L["WN23_1_TITLE"], L["WN23_1_TEXT"] },
+    },
+    { id = 22, version = "0.20.0",
+        { L["WN22_1_TITLE"], L["WN22_1_TEXT"], on = "retail" },
+        { L["WN22_2_TITLE"], L["WN22_2_TEXT"], on = "retail" },
+        { L["WN22_3_TITLE"], L["WN22_3_TEXT"], on = "retail" },
+        { L["WN22_4_TITLE"], L["WN22_4_TEXT"], on = "retail" },
+        { L["WN22_5_TITLE"], L["WN22_5_TEXT"] },
+        { L["WN22_6_TITLE"], L["WN22_6_TEXT"], on = "retail" },
+        { L["WN22_7_TITLE"], L["WN22_7_TEXT"], on = "forever" },
+        { L["WN22_8_TITLE"], L["WN22_8_TEXT"] },
+        { L["WN22_9_TITLE"], L["WN22_9_TEXT"], on = "retail" },
+        { L["WN22_10_TITLE"], L["WN22_10_TEXT"] },
+        { L["WN22_11_TITLE"], L["WN22_11_TEXT"], on = "retail" },
+    },
+    { id = 21, version = "0.19.1",
+        { L["WN21_1_TITLE"], L["WN21_1_TEXT"] },
+        { L["WN21_2_TITLE"], L["WN21_2_TEXT"] },
+        { L["WN21_3_TITLE"], L["WN21_3_TEXT"] },
+    },
     { id = 20, version = "0.19.0",
         { L["WN20_1_TITLE"], L["WN20_1_TEXT"] },
         { L["WN20_2_TITLE"], L["WN20_2_TEXT"] },
@@ -260,6 +288,15 @@ local WHATSNEW = {
     },
 }
 local LATEST = WHATSNEW[1].id
+-- This client's list: a version with no entry for it is left out whole (no chat line there, a silent update).
+local NEWS = {}
+for _, section in ipairs(WHATSNEW) do
+    local mine = { id = section.id, version = section.version }
+    for _, entry in ipairs(section) do
+        if not entry.on or (entry.on == "forever") == ns.OnForever() then mine[#mine + 1] = entry end
+    end
+    if #mine > 0 then NEWS[#NEWS + 1] = mine end
+end
 local GOLD, GREY = "|cffffd100", "|cffa0a0a0"
 local CHANGELOG_URL = "https://github.com/wowaddonmaker/classicuiforever/blob/main/CHANGELOG.md"
 -- The box fits the text up to NEWS_BODY_H; past that it stays that tall and the bar scrolls the rest.
@@ -272,10 +309,10 @@ local function CopyChangelog() CopyLink(string.format(L["WELCOME_CHANGELOG_LINK"
 -- The entries of every version newer than seen, each version headed by its number when there is more than one.
 local function NewsText(seen)
     local sections = {}
-    for _, section in ipairs(WHATSNEW) do
+    for _, section in ipairs(NEWS) do
         if section.id > seen then sections[#sections + 1] = section end
     end
-    if #sections == 0 then sections[1] = WHATSNEW[1] end
+    if #sections == 0 then sections[1] = NEWS[1] end
     local lines = {}
     for _, section in ipairs(sections) do
         if #sections > 1 then lines[#lines + 1] = GREY .. section.version .. "|r" end
@@ -287,7 +324,7 @@ end
 local newsWindow
 local function BuildNews()
     local frame = O.DialogWindow("ForeverClassicUIWhatsNew", 120)
-    ns.DialogHeader(frame, string.format(L["WELCOME_WHATS_NEW_IN"], WHATSNEW[1].version), NEWS_HEADER)
+    ns.DialogHeader(frame, string.format(L["WELCOME_WHATS_NEW_IN"], NEWS[1].version), NEWS_HEADER)
     -- The text in a fixed box, scrolled by the classic bar or the wheel.
     local fullW = NEWS_WIDTH - 48
     local scroll = ns.NewFrame("ScrollFrame", nil, frame)
@@ -416,6 +453,8 @@ function ns.AnnounceWhatsNew()
     ns.db.whatsNewFrom = seen
     ns.db.whatsNewSeen = LATEST
     if seen == 2 then ns.db.barsNote = true end
+    -- Nothing in the new versions for this client: a silent update.
+    if NEWS[1].id <= seen then return end
     if ns.db.addonMessages == false then return end
     HookLinks()
     local version = ns.AddonVersion and ns.AddonVersion() or ""

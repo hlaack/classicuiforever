@@ -19,6 +19,7 @@ local MICRO_ART = {
     -- and the world map button are ours: Forever's picture redrawn at the old size, and BandMicro's.
     LegacyMicroButton = "Achievement", ProfessionMicroButton = "Professions",
     ForeverClassicUIWorldMapMicroButton = "World", ForeverClassicUIHelpMicroButton = "Help",
+    ForeverClassicUISpellbookMicroButton = "Spellbook",
 }
 -- The classic sheets are 32x64; Era draws the lower 41 rows into its 29x37 buttons.
 local MICRO_CROP = 23 / 64
@@ -297,6 +298,7 @@ local MICRO_WINDOWS = {
     MainMenuMicroButton = { "GameMenuFrame", "SettingsPanel", "KeyBindingFrame", "MacroFrame" },
     ForeverClassicUIWorldMapMicroButton = { "WorldMapFrame" },
     ForeverClassicUIHelpMicroButton = { "HelpFrame" },
+    ForeverClassicUISpellbookMicroButton = { "ForeverClassicUISpellBook" },
 }
 -- The client's one window for spells and talents, where ours is not on.
 local SHARED = { SpellbookMicroButton = true, TalentMicroButton = true, PlayerSpellsMicroButton = true }
@@ -319,10 +321,11 @@ local function WindowUp(name)
     -- Where our window is off, the client's stands in: its spells/talents window, and the map (this client's quest log).
     local db = ns.db or ns.EMPTY
     if SHARED[name] then
-        local ours
-        if name == "SpellbookMicroButton" then ours = db.spellBook else ours = db.talents end
+        -- Talents by the window itself: retail's row dresses the client's, ours never opens there.
+        local off
+        if name == "SpellbookMicroButton" then off = db.spellBook == false else off = not ns.TalentsActive() end
         local shared = _G["PlayerSpellsFrame"]
-        if ours == false and shared and shared:IsShown() then
+        if off and shared and shared:IsShown() then
             -- Each button follows its own half, as the client's update does.
             local half = (name == "SpellbookMicroButton" and shared.SpellBookFrame)
                 or (name == "TalentMicroButton" and shared.TalentsFrame) or nil

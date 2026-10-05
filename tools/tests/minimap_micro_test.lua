@@ -11,11 +11,11 @@ if ROOT == (arg and arg[0]) or ROOT == "" then ROOT = "." end
 
 for _, name in ipairs({ "CharacterMicroButton", "SpellbookMicroButton", "TalentMicroButton", "ProfessionMicroButton",
     "QuestLogMicroButton", "LegacyMicroButton", "GuildMicroButton", "LFDMicroButton", "CollectionsMicroButton",
-    "HelpMicroButton", "MainMenuMicroButton", "StoreMicroButton" }) do
+    "HelpMicroButton", "MainMenuMicroButton", "StoreMicroButton", "HousingMicroButton" }) do
     _G[name] = { name = name }
 end
 MinimapCluster = { ZoneTextButton = { name = "ZoneTextButton" } }
-Enum = { GameRule = { StoreDisabled = 7, FinderPanelDisabled = 8 } }
+Enum = { GameRule = { StoreDisabled = 7, FinderPanelDisabled = 8, HousingDashboardDisabled = 9 } }
 local ruleOn = {}
 C_GameRules = { IsGameRuleActive = function(rule) return ruleOn[rule] == true end }
 function InCombatLockdown() return false end
@@ -39,6 +39,8 @@ local ns = {
     SetAttributeIf = function(pad, key, value) pad[key] = value end,
     Sched = { NextFrame = function(_, fn) soon[#soon + 1] = fn end },
     IsSecret = function() return false end,
+    -- Retail: its own two icons are made.
+    OnForever = function() return false end,
     Dress = noop, OnToggle = noop, EventFrame = noop, WhenCalm = noop,
 }
 assert(loadfile(ROOT .. "/Map/MinimapMicro.lua"))("ClassicUIForever", ns)
@@ -74,6 +76,31 @@ ns.db.questLogMinimapButton, ns.db.worldMapMinimapButton = true, true
 Pass()
 Check(shown[QUEST] and pads[_G[QUEST]].clickbutton == questPad, "the quest log icon presses the quest log's own pad")
 Check(shown[MAP] and pads[_G[MAP]].clickbutton == MinimapCluster.ZoneTextButton, "the map icon presses the zone name")
+
+-- The housing button: both clients have the frame; Forever holds it off by a game rule, and the icon goes with it.
+local HOUSING = "ForeverClassicUIMinimapHousingButton"
+ns.db.housingMinimapButton = true
+ruleOn[Enum.GameRule.HousingDashboardDisabled] = true
+Pass()
+Check(not shown[HOUSING], "no housing icon while the game has housing off (Forever)")
+ruleOn[Enum.GameRule.HousingDashboardDisabled] = nil
+Pass()
+Check(shown[HOUSING] and pads[_G[HOUSING]].clickbutton == HousingMicroButton, "the housing icon presses the housing button (retail)")
+ns.db.housingMinimapButton = false
+Pass()
+Check(not shown[HOUSING], "unchecked, the housing icon goes")
+
+-- Retail's achievements and adventure guide buttons, off its micro menu by default: an icon each, pressing the button.
+AchievementMicroButton, EJMicroButton = { name = "achievements" }, { name = "adventure guide" }
+local ACHIEVEMENTS, JOURNAL = "ForeverClassicUIMinimapAchievementsButton", "ForeverClassicUIMinimapJournalButton"
+ns.db.achievementsMinimapButton, ns.db.journalMinimapButton = true, true
+Pass()
+Check(shown[ACHIEVEMENTS] and pads[_G[ACHIEVEMENTS]].clickbutton == AchievementMicroButton,
+    "the achievements icon presses the achievements button (retail)")
+Check(shown[JOURNAL] and pads[_G[JOURNAL]].clickbutton == EJMicroButton, "the adventure guide icon presses its button (retail)")
+ns.db.achievementsMinimapButton, ns.db.journalMinimapButton = false, false
+Pass()
+Check(not shown[ACHIEVEMENTS] and not shown[JOURNAL], "unchecked, both icons go")
 
 -- A game rule that takes the button away takes its icon.
 ns.db.shopMinimapButton = true

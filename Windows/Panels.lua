@@ -26,6 +26,8 @@ local MERCHANT_TAB_LIFT = 1
 -- Mail tabs: the client's spot already has their tops on the line (+ up); Send Mail 8 into Inbox, as Era's.
 local MAIL_TAB_LIFT = 0
 local MAIL_TAB_STEP = -8
+-- A tab row window's border: the corners start 8 low on both clients, the client's own line is 3 low.
+local CLIENT_FOOT_LIFT = 5
 
 -- Era's inset border on the game's own social tabs (Friends, Raid) and the quest and gossip windows; Who and Guild
 -- (ours) draw their own, and the skin keeps every other inset border faded.
@@ -74,6 +76,8 @@ local WINDOWS = {
     { "MailFrame", lift = 5, tabLift = MAIL_TAB_LIFT, after = function()
         ns.EraTabRow({ _G["MailFrameTab1"], _G["MailFrameTab2"] }, MAIL_TAB_STEP)
     end },
+    -- The opened letter. Half lift: Reply, Delete and Close sit 4 up from the bottom edge.
+    { "OpenMailFrame", lift = 5 },
     -- Smaller tab lift: the full one pushed the tabs through the border.
     { "FriendsFrame", lift = 5, tabLift = 3, after = function(frame)
         -- Classic Era's width (measured 338, as its macro window); the lists hang from its edges.
@@ -81,6 +85,7 @@ local WINDOWS = {
         P.ShadeFloor(frame)
         GameSocialTabs()
         if ns.PlaceRecentAllyRows then ns.PlaceRecentAllyRows() end
+        if ns.SocialQuickJoin then ns.SocialQuickJoin() end
         ns.KeepScrollIcon(_G["FriendsFrameIcon"])
     end },
     -- The contacts tab's pop-out ignore list: no portrait, its button in the old red.
@@ -113,10 +118,14 @@ local WINDOWS = {
     { "ClassTrainerFrame", addon = "Blizzard_TrainerUI" },
     { "AuctionHouseFrame", addon = "Blizzard_AuctionHouseUI", lift = 9 },
     { "CommunitiesFrame", addon = "Blizzard_Communities", after = A.CommunitiesFrame },
-    { "CollectionsJournal", addon = "Blizzard_Collections", after = A.CollectionsJournal },
+    -- Half lift: the Mount button sits on the foot. The tabs' tops on the metal line, as the vendor's.
+    { "CollectionsJournal", addon = "Blizzard_Collections", lift = 5, tabLift = MERCHANT_TAB_LIFT,
+        after = A.CollectionsJournal },
     { "EncounterJournal", addon = "Blizzard_EncounterJournal" },
     { "AchievementFrame", addon = "Blizzard_AchievementUI" },
-    { "ProfessionsFrame", addon = "Blizzard_Professions" },
+    -- Retail's has a tab row: the client's foot line, tabs unlifted.
+    { "ProfessionsFrame", addon = "Blizzard_Professions", lift = not ns.OnForever() and CLIENT_FOOT_LIFT or nil,
+        tabLift = not ns.OnForever() and 0 or nil },
     { "ProfessionsBookFrame", addon = "Blizzard_ProfessionsBook" },
     { "GuildBankFrame", addon = "Blizzard_GuildBankUI" },
     { "CalendarFrame", addon = "Blizzard_Calendar", portrait = false },
@@ -134,6 +143,12 @@ local WINDOWS = {
     { "ClickBindingFrame", addon = "Blizzard_ClickBindingUI", lift = 5, scrollBars = false, after = A.ClickBindingFrame },
     { "CooldownViewerSettings", lift = 5, scrollBars = false, after = A.CooldownViewerSettings },
 }
+-- Retail's talents are the game's spells window; Forever's are our own (Skills/Talents.lua), its row either way.
+-- The client's foot line: its pages run to it, and its tab row's layout puts a lifted tab back.
+if not ns.OnForever() then
+    WINDOWS[#WINDOWS + 1] = { "PlayerSpellsFrame", addon = "Blizzard_PlayerSpells", toggle = "talents",
+        lift = CLIENT_FOOT_LIFT, tabLift = 0, scrollBars = false, after = A.PlayerSpellsFrame }
+end
 
 P.WINDOWS = WINDOWS
 
@@ -180,7 +195,7 @@ ns.RegisterModule("panels", { apply = Apply, restore = Restore })
 -- A window with its own row (the entry's toggle): dressed by the panels pass while on; off, the strip goes and the
 -- rest waits for the reload, as Window frames off does. Frame() is the dressed frame, once it exists.
 local stripOff = setmetatable({}, { __mode = "k" })   -- frame -> its row hid the strip (the loot skin hides its own)
-local function WindowRow(key, Frame)
+local function RowPass(Frame)
     local function Apply()
         if not P.active then return end
         local frame = Frame()
@@ -200,7 +215,13 @@ local function WindowRow(key, Frame)
         end
         ns.needsReload = true
     end
-    ns.RegisterModule(key, { apply = Apply, restore = Restore })
+    return Apply, Restore
+end
+P.RowPass = RowPass
+
+local function WindowRow(key, Frame)
+    local apply, restore = RowPass(Frame)
+    ns.RegisterModule(key, { apply = apply, restore = restore })
 end
 
 WindowRow("worldMap", function() return WorldMapFrame and WorldMapFrame.BorderFrame end)

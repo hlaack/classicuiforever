@@ -28,6 +28,14 @@ function ns.BronzeOn()
     return ThemeName() ~= nil
 end
 
+-- A subtree none of whose art the theme copies or tints: the talent tree's nodes and edges, hundreds of frames.
+-- The walks over the game's windows leave it out.
+function B.PlainTree(frame)
+    local spells = _G.PlayerSpellsFrame
+    local talents = spells and spells.TalentsFrame
+    return talents ~= nil and frame == talents.ButtonsParent
+end
+
 -- The theme rule in one place. Off: "classic" (1.x art). On: "themed" (1.x shapes in the theme's copies or tints),
 -- or "client" for pieces a theme shows in Forever's own art (bronze: tooltips, menus).
 function ns.ThemeLook(clientArt)

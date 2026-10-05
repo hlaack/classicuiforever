@@ -77,6 +77,8 @@ end
 -- both numbers on hover (the option), numeric and percent show both while the mouse is over the bar.
 local function Numbers(now, most)
     local mode = ns.GetCVar("statusTextDisplay")
+    -- The game's own rule (TextStatusBar): with its Status Text switch off, a bar's numbers show on hover only.
+    if ns.GetCVar("statusText") ~= "1" and not hovered then mode = "NONE" end
     if mode == "NONE" and hovered then mode = "NUMERIC" end
     if hovered and ns.db.hoverBothNumbers ~= false and (mode == "NUMERIC" or mode == "PERCENT") then mode = "BOTH" end
     local font = GamePowerText()

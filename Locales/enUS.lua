@@ -81,6 +81,10 @@ L["OPT_hideMicroGroupFinder"] = "Group finder"
 L["OPT_hideMicroGroupFinder_TIP"] = "Hides the group finder button."
 L["OPT_hideMicroCollections"] = "Collections"
 L["OPT_hideMicroCollections_TIP"] = "Hides the collections button."
+L["OPT_hideMicroJournal"] = "Adventure Guide"
+L["OPT_hideMicroJournal_TIP"] = "Hides the adventure guide button."
+L["OPT_hideMicroHousing"] = "Housing"
+L["OPT_hideMicroHousing_TIP"] = "Hides the housing button."
 L["OPT_microMinimapButtons"] = "Micro buttons on the minimap"
 L["OPT_microMinimapButtons_TIP"] = "Any micro button as an icon on the minimap, hidden from the micro menu or not. Check the ones you want. Move them in ClassicUI Forever Windows (edit mode)."
 L["OPT_showGroupFinderButton"] = "Show: always"
@@ -239,6 +243,7 @@ L["OPT_spellBookSearch"] = "Search box"
 L["OPT_spellBookSearch_TIP"] = "A search box on the spellbook that lists every known spell matching the words."
 L["OPT_talents"] = "Talent window"
 L["OPT_talents_TIP"] = "The old talent window: one tree at a time, tree tabs along the foot, rank plates and arrows. Click to stage a point, Learn to commit."
+L["OPT_talents_GAME_TIP"] = "The game's talent window in the classic frame: metal border, old tabs, buttons and drop down."
 L["OPT_professionsBook"] = "Professions book"
 L["OPT_professionsBook_TIP"] = "The professions overview as the old two-page book, each profession with its emblem, rank bar and spells."
 L["GROUP_PROFESSIONS"] = "Professions"
@@ -492,6 +497,10 @@ L["SKILL_COLLECTIONS"] = "Collections"
 -- Skills/Talents.lua
 L["SKILL_APPLY_CHANGES"] = "Apply Changes"
 
+-- Skills/TradeSkillRetail.lua
+L["SKILL_MORE_IN_THE_GAME_WINDOW"] = "More in the game's window"
+L["SKILL_MADE_IN_THE_GAME_WINDOW"] = "Made in the game's window"
+
 -- Social/GuildRoster.lua
 L["SOCIAL_GUILD_MESSAGE_OF_THE_DAY"] = "Guild Message Of The Day:"
 
@@ -691,7 +700,7 @@ L["OPTWIN_THIS_CHARACTER"] = "This character"
 -- Quest/QuestLogShare.lua
 L["QUEST_YOU_ARE_NOT_IN_A"] = "You are not in a party."
 L["QUEST_CLOSE_THE_WORLD_MAP_THEN"] = "Close the world map, then share again."
-L["QUEST_OPEN_THE_WORLD_MAP_THEN"] = "Open the world map, then share again."
+L["QUEST_SHARE_FROM_THE_MAP"] = "This quest could not be shared from here. Share it from the world map."
 
 -- Skills/Talents.lua
 L["SKILL_REQUIRES_N_POINT_IN_X"] = "Requires %d point in %s"

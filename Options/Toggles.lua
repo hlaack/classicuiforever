@@ -133,7 +133,7 @@ ns.TOGGLES = {
     { "spellBook", L["OPT_spellBook"], L["OPT_spellBook_TIP"] },
     { "spellBookTopRank", L["OPT_spellBookTopRank"], L["OPT_spellBookTopRank_TIP"], parent = "spellBook" },
     { "spellBookSearch", L["OPT_spellBookSearch"], L["OPT_spellBookSearch_TIP"], parent = "spellBook" },
-    { "talents", L["OPT_talents"], L["OPT_talents_TIP"] },
+    { "talents", L["OPT_talents"], ns.OnForever() and L["OPT_talents_TIP"] or L["OPT_talents_GAME_TIP"] },
 
     { "professionsBook", L["OPT_professionsBook"], L["OPT_professionsBook_TIP"], group = L["GROUP_PROFESSIONS"] },
     { "profBookBig", L["OPT_profBookBig"], L["OPT_profBookBig_TIP"], parent = "professionsBook", search = "big large popout" },
@@ -256,6 +256,30 @@ local ENGLISH_ROWS = {
 }
 if not ns.ENGLISH_CLIENT then
     for _, row in ipairs(ENGLISH_ROWS) do ns.TOGGLES[#ns.TOGGLES + 1] = row end
+end
+
+-- Retail's adventure guide and housing buttons, in the micro lists after Collections; Forever holds both off itself.
+local RETAIL_ROWS = {
+    hideMicroCollections = {
+        { "hideMicroJournal", L["OPT_hideMicroJournal"], L["OPT_hideMicroJournal_TIP"], parent = "hideMicroButtons",
+            checks = "hideMicroList", drop = true },
+        { "hideMicroHousing", L["OPT_hideMicroHousing"], L["OPT_hideMicroHousing_TIP"], parent = "hideMicroButtons",
+            checks = "hideMicroList", drop = true },
+    },
+    collectionsMinimapButton = {
+        { "achievementsMinimapButton", L["OPT_hideMicroAchievements"], nil, parent = "microMinimapButtons",
+            checks = "microMinimapList", drop = true },
+        { "journalMinimapButton", L["OPT_hideMicroJournal"], nil, parent = "microMinimapButtons", checks = "microMinimapList",
+            drop = true },
+        { "housingMinimapButton", L["OPT_hideMicroHousing"], nil, parent = "microMinimapButtons", checks = "microMinimapList",
+            drop = true },
+    },
+}
+if not ns.OnForever() then
+    for i = #ns.TOGGLES, 1, -1 do
+        local rows = RETAIL_ROWS[ns.TOGGLES[i][1]]
+        for n = #(rows or {}), 1, -1 do table.insert(ns.TOGGLES, i + 1, rows[n]) end
+    end
 end
 
 -- Radio rows: key -> its group's keys (Core ToggleChanged keeps exactly one on).

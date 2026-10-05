@@ -18,7 +18,7 @@ local SHEET = { layer = "ARTWORK", coords = { 5 / 32, 27 / 32, 32 / 64, 54 / 64 
 local MICROS = {
     { toggle = "characterMinimapButton", micro = "CharacterMicroButton", face = "portrait", id = "Character", angle = 232, free = true,
         label = L["OPT_hideMicroCharacter"], rule = "CharacterPanelDisabled" },
-    { toggle = "spellbookMinimapButton", micro = "SpellbookMicroButton", face = "Spellbook", id = "Spellbook", angle = 232, free = true,
+    { toggle = "spellbookMinimapButton", micro = "SpellbookMicroButton", ours = "ForeverClassicUISpellbookMicroButton", face = "Spellbook", id = "Spellbook", angle = 232, free = true,
         label = L["OPT_hideMicroSpellbook"] },
     { toggle = "talentsMinimapButton", micro = "TalentMicroButton", face = "Talents", id = "Talents", angle = 232, free = true,
         label = L["OPT_hideMicroTalents"] },
@@ -43,7 +43,18 @@ local MICROS = {
         label = L["OPT_hideMicroGameMenu"] },
     { toggle = "shopMinimapButton", micro = "StoreMicroButton", face = "BStore", id = "Shop", angle = 232, free = true,
         label = L["OPT_hideMicroShop"], rule = "StoreDisabled" },
+    -- Forever has the button too, held off by its game rule; 1.x has no sheet for it, so the icon is the game's own micro art.
+    { toggle = "housingMinimapButton", micro = "HousingMicroButton", atlas = "UI-HUD-MicroMenu-Housing-Up", id = "Housing",
+        angle = 232, free = true, label = L["OPT_hideMicroHousing"], rule = "HousingDashboardDisabled" },
 }
+-- Retail's own buttons 1.x never had: off the micro menu by default, each with its way in on the ring. Achievements
+-- wears the 1.x achievement face (Forever's Legacy icon there); the adventure guide has no 1.x sheet.
+if not ns.OnForever() then
+    MICROS[#MICROS + 1] = { toggle = "achievementsMinimapButton", micro = "AchievementMicroButton", face = "Achievement",
+        id = "Achievements", angle = 232, free = true, label = L["OPT_hideMicroAchievements"] }
+    MICROS[#MICROS + 1] = { toggle = "journalMinimapButton", micro = "EJMicroButton", atlas = "UI-HUD-MicroMenu-AdventureGuide-Up",
+        id = "Journal", angle = 232, free = true, label = L["OPT_hideMicroJournal"] }
+end
 local byToggle = {}
 
 local function Face(spec, icon)
@@ -52,6 +63,9 @@ local function Face(spec, icon)
     elseif spec.face == "portrait" then
         ns.Dress(icon, nil, FACE)
         SetPortraitTexture(icon, "player")
+    elseif spec.atlas then
+        ns.Dress(icon, nil, FACE)
+        icon:SetAtlas(spec.atlas)
     else
         ns.Dress(icon, "micro" .. spec.face .. "Up", SHEET)
     end
@@ -70,7 +84,8 @@ local function Target(spec)
     local rule = spec.rule and Enum.GameRule and Enum.GameRule[spec.rule]
     if rule and C_GameRules and C_GameRules.IsGameRuleActive and C_GameRules.IsGameRuleActive(rule) then return nil end
     if not spec.micro then return MinimapCluster and MinimapCluster.ZoneTextButton end
-    local micro = _G[spec.micro]
+    -- ours: the button we build where the client has none (retail's spellbook).
+    local micro = _G[spec.micro] or (spec.ours and _G[spec.ours])
     return micro and ns.PressTarget(micro)
 end
 

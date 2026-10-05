@@ -39,15 +39,16 @@ RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDA
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "POINTEXACT", "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "SECRETBAR", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE", "FRAMEWALK", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
-LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "EDITMODE", "PANELMGR",
+LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "FRAMEWALK", "EDITMODE", "PANELMGR",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
               "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST",
-              "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME")
+              "POINTEXACT",
+              "FADEDPIECE", "PCALLMANY", "SECRETLAYER", "SECRETBAR", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -133,7 +134,7 @@ DEV_NAMES = frozenset((
     "BronzeOn", "DrainBronze", "UndrainBronze", "band", "Sched", "DB_DEFAULTS", "OpenGuildRoster", "sheet",
     "ClassBandState", "PadOf", "TrainerState", "ActiveLayoutInfo", "LayoutWritable", "BandPinsWanted",
     "WindowLockButtons", "GameArtTinted", "FlatLayersShown", "FlatState", "FlatPartOf", "ThemeLayerSample",
-    "ClassicMapArt",
+    "ClassicMapArt", "EachThemeLayer",
 ))
 # Shared API kept without a reader yet (plan section 5); never reported by DEADNS.
 KEPT_API = frozenset((
@@ -154,10 +155,14 @@ FIX = {
     "FADEDPIECE": "hide the client's cap in a hidden frame of ours (StashCap in Bar/BandArt.lua): edit mode snaps other "
                   "pieces only to what is visible, and a snap to an unnamed cap is saved at the screen's top",
     "SECRETLAYER": "test it with ns.AnySecret(layer, sub) before any compare or math, and skip that region when secret",
+    "SECRETBAR": "test it with ns.IsSecret / ns.AnySecret before any compare or math, and skip the work when secret",
+    "NAMEDTEMPLATE": "give the frame a name of ours: retail's copy of the template anchors its pieces by $parent names",
     "PCALLMANY": "pcall a function of ours that walks them and returns one value (ns.EachChildProtected, "
                  "ns.EachRegionProtected in Core/Util.lua), never the getter itself",
-    "PADLIST": "change the trainer list's size only in the Train pad's secure snippet (LIST_TALL / LIST_BACK in "
-               "Skills/Trainer.lua), which measures it there too; our Lua never sizes, places or measures that list",
+    "PADLIST": "change the list's size only in a secure snippet that measures it there too (LIST_TALL / LIST_BACK in "
+               "Skills/Trainer.lua, GROW in Social/GuildNoteBridge.lua); our Lua never sizes, places or measures that list",
+    "POINTEXACT": "compare the offset with ns.Near(x, want, 1) (Core/Setters.lua), or place through ns.SetPointIf: the "
+                  "game hands an offset back a hair off (4000 came back 4000.000244), so an exact test never passes",
     "SELFBOX": "anchor an edit mode Selection to its own frame (offsets for a wider box): the client sets the frame's "
                "clamp and snap offsets from the gap between them, so a box hung elsewhere shoves the frame off its anchor",
     "MOUSEORDER": "set OnEnter/OnLeave/OnMouse* first, then SetMouseClickEnabled(false) (the hover sensor over the "
@@ -223,6 +228,8 @@ FIX = {
     "HOOK": "use ns.HookMethod / ns.HookGlobal / ns.HookScriptOnce (Core/Hooks.lua), and prefer a watch (ns.Sched)",
     "ONUPDATE": "use ns.Sched.OnFrame(frame, spec) or ns.Sched.Job(spec) (Core/Scheduler.lua)",
     "LOADADDON": "never load a client addon from our code; wait for its ADDON_LOADED (ns.RegisterEvents)",
+    "FRAMEWALK": "never walk the game's frames; reach the frame from what the client hands out (a manager, the mouse, "
+                 "a parent's children)",
     "PANELMGR": "never drive the client window manager from our code (it then runs in our name and in combat can "
                 "neither close nor place windows); open and close through ns.ShowPanel / ns.HidePanel",
     "EDITMODE": "never write layouts mid-session; writes run only as the session ends: the ns.sessionEnding jobs in "
@@ -256,6 +263,7 @@ USE_PATTERNS = {
         r"\b(?:EventRegistry|CVarCallbackRegistry)\b(?:\s*[.:]\s*[A-Za-z_]\w*)?"
         r"|\b(?:RegisterCallback|RegisterCallbackWithHandle|UnregisterCallback|TriggerEvent)\b"),
     "LOADADDON": re.compile(r"\b(?:UIParent)?LoadAddOn\b"),
+    "FRAMEWALK": re.compile(r"(?<![\w.:])EnumerateFrames\b|_G\.EnumerateFrames\b"),
     "PANELMGR": re.compile(
         r"\b(?:UpdateUIPanelPositions|FramePositionDelegate|SetUIPanelAttribute|UpdateContainerFrameAnchors)\b"),
     "EDITMODE": re.compile(
@@ -309,7 +317,11 @@ SYSBASE_BAND = re.compile(r"(?<![\w.])(?:bar|frame|piece)\s*:\s*(?:SetPoint|Clea
 EDITSAVE_FILES = ("UI/WindowHandles.lua", "UI/WindowsEditMode.lua")
 EDITSAVE_RX = re.compile(r"\bns\s*\.\s*db\s*(?:\.\s*\w+|\[[^\]]*\])\s*=(?!=)")
 # Plain matches per line, on code with strings kept (macro text, securecall names, art paths).
+# Client templates whose retail XML anchors children with relativeTo="$parent...": a frame made from one needs a name.
+NAMED_TEMPLATES = ("ProfessionStatusBarTemplate",)
 KEEP_PATTERNS = {
+    "NAMEDTEMPLATE": re.compile(r"\b(?:CreateFrame|NewFrame)\b\W+\"\w+\"\s*,\s*nil\s*,[^\n]*\"(?:%s)\""
+                                % "|".join(NAMED_TEMPLATES)),
     # The game's reload from our own button's click, or called outside ns.ReloadForLayout's file.
     "OWNRELOAD": re.compile(r'SetScript\s*\(\s*"On(?:Click|MouseUp|MouseDown)"[^\n]*\bReloadForLayout\b'
                             r"|\bC_UI\s*\.\s*Reload\b|(?<![\w.:])ReloadUI\s*\("),
@@ -379,12 +391,17 @@ MESSAGES = {
     "KEYUP": "a key bound straight to a release-acting button (it opens on release; the game's windows on press)",
     "CHECKLABEL": "a check's label made on another frame (it stays when the check hides; rows then overlap)",
     "MOUSEORDER": "a mouse script set after the frame's clicks were switched off (setting it turns clicks back on)",
+    "POINTEXACT": "an offset read from GetPoint compared exactly with a number, constant or saved value (the test failed every "
+                  "frame, and the hidden guild window was anchored again each one: 5 % CPU with the roster open)",
     "SELFBOX": "an edit mode Selection anchored to another frame than its own (the bars launched to the screen top)",
-    "PADLIST": "the trainer's client list sized, placed or measured in our Lua (rows it rebuilds in our name are "
-               "refused by Train's pad: a 6000-tall list left Train dead for every service)",
+    "PADLIST": "a pad-clicked client list sized, placed or measured in our Lua (rows it rebuilds in our name are "
+               "refused by Train's pad and fail a guild note save)",
     "FADEDPIECE": "a client end cap faded or laid on the band as a handle (bars snapped to it, saved at the screen top)",
     "PCALLMANY": "a pcall straight around GetChildren/GetRegions/GetAnimations: 22 or more results abort the beta client",
+    "NAMEDTEMPLATE": "a nameless frame from a client template that anchors by $parent names on retail (the profession "
+                     "bars' backs ran from one bar to another: a black box over the book)",
     "SECRETLAYER": "a draw layer read with no secret test beside it (a nameplate's pieces answer secret: 0.16.1, 1381 errors)",
+    "SECRETBAR": "a client bar's value read in Units/ with no secret test beside it (the swing bar answered secret: 351 errors)",
     "ERASPOT": "Era's old-frame shift on a window Era leaves on 16, -116 (the social window flush on the screen edge)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",
@@ -401,6 +418,7 @@ MESSAGES = {
     "SINCE": "hand-written elapsed accumulator",
     "TIMER": "C_Timer.After(0, ...), NewTicker, NewTimer or RunNextFrame outside Core/Scheduler.lua",
     "LOADADDON": "client addon loaded from our code",
+    "FRAMEWALK": "EnumerateFrames: a walk over every frame in the game (70 ms a frame on retail)",
     "PANELMGR": "client window manager driven from our code",
     "EDITMODE": "edit mode layout write",
     "EDITQUERY": "raw edit mode query outside Core/EditMode.lua",
@@ -1098,6 +1116,21 @@ def secret_layer_hits(lx):
     return found
 
 
+SECRET_BAR_READ = re.compile(r":\s*(?:GetValue|GetMinMaxValues)\s*\(")
+
+
+def secret_bar_hits(path, lx):
+    """In Units/, a status bar's GetValue or GetMinMaxValues with no IsSecret/AnySecret on its line or the next two."""
+    found = set()
+    if not path.startswith("Units/"):
+        return found
+    lines = lx.blank
+    for i, line in enumerate(lines):
+        if SECRET_BAR_READ.search(line) and not SECRET_TEST.search(" ".join(lines[i:i + 3])):
+            found.add(("SECRETBAR", i + 1))
+    return found
+
+
 def self_box_hits(lx):
     """A client Selection (frame.Selection, or a local holding one) anchored to anything but its own frame."""
     found = set()
@@ -1117,8 +1150,35 @@ def self_box_hits(lx):
     return found
 
 
+# The offsets (4th and 5th results) of a GetPoint read into locals, then compared exactly within the next lines.
+POINT_READ = re.compile(r"\blocal\s+([\w\s,]+?)\s*=\s*[\w.\[\]]+:GetPoint\(")
+POINT_REACH = 12
+
+
+def point_exact_hits(lx):
+    """An offset read from GetPoint compared with == or ~= to a number, a constant or a saved value."""
+    found = set()
+    lines = lx.blank
+    for no, line in enumerate(lines, 1):
+        m = POINT_READ.search(line)
+        if not m:
+            continue
+        names = [n.strip() for n in m.group(1).split(",")]
+        offsets = [re.escape(n) for n in names[3:5] if n and n != "_"]
+        if not offsets:
+            continue
+        name = r"(?:%s)" % "|".join(offsets)
+        # A number, a constant, or a saved value (a field or local): anything but nil.
+        value = r"(?:-?\d[\d.]*|(?!nil\b)[A-Za-z_][\w.]*)"
+        rx = re.compile(r"(?<![\w.])%s\s*(?:==|~=)\s*%s\b|(?<![\w.])%s\s*(?:==|~=)\s*%s\b" % (name, value, value, name))
+        for at in range(no, min(no + POINT_REACH, len(lines)) + 1):
+            if rx.search(lines[at - 1]):
+                found.add(("POINTEXACT", at))
+    return found
+
+
 # Lists whose rows a secure pad clicks; only the pad's snippet may size them.
-PADLIST_FILES = ("Skills/Trainer.lua",)
+PADLIST_FILES = ("Skills/Trainer.lua", "Social/GuildNoteBridge.lua")
 PADLIST_ANY_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=")
 PADLIST_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=\s*(?:[\w.]+\s+and\s+)?[\w.]+\.Scroll(?:Box|Bar)\b")
 PADLIST_CALL = re.compile(r"([\w.]+)\s*:\s*(?:Set(?:Height|Width|Size|Point|AllPoints)|ClearAllPoints"
@@ -1251,8 +1311,10 @@ def pattern_hits(path, lx, funcs):
     found |= check_label_hits(lx)
     found |= mouse_order_hits(lx)
     found |= self_box_hits(lx)
+    found |= point_exact_hits(lx)
     found |= pad_list_hits(path, lx)
     found |= secret_layer_hits(lx)
+    found |= secret_bar_hits(path, lx)
     found |= cvar_login_hits(lx, funcs)
     found |= held_cvar_hits(lx, funcs)
     if not allowed("THROTTLEFRAME", path):
