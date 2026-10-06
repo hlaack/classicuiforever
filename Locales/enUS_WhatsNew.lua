@@ -2,7 +2,9 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
-L["WN26_1_TITLE"] = "Class colors per frame"
+L["WN27_1_TITLE"] = "Less background work"
+L["WN27_1_TEXT"] = "The nameplates are laid out again only when a nameplate setting changes, not on every setting the game or another addon changes. The minimap coordinates are measured only when they change. Nothing looks different."
+L["WN26_1_TITLE"] ="Class colors per frame"
 L["WN26_1_TEXT"] = "Class colored health and Class colored name box are off by default; turn them on in the options (/fcui), under Unit frames. Each now has a Frames drop-down under it: Player, Target and Focus, so the target can wear its class color while your own frame stays as it was."
 L["WN26_2_TITLE"] = "Name box color"
 L["WN26_2_TEXT"] = "A new Name box color drop-down under Unit frames picks which frames' name box takes the game's color for the unit (blue for a friendly player). Target and Focus are checked, as in Classic Era; uncheck one for a plain box. Player is off by default; turn it on in the options (/fcui) to color your own."

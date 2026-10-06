@@ -3,7 +3,9 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
-L["WN26_1_TITLE"] = "Klassenfarben je Fenster"
+L["WN27_1_TITLE"] = "Weniger Hintergrundarbeit"
+L["WN27_1_TEXT"] = "Die Namensplaketten werden nur noch neu angeordnet, wenn sich eine Namensplaketten-Einstellung ändert, nicht mehr bei jeder Einstellung, die das Spiel oder ein anderes Addon ändert. Die Koordinaten der Minikarte werden nur noch gemessen, wenn sie sich ändern. Am Aussehen ändert sich nichts."
+L["WN26_1_TITLE"] ="Klassenfarben je Fenster"
 L["WN26_1_TEXT"] = "Gesundheit in Klassenfarbe und Namensfeld in Klassenfarbe sind standardmäßig aus; schalte sie in den Optionen (/fcui) unter Einheitenfenster ein. Beide haben jetzt darunter eine Auswahl der Fenster: Spieler, Ziel und Fokus, so kann das Ziel seine Klassenfarbe tragen, während dein eigenes Fenster bleibt, wie es war."
 L["WN26_2_TITLE"] = "Namensfeldfarbe"
 L["WN26_2_TEXT"] = "Eine neue Auswahl Namensfeldfarbe unter Einheitenfenster bestimmt, bei welchen Fenstern das Namensfeld die Farbe des Spiels für die Einheit annimmt (Blau für einen freundlichen Spieler). Ziel und Fokus sind angehakt, wie in Classic Era; ohne Haken bleibt das Feld schlicht. Spieler ist standardmäßig aus; schalte es in den Optionen (/fcui) ein, um dein eigenes zu färben."

@@ -3,7 +3,9 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
-L["WN26_1_TITLE"] = "Couleurs de classe par cadre"
+L["WN27_1_TITLE"] = "Moins de travail en arrière-plan"
+L["WN27_1_TEXT"] = "Les barres de nom ne sont replacées que lorsqu'un réglage des barres de nom change, et non à chaque réglage modifié par le jeu ou par un autre addon. Les coordonnées de la minicarte ne sont mesurées que lorsqu'elles changent. Rien ne change à l'écran."
+L["WN26_1_TITLE"] ="Couleurs de classe par cadre"
 L["WN26_1_TEXT"] = "Vie aux couleurs de classe et Case du nom aux couleurs de classe sont désactivées par défaut ; activez-les dans les options (/fcui), sous Cadres d'unité. Chacune a maintenant en dessous un menu des cadres : Joueur, Cible et Focus, la cible peut ainsi porter sa couleur de classe pendant que votre propre cadre reste comme avant."
 L["WN26_2_TITLE"] = "Couleur de la case du nom"
 L["WN26_2_TEXT"] = "Un nouveau menu Couleur de la case du nom, sous Cadres d'unité, choisit les cadres dont la case du nom prend la couleur du jeu pour l'unité (bleu pour un joueur amical). Cible et Focus sont cochés, comme dans Classic Era ; décochez-en un pour une case unie. Joueur est désactivé par défaut ; activez-le dans les options (/fcui) pour colorer la vôtre."
