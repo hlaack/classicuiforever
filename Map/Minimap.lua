@@ -112,20 +112,27 @@ end
 -- The comma under the map's middle: the game writes the line as one string, its numbers of any width, so the line
 -- slides by the difference, measured on a scratch string in its font, while it shows.
 local commaScratch, commaOn
+local measured = { shift = 0 }
 local function CommaShift(coords)
     local text = coords.CoordText
     local line = commaOn and text and text:GetText()
     if not line or ns.IsSecret(line) then return end
-    local cut = line:find(",", 1, true)
-    local shift = 0
-    if cut then
-        commaScratch = commaScratch or UIParent:CreateFontString(nil, "OVERLAY")
-        commaScratch:SetFont(text:GetFont())
-        commaScratch:SetText(line:sub(1, cut - 1))
-        local before = commaScratch:GetStringWidth()
-        commaScratch:SetText(",")
-        shift = text:GetStringWidth() / 2 - before - commaScratch:GetStringWidth() / 2
+    local file, size, flags = text:GetFont()
+    -- Measured only for a new line or font; the anchors are held each beat all the same.
+    if line ~= measured.line or file ~= measured.file or size ~= measured.size then
+        local cut = line:find(",", 1, true)
+        local shift = 0
+        if cut then
+            commaScratch = commaScratch or UIParent:CreateFontString(nil, "OVERLAY")
+            commaScratch:SetFont(file, size, flags)
+            commaScratch:SetText(line:sub(1, cut - 1))
+            local before = commaScratch:GetStringWidth()
+            commaScratch:SetText(",")
+            shift = text:GetStringWidth() / 2 - before - commaScratch:GetStringWidth() / 2
+        end
+        measured.line, measured.file, measured.size, measured.shift = line, file, size, shift
     end
+    local shift = measured.shift
     ns.SetTwoPointsIf(text, "TOPLEFT", coords, "TOPLEFT", shift, 0, "BOTTOMRIGHT", coords, "BOTTOMRIGHT", shift, 0)
 end
 

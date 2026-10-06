@@ -25,17 +25,23 @@ local function Moved(el) return ns.ValidPlace(ns.db[el.posKey]) end
 
 -- Hidden, or with no place of ours this layout, the client's key ring is hidden (it lays it beside its bags at its own size:
 -- the empty box left of the row). Hidden, not faded: an alpha animation on it undoes any fade. Given back as the band goes.
-local keyOff, keyWasShown = false, false
+local keyOff, keyWasShown, keyJob = false, false, nil
+-- Sole writer of keyOff; the watch that hides it again is awake only while it is on.
+local function SetKeyOff(off)
+    keyOff = off
+    if not keyJob then return end
+    if off then keyJob:Wake() else keyJob:Sleep() end
+end
 local function KeyRingShown(shown)
     local keyRing = KeyRingButton
     if not keyRing then return end
     if not shown then
         if not keyOff then keyWasShown = keyRing:IsShown() end
-        keyOff = true
+        SetKeyOff(true)
         if keyRing:IsShown() then keyRing:Hide() end
         if keyRing:IsMouseEnabled() then keyRing:EnableMouse(false) end
     elseif keyOff then
-        keyOff = false
+        SetKeyOff(false)
         ns.SetAlphaIf(keyRing, 1)
         keyRing:EnableMouse(true)
         if keyWasShown then keyRing:Show() end
@@ -248,7 +254,7 @@ function B.LaySection(level)
     if KeyRingButton and not watched then
         watched = true
         ns.Sched.OnVisible(KeyRingButton, "band.keyRingSeen", KeyRingSeen)
-        ns.Sched.Attach(KeyRingButton, { name = "band.keyRingOff", every = 0.1, fn = HideAgain })
+        keyJob = ns.Sched.Attach(KeyRingButton, { name = "band.keyRingOff", every = 0.1, fn = HideAgain, awake = false })
     end
     Place(LATENCY, plan, level)
     local placed = Place(KEYRING, plan, level)

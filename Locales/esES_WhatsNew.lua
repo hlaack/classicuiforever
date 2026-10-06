@@ -3,7 +3,9 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
-L["WN26_1_TITLE"] = "Colores de clase por marco"
+L["WN27_1_TITLE"] = "Menos trabajo en segundo plano"
+L["WN27_1_TEXT"] = "Las placas de nombre solo se vuelven a colocar cuando cambia un ajuste de las placas, no con cada ajuste que cambie el juego u otro addon. Las coordenadas del minimapa solo se miden cuando cambian. Nada se ve distinto."
+L["WN26_1_TITLE"] ="Colores de clase por marco"
 L["WN26_1_TEXT"] = "Salud con color de clase y Recuadro de nombre con color de clase están desactivadas por defecto; actívalas en las opciones (/fcui), en Marcos de unidad. Cada una tiene ahora debajo un desplegable de marcos: Jugador, Objetivo y Foco, así el objetivo puede llevar su color de clase mientras tu propio marco sigue como estaba."
 L["WN26_2_TITLE"] = "Color del recuadro de nombre"
 L["WN26_2_TEXT"] = "Un nuevo desplegable Color del recuadro de nombre, en Marcos de unidad, elige en qué marcos el recuadro de nombre toma el color del juego para la unidad (azul para un jugador amistoso). Objetivo y Foco están marcados, como en Classic Era; desmarca uno para un recuadro sin color. Jugador está desactivado por defecto; actívalo en las opciones (/fcui) para colorear el tuyo."

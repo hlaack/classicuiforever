@@ -3,7 +3,9 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
-L["WN26_1_TITLE"] = "Colori di classe per riquadro"
+L["WN27_1_TITLE"] = "Meno lavoro in background"
+L["WN27_1_TEXT"] = "Le targhette vengono disposte di nuovo solo quando cambia un'impostazione delle targhette, non a ogni impostazione modificata dal gioco o da un altro addon. Le coordinate della minimappa vengono misurate solo quando cambiano. Nulla cambia nell'aspetto."
+L["WN26_1_TITLE"] ="Colori di classe per riquadro"
 L["WN26_1_TEXT"] = "Salute col colore della classe e Riquadro del nome col colore della classe sono disattivate di base; attivale nelle opzioni (/fcui), in Riquadri delle unità. Ognuna ha ora sotto un menu dei riquadri: Giocatore, Bersaglio e Focus, così il bersaglio può portare il colore della sua classe mentre il tuo riquadro resta com'era."
 L["WN26_2_TITLE"] = "Colore del riquadro del nome"
 L["WN26_2_TEXT"] = "Un nuovo menu Colore del riquadro del nome, in Riquadri delle unità, sceglie in quali riquadri il riquadro del nome prende il colore del gioco per l'unità (blu per un giocatore amico). Bersaglio e Focus sono spuntati, come in Classic Era; togli la spunta per un riquadro senza colore. Giocatore è disattivato di base; attivalo nelle opzioni (/fcui) per colorare il tuo."

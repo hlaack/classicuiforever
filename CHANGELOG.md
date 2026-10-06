@@ -12,6 +12,13 @@ All notable changes to ClassicUI Forever are documented here.
   - Background under Legacy window: each tree's Era talent art, or parchment, marble or stone.
 - `/fcui legacy` opens the classic Legacy window.
 
+## [0.20.5] - 2026-10-06
+
+### Changed
+- The nameplates are laid out again only when a nameplate setting changes. Every setting changed by the game or by another addon did it, twice (#127).
+- The minimap coordinates are measured only when they change. They were measured ten times a second, standing still included (#127).
+- The check that keeps a hidden key ring hidden rests while the key ring shows. It ran every frame (#127).
+
 ## [0.20.4] - 2026-10-04
 
 ### Added
