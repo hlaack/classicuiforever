@@ -451,7 +451,11 @@ local function OnEvent(_, event, unit, _, _, interruptedBy)
             QueueRelay(unitFrame, "cast")
         end
     elseif ALL_EVENTS[event] then
-        if event == "CVAR_UPDATE" then plateScale = nil end
+        if event == "CVAR_UPDATE" then
+            -- unit holds the CVar's name; the client's plates and ours answer only to "nameplate" ones.
+            if not unit:lower():find("nameplate", 1, true) then return end
+            plateScale = nil
+        end
         QueueRelay()
     end
 end
