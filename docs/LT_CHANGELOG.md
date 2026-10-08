@@ -39,9 +39,6 @@ All notable changes to the Classic Legacy Talents window in ClassicUI Forever ar
 - A window opened beside the classic Legacy window no longer covers its page tabs: the next window stands clear of them, as beside the spellbook.
 
 ### Known issues
-- Not yet checked in game: spending and taking back points, Apply Changes and undo, and opening the window in a fight. The window and the trees' layout were checked on the beta.
-- Not yet checked in game: the Challenges list and detail updating as challenges progress or are earned.
-- Not yet checked in game: the Reward Track page opening at the next reward once some are earned. Its layout, reward names, icons and tooltips were checked on the beta.
 - Nested challenge categories are listed one after another, not indented under their parent.
 - A challenge with many steps lists them all; there is no search box yet.
 - A Legacy tree wider than four columns would be cut off at the window's right edge.
@@ -56,8 +53,8 @@ The Legacy window reuses the add-on's own windows and art instead of copying the
 - **Skills/Talents.lua** and **Skills/TalentsTree.lua**: the talent window's frame, tree view, talent buttons, branches and arrows, tooltip, foot (undo, points left, Apply Changes) and foot tabs moved to **UI/TalentWindow.lua** (`ns.TalentWindow`, `ns.DrawTalentTab`, `ns.TalentWindowShown`, `ns.TalentButtons`). The tree reader moved to **UI/TraitTree.lua** (`ns.ReadTraitTree`). Talents.lua keeps everything that is the talents window's own: class backgrounds, inspect, the key binding, the micro button and the module. Checked in game: the talents window looks and works as before.
   - Merging 0.20.3: the author's shift-click into a macro (#124) changed the talent button's click, which had moved; it was carried over unchanged into `Button_OnClick` in UI/TalentWindow.lua, so Legacy perks get it too. **tools/tests/spells_window_test.lua** now reads that file instead of Skills/Talents.lua. Checked in game: a talent shift-clicked into an open macro gives its name.
 - **Spells/SpellBook.lua**: the skill line tab down the book's right edge (`CreateSkillTab`) now builds its art with **UI/SkillLineTab.lua** (`ns.SkillLineTab`). The tab's scripts and id stay in SpellBook.lua. Checked in game: the side tabs work as before.
-- **Quest/QuestLogDetail.lua**: the 1.x quest reward button (`RewardButton`) now comes from **UI/RewardSlot.lua** (`ns.RewardSlot`); the quest log still sets its scale, scripts and contents. Not yet checked in game.
-- **Windows/DamageMeter.lua**: the class trainer's divider bar pieces (`BarPiece`) now come from **UI/DividerBar.lua** (`ns.DividerBar`); the meter still places them. Not yet checked in game.
+- **Quest/QuestLogDetail.lua**: the 1.x quest reward button (`RewardButton`) now comes from **UI/RewardSlot.lua** (`ns.RewardSlot`); the quest log still sets its scale, scripts and contents. Checked in game: the quest log's rewards look and work as before.
+- **Windows/DamageMeter.lua**: the class trainer's divider bar pieces (`BarPiece`) now come from **UI/DividerBar.lua** (`ns.DividerBar`); the meter still places them. Checked in game: the divider looks as before.
 
 ### Additions to existing shared code
 - **Skills/SkillShell.lua**: `SkillList.Paint(row, picked, color)` (a list row's picked and unpicked colors) and `SkillList.Fold(line, collapsed)` (a header's fold on click), both taken from Skills/TradeSkill.lua. `panel.tabStones` (the stone strips over the All tab's top and right side) is now exposed so the Legacy window's divider can take their place. No change to how the trade skill or trainer window lays them out. Checked in game: the trade skill window's list works as before.
