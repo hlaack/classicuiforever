@@ -77,4 +77,3 @@ The Legacy window reuses the add-on's own windows and art instead of copying the
 - **ClassicUIForever.toc**: the new UI, Legacy and `Locales/*_Legacy.lua` files.
 - **.luacheckrc**: read globals the Legacy window uses: the achievement API, `FormatShortDate`, `C_MajorFactions`, `RenownRewardUtil` and `C_MountJournal`.
 - **tools/CONVENTIONS.md**: the Legacy folder in the folder map, and the new shared helpers in the helper table.
-- **.gitignore**: Claude Code's own files (`CLAUDE.md`, `.claude/`, `.mcp.json`) are kept out of the repository.
