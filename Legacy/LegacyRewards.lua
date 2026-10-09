@@ -14,6 +14,8 @@ local SLOT_SCALE = (TEXT_W - SLOT_GAP) / 2 / 147
 local HEADING_GAP, SLOT_ROW_GAP, MILESTONE_GAP = 6, 4, 12
 -- The progress bar and the rewards' pane, this far under the divider's metal.
 local BAR_UNDER, PANE_UNDER = 15, 51
+-- The scroll column's marble, as bright as the shell's panes.
+local RUN_SHADE = 1.35
 local BAR_COLOR = { 0.25, 0.35, 0.75 }
 local EARNED_COLOR = { 1, 0.82, 0 }
 local LOCKED_COLOR = { 0.5, 0.5, 0.5 }
@@ -219,6 +221,10 @@ local function BuildPane()
     pane.bar:SetPoint("BOTTOMLEFT", box, "BOTTOMRIGHT", -9, 22)
     pane.bar:SetFrameLevel(box:GetFrameLevel() + 6)
     ns.ScrollColumnOn(pane.bar)
+    -- Marble down the column's see-through channel, as the trade skill list's; the pane's border showed through.
+    local run = pane.bar:CreateTexture(nil, "BORDER")
+    ns.TileTex(run, "marbleBg", nil, RUN_SHADE)
+    run:SetAllPoints(pane.bar)
     scroll:SetScript("OnMouseWheel", function(_, delta)
         pane.bar:SetValue((pane.bar:GetValue() or 0) - delta * 30)
     end)

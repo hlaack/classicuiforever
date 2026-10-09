@@ -35,6 +35,7 @@ All notable changes to the Classic Legacy Talents window in ClassicUI Forever ar
 - The quest log's reward buttons are now shared code that the Legacy window also uses. The quest log looks and works as before.
 
 ### Fixed
+- The Reward Track's scroll column no longer shows its pane's right border through its middle. It has the marble behind it that the Challenges list's column has.
 - The Challenges and Reward Track pages no longer cover the bottom of the portrait, and leave a gap under the Legacy Points bar. Their stone now starts under Classic Era's class trainer divider bar instead of a bare edge.
 - A window opened beside the classic Legacy window no longer covers its page tabs: the next window stands clear of them, as beside the spellbook.
 
@@ -77,4 +78,3 @@ The Legacy window reuses the add-on's own windows and art instead of copying the
 - **ClassicUIForever.toc**: the new UI, Legacy and `Locales/*_Legacy.lua` files.
 - **.luacheckrc**: read globals the Legacy window uses: the achievement API, `FormatShortDate`, `C_MajorFactions`, `RenownRewardUtil` and `C_MountJournal`.
 - **tools/CONVENTIONS.md**: the Legacy folder in the folder map, and the new shared helpers in the helper table.
-- **.gitignore**: Claude Code's own files (`CLAUDE.md`, `.claude/`, `.mcp.json`) are kept out of the repository.
