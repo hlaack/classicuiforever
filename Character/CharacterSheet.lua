@@ -24,7 +24,8 @@ local RIGHT_SLOTS = { "CharacterHandsSlot", "CharacterWaistSlot", "CharacterLegs
 local WEAPON_SLOTS = { "CharacterMainHandSlot", "CharacterSecondaryHandSlot", "CharacterRangedSlot" }
 local DOLL_BG = { "BackgroundTopLeft", "BackgroundTopRight", "BackgroundBotLeft", "BackgroundBotRight", "BackgroundOverlay" }
 local INNER_BORDER = { "TopLeft", "TopRight", "BottomLeft", "BottomRight", "Left", "Right", "Top", "Bottom", "Bottom2" }
-local SIDE_PIECES = { "CharacterStatsPane", "CharacterStatsPaneScrollBox", "PaperDollSidebarTabs", "PaperDollLevelInfo" }
+local SIDE_PIECES = { "CharacterStatsPane", "CharacterStatsPaneScrollBox", "PaperDollSidebarTabs", "PaperDollLevelInfo",
+    "PaperDollPetLevelInfo" }
 
 -- Short labels so the tabs fit the 384px window.
 local TAB_LABELS = {
@@ -123,8 +124,7 @@ end
 -- Client sidebar tabs that take our clicks: the side pane's quiet walk leaves their mouse on.
 local catchers = setmetatable({}, { __mode = "k" })
 
--- Keeps a client tab (the mode tab unless given) over our drawn one, out to far and above under;
--- the client re-lays its tabs, so rechecked while up.
+-- A client tab (the mode tab unless given) kept over our drawn one; rechecked while up (the client re-lays it).
 local function OverTab(tab, catcher, under, far)
     catcher = catcher or (tab and tab.mode)
     if not catcher or not catcher.SetAllPoints then return end
@@ -222,8 +222,7 @@ local function HookCatcher(tab, catcher)
     catcher:HookScript("OnLeave", function() tab:UnlockHighlight() end)
 end
 
--- Picture only: our click opens the tab tainted and in combat it is refused its numbers.
--- The client's own tab lies over it, unseen.
+-- Picture only, the client's own tab unseen over it: our click opened the tab tainted, refused its numbers in combat.
 local function NewTab(frame, i, mode)
     local tab = ClassicTab(frame, i)
     tab:EnableMouse(false)
@@ -431,6 +430,8 @@ local function LayoutNow()
     Fade(frame.InsetRight)
     ns.EachKey(doll, DOLL_BG, Fade)
     ns.EachKey(CharacterModelScene, DOLL_BG, Fade)
+    -- Forever 70291: a rock strip over the model's top, across the left pane.
+    Fade(PaperDollFrame and PaperDollFrame.TopBackgroundStripHost)
     -- Retail's thin frame round the model hangs on the faded inset, taller than the old window.
     for _, name in ipairs(INNER_BORDER) do Fade(_G["PaperDollInnerBorder" .. name]) end
     -- Client zoom/rotate controls give way to the old buttons; the client reshows them with the doll.
@@ -732,8 +733,7 @@ local function Apply()
     if not hooked then
         hooked = true
         ns.HookMethod(CharacterFrame, "UpdateSize", Layout)
-        -- The client resizes the pane on its own (e.g. opening in combat); re-lay then and
-        -- after combat, when the panel system re-places it.
+        -- The client resizes the pane on its own (opening in combat): re-lay then and after the fight.
         if PaperDollFrame then PaperDollFrame:HookScript("OnSizeChanged", LayoutIfActive) end
         ns.EventFrame("PLAYER_REGEN_ENABLED", LayoutIfShown)
         -- Put away the side panel's frames, never its state: writing the collapsed flag taints

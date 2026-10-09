@@ -3,6 +3,14 @@ if ns.LOCALE ~= "frFR" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/frFR.lua.
+L["WN28_1_TITLE"] = "Alliés récents et Ignorés"
+L["WN28_1_TEXT"] = "L'onglet Amis de la fenêtre sociale a les onglets Alliés récents et Ignorés à côté d'Amis. Alliés récents liste les joueurs avec qui vous avez groupé récemment et a une ligne de recherche ; Ignorés liste les joueurs que vous ignorez."
+L["WN28_2_TITLE"] = "De nouveau la fenêtre sociale classique"
+L["WN28_2_TEXT"] = "Depuis la dernière mise à jour du jeu, O et le bouton de guilde ouvraient la nouvelle fenêtre sociale du jeu. Ils ouvrent de nouveau la classique, ses onglets sont alignés et l'onglet Raid est de retour."
+L["WN28_3_TITLE"] = "Corrections après la mise à jour du jeu"
+L["WN28_3_TEXT"] = "Les points de combo affichent de nouveau les cinq orbes classiques. La bande sombre sur le modèle du personnage et le cadre sombre sur les pages d'annonce de la recherche de groupe ont disparu, le bouton de tri fonctionne en mode sac unique, et la recherche de groupe ne saute plus quand elle s'ouvre en combat."
+L["WN28_4_TITLE"] = "Fenêtre de butin et sacs"
+L["WN28_4_TEXT"] = "Avec Fenêtre de butin désactivée, la fenêtre de butin du jeu n'affiche plus deux carrés blancs dans ses coins. Le bouton de tri des sacs tient à côté du champ de recherche."
 L["WN27_1_TITLE"] = "Moins de travail en arrière-plan"
 L["WN27_1_TEXT"] = "Les barres de nom ne sont replacées que lorsqu'un réglage des barres de nom change, et non à chaque réglage modifié par le jeu ou par un autre addon. Les coordonnées de la minicarte ne sont mesurées que lorsqu'elles changent. Rien ne change à l'écran."
 L["WN26_1_TITLE"] ="Couleurs de classe par cadre"

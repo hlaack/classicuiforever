@@ -596,7 +596,6 @@ L["CORE_THE_PET_FRAME_KEEPS_THE"] = "Le cadre du familier garde les anciens grap
 L["CORE_THE_PARTY_FRAMES_KEEP_SOME"] = "Les cadres du groupe gardent une partie des anciens graphismes jusqu'au rechargement de l'interface."
 L["CORE_THE_CAST_BARS_KEEP_THE"] = "Les barres d'incantation gardent l'ancien remplissage et l'ancien éclat jusqu'au rechargement de l'interface."
 L["CORE_THE_BREATH_AND_FATIGUE_BARS"] = "Les barres de souffle et de fatigue gardent l'ancienne bordure et l'ancienne barre jusqu'au rechargement de l'interface."
-L["CORE_THE_GAME_S_OWN_COMBO"] = "Les points de combo du jeu gardent les anciennes places jusqu'au rechargement de l'interface."
 L["CORE_THE_MINIMAP_S_BUTTONS_AND"] = "Les boutons et le nom de zone de la minicarte gardent les anciennes places jusqu'au rechargement de l'interface."
 L["CORE_NAMEPLATES_KEEP_THE_OLD_SIZES"] = "Les barres de nom gardent les anciennes tailles et places jusqu'au rechargement de l'interface."
 L["CORE_THE_OBJECTIVE_TRACKER_KEEPS_THE"] = "Le suivi des objectifs garde les anciens en-têtes en pierre jusqu'au rechargement de l'interface."

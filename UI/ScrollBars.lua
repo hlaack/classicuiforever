@@ -230,8 +230,10 @@ function ns.ScrollTrackArt(bar, spec)
     ns.TileTex(channel, "marbleBg", nil, ns.PANE_SHADE or 0.9)
     channel:SetPoint("TOPLEFT", top, "TOPLEFT", HOUSING_CHANNEL_LEFT, -HOUSING_CHANNEL_TOP)
     channel:SetPoint("BOTTOMRIGHT", foot, "BOTTOMLEFT", HOUSING_CHANNEL_RIGHT, HOUSING_CHANNEL_TOP)
+    -- The channel hangs on the head and foot: with them hidden it loses its shape and drew a 256 box over the window.
     local function Fit()
         FitColumn(top, middle, foot, (bar:GetHeight() or 0) + spec.houseTop - spec.houseFoot)
+        channel:SetShown(top:IsShown())
     end
     -- Sized via our own frame: the client resets the bar's size script, dropping any hook on it.
     local ear = ns.NewFrame("Frame", nil, bar)

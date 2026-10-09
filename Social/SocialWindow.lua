@@ -21,6 +21,16 @@ local GOLD_HL = { set = "raw", layer = "HIGHLIGHT", fill = true, blend = "ADD", 
 
 ---------------------------------------------------------------- tabs
 
+-- The game's new social window (beta 70291, a server switch): the game's friends toggle opens it, and the old window
+-- left to us hides its own Friends and Raid tabs and lists no Recent Allies.
+function ns.SocialUIOn()
+    local api = _G.C_SocialUI
+    return api ~= nil and api.IsSystemEnabled ~= nil and api.IsSystemEnabled() == true and _G.SocialUIFrame ~= nil
+end
+
+local friendsTab, raidTab
+local SyncFriendsTab, NewSocialUI, StandInPad
+
 -- The client's own tabs along the window's foot, a new list each call.
 function S.FriendsFrameTabs()
     local tabs = {}
@@ -42,6 +52,7 @@ function S.SelectFriendsTab(tab, on)
         if PanelTemplates_DeselectTab then PanelTemplates_DeselectTab(tab) end
     end
     ns.FitBottomTab(tab)
+    if tab ~= friendsTab then SyncFriendsTab() end
 end
 
 function S.NewTab(host, name, id, text)
@@ -99,18 +110,104 @@ local function ClientQuick()
     return id and _G["FriendsFrameTab" .. id] or nil
 end
 
+-- Covered while a list of ours is up.
+local function OverlayUp()
+    local who = ns.WhoPanel and ns.WhoPanel()
+    local guild = ns.guild and ns.guild.panel
+    return (who and who:IsShown()) or (guild and guild:IsShown()) or false
+end
+
+-- The client's foot tab picked is its Raid one: the old raid page stands in the window.
+local function OnRaidPage()
+    local id = _G.FRIEND_TAB_RAID
+    return id ~= nil and FriendsFrame ~= nil and PanelTemplates_GetSelectedTab(FriendsFrame) == id
+end
+
+local function Pick(tab, on)
+    if not tab or not tab:IsShown() then return end
+    if on then PanelTemplates_SelectTab(tab) else PanelTemplates_DeselectTab(tab) end
+    ns.FitBottomTab(tab)
+end
+
+S.OverlayUp, S.OnRaidPage = OverlayUp, OnRaidPage
+
+SyncFriendsTab = function()
+    local covered, raid = OverlayUp(), OnRaidPage()
+    Pick(friendsTab, not covered and not raid)
+    Pick(raidTab, not covered and raid)
+    -- After the lists' own show and hide work, which puts the client's panels back.
+    if S.SyncContactPages then ns.Sched.Soon("social.pages", S.SyncContactPages) end
+end
+
+local function HideOurLists()
+    local who = ns.WhoPanel and ns.WhoPanel()
+    if who and who:IsShown() then ns.HideWhoList() end
+    local guild = ns.guild and ns.guild.panel
+    if guild and guild:IsShown() then ns.HideGuildRoster() end
+end
+
+-- Without its pad (in a fight): our lists step aside; the raid page cannot be put away then.
+local function FriendsTabClick()
+    PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
+    if OnRaidPage() and InCombatLockdown() then
+        ns.SayNotInCombat()
+        return
+    end
+    HideOurLists()
+    SyncFriendsTab()
+end
+
+-- The row's first tab: the client's Friends tab, or ours while the switch hides it.
+local function FirstTab()
+    local client = _G.FriendsFrameTab1
+    local ours = ns.SocialUIOn() and client ~= nil and not client:IsShown()
+    if ours and not friendsTab and FriendsFrame then
+        friendsTab = S.NewTab(FriendsFrame, "ClassicUIForeverFriendsTab", 89, FRIENDS or "Friends")
+        friendsTab:SetScript("OnClick", FriendsTabClick)
+        -- The row's tuned spot is the first tab's own: no window lift on top.
+        ns.SetTabLift(friendsTab, 0)
+        StandInPad(friendsTab, client)
+    end
+    if friendsTab then ns.SetShownIf(friendsTab, ours) end
+    if ours then return friendsTab end
+    return client
+end
+
+-- The client's Raid tab, hidden by the switch; ours in its place presses it.
+local function ClientRaid()
+    for _, tab in ipairs(S.FriendsFrameTabs()) do
+        if tab:GetID() == _G.FRIEND_TAB_RAID then return tab end
+    end
+end
+
+local function RaidTab()
+    local client = ClientRaid()
+    local ours = ns.SocialUIOn() and client ~= nil and not client:IsShown()
+    if ours and not raidTab and FriendsFrame then
+        raidTab = S.NewTab(FriendsFrame, "ClassicUIForeverRaidTab", 93, RAID or "Raid")
+        PanelTemplates_DeselectTab(raidTab)
+        -- Without its pad: in a fight, where the client's tab cannot be pressed for us.
+        raidTab:SetScript("OnClick", function() if InCombatLockdown() then ns.SayNotInCombat() end end)
+        StandInPad(raidTab, client)
+    end
+    if raidTab then ns.SetShownIf(raidTab, ours) end
+end
+
 function S.PlaceTabs()
     local blizzard = S.FriendsFrameTabs()
     local clientWho = clientWhoOff and ClientWho() or nil
     local clientQuick = quickOff and ClientQuick() or nil
     local order = {}
-    if blizzard[1] then order[#order + 1] = blizzard[1] end
+    local first = FirstTab()
+    if first then order[#order + 1] = first end
     local whoTab = S.whoTab
     if whoTab then order[#order + 1] = whoTab end
     local guildTab = _G["ClassicUIForeverGuildTab"]
     if guildTab then order[#order + 1] = guildTab end
     local communitiesTab = _G["ClassicUIForeverCommunitiesTab"]
     if communitiesTab then order[#order + 1] = communitiesTab end
+    RaidTab()
+    if raidTab then order[#order + 1] = raidTab end
     for i = 2, #blizzard do
         if blizzard[i] ~= clientWho and blizzard[i] ~= clientQuick then order[#order + 1] = blizzard[i] end
     end
@@ -134,6 +231,7 @@ function S.PlaceTabs()
             previous = entry
         end
     end
+    NewSocialUI()
 end
 
 -------------------------------------------------------- client panels
@@ -275,6 +373,41 @@ function S.ListBox(panel, host, headerRow, bottom)
     return box
 end
 
+-- The who list's foot line under a list box (panel.listBox): the client's lens, its X once typed. onEnter(box) on Enter;
+-- the box is panel.query.
+function S.SearchLine(panel, onEnter)
+    local query = ns.NewFrame("EditBox", nil, panel.listBox, "InputBoxTemplate")
+    panel.query = query
+    query:SetPoint("BOTTOMLEFT", panel.listBox, "BOTTOMLEFT", 6, -7)
+    query:SetPoint("RIGHT", panel.listBox, "RIGHT", -2, 0)
+    query:SetHeight(18)
+    -- The input's thin border is bronze here; drained, it is the old silver.
+    ns.DrainInput(query)
+    local lens = query:CreateTexture(nil, "OVERLAY")
+    lens:SetTexture("Interface/Common/UI-Searchbox-Icon")
+    lens:SetSize(14, 14)
+    lens:SetPoint("LEFT", query, "LEFT", 1, -2)
+    lens:SetVertexColor(0.6, 0.6, 0.6)
+    query:SetTextInsets(16, 20, 0, 0)
+    local clear = ns.SearchClear(query)
+    query:HookScript("OnTextChanged", function(self)
+        clear:SetShown((self:GetText() or "") ~= "")
+    end)
+    query:SetAutoFocus(false)
+    query:SetFontObject("ChatFontNormal")
+    query:SetMaxLetters(60)
+    query:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    query:SetScript("OnEnterPressed", onEnter)
+    return query
+end
+
+-- The bar the pane's full height, down beside the count to the search line.
+function S.PlaceListBar(bar, list)
+    bar:ClearAllPoints()
+    bar:SetPoint("TOPLEFT", list, "TOPRIGHT", 6, -13)
+    bar:SetPoint("BOTTOMLEFT", list, "BOTTOMRIGHT", 6, 1)
+end
+
 -- The list over foot (gap above it), its bar and 30 rows. placeBar(bar,
 -- list) re-anchors the bar before its column is put on.
 function S.ScrollRows(panel, foot, gap, onValue, columns, onClick, onDoubleClick, placeBar)
@@ -356,6 +489,22 @@ end
 -- Era's player menu section heads.
 S.MENU_INTERACT = _G.UNIT_FRAME_DROPDOWN_SUBSECTION_TITLE_INTERACT or "Interact"
 S.MENU_OTHER = _G.UNIT_FRAME_DROPDOWN_SUBSECTION_TITLE_OTHER or "Other Options"
+
+-- One player menu for every list here (Report and Copy Name are the client's alone); entry.name is the player.
+function S.ShowPlayerMenu(owner, entry)
+    if not S.playerMenu then
+        S.playerMenu = ns.RowMenu({
+            { section = S.MENU_INTERACT },
+            { INVITE or "Invite", function(who) S.Invite(who.name) end },
+            { WHISPER or "Whisper", function(who) ns.Whisper(who.name) end },
+            { section = S.MENU_OTHER },
+            { ADD_FRIEND or "Add Friend", function(who) S.AddFriend(who.name) end },
+            { IGNORE or "Ignore", function(who) S.Ignore(who.name) end },
+        })
+    end
+    S.playerMenu:Follow(owner)
+    S.playerMenu:Open(entry, entry.name)
+end
 
 ---------------------------------------------------------------- recent allies
 
@@ -478,4 +627,32 @@ function ns.PlaceRecentAllyRows()
     alliesWatch = ns.NewFrame("Frame", nil, list)
     local job = ns.Sched.OnFrame(alliesWatch, { name = "friends.recentAllies", every = 0.25, pre = AlliesChanged, fn = PlaceAllies })
     job.target = target
+end
+
+---------------------------------------------------------------- the game's new social window
+
+-- Our Friends and Raid tabs press the client's hidden ones, so the page changes in its own pass, as before the switch.
+-- Off the raid page the raid frame is parked first: the raid parent's first tab takes it back and presses the client's
+-- Friends tab (ClaimRaidFrame); the switch left nothing else to hide it.
+local function StandInMacro(client)
+    local text = "/click " .. client:GetName()
+    if client == _G.FriendsFrameTab1 and _G.RaidParentFrameTab1 and _G.RaidFrame and _G.RaidFrame:GetParent() == FriendsFrame then
+        text = "/click RaidParentFrameTab1\n" .. text
+    end
+    return text
+end
+
+local function PadWanted() return ns.SocialUIOn() and FriendsFrame ~= nil and FriendsFrame:IsShown() end
+local function AfterPress()
+    HideOurLists()
+    SyncFriendsTab()
+end
+
+StandInPad = function(tab, client)
+    if not client:GetName() then return end
+    ns.MapPad(tab, "HIGH", AfterPress, function() return StandInMacro(client) end, PadWanted)
+end
+
+NewSocialUI = function()
+    SyncFriendsTab()
 end

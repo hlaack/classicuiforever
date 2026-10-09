@@ -508,6 +508,43 @@ local function FinderShown(shown)
     if not shown then ns.Sched.NextFrame("finder.shutFit", FitShut) end
 end
 
+-- In a fight we swap the finder and the social window raw, so the client's manager still holds the social window: its
+-- own open of the finder (the tab over ours) stood it in the next slot, 386 over, and it stayed there for the fight. While
+-- the social window is shut, the finder stands in its place.
+local function SocialSpot()
+    local social = FriendsFrame
+    if not social or ns.Safe(social:GetNumPoints(), 0) ~= 1 then return nil end
+    local point, rel, relPoint, x, y = social:GetPoint(1)
+    if ns.AnySecret(point, rel, relPoint, x, y) or point ~= "TOPLEFT" or relPoint ~= "TOPLEFT" then return nil end
+    if rel ~= nil and rel ~= UIParent then return nil end
+    return x, y
+end
+
+local function FinderOnSocialSpot()
+    local finder = _G["LFGParentFrame"]
+    if not (active and InCombatLockdown() and finder and finder:IsShown()) then return end
+    if FriendsFrame and FriendsFrame:IsShown() or ns.WindowLocked(finder) then return end
+    local x, y = SocialSpot()
+    if x then ns.SetPointIf(finder, "TOPLEFT", UIParent, "TOPLEFT", x, y) end
+end
+
+local function SocialShown(shown)
+    if not shown then ns.Sched.NextFrame("finder.fightSpot", FinderOnSocialSpot) end
+end
+
+-- After the fight the manager's record is put right: a window it still holds but that we hid is let go.
+local PANEL_SLOTS = { "left", "center", "right", "doublewide" }
+local function ForgetHidden()
+    local held = _G.GetUIPanel
+    if not active or InCombatLockdown() or not held or not HideUIPanel then return end
+    for _, frame in ipairs({ FriendsFrame, _G["LFGParentFrame"] }) do
+        for _, slot in ipairs(PANEL_SLOTS) do
+            -- ns.HidePanel passes a shut window by: the manager is told here.
+            if frame and held(slot) == frame and not frame:IsShown() then HideUIPanel(frame) end
+        end
+    end
+end
+
 -- 10 Hz on a child of the finder (and at once for a category bar off size), so only while it shows; the finder exists
 -- once its code loads.
 local function AttachFit()
@@ -519,6 +556,7 @@ local function AttachFit()
         if _G[name] then ns.Sched.AfterShow(_G[name], "finder.pageFit", FitShown) end
     end
     ns.Sched.OnVisible(parent, "finder.shutFit", FinderShown)
+    ns.Sched.AfterShow(parent, "finder.fightSpot", FinderOnSocialSpot)
 end
 
 local function Watch()
@@ -529,7 +567,11 @@ local function Watch()
         ns.SafeCall(Fit)
     end)
     AttachFit()
-    if FriendsFrame then ns.Sched.OnMove(FriendsFrame, FitShut) end
+    if FriendsFrame then
+        ns.Sched.OnMove(FriendsFrame, FitShut)
+        ns.Sched.OnVisible(FriendsFrame, "finder.fightSpot", SocialShown)
+    end
+    ns.EventFrame("PLAYER_REGEN_ENABLED", ForgetHidden)
 end
 
 -- The module's switch, its only writer.

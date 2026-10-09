@@ -1,8 +1,7 @@
 local _, ns = ...
 
 -- 1.x combo points: five orbs curving down the right of the target portrait, each glinting as it lights.
--- The client's ComboFrame (eight-orb arc) is re-laid to the 1.13 shape; without one we build our own.
--- Retail's display under the player frame fades either way.
+-- Our own orbs in the 1.13 shape; the client's (Forever's ComboFrame, retail's under the player frame) are faded.
 
 local POINTS = 5
 -- Orb centres on the portrait rim, top right down to just above the level badge.
@@ -16,7 +15,7 @@ local SHEET = "comboPoint"
 local ORB_BG = { layer = "BACKGROUND", w = 12, h = 16, point = "TOPLEFT", coords = { 0, 0.375, 0, 1 } }
 local ORB_FILL = { layer = "ARTWORK", w = 8, h = 16, point = "TOPLEFT", x = 2, coords = { 0.375, 0.5625, 0, 1 }, alpha = 0 }
 local ORB_GLOW = { layer = "OVERLAY", w = 14, h = 16, point = "TOPLEFT", y = 4, coords = { 0.5625, 1, 0, 1 }, blend = "ADD", alpha = 0 }
-local WORLD_EVENTS = { "PLAYER_TARGET_CHANGED", "PLAYER_ENTERING_WORLD", "UPDATE_SHAPESHIFT_FORM" }
+local WORLD_EVENTS = { "PLAYER_TARGET_CHANGED", "PLAYER_ENTERING_WORLD", "UPDATE_SHAPESHIFT_FORM", "COMBO_TARGET_CHANGED" }
 local POWER_EVENTS = { "UNIT_POWER_UPDATE", "UNIT_MAXPOWER", "UNIT_DISPLAYPOWER" }
 
 local active = false
@@ -33,34 +32,10 @@ local function PinOrb(orb, index)
     ns.SetPointOnce(orb, "CENTER", Ring(), "CENTER", x, y)
 end
 
----------------------------------------------------------------- the client's
-
-local function LayoutBlizzard()
-    local cf = ComboFrame
-    if not cf or not active then return end
-    ns.SetPointOnce(cf, "CENTER", Ring(), "CENTER", 0, 0)
-    -- Five orbs from the client's start index (2 for five-point classes) take the ring; the rest park at centre.
-    local first = cf.startComboPointIndex or 2
-    for i, point in ipairs(cf.ComboPoints or ns.EMPTY) do
-        local slot = i - first + 1
-        if slot >= 1 and slot <= POINTS then
-            PinOrb(point, slot)
-            point:SetAlpha(1)
-        else
-            ns.SetPointOnce(point, "CENTER", cf, "CENTER", 0, 0)
-            point:SetAlpha(0)
-        end
-    end
-end
-
-local blizzardHooked = false
-local function HookBlizzard()
-    if blizzardHooked or not ComboFrame then return end
-    blizzardHooked = true
-    -- Checked first so a missing global is not reported as a missing piece.
-    if ComboFrame_ApplyOverrides then ns.HookGlobal("ComboFrame_ApplyOverrides", LayoutBlizzard) end
-    if ComboFrame_UpdateMax then ns.HookGlobal("ComboFrame_UpdateMax", LayoutBlizzard) end
-    ns.HookScriptOnce(ComboFrame, "OnShow", LayoutBlizzard)
+-- Forever's ComboFrame (70291+): five modern orbs it re-lays on every update. Each orb's own alpha it never sets.
+local clientTaken = false
+local function ClientOrbs(alpha)
+    for _, point in ipairs(ComboFrame and ComboFrame.ComboPoints or ns.EMPTY) do ns.SetAlphaIf(point, alpha) end
 end
 
 ---------------------------------------------------------------- our own
@@ -86,7 +61,9 @@ end
 local function Update()
     if not frame or not active then return end
     local max = ns.Safe(UnitPowerMax("player", Enum.PowerType.ComboPoints), 0)
-    local points = ns.Safe(UnitPower("player", Enum.PowerType.ComboPoints), 0)
+    -- Forever keeps the points on the target.
+    local points = ns.OnForever() and GetComboPoints("player", "target") or UnitPower("player", Enum.PowerType.ComboPoints)
+    points = ns.Safe(points, 0)
     if max <= 0 or points <= 0 or not UnitExists("target") or not UnitCanAttack("player", "target") then
         frame:Hide()
         for i = 1, POINTS do
@@ -136,10 +113,8 @@ local function Apply()
     ns.Fade(ComboPointPlayerFrame)
     ns.Fade(DruidComboPointBarFrame)
     if ComboFrame then
-        HookBlizzard()
-        LayoutBlizzard()
-        if frame then frame:Hide() end
-        return
+        clientTaken = true
+        ClientOrbs(0)
     end
     if not frame then Build() else for i, orb in ipairs(frame.orbs) do PinOrb(orb, i) end end
     Update()
@@ -151,8 +126,10 @@ local function Restore()
     if frame then frame:Hide() end
     ns.Unfade(ComboPointPlayerFrame)
     ns.Unfade(DruidComboPointBarFrame)
-    -- The client's arc keeps our anchors until a reload.
-    if ComboFrame then ns.needsReload = true end
+    if clientTaken then
+        clientTaken = false
+        ClientOrbs(1)
+    end
 end
 
 ns.RegisterModule("comboPoints", { apply = Apply, restore = Restore })

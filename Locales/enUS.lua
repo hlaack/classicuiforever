@@ -657,7 +657,6 @@ L["CORE_THE_PET_FRAME_KEEPS_THE"] = "The pet frame keeps the old art until the i
 L["CORE_THE_PARTY_FRAMES_KEEP_SOME"] = "The party frames keep some of the old art until the interface reloads."
 L["CORE_THE_CAST_BARS_KEEP_THE"] = "The cast bars keep the old fill and flash until the interface reloads."
 L["CORE_THE_BREATH_AND_FATIGUE_BARS"] = "The breath and fatigue bars keep the old border and bar until the interface reloads."
-L["CORE_THE_GAME_S_OWN_COMBO"] = "The game's own combo points keep the old places until the interface reloads."
 L["CORE_THE_MINIMAP_S_BUTTONS_AND"] = "The minimap's buttons and zone name keep the old places until the interface reloads."
 L["CORE_NAMEPLATES_KEEP_THE_OLD_SIZES"] = "Nameplates keep the old sizes and places until the interface reloads."
 L["CORE_THE_OBJECTIVE_TRACKER_KEEPS_THE"] = "The objective tracker keeps the old stone headers until the interface reloads."
