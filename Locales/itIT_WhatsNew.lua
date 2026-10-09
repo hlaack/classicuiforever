@@ -3,6 +3,14 @@ if ns.LOCALE ~= "itIT" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/itIT.lua.
+L["WN28_1_TITLE"] = "Alleati recenti e Ignorati"
+L["WN28_1_TEXT"] = "La scheda Amici della finestra sociale ha le schede Alleati recenti e Ignorati accanto ad Amici. Alleati recenti elenca i giocatori con cui sei stato in gruppo di recente e ha una riga di ricerca; Ignorati elenca i giocatori che ignori."
+L["WN28_2_TITLE"] = "Di nuovo la finestra sociale classica"
+L["WN28_2_TEXT"] = "Dopo l'ultimo aggiornamento del gioco, O e il pulsante della gilda aprivano la nuova finestra sociale del gioco. Ora aprono di nuovo quella classica, le sue schede sono allineate e la scheda Incursione è tornata."
+L["WN28_3_TITLE"] = "Correzioni dopo l'aggiornamento del gioco"
+L["WN28_3_TEXT"] = "I punti combo mostrano di nuovo tutti e cinque i globi classici. La striscia scura sul modello del personaggio e il riquadro scuro sulle pagine degli annunci della ricerca di gruppo sono spariti, il pulsante di ordinamento funziona in modalità borsa unica, e la ricerca di gruppo non salta più quando la si apre in combattimento."
+L["WN28_4_TITLE"] = "Finestra del bottino e borse"
+L["WN28_4_TEXT"] = "Con Finestra del bottino disattivata, la finestra del bottino del gioco non mostra più due quadrati bianchi negli angoli. Il pulsante di ordinamento delle borse sta accanto alla casella di ricerca."
 L["WN27_1_TITLE"] = "Meno lavoro in background"
 L["WN27_1_TEXT"] = "Le targhette vengono disposte di nuovo solo quando cambia un'impostazione delle targhette, non a ogni impostazione modificata dal gioco o da un altro addon. Le coordinate della minimappa vengono misurate solo quando cambiano. Nulla cambia nell'aspetto."
 L["WN26_1_TITLE"] ="Colori di classe per riquadro"

@@ -2,6 +2,21 @@
 
 All notable changes to ClassicUI Forever are documented here.
 
+## [0.21.0] - 2026-10-09
+
+### Added
+- The social window's Friends tab has Recent Allies and Ignore tabs beside Friends, as the game's new social window does. Recent Allies lists the players you grouped with lately, with Group Invite and Add Friend buttons and a search line under the list. Ignore lists the players you ignore, with Ignore Player and Remove buttons. Right-click a name for the player menu.
+
+### Fixed
+- After the latest Forever update, O, the social key bindings and the guild button opened the game's new social window, and the guild button opened both side by side. They open the classic social window again, Escape closes it in a fight too, and its tabs line up with the window again.
+- The social window's Raid tab is back and opens the raid list in place.
+- Combo points show five 1.x orbs again. Forever's new combo frame showed through at times, with only four.
+- The character window no longer shows a dark strip over the model, in every theme.
+- The group finder's listing pages (Create Listing, quests and zones, dungeons) no longer have a dark box over them.
+- One-bag mode: the game's gamepad bag icon no longer covers the sort button, and the sort button can be clicked again. It is sized to fit beside the search box and no longer reaches the top row of slots, in every bag mode.
+- The group finder opened from the social window's side tabs in a fight opens in the social window's place. It opened higher and could move around.
+- With Loot Window off, the game's loot window no longer shows two white squares in its bottom corners.
+
 ## [0.20.5] - 2026-10-06
 
 ### Changed
