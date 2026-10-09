@@ -4,6 +4,10 @@ local _, ns = ...
 
 local P = ns.panels
 
+-- A tab of ours standing in for a client one takes that tab's lift.
+local lifts = setmetatable({}, { __mode = "k" })
+function ns.SetTabLift(tab, lift) lifts[tab] = lift end
+
 -- Lift window-anchored tabs to the metal (tab-anchored ones follow). Every fit:
 -- the client resets the anchor at times.
 local function LiftTab(tab)
@@ -11,7 +15,7 @@ local function LiftTab(tab)
     if not point or rel ~= tab:GetParent() then return end
     -- Within a hair: the game hands an offset back inexact, and an exact test lifted the tab again on every fit.
     if tab.fcuiLiftedY and ns.Near(y, tab.fcuiLiftedY, 0.5) then return end
-    tab.fcuiLiftedY = (y or 0) + (tonumber(tab.fcuiLift) or P.BOTTOM_LIFT)
+    tab.fcuiLiftedY = (y or 0) + (lifts[tab] or tonumber(tab.fcuiLift) or P.BOTTOM_LIFT)
     tab:SetPoint(point, rel, relPoint, x or 0, tab.fcuiLiftedY)
 end
 
