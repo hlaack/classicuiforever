@@ -118,6 +118,12 @@ ns.TEX = {
     charTabBotLeft = "PaperDollInfoFrame\\UI-Character-CharacterTab-BottomLeft",
     charTabBotRight = "PaperDollInfoFrame\\UI-Character-CharacterTab-BottomRight",
     charStatBox = "PaperDollInfoFrame\\UI-Character-StatBackground",
+    -- Era's Skills tab (UI/EraSkills.lua): its bottom sheets, the list's scroll track, the bar's hover border.
+    skillFrameBotLeft = "PaperDollInfoFrame\\SkillFrame-BotLeft",
+    skillFrameBotRight = "PaperDollInfoFrame\\SkillFrame-BotRight",
+    trainerScrollBar = "ClassTrainerFrame\\UI-ClassTrainer-ScrollBar",
+    trainerBar = "ClassTrainerFrame\\UI-ClassTrainer-HorizontalBar",
+    skillsBarBorderHighlight = "PaperDollInfoFrame\\UI-Character-Skills-BarBorderHighlight",
     -- 1.x's pet tab lower half: the XP bar socket and the training points and Close footer.
     petBotLeft = "PetPaperDollFrame\\UI-PetPaperDollFrame-BotLeft",
     petBotRight = "PetPaperDollFrame\\UI-PetPaperDollFrame-BotRight",

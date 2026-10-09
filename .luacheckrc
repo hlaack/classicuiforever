@@ -25,6 +25,7 @@ globals = { "ToggleGuildFrame",
 read_globals = {
     "GetCategoryList", "GetCategoryInfo", "GetCategoryNumAchievements", "GetAchievementInfo", "GetAchievementLink",
     "GetAchievementNumCriteria", "GetAchievementCriteriaInfo", "FormatShortDate", "C_MajorFactions", "RenownRewardUtil", "C_MountJournal",
+    "GREEN_FONT_COLOR_CODE", "RED_FONT_COLOR_CODE", "FONT_COLOR_CODE_CLOSE",
     "C_Map", "WORLD_MAP",
     "date",
     "InputUtil", "GetNumLootItems",

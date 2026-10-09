@@ -1,39 +1,23 @@
 local _, ns = ...
 local L = ns.L
 
--- The Legacy window's challenges page, in the old trade skill window's shape (Skills/SkillShell.lua): the challenge
--- categories as folding headers, each challenge with the Legacy Points it gives, a filter for completed ones, and the
--- picked challenge below with its steps. Read from the client's achievement data, which holds the Legacy challenges.
+-- The Legacy window's challenges page as Era's Skills tab (UI/EraSkills.lua): the challenge categories as its folding
+-- sections, each challenge a skill bar of its progress, the picked one in the detail pane with its points and steps;
+-- a search line and a filter beside the All tab. Read from the client's achievement data, which holds the challenges.
 
 local LG = ns.legacy
-local Text = LG.Text
-local SkillList = ns.SkillList
 
 local POINTS_CURRENCY = LG.POINTS_CURRENCY
-local LIST_ROWS = 10
--- The All tab's height over the shell's list; how far its top stands over the divider's metal foot, so its own top
--- border lies under the divider (which draws over it); the filter's clear top edge and its place from the right.
--- Measured in game.
-local ALL_TAB_H, TAB_STONE, FILTER_EDGE, FILTER_X = 22, 6, 5, -9
--- The filter's box this far under the divider's metal, so its top border shows whole (touching, the two lines merged).
-local FILTER_GAP = 3
--- The shell's All button over the list, as the shell lays it (its list 75 down the page, the button 68).
-local ALL_BUTTON_OVER = 7
--- The list raised so the All tab's metal meets the divider's, which hides where the page's stone starts.
-local LIST_TOP = LG.METAL_FOOT - ALL_TAB_H + TAB_STONE
-local CRITERIA_LINE = 13
--- The detail pane's text width: the page less the pane's scroll column.
-local CONTENT_W = LG.PANEL_W - 26
-local DONE_COLOR = { 0.5, 0.5, 0.5 }
-local OPEN_COLOR = { 1, 1, 1 }
-local HEADER_COLOR = { 1, 0.82, 0 }
-local PROGRESS_COLOR = { 0, 0.6, 0.1 }
+-- Window coordinates beside Era's All tab (it ends near 132).
+local SEARCH_X, SEARCH_Y, SEARCH_W = 142, -50, 110
+local FILTER_X, FILTER_Y, FILTER_W = 258, -47, 82
+local STEP_DONE, STEP_OPEN = "|cff1aff1a", "|cff808080"
 
-local panel, detail
+local page
 local lines, collapsed = {}, {}
-local show = { completed = true, incomplete = true }
 local selected
-local criteria = {}
+local query = ""
+local show = { completed = true, incomplete = true }
 
 -- Legacy Points a challenge gives; nil when the client cannot say.
 local function PointsFor(id)
@@ -43,30 +27,53 @@ local function PointsFor(id)
     return ok and type(points) == "number" and points or nil
 end
 
-local function ReadCategory(category)
-    local total = GetCategoryNumAchievements(category) or 0
-    local items, done = {}, 0
-    for index = 1, total do
-        local id, name, _, completed, month, day, year, description, _, icon = GetAchievementInfo(category, index)
-        if id then
-            if completed then done = done + 1 end
-            if (completed and show.completed) or (not completed and show.incomplete) then
-                items[#items + 1] = { id = id, name = name or "", completed = completed and true or false, description = description,
-                    icon = icon, month = month, day = day, year = year, points = PointsFor(id) }
-            end
+-- How far along a challenge is: one counted step by its count, else its steps done of all.
+local function Progress(id, completed)
+    local count = GetAchievementNumCriteria and GetAchievementNumCriteria(id) or 0
+    if count == 1 then
+        local _, _, done, quantity, required = GetAchievementCriteriaInfo(id, 1)
+        if type(required) == "number" and required > 1 and type(quantity) == "number" then
+            return math.min(quantity, required), required
         end
+        return (done or completed) and 1 or 0, 1
     end
-    return items, done, total
+    if count == 0 then return completed and 1 or 0, 1 end
+    local done = 0
+    for index = 1, count do
+        if select(3, GetAchievementCriteriaInfo(id, index)) then done = done + 1 end
+    end
+    return done, count
 end
 
--- The list: a header per category with challenges left by the filter, its challenges under it unless folded.
+local function Wanted(name, completed)
+    if completed and not show.completed then return false end
+    if not completed and not show.incomplete then return false end
+    return query == "" or name:lower():find(query, 1, true) ~= nil
+end
+
+local function ReadCategory(category)
+    local items = {}
+    for index = 1, GetCategoryNumAchievements(category) or 0 do
+        local id, name, _, completed, month, day, year, description, _, icon = GetAchievementInfo(category, index)
+        if id and Wanted(name or "", completed) then
+            local value, most = Progress(id, completed)
+            items[#items + 1] = { id = id, name = name or "", completed = completed and true or false,
+                description = description, icon = icon, month = month, day = day, year = year, points = PointsFor(id),
+                rank = value, most = most, count = true }
+        end
+    end
+    return items
+end
+
+-- Era's list: a section per category, its challenges under it unless folded; the first shown is picked by default.
 local function Collect()
     wipe(lines)
     local first, still
     for _, category in ipairs(GetCategoryList and GetCategoryList() or ns.EMPTY) do
-        local items, done, total = ReadCategory(category)
+        local items = ReadCategory(category)
         if #items > 0 then
-            lines[#lines + 1] = { header = true, id = category, name = GetCategoryInfo(category) or "", done = done, total = total }
+            lines[#lines + 1] = { header = true, id = category, name = GetCategoryInfo(category) or "",
+                expanded = not collapsed[category] }
             if not collapsed[category] then
                 for _, item in ipairs(items) do
                     lines[#lines + 1] = item
@@ -77,231 +84,104 @@ local function Collect()
         end
     end
     if not still then selected = first end
-end
-
-local function DrawItem(row, line)
-    row.toggle:Hide()
-    row.text:SetPoint("LEFT", row, "LEFT", 26, 0)
-    row.text:SetText(line.name)
-    SkillList.Paint(row, line.id == selected, line.completed and DONE_COLOR or OPEN_COLOR)
-end
-
--- The right column: a header's count done, a challenge's points.
-local function DrawCounts()
-    for _, row in ipairs(panel.rows) do
-        local line = row.line
-        if line and line.header then
-            row.points:SetText(line.done .. "/" .. line.total)
-            row.points:SetTextColor(HEADER_COLOR[1], HEADER_COLOR[2], HEADER_COLOR[3])
-        elseif line then
-            row.points:SetText(line.points or "")
-            local color = line.completed and DONE_COLOR or HEADER_COLOR
-            row.points:SetTextColor(color[1], color[2], color[3])
-        end
-    end
-end
-
-local function UpdateRows()
-    if not panel then return end
-    SkillList.Draw(panel, lines, collapsed, DrawItem)
-    DrawCounts()
-    panel.bar:SetRange(math.max(0, #lines - LIST_ROWS))
-    SkillList.FoldIcon(panel, lines, collapsed)
-    panel.none:SetShown(#lines == 0)
-end
-
-local UpdateDetail
-
-local function Row_OnClick(self, button)
-    local line = self.line
-    if not line then return end
-    if SkillList.Fold(line, collapsed) then return LG.Refresh() end
-    if button == "LeftButton" and IsModifiedClick("CHATLINK") then
-        local link = GetAchievementLink and GetAchievementLink(line.id)
-        if link and not ns.IsSecret(link) then ChatFrameUtil.InsertLink(link) end
-        return
-    end
-    selected = line.id
-    UpdateRows()
-    UpdateDetail()
-end
-
-local function CreateRow(list, index)
-    local row = ns.SkillListRow(list, index, Row_OnClick)
-    row.points = row:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-    row.points:SetPoint("RIGHT", row, "RIGHT", -4, 0)
-    row.points:SetJustifyH("RIGHT")
-    row.text:SetPoint("RIGHT", row.points, "LEFT", -6, 0)
-    return row
-end
-
-local function SelectedLine()
-    for _, line in ipairs(lines) do
-        if not line.header and line.id == selected then return line end
-    end
-end
-
------------------------------------------------------------------ the detail
-
-local function CriteriaLine(index)
-    local fs = criteria[index]
-    if fs then return fs end
-    fs = detail.content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-    fs:SetJustifyH("LEFT")
-    fs:SetWordWrap(false)
-    criteria[index] = fs
-    return fs
-end
-
--- The steps in two columns under the description; one counted step gets the rimmed bar instead. Returns the height used.
-local function DrawCriteria(id, top)
-    local count = GetAchievementNumCriteria and GetAchievementNumCriteria(id) or 0
-    local width = (CONTENT_W - 42) / 2
-    local shown = 0
-    detail.progress:Hide()
-    for _, fs in ipairs(criteria) do fs:Hide() end
-    for index = 1, count do
-        local text, _, done, quantity, required, _, _, _, quantityText = GetAchievementCriteriaInfo(id, index)
-        if count == 1 and type(required) == "number" and required > 1 and type(quantity) == "number" then
-            local bar = detail.progress
-            bar:SetPoint("TOPLEFT", detail.content, "TOPLEFT", 22, top - 4)
-            bar.fill:SetMinMaxValues(0, required)
-            bar.fill:SetValue(math.min(quantity, required))
-            bar.text:SetText(quantityText ~= "" and quantityText or (quantity .. " / " .. required))
-            bar:Show()
-            return 24
-        end
-        if type(text) == "string" and text ~= "" then
-            shown = shown + 1
-            local fs = CriteriaLine(shown)
-            local column, rowIndex = (shown - 1) % 2, math.floor((shown - 1) / 2)
-            fs:SetPoint("TOPLEFT", detail.content, "TOPLEFT", 21 + column * (width + 4), top - rowIndex * CRITERIA_LINE)
-            fs:SetWidth(width)
-            fs:SetText(text)
-            if done then fs:SetTextColor(0.1, 1, 0.1) else fs:SetTextColor(DONE_COLOR[1], DONE_COLOR[2], DONE_COLOR[3]) end
-            fs:Show()
-        end
-    end
-    return math.ceil(shown / 2) * CRITERIA_LINE
+    for _, line in ipairs(lines) do line.selected = not line.header and line.id == selected end
 end
 
 local function DoneText(line)
-    if not line.completed then return "" end
     local date = FormatShortDate and line.day and FormatShortDate(line.day, line.month, line.year)
         or (line.month and string.format("%d/%d/%02d", line.month, line.day, line.year)) or ""
-    return "    |cff1aff1a" .. string.format(L["LEGACY_COMPLETED_ON"], date) .. "|r"
+    return string.format(L["LEGACY_COMPLETED_ON"], date)
 end
 
-UpdateDetail = function()
-    if not detail then return end
-    local line = SelectedLine()
-    detail.content:SetShown(line ~= nil)
-    if not line then return end
-    detail.icon:SetTexture(line.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
-    detail.icon:SetDesaturated(not line.completed)
-    detail.name:SetText(line.name)
-    local points = line.points and string.format(L["LEGACY_POINTS"], "|cffffffff" .. line.points .. "|r") or ""
-    detail.requires:SetText(points .. DoneText(line))
-    detail.text:SetText(line.description or "")
-    local top = -62 - math.ceil(detail.text:GetStringHeight()) - 8
-    local height = -top + DrawCriteria(line.id, top) + 10
-    detail.content:SetHeight(math.max(height, detail.scroll:GetHeight()))
-    local over = math.max(0, height - detail.scroll:GetHeight())
-    detail.bar:SetRange(over, 20)
-    detail.scroll:SetVerticalScroll(math.min(detail.bar:GetValue() or 0, over))
+-- The detail's words: the description, then each step in green once done.
+local function Words(line)
+    local parts = { line.description or "" }
+    local count = GetAchievementNumCriteria and GetAchievementNumCriteria(line.id) or 0
+    if count > 1 then
+        parts[#parts + 1] = ""
+        for index = 1, count do
+            local text, _, done = GetAchievementCriteriaInfo(line.id, index)
+            if type(text) == "string" and text ~= "" then parts[#parts + 1] = (done and STEP_DONE or STEP_OPEN) .. text .. "|r" end
+        end
+    end
+    if line.completed then
+        parts[#parts + 1] = ""
+        parts[#parts + 1] = STEP_DONE .. DoneText(line) .. "|r"
+    end
+    return table.concat(parts, "\n")
 end
 
-local function Icon_OnEnter(self)
-    local link = selected and GetAchievementLink and GetAchievementLink(selected)
-    if not link then return end
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetHyperlink(link)
-    GameTooltip:Show()
+local function Detail()
+    for _, line in ipairs(lines) do
+        if not line.header and line.id == selected then
+            local cost = line.points and string.format(L["LEGACY_POINTS"], "|cffffffff" .. line.points .. "|r") or nil
+            return { name = line.name, rank = line.rank, most = line.most, count = true, cost = cost, words = Words(line) }
+        end
+    end
 end
 
--- The picked challenge in a scrolling pane: icon, name, points and date, description, steps.
-local function BuildDetail()
-    local box = panel.detail
-    local scroll = ns.NewFrame("ScrollFrame", nil, box)
-    scroll:SetPoint("TOPLEFT", box, "TOPLEFT", 0, -4)
-    scroll:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", -26, 8)
-    scroll:EnableMouseWheel(true)
-    local content = ns.NewFrame("Frame", nil, scroll)
-    content:SetSize(CONTENT_W, 1)
-    scroll:SetScrollChild(content)
-    detail = content
-    detail.content, detail.scroll = content, scroll
-    ns.ShellDetailHeader(detail, Icon_OnEnter)
-    detail.text = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-    detail.text:SetPoint("TOPLEFT", content, "TOPLEFT", 21, -62)
-    detail.text:SetPoint("RIGHT", content, "RIGHT", -16, 0)
-    detail.text:SetJustifyH("LEFT")
-    detail.progress = ns.RimBar(content, 15, PROGRESS_COLOR)
-    detail.progress:SetWidth(CONTENT_W - 44)
-    detail.progress:Hide()
-    detail.bar = ns.ClassicScrollBar(box, scroll, function(value) scroll:SetVerticalScroll(value or 0) end)
-    ns.ScrollColumnOn(detail.bar)
-    detail.bar.hideWhenIdle = true
-    scroll:SetScript("OnMouseWheel", function(_, delta)
-        detail.bar:SetValue((detail.bar:GetValue() or 0) - delta * 20)
+local function Refresh()
+    if not page then return end
+    Collect()
+    page.lines = lines
+    page:Draw()
+    page:DrawDetail(Detail())
+    LG.DrawEarned(page)
+end
+
+local SPEC = {
+    collapsed = collapsed,
+    pick = function(line) selected = line.id end,
+    link = function(line) return GetAchievementLink and GetAchievementLink(line.id) end,
+}
+
+local function SearchBox()
+    local box = ns.SearchBox(page, SEARCH_W, SEARCH or "Search")
+    box:SetPoint("TOPLEFT", page, "TOPLEFT", SEARCH_X, SEARCH_Y)
+    box:SetScript("OnTextChanged", function(self)
+        local text = (self:GetText() or ""):lower()
+        self.hint:SetShown(text == "")
+        self.clear:SetShown(text ~= "")
+        if text == query then return end
+        query = text
+        page.scroll:SetValue(0)
+        LG.Refresh()
     end)
 end
 
------------------------------------------------------------------ the page
-
-local function Refresh(frame)
-    Collect()
-    UpdateRows()
-    UpdateDetail()
-    LG.ShowEarned(frame)
-end
-
 local function FilterItem(key, global, fallback)
-    return { Text(global, fallback), function()
+    return { LG.Text(global, fallback), function()
         show[key] = not show[key]
         LG.Refresh()
     end, function() return show[key] end }
 end
 
-local function BuildFilter()
-    panel.filter:SetScript("OnClick", function(self)
-        if not panel.filterList then
-            panel.filterList = ns.DropList({
+local function Filter()
+    local filter = ns.ShellFilterButton(page)
+    filter:SetWidth(FILTER_W)
+    filter:SetPoint("TOPLEFT", page, "TOPLEFT", FILTER_X, FILTER_Y)
+    local list
+    filter:SetScript("OnClick", function(self)
+        if not list then
+            list = ns.DropList({
                 FilterItem("completed", "ACHIEVEMENTFRAME_FILTER_COMPLETED", "LEGACY_SHOW_COMPLETED"),
                 FilterItem("incomplete", "ACHIEVEMENTFRAME_FILTER_INCOMPLETE", "LEGACY_SHOW_INCOMPLETE"),
             })
-            panel.filterList:Follow(panel)
+            list:Follow(page)
         end
-        panel.filterList:Toggle(self)
+        list:Toggle(self)
     end)
 end
 
-local function Build(frame)
-    panel = LG.Panel(frame)
-    ns.OldSkillShell(panel, { rows = LIST_ROWS, createRow = CreateRow, onScroll = UpdateRows })
-    -- The shell's list stands 2 left of its page, under a trainer's border; this window's border is under the page. The
-    -- list, its All button and the filter's box rise to just under the divider.
-    panel.listBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, LIST_TOP)
-    panel.collapseAll:SetPoint("TOPLEFT", panel, "TOPLEFT", 17, LIST_TOP + ALL_BUTTON_OVER)
-    panel.filter:SetPoint("TOPRIGHT", panel, "TOPRIGHT", FILTER_X, LG.METAL_FOOT + FILTER_EDGE - FILTER_GAP)
-    -- The shell's stone strips over the tab's top rose past the divider: the divider is the tab's top edge now, and the
-    -- strip beside the tab starts under it.
-    panel.tabStones.overTab:Hide()
-    panel.tabStones.besideTab:SetPoint("TOPRIGHT", panel.allTab, "TOPRIGHT", 0, -TAB_STONE)
-    panel.bar.hideWhenIdle = true
-    panel.collapseAll:SetScript("OnClick", function()
-        SkillList.FoldAll(lines, collapsed)
-        LG.Refresh()
-    end)
-    BuildFilter()
-    panel.none = panel.list:CreateFontString(nil, "ARTWORK", "GameFontDisable")
-    panel.none:SetPoint("CENTER", panel.list, "CENTER", 0, 0)
-    panel.none:SetText(L["LEGACY_NO_CHALLENGES"])
-    BuildDetail()
+local function Build(window)
+    page = LG.EraPage(window, SPEC)
+    page.empty:SetText(L["LEGACY_NO_CHALLENGES"])
+    SearchBox()
+    Filter()
 end
 
 local function Shown(_, on)
-    panel:SetShown(on)
+    page:SetShown(on)
 end
 
 LG.AddPage({

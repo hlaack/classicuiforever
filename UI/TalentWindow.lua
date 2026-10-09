@@ -345,7 +345,7 @@ local function BuildShell(name, spec)
     -- Hosted, the game's window places and closes it; otherwise our window handles move it.
     if not spec.hosted then ns.CloseWithGameMenu(frame) end
 
-    ns.DressPieces(frame, TALENT_QUARTERS)
+    frame.quarters = ns.DressPieces(frame, TALENT_QUARTERS, nil, true)
 
     local portrait = frame:CreateTexture(nil, "BACKGROUND")
     portrait:SetSize(60, 60)
@@ -370,33 +370,23 @@ local function BuildShell(name, spec)
     return frame
 end
 
--- A dark bar with the skill bars' old round-ended grey rim and a label in its middle (bar.text); width and place are the
--- caller's. color { r, g, b }: a status bar fills it (bar.fill), the label over the fill.
-function ns.RimBar(parent, height, color)
+-- A dark bar with the skill bars' old round-ended grey rim and a label in its middle (bar.text).
+local function RimBar(parent)
     local bar = ns.NewFrame("Frame", nil, parent)
-    bar:SetHeight(height or 13)
+    bar:SetHeight(13)
     local back = bar:CreateTexture(nil, "BACKGROUND")
     back:SetColorTexture(0, 0, 0, 0.6)
     back:SetPoint("TOPLEFT", bar, "TOPLEFT", 1, 0)
     back:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -1, 0)
     ns.ThreeSlice(bar, nil, RIM)
-    local host = bar
-    if color then
-        local fill = ns.NewFrame("StatusBar", nil, bar)
-        fill:SetPoint("TOPLEFT", bar, "TOPLEFT", 1, -1)
-        fill:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -1, 1)
-        ns.SetBarFill(fill)
-        fill:SetStatusBarColor(color[1], color[2], color[3])
-        bar.fill, host = fill, fill
-    end
-    bar.text = host:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    bar.text = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     bar.text:SetPoint("CENTER", bar, "CENTER", 0, 0)
     return bar
 end
 
 -- Points spent on the rimmed bar, and the tree in a window that scrolls.
 local function BuildView(frame)
-    local spentBar = ns.RimBar(frame)
+    local spentBar = RimBar(frame)
     spentBar:SetWidth(258)
     spentBar:SetPoint("TOP", frame, "TOP", 12, -48)
     frame.spentBar, frame.spent = spentBar, spentBar.text
@@ -511,9 +501,11 @@ function ns.TalentWindow(name, spec)
     return frame
 end
 
--- The tree's own pieces (the tree, its scroll bar, the foot and foot tabs) shown or hidden, for a window that shows
--- another page in their place; the title and the points bar stay. The next DrawTalentTab sets the foot tabs again.
+-- The tree's own pieces (the talent art, points bar, tree, scroll bar, foot and foot tabs) shown or hidden, for a
+-- window that shows another page in their place; the title stays. The next DrawTalentTab sets the foot tabs again.
 function ns.TalentTreeShown(frame, shown)
+    for _, tex in ipairs(frame.quarters) do tex:SetShown(shown) end
+    frame.spentBar:SetShown(shown)
     frame.scroll:SetShown(shown)
     frame.foot:SetShown(shown)
     if not shown then
