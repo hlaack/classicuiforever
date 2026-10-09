@@ -61,6 +61,7 @@ local function Help()
     ns.Print(L["CHAT_8"])
     ns.Print(L["CHAT_9"])
     ns.Print(L["CHAT_10"])
+    ns.Print(L["CHAT_LEGACY"])
 end
 
 local function Status()
@@ -118,6 +119,8 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
         ns.Print(L["CHAT_12"])
     elseif cmd == "layout" then
         ns.CreateClassicLayout()
+    elseif cmd == "legacy" then
+        ns.ToggleLegacy()
     elseif cmd == "welcome" then
         ns.ShowWelcome()
     elseif cmd == "whatsnew" or cmd == "news" then

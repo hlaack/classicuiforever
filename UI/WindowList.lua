@@ -14,6 +14,7 @@ ns.WINDOW_LIST = {
         follows = "spellBook", followIf = "professionsBook", followX = 12, followY = -14 },
     { key = "talents", label = L["UI_TALENTS"], name = "ClassicUIForeverTalents", w = 354, h = 467, cut = { 30, 45 },
         padHost = true },
+    { key = "legacy", label = L["UI_LEGACY"], name = "ClassicUIForeverLegacy", w = 354, h = 467, cut = { 30, 45 } },
     { key = "questLog", label = L["UI_QUEST_LOG"], name = "ForeverClassicUIQuestLog", w = 349, h = 437, cut = { 35, 75 } },
     { key = "map", label = L["UI_WORLD_MAP"], name = "WorldMapFrame", w = 1035, h = 534, stripH = 24, toggle = "mapUnlocked",
         quests = true },

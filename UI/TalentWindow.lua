@@ -511,6 +511,17 @@ function ns.TalentWindow(name, spec)
     return frame
 end
 
+-- The tree's own pieces (the tree, its scroll bar, the foot and foot tabs) shown or hidden, for a window that shows
+-- another page in their place; the title and the points bar stay. The next DrawTalentTab sets the foot tabs again.
+function ns.TalentTreeShown(frame, shown)
+    frame.scroll:SetShown(shown)
+    frame.foot:SetShown(shown)
+    if not shown then
+        frame.bar:Hide()
+        for _, tab in ipairs(frame.tabs) do tab:Hide() end
+    end
+end
+
 -- The window's show and hide: a talent tooltip up across a hide and show keeps its listener.
 function ns.TalentWindowShown(frame, shown)
     if not shown then
