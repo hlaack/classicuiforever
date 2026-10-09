@@ -183,24 +183,11 @@ local function Toggle()
     frame:SetShown(not frame:IsShown())
 end
 
--- The Legacy micro button opens this window while on, and the minimap icon with it (it presses the button). Its own
--- click goes back on turn-off, run in our name until a reload (RELOAD_KEYS).
-local MICRO = "LegacyMicroButton"
-local microClick, taken
-local function TakeButton(on)
-    local button = _G[MICRO]
-    if taken == on or not (button and button.GetScript) then return end
-    taken = on
-    if on then
-        if microClick == nil then microClick = button:GetScript("OnClick") or false end
-        button:SetScript("OnClick", function()
-            if KeybindFrames_InQuickKeybindMode and KeybindFrames_InQuickKeybindMode() then return end
-            Toggle()
-        end)
-    elseif microClick then
-        button:SetScript("OnClick", microClick)
-    end
-end
+-- The Legacy micro button opens this window while on, and the minimap icon with it (it presses the button); in a fight
+-- the frame after, as the talents button.
+local TakeButton = ns.WindowMicro({ "LegacyMicroButton" }, function()
+    if InCombatLockdown() then ns.Sched.NextFrame("legacy.open", Toggle) else Toggle() end
+end)
 
 -- The game's Legacy key opens this window too.
 local key = ns.WindowKey("ClassicUIForeverLegacyBind", "TOGGLELEGACYSYSTEM", Toggle, "legacy")
