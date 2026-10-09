@@ -258,16 +258,21 @@ local TOP_ACTIVE = {
     fields = { "LeftActive", "MiddleActive", "RightActive" }, key = "topTabActive", cap = TOP_CAP, height = TOP_HEIGHT,
     edge = "BOTTOM", middle = "edge", horizTile = false, coords = TOP_COORDS, oy = TOP_PICKED_Y,
 }
+-- A row of sub-tabs whose picked face stays level with the others (the friends page's, as the client's were).
+local TOP_ACTIVE_LEVEL = {
+    fields = { "LeftActive", "MiddleActive", "RightActive" }, key = "topTabActive", cap = TOP_CAP, height = TOP_HEIGHT,
+    edge = "BOTTOM", middle = "edge", horizTile = false, coords = TOP_COORDS, oy = 0,
+}
 local TOP_INACTIVE = {
     fields = { "Left", "Middle", "Right" }, key = "topTabInactive", cap = TOP_CAP, height = TOP_HEIGHT,
     edge = "BOTTOM", middle = "edge", horizTile = false, coords = TOP_COORDS,
 }
 local TOP_GLOW_X, TOP_GLOW_Y = 2, -8   -- hover glow: the tab's width, from its foot
 
--- padding, widest: this tab's resize numbers in Era (its template's are 0 and none).
-function ns.SkinTopTab(tab, padding, widest)
+-- padding, widest: this tab's resize numbers in Era (its template's are 0 and none); level: the picked face not lower.
+function ns.SkinTopTab(tab, padding, widest, level)
     if not tab or not tab.Left then return end
-    ns.ThreeSlice(tab, nil, TOP_ACTIVE)
+    ns.ThreeSlice(tab, nil, level and TOP_ACTIVE_LEVEL or TOP_ACTIVE)
     ns.ThreeSlice(tab, nil, TOP_INACTIVE)
     ns.FadeKeys(tab, ns.KEYS.TAB_GLOW)
     local fit = topFit[tab] or { 0 }

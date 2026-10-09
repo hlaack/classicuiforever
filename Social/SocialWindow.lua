@@ -129,10 +129,14 @@ local function Pick(tab, on)
     ns.FitBottomTab(tab)
 end
 
+S.OverlayUp, S.OnRaidPage = OverlayUp, OnRaidPage
+
 SyncFriendsTab = function()
     local covered, raid = OverlayUp(), OnRaidPage()
     Pick(friendsTab, not covered and not raid)
     Pick(raidTab, not covered and raid)
+    -- After the lists' own show and hide work, which puts the client's panels back.
+    if S.SyncContactPages then ns.Sched.Soon("social.pages", S.SyncContactPages) end
 end
 
 local function HideOurLists()
@@ -369,6 +373,41 @@ function S.ListBox(panel, host, headerRow, bottom)
     return box
 end
 
+-- The who list's foot line under a list box (panel.listBox): the client's lens, its X once typed. onEnter(box) on Enter;
+-- the box is panel.query.
+function S.SearchLine(panel, onEnter)
+    local query = ns.NewFrame("EditBox", nil, panel.listBox, "InputBoxTemplate")
+    panel.query = query
+    query:SetPoint("BOTTOMLEFT", panel.listBox, "BOTTOMLEFT", 6, -7)
+    query:SetPoint("RIGHT", panel.listBox, "RIGHT", -2, 0)
+    query:SetHeight(18)
+    -- The input's thin border is bronze here; drained, it is the old silver.
+    ns.DrainInput(query)
+    local lens = query:CreateTexture(nil, "OVERLAY")
+    lens:SetTexture("Interface/Common/UI-Searchbox-Icon")
+    lens:SetSize(14, 14)
+    lens:SetPoint("LEFT", query, "LEFT", 1, -2)
+    lens:SetVertexColor(0.6, 0.6, 0.6)
+    query:SetTextInsets(16, 20, 0, 0)
+    local clear = ns.SearchClear(query)
+    query:HookScript("OnTextChanged", function(self)
+        clear:SetShown((self:GetText() or "") ~= "")
+    end)
+    query:SetAutoFocus(false)
+    query:SetFontObject("ChatFontNormal")
+    query:SetMaxLetters(60)
+    query:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    query:SetScript("OnEnterPressed", onEnter)
+    return query
+end
+
+-- The bar the pane's full height, down beside the count to the search line.
+function S.PlaceListBar(bar, list)
+    bar:ClearAllPoints()
+    bar:SetPoint("TOPLEFT", list, "TOPRIGHT", 6, -13)
+    bar:SetPoint("BOTTOMLEFT", list, "BOTTOMRIGHT", 6, 1)
+end
+
 -- The list over foot (gap above it), its bar and 30 rows. placeBar(bar,
 -- list) re-anchors the bar before its column is put on.
 function S.ScrollRows(panel, foot, gap, onValue, columns, onClick, onDoubleClick, placeBar)
@@ -450,6 +489,22 @@ end
 -- Era's player menu section heads.
 S.MENU_INTERACT = _G.UNIT_FRAME_DROPDOWN_SUBSECTION_TITLE_INTERACT or "Interact"
 S.MENU_OTHER = _G.UNIT_FRAME_DROPDOWN_SUBSECTION_TITLE_OTHER or "Other Options"
+
+-- One player menu for every list here (Report and Copy Name are the client's alone); entry.name is the player.
+function S.ShowPlayerMenu(owner, entry)
+    if not S.playerMenu then
+        S.playerMenu = ns.RowMenu({
+            { section = S.MENU_INTERACT },
+            { INVITE or "Invite", function(who) S.Invite(who.name) end },
+            { WHISPER or "Whisper", function(who) ns.Whisper(who.name) end },
+            { section = S.MENU_OTHER },
+            { ADD_FRIEND or "Add Friend", function(who) S.AddFriend(who.name) end },
+            { IGNORE or "Ignore", function(who) S.Ignore(who.name) end },
+        })
+    end
+    S.playerMenu:Follow(owner)
+    S.playerMenu:Open(entry, entry.name)
+end
 
 ---------------------------------------------------------------- recent allies
 
@@ -576,22 +631,6 @@ end
 
 ---------------------------------------------------------------- the game's new social window
 
--- Its Recent Allies list is empty here (the new window holds it): that header tab is unseen and deaf.
-local alliesOff = false
-local function AlliesMouse()
-    local tab = AlliesTab()
-    if tab then tab:EnableMouse(not alliesOff) end
-end
-
-local function KeepAlliesTab()
-    local off = ns.SocialUIOn()
-    local tab = AlliesTab()
-    if not tab or off == alliesOff then return end
-    alliesOff = off
-    ns.SetAlphaIf(tab, off and 0 or 1)
-    ns.WhenCalm("social.alliesTab", AlliesMouse)
-end
-
 -- Our Friends and Raid tabs press the client's hidden ones, so the page changes in its own pass, as before the switch.
 -- Off the raid page the raid frame is parked first: the raid parent's first tab takes it back and presses the client's
 -- Friends tab (ClaimRaidFrame); the switch left nothing else to hide it.
@@ -616,5 +655,4 @@ end
 
 NewSocialUI = function()
     SyncFriendsTab()
-    KeepAlliesTab()
 end
