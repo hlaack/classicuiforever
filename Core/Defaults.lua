@@ -283,8 +283,6 @@ ns.RELOAD_KEYS = {
     castBars = { off = L["CORE_THE_CAST_BARS_KEEP_THE"] },
     -- Restore hides the dark ground only; the bars keep our border, texture and size.
     mirrorTimers = { off = L["CORE_THE_BREATH_AND_FATIGUE_BARS"] },
-    -- The client's ComboFrame keeps our anchors (ComboPoints Restore).
-    comboPoints = { off = L["CORE_THE_GAME_S_OWN_COMBO"] },
     -- Restore hides the ring art only; buttons, zone name and clock keep the old layout.
     minimap = { off = L["CORE_THE_MINIMAP_S_BUTTONS_AND"] },
     -- Restore hides our pieces; the plates keep our anchors, scale and font.

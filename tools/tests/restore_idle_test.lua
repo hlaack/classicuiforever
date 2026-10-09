@@ -146,6 +146,7 @@ Piece.__call = function(self, owner, ...)
     if leaf == "GetChildren" or leaf == "GetRegions" then return owner.Part end
     if leaf:find("^Is") or leaf:find("^Has") then return true end
     if leaf == "GetAlpha" or leaf == "GetScale" then return 0.5 end
+    if leaf == "GetFrameLevel" then return 1 end
     if leaf:find("^Get") then return nil end
     return nil
 end

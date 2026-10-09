@@ -596,7 +596,6 @@ L["CORE_THE_PET_FRAME_KEEPS_THE"] = "Das Begleiterfenster behält die alte Grafi
 L["CORE_THE_PARTY_FRAMES_KEEP_SOME"] = "Die Gruppenfenster behalten einen Teil der alten Grafik, bis die Oberfläche neu lädt."
 L["CORE_THE_CAST_BARS_KEEP_THE"] = "Die Zauberleisten behalten die alte Füllung und das Aufblitzen, bis die Oberfläche neu lädt."
 L["CORE_THE_BREATH_AND_FATIGUE_BARS"] = "Die Atem- und Erschöpfungsleisten behalten den alten Rahmen und die alte Leiste, bis die Oberfläche neu lädt."
-L["CORE_THE_GAME_S_OWN_COMBO"] = "Die eigenen Combopunkte des Spiels behalten die alten Plätze, bis die Oberfläche neu lädt."
 L["CORE_THE_MINIMAP_S_BUTTONS_AND"] = "Die Tasten und der Gebietsname der Minikarte behalten die alten Plätze, bis die Oberfläche neu lädt."
 L["CORE_NAMEPLATES_KEEP_THE_OLD_SIZES"] = "Namensplaketten behalten die alten Größen und Plätze, bis die Oberfläche neu lädt."
 L["CORE_THE_OBJECTIVE_TRACKER_KEEPS_THE"] = "Die Zielverfolgung behält die alten Steinüberschriften, bis die Oberfläche neu lädt."
