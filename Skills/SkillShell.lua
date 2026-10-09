@@ -123,6 +123,25 @@ function SkillList.Draw(panel, lines, collapsed, drawItem)
     end
 end
 
+-- An item row in its colour: white text on a bar of that colour when picked.
+function SkillList.Paint(row, picked, color)
+    if picked then
+        row.text:SetTextColor(1, 1, 1)
+        row.selectedTex:SetVertexColor(color[1], color[2], color[3])
+        row.selectedTex:Show()
+    else
+        row.text:SetTextColor(color[1], color[2], color[3])
+        row.selectedTex:Hide()
+    end
+end
+
+-- A header line's click folds or unfolds it; true when it was a header, and the caller draws the list again.
+function SkillList.Fold(line, collapsed)
+    if not line.header then return false end
+    collapsed[line.id] = not collapsed[line.id] or nil
+    return true
+end
+
 function SkillList.FoldIcon(panel, lines, collapsed)
     ns.SetCollapseIcon(panel.collapseAll.icon, SkillList.AllCollapsed(lines, collapsed))
 end
@@ -288,6 +307,8 @@ local function RimStones(panel, listBox)
     -- As far down as the list's strip, or a square of bare metal shows in the angle.
     besideTab:SetPoint("BOTTOMRIGHT", panel.allTab, "BOTTOMRIGHT", 0, -8)
     besideTab:SetWidth(8)
+    -- A page that lays its own edge over the tab (the Legacy window's divider) moves these.
+    panel.tabStones = { overTab = overTab, besideTab = besideTab }
 end
 
 -- Detail pane over the list's bottom edge so the borders read as one heavy line (metal 4 to 11 px in at this weight).

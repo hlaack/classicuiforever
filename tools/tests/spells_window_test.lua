@@ -232,9 +232,10 @@ do
         "the click does not shut the book on a link click")
 end
 
--- The classic talents window the same way: the talent's spell by name, tried before the link, never a passive.
+-- The classic talents window the same way: the talent's spell by name, tried before the link, never a passive. Its
+-- talent buttons are the old talent window's, shared with the Legacy window (UI/TalentWindow.lua).
 do
-    local file = assert(io.open(ROOT .. "/Skills/Talents.lua", "r"))
+    local file = assert(io.open(ROOT .. "/UI/TalentWindow.lua", "r"))
     local text = file:read("a")
     file:close()
     local click = text:match("local function Button_OnClick%(.-\nend\n")

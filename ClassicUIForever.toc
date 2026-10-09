@@ -60,6 +60,7 @@ UI\Controls.lua
 UI\EditModeLook.lua
 UI\ClientDialogs.lua
 UI\ListPieces.lua
+UI\DividerBar.lua
 UI\Menus.lua
 UI\ClientMenus.lua
 UI\Escape.lua
@@ -173,6 +174,10 @@ Skills\TradeSkillReagents.lua
 Skills\TradeSkill.lua
 Skills\TradeSkillRetail.lua
 Skills\Trainer.lua
+UI\SkillLineTab.lua
+UI\RewardSlot.lua
+UI\TraitTree.lua
+UI\TalentWindow.lua
 Skills\Talents.lua
 Skills\TalentsTree.lua
 Options\Toggles.lua

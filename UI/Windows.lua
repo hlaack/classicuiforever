@@ -318,6 +318,12 @@ end
 -- Sharing windows stand side by side in open order, shifting left as one shuts;
 -- a non-sharing one (the quest log) has the place to itself.
 local SLOT_Y, SLOT_STEP = -104, 352
+-- A window's room beside the next, where it is wider than a slot (side tabs past its art); see ns.SetSlotWidth.
+local slotWidths = setmetatable({}, { __mode = "k" })
+local function SlotWidth(frame) return slotWidths[frame] or SLOT_STEP end
+
+-- Side tabs down a window's right edge stand past its art: the next window keeps clear of them.
+function ns.SetSlotWidth(frame, width) slotWidths[frame] = width end
 local showCount = 0
 
 -- Protected or anchor-restricted, asked under pcall.
@@ -389,21 +395,21 @@ PlaceClassicWindows = function()
     -- run as ours, and its health text then compared a secret.
     local blocks, sig = ClientBlocks()
     placedSig = sig + MovedSig()
-    -- fcuiSlotWidth includes side tabs. Held windows keep their place, the rest fill round;
+    -- SlotWidth includes side tabs. Held windows keep their place, the rest fill round;
     -- mine collects our own blocks for OnScreen.
     local held, mine = {}, {}
     for _, frame in ipairs(shown) do
         local at = HeldAt(frame)
         if at then
             held[frame] = at
-            local block = { at, at + (frame.fcuiSlotWidth or SLOT_STEP) }
+            local block = { at, at + (SlotWidth(frame)) }
             blocks[#blocks + 1] = block
             mine[#mine + 1] = block
         end
     end
     local cursor = 0
     for _, frame in ipairs(shown) do
-        local width = frame.fcuiSlotWidth or SLOT_STEP
+        local width = SlotWidth(frame)
         local x = held[frame]
         if x then
             -- Held: never moved, only the record updated.
@@ -437,7 +443,7 @@ local function HomeClosedWindows()
     for frame in pairs(classicWindows) do
         if not frame:IsShown() and not Moved(frame) then
             blocks, none = blocks or ClientBlocks(), none or {}
-            local width = frame.fcuiSlotWidth or SLOT_STEP
+            local width = SlotWidth(frame)
             local drawn = Drawn(frame, width)
             local x = OnScreen(FirstFree(0, width, blocks, drawn), width, drawn, none)
             if (frame.fcuiSlotX or 0) ~= x then PlaceAt(frame, x) end
