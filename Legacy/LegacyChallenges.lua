@@ -305,7 +305,7 @@ local function Shown(_, on)
 end
 
 LG.AddPage({
-    key = "challenges", icon = "Interface\\Icons\\Achievement_GuildPerk_HonorableMention",
+    key = "challenges", tab = 2, icon = "Interface\\Icons\\Achievement_GuildPerk_HonorableMention",
     tip = { "LEGACY_CHALLENGE_TAB_TOOLTIP", "LEGACY_CHALLENGES" }, title = { "LEGACY_CHALLENGE_FRAME_TITLE", "LEGACY_CHALLENGES" },
     -- Challenges earned and their steps' progress; points earned.
     events = { "ACHIEVEMENT_EARNED", "CRITERIA_UPDATE", "TRAIT_TREE_CURRENCY_INFO_UPDATED", "MAJOR_FACTION_RENOWN_LEVEL_CHANGED" },

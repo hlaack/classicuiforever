@@ -75,10 +75,11 @@ function LG.ShowEarned(frame)
         and string.format(L["LEGACY_EARNED"], "|cffffffff" .. earned .. "|r", "|cffffffff" .. most .. "|r") or "")
 end
 
--- page: { key, icon, tip = { global, key }, title = { global, key }, events, build(frame), shown(frame, on),
--- refresh(frame), learn(tree) }. Pages show in the order added.
+-- page: { key, tab, icon, tip = { global, key }, title = { global, key }, events, build(frame), shown(frame, on),
+-- refresh(frame), learn(tree) }. tab is its place in the game's own Legacy window (Reward Track, Challenges, Tree),
+-- which opens on the first.
 function LG.AddPage(page)
-    LG.pages[#LG.pages + 1] = page
+    LG.pages[page.tab] = page
 end
 
 -- The current page drawn again.

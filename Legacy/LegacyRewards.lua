@@ -255,7 +255,7 @@ local function Shown(_, on)
 end
 
 LG.AddPage({
-    key = "rewards", icon = "Interface\\Icons\\UI_Chat",
+    key = "rewards", tab = 1, icon = "Interface\\Icons\\UI_Chat",
     tip = { "LEGACY_REWARD_TRACK_TAB_TOOLTIP", "LEGACY_REWARD_TRACK" }, title = { "LEGACY_TRACK_FRAME_TITLE", "LEGACY_REWARD_TRACK" },
     -- Points earned move the track; the track's own data can arrive after login.
     events = { "MAJOR_FACTION_RENOWN_LEVEL_CHANGED", "MAJOR_FACTION_UNLOCKED", "UPDATE_FACTION" },

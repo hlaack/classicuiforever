@@ -60,7 +60,7 @@ local function Learn(tree)
 end
 
 LG.AddPage({
-    key = "tree", icon = "Interface\\Icons\\Achievement_GuildPerk_EverybodysFriend",
+    key = "tree", tab = 3, icon = "Interface\\Icons\\Achievement_GuildPerk_EverybodysFriend",
     tip = { "LEGACY_TREE_TAB_TOOLTIP", "LEGACY_TREE_TAB" }, title = { "LEGACY_TREE_FRAME_TITLE", "LEGACY_TITLE" },
     -- Points, perks and staged changes.
     events = { "TRAIT_CONFIG_UPDATED", "TRAIT_TREE_CURRENCY_INFO_UPDATED", "TRAIT_NODE_CHANGED" },
