@@ -11,8 +11,7 @@ local DEPTH = 10
 -- Frame metal by atlas (lower case, its tiling mark dropped): frames, borders, rings, tabs, slots, headers, dividers.
 local METAL = {
     "^ui%-frame%-metal", "^ui%-frame%-portraitmetal", "^ui%-frame%-inner", "^ui%-frame%-diamondmetal", "^ui%-frame%-bot",
-    "^ui%-frame%-title", "^ui%-frame%-btndiv", "^uiframe%-tab", "^uiframe%-activetab", "^uiframebackground%-nineslice",
-    "^ui%-hud%-minimap%-frame", "^ui%-hud%-minimap%-zoom%-", "^ui%-hud%-minimap%-button", "^ui%-hud%-minimap%-guildbanner%-border",
+    "^ui%-frame%-title", "^ui%-frame%-btndiv", "^uiframe%-tab", "^uiframe%-activetab", "^ui%-hud%-minimap%-frame", "^ui%-hud%-minimap%-zoom%-", "^ui%-hud%-minimap%-button", "^ui%-hud%-minimap%-guildbanner%-border",
     "^ui%-hud%-unitframe%-smallcircle$", "portraiton$", "portraiton%-vehicle$", "portraiton%-classresource$",
     "^ui%-hud%-unitframe%-target%-portraiton%-boss%-gold", "^ui%-hud%-unitframe%-target%-portraiton%-boss%-rare%-silver",
     "^ui%-hud%-actionbar%-iconframe$", "^ui%-hud%-actionbar%-iconframe%-border$", "^ui%-hud%-actionbar%-iconframe%-small$",

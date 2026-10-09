@@ -348,6 +348,27 @@ local function LayoutItems(frame, backpackExtra, combined, plusTwo)
     if made then for j = blanks + 1, #made do made[j]:Hide() end end
 end
 
+-- The gamepad's bag bar in the combined bag (backpack and bag buttons): since beta 70291 the client no longer hides it
+-- without a controller, and its buttons, unplaced, pile up over the sort button. Faded and deaf then, never hidden: its
+-- buttons' close code would run in our name.
+local function Deaf(frame, depth)
+    if frame.IsMouseEnabled and frame:IsMouseEnabled() then frame:EnableMouse(false) end
+    if depth < 3 then ns.EachChild(frame, Deaf, depth + 1) end
+end
+
+-- Returns the bar while it is off, for the sort button to stand above it.
+local function GamepadBarOff()
+    local bar = _G.GamepadBagBar
+    if not bar or ns.GamepadUI() then return nil end
+    ns.SetAlphaIf(bar, 0)
+    -- Its buttons' dropdowns take the mouse too.
+    Deaf(bar, 0)
+    return bar
+end
+
+-- The sort button near the client's 28 x 26, its foot clear of the top row (51 down); the fixed-size hover glow (24 x 23)
+-- cut to match.
+local SORT_W, SORT_H, SORT_GLOW_W, SORT_GLOW_H = 24, 22, 21, 20
 local function PlaceSearch(frame)
     if BagItemSearchBox and BagItemSearchBox:GetParent() == frame then
         ns.SetPointOnce(BagItemSearchBox, "TOPLEFT", frame, "TOPLEFT", 52, -31)
@@ -355,7 +376,12 @@ local function PlaceSearch(frame)
     end
     if BagItemAutoSortButton and BagItemAutoSortButton:GetParent() == frame then
         ns.SetPointOnce(BagItemAutoSortButton, "TOPRIGHT", frame, "TOPRIGHT", -10, -28)
+        ns.SetSizeIf(BagItemAutoSortButton, SORT_W, SORT_H)
+        local glow = BagItemAutoSortButton:GetHighlightTexture()
+        if glow then ns.SetSizeIf(glow, SORT_GLOW_W, SORT_GLOW_H) end
     end
+    local bar = frame.IsCombinedBagContainer and frame:IsCombinedBagContainer() and GamepadBarOff()
+    if bar and BagItemAutoSortButton then ns.SetLevelIf(BagItemAutoSortButton, bar:GetFrameLevel() + 5) end
 end
 
 local shape = setmetatable({}, { __mode = "k" })   -- bag frame -> { extra, plusTwo, wider } as last drawn

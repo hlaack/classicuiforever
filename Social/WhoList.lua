@@ -125,22 +125,7 @@ local function Refresh()
     UpdateButtons()
 end
 
--- Right-click menu in Era's sections (Report and Copy Name are the client's alone).
-local rowMenu
-local function ShowRowMenu(entry)
-    if not rowMenu then
-        rowMenu = ns.RowMenu({
-            { section = S.MENU_INTERACT },
-            { INVITE or "Invite", function(who) S.Invite(who.name) end },
-            { WHISPER or "Whisper", function(who) ns.Whisper(who.name) end },
-            { section = S.MENU_OTHER },
-            { ADD_FRIEND or "Add Friend", function(who) S.AddFriend(who.name) end },
-            { IGNORE or "Ignore", function(who) S.Ignore(who.name) end },
-        })
-    end
-    rowMenu:Follow(panel)
-    rowMenu:Open(entry, entry.name)
-end
+local function ShowRowMenu(entry) S.ShowPlayerMenu(panel, entry) end
 
 local function Row_OnClick(self, button)
     if not self.entry then return end
@@ -164,7 +149,8 @@ local function Header_OnClick(self)
 end
 
 local function HideRowMenu()
-    if rowMenu and rowMenu:IsShown() then rowMenu:Hide() end
+    local menu = S.playerMenu
+    if menu and menu:IsShown() then menu:Hide() end
 end
 
 -- The client's who window (in the group finder) opens itself on results; closed while ours is up.
@@ -264,12 +250,6 @@ local function FieldArrow(header, column)
 end
 
 -- The bar runs the pane's full height, down beside the count to the search line.
-local function PlaceBar(bar, list)
-    bar:ClearAllPoints()
-    bar:SetPoint("TOPLEFT", list, "TOPRIGHT", 6, -13)
-    bar:SetPoint("BOTTOMLEFT", list, "BOTTOMRIGHT", 6, 1)
-end
-
 local function Build()
     local host = FriendsFrame
     if not host then return end
@@ -311,36 +291,14 @@ local function Build()
     panel.found:SetPoint("BOTTOM", panel.listBox, "BOTTOM", 0, 19)
 
     -- The old query line: a who search without the slash command.
-    local query = ns.NewFrame("EditBox", nil, panel.listBox, "InputBoxTemplate")
-    panel.query = query
-    query:SetPoint("BOTTOMLEFT", panel.listBox, "BOTTOMLEFT", 6, -7)
-    query:SetPoint("RIGHT", panel.listBox, "RIGHT", -2, 0)
-    query:SetHeight(18)
-    -- The input's thin border is bronze here; drained, it is the old silver.
-    ns.DrainInput(query)
-    -- The client's lens at the left and its X once something is typed.
-    local lens = query:CreateTexture(nil, "OVERLAY")
-    lens:SetTexture("Interface/Common/UI-Searchbox-Icon")
-    lens:SetSize(14, 14)
-    lens:SetPoint("LEFT", query, "LEFT", 1, -2)
-    lens:SetVertexColor(0.6, 0.6, 0.6)
-    query:SetTextInsets(16, 20, 0, 0)
-    local clear = ns.SearchClear(query)
-    query:HookScript("OnTextChanged", function(self)
-        clear:SetShown((self:GetText() or "") ~= "")
-    end)
-    query:SetAutoFocus(false)
-    query:SetFontObject("ChatFontNormal")
-    query:SetMaxLetters(60)
-    query:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    query:SetScript("OnEnterPressed", function(self)
+    S.SearchLine(panel, function(self)
         S.SendWho(self:GetText())
         self:ClearFocus()
     end)
 
     -- Era's inset runs down round the search line to the buttons.
     panel.insetFoot = panel.refresh
-    S.ScrollRows(panel, panel.found, 2, UpdateRows, COLUMNS, Row_OnClick, Row_OnDoubleClick, PlaceBar)
+    S.ScrollRows(panel, panel.found, 2, UpdateRows, COLUMNS, Row_OnClick, Row_OnDoubleClick, S.PlaceListBar)
 
     panel:SetScript("OnShow", function()
         -- Results come to this window, not the chat frame.

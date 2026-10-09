@@ -596,7 +596,6 @@ L["CORE_THE_PET_FRAME_KEEPS_THE"] = "El marco de la mascota mantiene el arte ant
 L["CORE_THE_PARTY_FRAMES_KEEP_SOME"] = "Los marcos del grupo mantienen parte del arte antiguo hasta recargar la interfaz."
 L["CORE_THE_CAST_BARS_KEEP_THE"] = "Las barras de lanzamiento mantienen el relleno y el destello antiguos hasta recargar la interfaz."
 L["CORE_THE_BREATH_AND_FATIGUE_BARS"] = "Las barras de respiración y fatiga mantienen el borde y la barra antiguos hasta recargar la interfaz."
-L["CORE_THE_GAME_S_OWN_COMBO"] = "Los puntos de combo propios del juego mantienen los sitios antiguos hasta recargar la interfaz."
 L["CORE_THE_MINIMAP_S_BUTTONS_AND"] = "Los botones y el nombre de zona del minimapa mantienen los sitios antiguos hasta recargar la interfaz."
 L["CORE_NAMEPLATES_KEEP_THE_OLD_SIZES"] = "Las placas de nombre mantienen los tamaños y sitios antiguos hasta recargar la interfaz."
 L["CORE_THE_OBJECTIVE_TRACKER_KEEPS_THE"] = "El seguimiento de objetivos mantiene los antiguos encabezados de piedra hasta recargar la interfaz."

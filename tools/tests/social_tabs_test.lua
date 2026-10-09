@@ -24,6 +24,7 @@ local function Addon(onForever)
     ns.Dress = function(tex) tex.atlas = nil end
     ns.SetAlphaIf = function(region, alpha) region.alpha = alpha end
     ns.WhenCalm = function(_, fn) fn() end
+    ns.SetShownIf = function(region, on) region.shown = on and true or false end
     return ns
 end
 
@@ -38,8 +39,18 @@ InCombatLockdown = function() return false end
 local Tab = {}
 Tab.__index = Tab
 function Tab:IsShown() return self.shown end
-function Tab:ClearAllPoints() self.after = nil end
-function Tab:SetPoint(point, rel) if point == "LEFT" then self.after = rel end end
+function Tab:ClearAllPoints() self.after, self.first = nil, nil end
+function Tab:SetPoint(point, rel)
+    if point == "LEFT" then self.after = rel end
+    if point == "TOPLEFT" then self.first = true end
+end
+function Tab:Show() self.shown = true end
+function Tab:Hide() self.shown = false end
+function Tab:SetScript() end
+function Tab:SetID() end
+function Tab:SetText() end
+function Tab:GetID() return self.id end
+function Tab:GetName() return self.name end
 function Tab:EnableMouse(on) self.mouse = on end
 
 local function NewTab() return setmetatable({ shown = true, mouse = true, alpha = 1 }, Tab) end
@@ -48,9 +59,20 @@ local function Social(clientWho)
     FriendsFrame = {}
     for i = 1, 8 do _G["FriendsFrameTab" .. i] = nil end
     FriendsFrameTab1, FriendsFrameTab3, FriendsFrameTab4 = NewTab(), NewTab(), NewTab()
+    FriendsFrameTab1.id, FriendsFrameTab1.name = 1, "FriendsFrameTab1"
+    FriendsFrameTab3.id, FriendsFrameTab3.name = 2, "FriendsFrameTab3"
     FriendsFrameTab2 = clientWho and NewTab() or nil
     FRIEND_TAB_WHO = clientWho and 2 or nil
     local ns = Addon(not clientWho)
+    ns.guild = {}
+    ns.WhoPanel = function() return nil end
+    -- Tabs only: the expand button's template is left unmade here.
+    ns.NewFrame = function(_, name, _, template)
+        if template ~= "PanelTabButtonTemplate" then return nil end
+        local tab = NewTab()
+        if name then _G[name] = tab end
+        return tab
+    end
     Load("Social/SocialWindow.lua", ns)
     ns.social.whoTab = NewTab()
     return ns.social
@@ -76,6 +98,38 @@ do
     Check(S.ClientWhoTab(true) == false, "Forever: no client Who tab to take")
     S.PlaceTabs()
     Check(FriendsFrameTab3.after == S.whoTab, "Forever: the row is Friends, Who, then the client's others")
+end
+
+------------------------------------------------------------------ the game's new social window
+
+-- Beta 70291's switch hides the client's Friends tab; ours stands first in the row, picked while no list of ours is up.
+do
+    local S = Social(false)
+    C_SocialUI = { IsSystemEnabled = function() return true end }
+    SocialUIFrame = {}
+    PanelTemplates_SelectTab = function(tab) tab.picked = true end
+    PanelTemplates_DeselectTab = function(tab) tab.picked = false end
+    PanelTemplates_GetSelectedTab = function() return 1 end
+    FRIEND_TAB_RAID = 2
+    FriendsFrameTab1.shown, FriendsFrameTab3.shown = false, false
+    S.PlaceTabs()
+    local ours = _G.ClassicUIForeverFriendsTab
+    Check(ours ~= nil, "switch on: our Friends tab is made")
+    if ours then
+        Check(ours.shown and ours.after == nil and ours.first == true, "switch on: our Friends tab stands first")
+        Check(S.whoTab.after == ours, "switch on: Who follows our Friends tab")
+        Check(ours.picked == true, "switch on: with no list of ours up, Friends is picked")
+    end
+    local raid = _G.ClassicUIForeverRaidTab
+    Check(raid ~= nil and raid.shown and raid.after == S.whoTab, "switch on: our Raid tab stands where the client's was")
+    Check(raid ~= nil and raid.picked == false, "switch on: on the friends page Raid is not picked")
+    C_SocialUI = { IsSystemEnabled = function() return false end }
+    FriendsFrameTab1.shown, FriendsFrameTab3.shown = true, true
+    S.PlaceTabs()
+    Check(ours == nil or ours.shown == false, "switch off: ours is gone")
+    Check(_G.ClassicUIForeverRaidTab == nil or _G.ClassicUIForeverRaidTab.shown == false, "switch off: our Raid tab is gone")
+    Check(S.whoTab.after == FriendsFrameTab1, "switch off: the client's Friends tab is first again")
+    C_SocialUI, SocialUIFrame = nil, nil
 end
 
 if failed > 0 then

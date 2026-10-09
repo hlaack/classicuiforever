@@ -49,7 +49,8 @@ end
 local function GameSocialTabUp()
     local raid, header = _G.RaidFrame, _G.FriendsTabHeader
     if raid and raid:IsVisible() and raid:GetParent() == _G.FriendsFrame then return true end
-    -- Shown only on Friends; our tabs fade it while they are up.
+    -- Shown only on Friends; our tabs fade it while they are up, and our pages over its list draw their own box.
+    if ns.ContactPageUp and ns.ContactPageUp() then return false end
     return header ~= nil and header:IsVisible() and header:GetAlpha() > 0.5
 end
 function ns.SocialInsetBorder()

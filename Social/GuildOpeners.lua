@@ -239,28 +239,53 @@ local function WrapGuildToggle()
     end
 end
 
--- The guild key clicks our secure button. No secure snippets on this client,
--- so a window the client won't open in combat stays shut, no blocked box.
+-- The guild key clicks our secure button; with the game's new social window on, the social keys click our opener too.
 local GUILD_BIND = "ForeverClassicUIGuildBind"
-local guildBind
+local SOCIAL_OPEN = "ForeverClassicUISocialOpen"
+local SOCIAL_BINDINGS = { "TOGGLESOCIAL", "TOGGLEFRIENDSTAB" }
+local guildBind, socialOpen
+
+-- The toast's click runs the client's friends toggle: a counted panel that opens in combat. With the new window on that
+-- toggle opens the new one, so ours opens from Lua (raw in a fight, Escape armed by the opener's click).
+local TOAST_OPEN = "/click QuickJoinToastButton"
+local function OpenerMacro() return ns.SocialUIOn() and "" or TOAST_OPEN end
+
+local escArmed = setmetatable({}, { __mode = "k" })
+local function ArmEscape(button, on)
+    if not button or (escArmed[button] or false) == on or not ns.EscArmOnClick then return end
+    escArmed[button] = on
+    if on then
+        ns.EscArmOnClick(button, "social")
+    elseif SecureHandlerUnwrapScript then
+        SecureHandlerUnwrapScript(button, "OnClick")
+    end
+end
+
+local function BindKeys(bindings, target)
+    for _, binding in ipairs(bindings) do
+        local key, second = GetBindingKey(binding)
+        for _, k in ipairs({ key, second }) do
+            if k then SetOverrideBindingClick(guildBind, true, k, ns.KeyProxy(target), "LeftButton") end
+        end
+    end
+end
 
 local function UpdateGuildBinding()
     if not guildBind or InCombatLockdown() then return end
     ClearOverrideBindings(guildBind)
-    if not G.active then return end
-    for _, binding in ipairs(GUILD_BINDINGS) do
-        local key, second = GetBindingKey(binding)
-        for _, k in ipairs({ key, second }) do
-            if k then SetOverrideBindingClick(guildBind, true, k, ns.KeyProxy(GUILD_BIND), "LeftButton") end
-        end
+    local newUI = ns.SocialUIOn()
+    for _, button in pairs({ guildBind, socialOpen }) do
+        ns.SetAttributeIf(button, "macrotext", OpenerMacro())
+        ArmEscape(button, newUI)
     end
+    if not G.active then return end
+    BindKeys(GUILD_BINDINGS, GUILD_BIND)
+    if newUI and socialOpen then BindKeys(SOCIAL_BINDINGS, SOCIAL_OPEN) end
 end
 ns.UpdateGuildBinding = UpdateGuildBinding
 
--- The social window opens by a client opener: a counted panel (Escape closes it) that opens in combat.
--- No friends micro button, and /friends is not secure (it adds the target as a friend):
--- QuickJoinToastButton, clicked with no toast waiting, runs the client's ToggleFriendsFrame.
-local socialOpen
+-- No friends micro button, and /friends is not secure (it adds the target as a friend): QuickJoinToastButton, clicked
+-- with no toast waiting, runs the client's ToggleFriendsFrame.
 
 -- After a press: the key also opens the roster, the button only the window.
 -- Never selects the client's tab (it lit beside ours).
@@ -287,7 +312,7 @@ end
 local function BuildSocialOpener()
     if socialOpen or InCombatLockdown() then return end
     if not _G["QuickJoinToastButton"] then return end
-    socialOpen = CreateFrame("Button", "ForeverClassicUISocialOpen", UIParent, "SecureActionButtonTemplate")
+    socialOpen = CreateFrame("Button", SOCIAL_OPEN, UIParent, "SecureActionButtonTemplate")
     -- Sized and placed off screen: a button with neither is never clicked.
     socialOpen:SetSize(1, 1)
     socialOpen:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -500, 500)
@@ -295,7 +320,7 @@ local function BuildSocialOpener()
     socialOpen:RegisterForClicks("AnyUp", "AnyDown")
     socialOpen:SetAttribute("useOnKeyDown", false)
     socialOpen:SetAttribute("type", "macro")
-    socialOpen:SetAttribute("macrotext", "/click QuickJoinToastButton")
+    socialOpen:SetAttribute("macrotext", OpenerMacro())
     socialOpen:SetScript("PreClick", function(self, _, down)
         if down then return end
         self.was = SocialShown()
@@ -318,8 +343,7 @@ local function BuildSecureOpener()
     -- Once per press, on release (both key halves reach this button).
     guildBind:SetAttribute("useOnKeyDown", false)
     guildBind:SetAttribute("type", "macro")
-    -- The toast, not /friends: not secure here, and it adds the target as a friend.
-    guildBind:SetAttribute("macrotext", "/click QuickJoinToastButton")
+    guildBind:SetAttribute("macrotext", OpenerMacro())
     guildBind:SetScript("PreClick", function(self, _, down)
         if down then return end
         self.was = SocialShown()
@@ -331,6 +355,7 @@ local function BuildSecureOpener()
         AfterSocialPress(true)
     end)
     guildBind:RegisterEvent("UPDATE_BINDINGS")
+    guildBind:RegisterEvent("SOCIAL_UI_SYSTEM_STATUS_UPDATED")
     guildBind:RegisterEvent("PLAYER_REGEN_ENABLED")
     -- Bindings may not be loaded yet on the first run.
     guildBind:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -390,6 +415,8 @@ local function Apply()
         if BuildSocialOpener() and GuildMicroButton then
             ns.MapPad(GuildMicroButton, nil, nil, socialOpen, function() return G.active end)
         end
+        -- The social keys and the opener's arming wait for the opener.
+        UpdateGuildBinding()
         if communitiesTab then communitiesTab:Show() end
         if tab then tab:Show() PlaceTab() end
     end)

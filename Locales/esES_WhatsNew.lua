@@ -3,6 +3,14 @@ if ns.LOCALE ~= "esES" and ns.LOCALE ~= "esMX" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/esES.lua.
+L["WN28_1_TITLE"] = "Aliados recientes e Ignorar"
+L["WN28_1_TEXT"] = "La pestaña Amigos de la ventana social tiene las pestañas Aliados recientes e Ignorar junto a Amigos. Aliados recientes muestra los jugadores con los que te agrupaste hace poco y tiene una línea de búsqueda; Ignorar muestra los jugadores que ignoras."
+L["WN28_2_TITLE"] = "De nuevo la ventana social clásica"
+L["WN28_2_TEXT"] = "Tras la última actualización del juego, O y el botón de hermandad abrían la nueva ventana social del juego. Vuelven a abrir la clásica, sus pestañas se alinean y la pestaña de banda ha vuelto."
+L["WN28_3_TITLE"] = "Correcciones tras la actualización del juego"
+L["WN28_3_TEXT"] = "Los puntos de combo vuelven a mostrar los cinco orbes clásicos. La franja oscura sobre el modelo del personaje y el recuadro oscuro en las páginas de anuncios del buscador de grupo han desaparecido, el botón de ordenar funciona en el modo de una bolsa, y el buscador de grupo ya no salta al abrirlo en combate."
+L["WN28_4_TITLE"] = "Ventana de botín y bolsas"
+L["WN28_4_TEXT"] = "Con Ventana de botín desactivada, la ventana de botín del juego ya no muestra dos cuadrados blancos en sus esquinas. El botón de ordenar de las bolsas cabe junto al cuadro de búsqueda."
 L["WN27_1_TITLE"] = "Menos trabajo en segundo plano"
 L["WN27_1_TEXT"] = "Las placas de nombre solo se vuelven a colocar cuando cambia un ajuste de las placas, no con cada ajuste que cambie el juego u otro addon. Las coordenadas del minimapa solo se miden cuando cambian. Nada se ve distinto."
 L["WN26_1_TITLE"] ="Colores de clase por marco"

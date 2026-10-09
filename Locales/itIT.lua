@@ -596,7 +596,6 @@ L["CORE_THE_PET_FRAME_KEEPS_THE"] = "Il riquadro del famiglio mantiene la vecchi
 L["CORE_THE_PARTY_FRAMES_KEEP_SOME"] = "I riquadri del gruppo mantengono parte della vecchia grafica fino al ricaricamento dell'interfaccia."
 L["CORE_THE_CAST_BARS_KEEP_THE"] = "Le barre di lancio mantengono il vecchio riempimento e il lampo fino al ricaricamento dell'interfaccia."
 L["CORE_THE_BREATH_AND_FATIGUE_BARS"] = "Le barre di respiro e fatica mantengono il vecchio bordo e la vecchia barra fino al ricaricamento dell'interfaccia."
-L["CORE_THE_GAME_S_OWN_COMBO"] = "I punti combo del gioco mantengono i vecchi posti fino al ricaricamento dell'interfaccia."
 L["CORE_THE_MINIMAP_S_BUTTONS_AND"] = "I pulsanti e il nome della zona della minimappa mantengono i vecchi posti fino al ricaricamento dell'interfaccia."
 L["CORE_NAMEPLATES_KEEP_THE_OLD_SIZES"] = "Le targhette mantengono le vecchie dimensioni e posizioni fino al ricaricamento dell'interfaccia."
 L["CORE_THE_OBJECTIVE_TRACKER_KEEPS_THE"] = "Il tracciamento degli obiettivi mantiene le vecchie intestazioni in pietra fino al ricaricamento dell'interfaccia."

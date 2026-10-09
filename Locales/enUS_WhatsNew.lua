@@ -2,6 +2,14 @@ local _, ns = ...
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; English beside Locales/enUS.lua.
+L["WN28_1_TITLE"] = "Recent Allies and Ignore"
+L["WN28_1_TEXT"] = "The social window's Friends tab has Recent Allies and Ignore tabs beside Friends. Recent Allies lists the players you grouped with lately and has a search line; Ignore lists the players you ignore."
+L["WN28_2_TITLE"] = "The classic social window again"
+L["WN28_2_TEXT"] = "After the latest game update, O and the guild button opened the game's new social window. They open the classic one again, its tabs line up, and the Raid tab is back."
+L["WN28_3_TITLE"] = "Fixes after the game update"
+L["WN28_3_TEXT"] = "Combo points show all five classic orbs again. The dark strip over the character model and the dark box on the group finder's listing pages are gone, the sort button works in one-bag mode, and the group finder no longer jumps when opened in a fight."
+L["WN28_4_TITLE"] = "Loot window and bags"
+L["WN28_4_TEXT"] = "With Loot Window off, the game's loot window no longer shows two white squares in its corners. The bags' sort button fits beside the search box."
 L["WN27_1_TITLE"] = "Less background work"
 L["WN27_1_TEXT"] = "The nameplates are laid out again only when a nameplate setting changes, not on every setting the game or another addon changes. The minimap coordinates are measured only when they change. Nothing looks different."
 L["WN26_1_TITLE"] ="Class colors per frame"

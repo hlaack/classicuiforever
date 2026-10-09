@@ -3,6 +3,14 @@ if ns.LOCALE ~= "deDE" then return end
 local L = ns.L
 
 -- Options/Welcome.lua: What's New, by version (WN<id>_<n>), newest first; beside Locales/deDE.lua.
+L["WN28_1_TITLE"] = "Kürzliche Verbündete und Ignorieren"
+L["WN28_1_TEXT"] = "Der Freunde-Reiter des Kontaktfensters hat neben Freunde die Reiter Kürzliche Verbündete und Ignorieren. Kürzliche Verbündete zeigt die Spieler, mit denen du zuletzt in einer Gruppe warst, mit einer Suchzeile; Ignorieren zeigt die Spieler, die du ignorierst."
+L["WN28_2_TITLE"] = "Wieder das klassische Kontaktfenster"
+L["WN28_2_TEXT"] = "Seit dem letzten Spielupdate öffneten O und der Gildenknopf das neue Kontaktfenster des Spiels. Sie öffnen wieder das klassische, seine Reiter sitzen richtig, und der Schlachtzugsreiter ist zurück."
+L["WN28_3_TITLE"] = "Korrekturen nach dem Spielupdate"
+L["WN28_3_TEXT"] = "Die Combopunkte zeigen wieder alle fünf klassischen Kugeln. Der dunkle Streifen über dem Charaktermodell und der dunkle Kasten auf den Eintragsseiten der Gruppensuche sind weg, der Sortierknopf funktioniert im Ein-Taschen-Modus, und die Gruppensuche springt nicht mehr, wenn sie im Kampf geöffnet wird."
+L["WN28_4_TITLE"] = "Beutefenster und Taschen"
+L["WN28_4_TEXT"] = "Mit ausgeschaltetem Beutefenster zeigt das Beutefenster des Spiels keine zwei weißen Quadrate mehr in seinen Ecken. Der Sortierknopf der Taschen passt neben das Suchfeld."
 L["WN27_1_TITLE"] = "Weniger Hintergrundarbeit"
 L["WN27_1_TEXT"] = "Die Namensplaketten werden nur noch neu angeordnet, wenn sich eine Namensplaketten-Einstellung ändert, nicht mehr bei jeder Einstellung, die das Spiel oder ein anderes Addon ändert. Die Koordinaten der Minikarte werden nur noch gemessen, wenn sie sich ändern. Am Aussehen ändert sich nichts."
 L["WN26_1_TITLE"] ="Klassenfarben je Fenster"

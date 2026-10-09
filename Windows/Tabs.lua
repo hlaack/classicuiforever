@@ -4,6 +4,10 @@ local _, ns = ...
 
 local P = ns.panels
 
+-- A tab of ours standing in for a client one takes that tab's lift.
+local lifts = setmetatable({}, { __mode = "k" })
+function ns.SetTabLift(tab, lift) lifts[tab] = lift end
+
 -- Lift window-anchored tabs to the metal (tab-anchored ones follow). Every fit:
 -- the client resets the anchor at times.
 local function LiftTab(tab)
@@ -11,7 +15,7 @@ local function LiftTab(tab)
     if not point or rel ~= tab:GetParent() then return end
     -- Within a hair: the game hands an offset back inexact, and an exact test lifted the tab again on every fit.
     if tab.fcuiLiftedY and ns.Near(y, tab.fcuiLiftedY, 0.5) then return end
-    tab.fcuiLiftedY = (y or 0) + (tonumber(tab.fcuiLift) or P.BOTTOM_LIFT)
+    tab.fcuiLiftedY = (y or 0) + (lifts[tab] or tonumber(tab.fcuiLift) or P.BOTTOM_LIFT)
     tab:SetPoint(point, rel, relPoint, x or 0, tab.fcuiLiftedY)
 end
 
@@ -254,16 +258,21 @@ local TOP_ACTIVE = {
     fields = { "LeftActive", "MiddleActive", "RightActive" }, key = "topTabActive", cap = TOP_CAP, height = TOP_HEIGHT,
     edge = "BOTTOM", middle = "edge", horizTile = false, coords = TOP_COORDS, oy = TOP_PICKED_Y,
 }
+-- A row of sub-tabs whose picked face stays level with the others (the friends page's, as the client's were).
+local TOP_ACTIVE_LEVEL = {
+    fields = { "LeftActive", "MiddleActive", "RightActive" }, key = "topTabActive", cap = TOP_CAP, height = TOP_HEIGHT,
+    edge = "BOTTOM", middle = "edge", horizTile = false, coords = TOP_COORDS, oy = 0,
+}
 local TOP_INACTIVE = {
     fields = { "Left", "Middle", "Right" }, key = "topTabInactive", cap = TOP_CAP, height = TOP_HEIGHT,
     edge = "BOTTOM", middle = "edge", horizTile = false, coords = TOP_COORDS,
 }
 local TOP_GLOW_X, TOP_GLOW_Y = 2, -8   -- hover glow: the tab's width, from its foot
 
--- padding, widest: this tab's resize numbers in Era (its template's are 0 and none).
-function ns.SkinTopTab(tab, padding, widest)
+-- padding, widest: this tab's resize numbers in Era (its template's are 0 and none); level: the picked face not lower.
+function ns.SkinTopTab(tab, padding, widest, level)
     if not tab or not tab.Left then return end
-    ns.ThreeSlice(tab, nil, TOP_ACTIVE)
+    ns.ThreeSlice(tab, nil, level and TOP_ACTIVE_LEVEL or TOP_ACTIVE)
     ns.ThreeSlice(tab, nil, TOP_INACTIVE)
     ns.FadeKeys(tab, ns.KEYS.TAB_GLOW)
     local fit = topFit[tab] or { 0 }
