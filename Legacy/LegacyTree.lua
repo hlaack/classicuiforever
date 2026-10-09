@@ -41,27 +41,11 @@ local function Build(frame)
     locked:Hide()
 end
 
--- The trees' background (option): each tree's Era art, or one plain backdrop for all three (UI/TalentWindow.lua).
-ns.LEGACY_BACKGROUNDS = {
-    { key = "era", label = L["LEGACY_BG_ERA"] },
-    { key = "parchment", label = L["LEGACY_BG_PARCHMENT"] },
-    { key = "marble", label = L["WIN_MARBLE"] },
-    { key = "stone", label = L["LEGACY_BG_STONE"] },
-}
-local BACKDROP = { parchment = true, marble = true, stone = true }
-
--- A background picked in the options.
-function ns.SetLegacyBackground(key, value)
-    ns.db[key] = value
-    LG.Refresh()
-end
-
 local function Refresh(frame)
     local tree = ReadTree(frame.tabIndex)
     local points = tree and string.format(L["LEGACY_POINTS"], "|cffffffff" .. tree.points .. "|r") or ""
-    local pick = ns.db.legacyBackground
     ns.DrawTalentTab(frame, tree, {
-        background = function() return BACKDROP[pick] and pick or TREES[frame.tabIndex].art end,
+        background = function() return TREES[frame.tabIndex].art end,
         title = Text("LEGACY_TREE_FRAME_TITLE", "LEGACY_TITLE"), points = points, tabNames = TreeNames() })
     -- No config yet: the account has earned no Legacy Point.
     locked:SetShown(tree == nil)

@@ -531,50 +531,11 @@ function ns.TalentWindowShown(frame, shown)
     end
 end
 
--- A plain backdrop in place of Era's art, the whole tree's length: the quest log's parchment, or the marble or stone of
--- the add-on's panes tiled.
-local BACKDROPS = {
-    -- The parchment is the sheet's top-left 300 x 336 of 512, as the quest map's detail pane cuts it; the rest is dark.
-    parchment = { key = "questParchment", coords = { 8 / 512, 300 / 512, 4 / 512, 336 / 512 } },
-    marble = { key = "marbleBg", tile = true, shade = 1.35 },
-    stone = { key = "rockBg", tile = true },
-}
-
-local function DrawBackdrop(frame, backdrop)
-    local fill = frame.backdrop
-    if not backdrop then
-        if fill then fill:Hide() end
-        return
-    end
-    if not fill then
-        fill = frame.child:CreateTexture(nil, "BACKGROUND", nil, -1)
-        fill:SetAllPoints(frame.child)
-        frame.backdrop = fill
-    end
-    if frame.backdropKey ~= backdrop.key then
-        frame.backdropKey = backdrop.key
-        if backdrop.tile then
-            fill:SetTexCoord(0, 1, 0, 1)
-            ns.TileTex(fill, backdrop.key, nil, backdrop.shade or 1)
-        else
-            fill:SetTexture((ns.TexPath(backdrop.key)))
-            fill:SetHorizTile(false)
-            fill:SetVertTile(false)
-            fill:SetVertexColor(1, 1, 1)
-            fill:SetTexCoord(unpack(backdrop.coords))
-        end
-    end
-    fill:Show()
-end
-
 -- The background, pulled to the tree's length. Lower files are 128 tall but painted for 75 rows (the old cut);
 -- drawn whole they left the tree's foot bare.
 local function DrawBackground(frame, name, height)
     local top, bottom = height * 256 / 331, height * 75 / 331
     local art = frame.background
-    local backdrop = BACKDROPS[name]
-    DrawBackdrop(frame, backdrop)
-    if backdrop then name = nil end
     for key, piece in pairs(art) do
         if name then
             if frame.backgroundName ~= name then piece:SetTexture(ART .. name .. "-" .. key) end
@@ -639,9 +600,9 @@ local function DrawFootTabs(frame, tree, names)
     end
 end
 
--- DrawTalentTab(frame, tree, look): the picked tab drawn. look: background(tab) -> an Era tree's art, "parchment",
--- "marble", "stone" or nil; title; points (the foot's points-left text); tabNames (each foot tab a tree of its own: tree
--- is the picked one, drawn whole). A missing or empty tree draws nothing.
+-- DrawTalentTab(frame, tree, look): the picked tab drawn. look: background(tab) -> an Era tree's art or nil; title;
+-- points (the foot's points-left text); tabNames (each foot tab a tree of its own: tree is the picked one, drawn
+-- whole). A missing or empty tree draws nothing.
 function ns.DrawTalentTab(frame, tree, look)
     frame.tree, frame.tab = tree, nil
     ReleaseAll(frame.branchPool)

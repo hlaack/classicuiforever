@@ -494,10 +494,6 @@ local function Build(canvas)
             Grouped(pan)
             Add(pan, "damageMeter")
         end
-        if entry[1] == "legacyWindow" and ns.LEGACY_BACKGROUNDS then
-            ExtraDrop("legacyWindow", "legacyBackground", L["OPTWIN_BACKGROUND"], L["OPTWIN_LEGACY_BACKGROUND_TIP"],
-                ns.LEGACY_BACKGROUNDS, ns.SetLegacyBackground, "legacy tree talent parchment marble stone")
-        end
         if entry[1] == "thickHealthMana" and ns.ENEMY_HEALTH_COLORS then
             ExtraDrop("thickHealth", "thickEnemyColor", L["OPTWIN_ENEMY_HEALTH"], L["OPTWIN_THE_COLOUR_OF_AN_ENEMY"],
                 ns.ENEMY_HEALTH_COLORS, ns.SetEnemyHealthColor, "colour color hostile red neutral yellow reaction aggro", 2)
