@@ -8,7 +8,6 @@ local BIND_NAME = "ForeverClassicUIQuestLogBind"   -- clicked by name via the ov
 local TRACKERS = { "QuestObjectiveTracker", "CampaignQuestObjectiveTracker" }
 
 local bindButton
-local originalMicroClick
 -- The key and the micro button drop the spellbook's casting layer first (secure; our code cannot in a fight), else the
 -- book, hidden under the log by the one-window rule, comes back over it.
 local DROP_LAYER = "/click ForeverClassicUISpellBookLayerOff"
@@ -37,6 +36,7 @@ end
 local function MicroClick()
     ns.ToggleQuestLog()
 end
+local TakeButton = ns.WindowMicro({ "QuestLogMicroButton" }, MicroClick)
 
 -- Runs at login with the module on or off; handlers check QL.active.
 local hooked = false
@@ -70,20 +70,14 @@ local function Apply()
     QL.active = true
     -- The button's own click opens the map's quest panel: ours stands in wherever the pad is not over it (a fight
     -- moves the micro row and the pad cannot follow there).
-    if QuestLogMicroButton then
-        if not originalMicroClick then originalMicroClick = QuestLogMicroButton:GetScript("OnClick") end
-        QuestLogMicroButton:SetScript("OnClick", MicroClick)
-    end
+    TakeButton(true)
     UpdateBinding()
 end
 
 local function Restore()
     QL.active = false
     ns.HideQuestLog()
-    if QuestLogMicroButton and originalMicroClick then
-        QuestLogMicroButton:SetScript("OnClick", originalMicroClick)
-        originalMicroClick = nil
-    end
+    TakeButton(false)
     UpdateBinding()
 end
 

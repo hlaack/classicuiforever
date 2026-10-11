@@ -182,35 +182,10 @@ end)
 -- Talents micro button and key open this window while on. Both client buttons:
 -- this client shows TalentMicroButton; taking only PlayerSpellsMicroButton
 -- (never shown) left the visible one opening the client's window.
-local microClicks = {}
-local function TakeButton(on)
-    for _, name in ipairs({ "TalentMicroButton", "PlayerSpellsMicroButton" }) do
-        local button = _G[name]
-        if button and button.GetScript then
-            if on then
-                if microClicks[name] == nil then microClicks[name] = button:GetScript("OnClick") or false end
-                button:SetScript("OnClick", function()
-                    if KeybindFrames_InQuickKeybindMode and KeybindFrames_InQuickKeybindMode() then return end
-                    if InCombatLockdown() and C_Timer and C_Timer.After then C_Timer.After(0, Toggle) else Toggle() end
-                end)
-            elseif microClicks[name] then
-                button:SetScript("OnClick", microClicks[name])
-            end
-        end
-    end
-end
-
-local BIND_NAME = "ClassicUIForeverTalentsBind"
-local bindButton
-local function UpdateBinding()
-    if not bindButton or InCombatLockdown() then return end
-    ClearOverrideBindings(bindButton)
-    if not active then return end
-    local key, second = GetBindingKey("TOGGLETALENTS")
-    for _, k in ipairs({ key, second }) do
-        if k then SetOverrideBindingClick(bindButton, true, k, ns.KeyProxy(BIND_NAME), "LeftButton") end
-    end
-end
+local TakeButton = ns.WindowMicro({ "TalentMicroButton", "PlayerSpellsMicroButton" }, function()
+    if InCombatLockdown() then ns.Sched.NextFrame("talents.open", Toggle) else Toggle() end
+end)
+local key = ns.WindowKey("ClassicUIForeverTalentsBind", "TOGGLETALENTS", Toggle, "talents")
 
 local function Apply()
     active = true
@@ -219,28 +194,16 @@ local function Apply()
         if ns.HostSpellsWindow then ns.HostSpellsWindow() end
         return
     end
-    if not bindButton then
-        -- Secure, so its click can bind Escape in a fight (UI/Escape.lua); its events live on a side frame, as a
-        -- frame with registrations can be refused by the secure environment.
-        bindButton = CreateFrame("Button", BIND_NAME, UIParent, "SecureActionButtonTemplate")
-        bindButton:RegisterForClicks("AnyDown", "AnyUp")
-        bindButton:SetAttribute("useOnKeyDown", false)
-        bindButton:SetScript("PostClick", function(_, _, down)
-            if not down then Toggle() end
-        end)
-        if ns.EscArmOnClick then ns.EscArmOnClick(bindButton, "talents") end
-        ns.EventFrame({ "UPDATE_BINDINGS", "PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD" }, UpdateBinding)
-    end
     TakeButton(true)
     TakeInspectButton(true)
-    UpdateBinding()
+    key:Set(true)
 end
 
 local function Restore()
     active = false
     TakeButton(false)
     TakeInspectButton(false)
-    UpdateBinding()
+    key:Set(false)
     if frame and not Hosted() then frame:Hide() end
     if ns.HostSpellsWindow then ns.HostSpellsWindow() end
 end

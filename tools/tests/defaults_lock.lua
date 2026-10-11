@@ -153,7 +153,6 @@ return {
     layoutPrompted = false,
     layoutSelectPending = false,
     layoutSelectTries = 0,
-    legacyBackground = "era",
     legacyMinimapButton = true,
     legacyWindow = true,
     lfgMinimapButton = true,

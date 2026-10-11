@@ -1862,26 +1862,9 @@ local function TakeOver(on)
     end
 end
 
--- The micro button calls TogglePlayerSpellsFrame (never wrapped, see Init), so
--- its OnClick is swapped instead. The talents button is untouched.
 -- The micro button's own click opens the client's book (TogglePlayerSpellsFrame, never wrapped): ours stands in
 -- wherever the pad is not over it (a fight moves the micro row and the pad cannot follow there).
-local microClick
-local tookButton = false
-local function TakeButton(on)
-    local button = _G["SpellbookMicroButton"]
-    if not button or not button.GetScript or on == tookButton then return end
-    tookButton = on
-    if on then
-        if microClick == nil then microClick = button:GetScript("OnClick") or false end
-        button:SetScript("OnClick", function()
-            if KeybindFrames_InQuickKeybindMode and KeybindFrames_InQuickKeybindMode() then return end
-            Step(Toggle)
-        end)
-    elseif microClick then
-        button:SetScript("OnClick", microClick)
-    end
-end
+local TakeButton = ns.WindowMicro({ "SpellbookMicroButton" }, function() Step(Toggle) end)
 
 local BIND_NAME = "ForeverClassicUISpellBookBind"
 local CLICK_NAME = "ForeverClassicUISpellBookClick"

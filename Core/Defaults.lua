@@ -61,7 +61,6 @@ ns.DB_DEFAULTS = {
     tradeSkillSearch = true,
     talents = true,
     legacyWindow = true,
-    legacyBackground = "era",
     professionTabs = false,
     whoTabs = false,
     whoColumn = "zone",

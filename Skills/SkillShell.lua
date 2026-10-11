@@ -199,17 +199,22 @@ local function FoldAllButton(panel)
     panel.collapseAll = all
 end
 
--- The old drop down: dark label frame, gold arrow, word against the arrow.
-local function FilterButton(panel)
-    local filter = ns.NewFrame("Button", nil, panel)
+-- The old drop down: dark label frame, gold arrow, word against the arrow; unplaced.
+function ns.ShellFilterButton(parent)
+    local filter = ns.NewFrame("Button", nil, parent)
     filter:SetSize(118, 27)
-    filter:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -9, -57)
-    -- Over the stone strips along the list's top.
-    filter:SetFrameLevel(panel:GetFrameLevel() + 12)
     local filterArrow = ns.DressDropdown(filter, 14)
     local filterText = filter:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     filterText:SetPoint("RIGHT", filterArrow, "LEFT", 1, 1)
     filterText:SetText(FILTER or "Filter")
+    return filter
+end
+
+local function FilterButton(panel)
+    local filter = ns.ShellFilterButton(panel)
+    filter:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -9, -57)
+    -- Over the stone strips along the list's top.
+    filter:SetFrameLevel(panel:GetFrameLevel() + 12)
     panel.filter = filter
 end
 

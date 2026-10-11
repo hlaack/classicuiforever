@@ -35,20 +35,21 @@ DUP_WINDOW = 6
 DUP_MIN_REAL = 4
 DUPFN_MIN = 3
 
-RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDATE", "SINCE", "TIMER", "THROTTLEFRAME",
+RULES = ["CVAR", "CVARREAD", "CVARLOGIN", "CVARREG", "REGISTRY", "HOOK", "ONUPDATE", "SINCE", "TIMER", "THROTTLEFRAME", "SEARCHBOX", "ADDONCHAR", "KEYONLY",
          "LOADADDON", "EDITMODE", "EDITQUERY", "SETTLE",
          "PANELMGR", "SECRET", "WALK", "REGEVENTS", "EVENTFRAME", "POINTONCE", "SETIF", "THEME", "ONCEFLAG",
          "FRAMEFIELD", "GAMEMENU", "SHAREDART", "PLATES", "FORBIDDEN", "SYSBASE", "LAYOUTFIELD",
-         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "POINTEXACT", "FADEDPIECE", "PCALLMANY", "ADDONFORBID", "SECRETLAYER", "SECRETBAR", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE", "FRAMEWALK", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
+         "PADART", "SECRETMOUSE", "UNITEVENTS", "DRAGPOINT", "ERASPOT", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST", "POINTEXACT", "FADEDPIECE", "PCALLMANY", "ADDONFORBID", "SECRETLAYER", "SECRETATLAS", "SECRETBAR", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE", "FRAMEWALK", "OTHERADDON", "FILESIZE", "FUNCSIZE", "COMMENT", "DUP", "DUPFN", "DEADNS", "UNDEFNS", "TOC"]
 # A hit of these on a line the change adds fails even within the baseline, so swapping one call for another fails.
 # SINCE, DEADNS, FRAMEFIELD, CVARLOGIN and THROTTLEFRAME stay count-only, so a kept line can still be rewritten.
-LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "FRAMEWALK", "EDITMODE", "PANELMGR",
+LINE_RULES = ("CVAR", "REGISTRY", "HOOK", "ONUPDATE", "LOADADDON", "FRAMEWALK", "EDITMODE", "PANELMGR", "SEARCHBOX", "ADDONCHAR",
+              "KEYONLY",
               "CVARREAD", "THEME", "POINTONCE", "SECRET", "SETIF", "REGEVENTS", "ONCEFLAG", "TIMER", "EDITQUERY",
               "PLATES", "FORBIDDEN", "EVENTFRAME",
               "WALK", "GAMEMENU", "SHAREDART", "SYSBASE", "LAYOUTFIELD", "PADART", "SECRETMOUSE", "UNITEVENTS",
               "DRAGPOINT", "ERASPOT", "CVARREG", "CHECKLABEL", "LUA51", "EDITSAVE", "KEYUP", "MOUSEORDER", "SELFBOX", "PADLIST",
               "POINTEXACT",
-              "FADEDPIECE", "PCALLMANY", "ADDONFORBID", "SECRETLAYER", "SECRETBAR", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE")
+              "FADEDPIECE", "PCALLMANY", "ADDONFORBID", "SECRETLAYER", "SECRETATLAS", "SECRETBAR", "LOCALE", "OWNRELOAD", "HELDCVAR", "NAVFRAME", "NAMEDTEMPLATE")
 
 # The files allowed to hold each pattern, each with its reason; an entry ending in / is a folder.
 ALLOWED = {
@@ -57,7 +58,8 @@ ALLOWED = {
     "ONUPDATE": {"Core/Scheduler.lua": "the one OnUpdate owner"},
     "SINCE": {"Core/Scheduler.lua": "the scheduler's own counters"},
     "TIMER": {"Core/Scheduler.lua": "NextFrame, Soon and AfterPerFrame wrap the client timers"},
-    "EDITMODE": {"Bar/BandPins.lua": "the session-end pin writer"},
+    "EDITMODE": {"Bar/BandPins.lua": "the session-end pin writer",
+                 "Options/LayoutCopy.lua": "the session-end hand back of old pins in the player's own layouts"},
     "EDITQUERY": {"Core/EditMode.lua": "the edit mode query helpers"},
     "SECRET": {"Core/Util.lua": "the secret-value helpers"},
     "WALK": {"Core/Util.lua": "ns.EachChild / ns.EachRegion"},
@@ -81,6 +83,9 @@ ALLOWED = {
     "SECRETMOUSE": {folder: "only unit frame bars can answer secret" for folder in (
         "Art/", "Bar/", "Character/", "Core/", "Map/", "Options/", "Quest/", "Skills/", "Social/", "Spells/",
         "UI/", "Windows/")},
+    "SEARCHBOX": {"UI/Controls.lua": "ns.SearchBox", "Skills/TradeSkill.lua": "the craft count, no search",
+                  "Social/SocialWindow.lua": "the who line: the lens, ns.SearchClear",
+                  "Spells/SpellBook.lua": "its search, X built in, Escape keeps the text"},
 }
 # Frames allowed a pattern by file and variable: plan 4.2 keeps their own frames and registrations untouched.
 ALLOWED_SITES = {
@@ -127,7 +132,7 @@ ALLOWED_BODIES = {
 
 # Names ClassicUIForeverDev reads; never reported by DEADNS.
 DEV_NAMES = frozenset((
-    "savedFirst", "MicroButtonList", "barMoved", "bandPasses", "stripPasses", "OnBarLaid", "OnMinimapLaid", "OnSpellBarPlaced",
+    "walkFns", "stopped", "savedFirst", "MicroButtonList", "barMoved", "bandPasses", "stripPasses", "OnBarLaid", "OnMinimapLaid", "OnSpellBarPlaced",
     "CharacterCameraInfo", "db", "Persist", "Print", "BeginOutput", "FlushNotice", "debugSink", "debugFlushNotice",
     "missing", "mirrorLoaded", "SkinBank", "ClassicLayoutActive", "GetMainBar", "BandBarsToUnpinned", "SystemMoved",
     "DressLootRoll", "ToggleSpellBook", "CombatNumbersInfo", "ClassicBarActive", "hookFns", "MODULE_ORDER", "modules",
@@ -156,6 +161,7 @@ FIX = {
                   "pieces only to what is visible, and a snap to an unnamed cap is saved at the screen's top",
     "SECRETLAYER": "test it with ns.AnySecret(layer, sub) before any compare or math, and skip that region when secret",
     "SECRETBAR": "test it with ns.IsSecret / ns.AnySecret before any compare or math, and skip the work when secret",
+    "SECRETATLAS": "test it with ns.IsSecret before a method call or table key on it, and skip that region when secret",
     "NAMEDTEMPLATE": "give the frame a name of ours: retail's copy of the template anchors its pieces by $parent names",
     "ADDONFORBID": "route it through a secure pad clicking the client's own button, or leave it to the client's code",
     "PCALLMANY": "pcall a function of ours that walks them and returns one value (ns.EachChildProtected, "
@@ -209,6 +215,10 @@ FIX = {
                    "under a child the client marks out of layout, e.g. EditModeManagerFrame.Border)",
     "PADART": "give a secure pad no art or text of its own: light the control under it (LockHighlight in OnEnter, "
               "UnlockHighlight in OnLeave), so a pad that outlives its window (a fight blocks its hide) draws nothing",
+    "ADDONCHAR": "name the character by UnitGUID(\"player\"), as the game's AddOns list does",
+    "KEYONLY": "fall back to the global name on the same line (ClassTrainerFrame.TrainButton or _G.ClassTrainerTrainButton)",
+    "SEARCHBOX": "use ns.SearchBox(parent, width, hint) (UI/Controls.lua): the hint while empty, the X once typed; "
+                 "show box.hint and box.clear by the text in OnTextChanged",
     "SECRETMOUSE": "read it into a local first, then test `not IsSecret(over) and over` (ns.IsSecret)",
     "UNITEVENTS": "register with the units the handler serves (ns.RegisterEvents(frame, LIST, unit1, unit2)), or drop "
                   "other units first thing in the handler and list the site in ALLOWED_SITES with its reason",
@@ -280,6 +290,8 @@ HOOK_RX = re.compile(r"\bhooksecurefunc\b")
 # Plain matches per line, on code with strings blanked.
 LINE_PATTERNS = {
     "HOOK": HOOK_RX,
+    # A trainer piece by the key only Forever gives it (retail names it only): with no name fallback on the line.
+    "KEYONLY": re.compile(r"\bClassTrainerFrame\s*\.\s*(?:TrainButton|money)\b(?![^\n]*\bor\s+_G\s*\.)"),
     "ERASPOT": re.compile(r"(?<!function )\bAtEraSpot\s*\(\s*([A-Za-z_][\w.]*)"),
     "SETTLE": re.compile(r"\b(?:S|social)\s*\.\s*Settle\s*\("),
     "THEME": re.compile(r"\bns\s*\.\s*(?:BronzeOn|bronze)\b|\bdb\s*\.\s*bronzeTheme\b|\b(?:DrainBronze|LMR)\b.*\b0\.85\b"
@@ -331,6 +343,10 @@ KEEP_PATTERNS = {
     "KEYUP": re.compile(r"SetOverrideBindingClick\s*\((?![^\n]*ns\.KeyProxy\()|SetBindingClick\s*\([^\n]*[\"']\w*(?<!Key)[\"']\s*\)"),
     "CVAR": re.compile(r"[\"']\s*/console\b|[\"']SetCVar\w*[\"']"),
     "PANELMGR": re.compile(r"\bSetAttribute\b[^\n]*[\"']UIPanelLayout-"),
+    "SEARCHBOX": re.compile(r"[\"']InputBoxTemplate[\"']"),
+    # An addon's on/off state for a character by its name: the game keys it by GUID.
+    "ADDONCHAR": re.compile(r"(?:EnableAddOn|DisableAddOn|GetAddOnEnableState)\b[^\n]*\bUnit(?:Full)?Name\s*\("
+                            r"|[\"']ClassicUIForever[\"']\s*,\s*Unit(?:Full)?Name\s*\("),
     # Player-facing text as a literal: a set text or tooltip line, a text/title/label/tooltip field, or one of our
     # option and dialog row builders given a label (a capital letter then lower case: words, not keys or paths).
     # A literal after `or` is the English fallback for the game's own translated global (CLOSE or "Close").
@@ -406,6 +422,8 @@ MESSAGES = {
                      "bars' backs ran from one bar to another: a black box over the book)",
     "SECRETLAYER": "a draw layer read with no secret test beside it (a nameplate's pieces answer secret: 0.16.1, 1381 errors)",
     "SECRETBAR": "a client bar's value read in Units/ with no secret test beside it (the swing bar answered secret: 351 errors)",
+    "SECRETATLAS": "an atlas read used as a table key or with a method on it, no secret test beside it (the nameplate "
+                   "preview's spark answered secret: #139, 779 errors)",
     "ERASPOT": "Era's old-frame shift on a window Era leaves on 16, -116 (the social window flush on the screen edge)",
     "DRAGPOINT": "anchor read after StopMovingOrSizing (it can be gone: the saved place came out empty)",
     "CVAR": "CVar write or console command outside the ns.SetCVar / ns.WriteCVar wrappers",
@@ -439,6 +457,10 @@ MESSAGES = {
     "CVARREG": "an addon-registered cvar (a settings copy outside saved variables)",
     "LAYOUTFIELD": "a field client layout code reads, written from our code (its layout pass then runs in our name)",
     "PADART": "a secure pad on UIParent with art or text of its own (a ghost bar where it outlives its window)",
+    "SEARCHBOX": "an input box built by hand (the Legacy challenges' search came out with no X to clear it)",
+    "KEYONLY": "a trainer piece by a key retail lacks (retail's Train did nothing, #144)",
+    "ADDONCHAR": "an addon turned on, off or read for a character by name (Forever's UnitName is the first name "
+                 "alone: /fcui off turned off nothing)",
     "SECRETMOUSE": "a unit frame bar's IsMouseOver() tested directly (it can answer a secret in a fight or an instance)",
     "UNITEVENTS": "UNIT_ events registered for every unit (each nameplate and group member's copy runs the handler)",
     "SYSBASE": "anchor or scale of a bar or edit mode system through the client's wrapper (its snap note taints the next drag)",
@@ -1120,6 +1142,29 @@ def secret_layer_hits(lx):
     return found
 
 
+SECRET_ATLAS_LOCAL = re.compile(r"\blocal\s+(\w+)\s*=.*:\s*GetAtlas\s*\(")
+SECRET_ATLAS_INLINE = re.compile(r":\s*GetAtlas\s*\(\s*\)\s*:|\[[^\]]*:\s*GetAtlas\s*\(")
+
+
+def secret_atlas_hits(lx):
+    """An atlas read whose result takes a method call or is a table key, with no IsSecret/AnySecret on its line or the
+    next two."""
+    found = set()
+    lines = lx.blank
+    for i, line in enumerate(lines):
+        near = " ".join(lines[i:i + 3])
+        if SECRET_TEST.search(near):
+            continue
+        local = SECRET_ATLAS_LOCAL.search(line)
+        if local:
+            name = re.escape(local.group(1))
+            if re.search(r"\b" + name + r"\s*:\s*\w+\s*\(|\[\s*" + name + r"\b", near):
+                found.add(("SECRETATLAS", i + 1))
+        elif SECRET_ATLAS_INLINE.search(line):
+            found.add(("SECRETATLAS", i + 1))
+    return found
+
+
 SECRET_BAR_READ = re.compile(r":\s*(?:GetValue|GetMinMaxValues)\s*\(")
 
 
@@ -1318,6 +1363,7 @@ def pattern_hits(path, lx, funcs):
     found |= point_exact_hits(lx)
     found |= pad_list_hits(path, lx)
     found |= secret_layer_hits(lx)
+    found |= secret_atlas_hits(lx)
     found |= secret_bar_hits(path, lx)
     found |= cvar_login_hits(lx, funcs)
     found |= held_cvar_hits(lx, funcs)
@@ -1512,7 +1558,8 @@ def deadns_hits(corpus_lex):
 
 
 # ns fields set by a loop or a table copy the patterns cannot see; UNDEFNS never reports them.
-NS_DYNAMIC = frozenset()
+# Set by the dev addon on attach: the walk helpers note each walk only then (Core/Util.lua).
+NS_DYNAMIC = frozenset(("noteWalks",))
 NS_DEF_ANY = re.compile(r"\bfunction\s+ns\s*[.:]\s*(\w+)\s*\(|\bns\s*\.\s*(\w+)\s*=(?!=)")
 # ns.A, ns.B = 1, 2: every name on the left.
 NS_DEF_LIST = re.compile(r"^\s*((?:ns\s*\.\s*\w+\s*,\s*)+ns\s*\.\s*\w+)\s*=(?!=)")
@@ -1639,9 +1686,13 @@ def news_hits():
                 if len(name) >= 6:
                     labels[name] = key
     prefix = "WN%s_" % newest.group(1)
+    # An options section named as the place ("under Character and spells") names no option.
+    groups = sorted((v for k, v in english.items() if k.startswith("GROUP_")), key=len, reverse=True)
     for key, text in english.items():
         if not (key.startswith(prefix) and key.endswith("_TEXT")):
             continue
+        for group in groups:
+            text = text.replace(group, "")
         named = sorted(n for n in labels if re.search(r"(?<!\w)" + re.escape(n) + r"(?!\w)", text))
         if named and not (NEWS_TURN_ON.search(text) and "options" in text.lower()):
             hits.append((LOCALE_DIR + "/enUS_WhatsNew.lua", 1, "NEWSOPTIN",

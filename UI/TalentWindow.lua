@@ -345,7 +345,7 @@ local function BuildShell(name, spec)
     -- Hosted, the game's window places and closes it; otherwise our window handles move it.
     if not spec.hosted then ns.CloseWithGameMenu(frame) end
 
-    ns.DressPieces(frame, TALENT_QUARTERS)
+    frame.quarters = ns.DressPieces(frame, TALENT_QUARTERS, nil, true)
 
     local portrait = frame:CreateTexture(nil, "BACKGROUND")
     portrait:SetSize(60, 60)
@@ -370,33 +370,23 @@ local function BuildShell(name, spec)
     return frame
 end
 
--- A dark bar with the skill bars' old round-ended grey rim and a label in its middle (bar.text); width and place are the
--- caller's. color { r, g, b }: a status bar fills it (bar.fill), the label over the fill.
-function ns.RimBar(parent, height, color)
+-- A dark bar with the skill bars' old round-ended grey rim and a label in its middle (bar.text).
+local function RimBar(parent)
     local bar = ns.NewFrame("Frame", nil, parent)
-    bar:SetHeight(height or 13)
+    bar:SetHeight(13)
     local back = bar:CreateTexture(nil, "BACKGROUND")
     back:SetColorTexture(0, 0, 0, 0.6)
     back:SetPoint("TOPLEFT", bar, "TOPLEFT", 1, 0)
     back:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -1, 0)
     ns.ThreeSlice(bar, nil, RIM)
-    local host = bar
-    if color then
-        local fill = ns.NewFrame("StatusBar", nil, bar)
-        fill:SetPoint("TOPLEFT", bar, "TOPLEFT", 1, -1)
-        fill:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -1, 1)
-        ns.SetBarFill(fill)
-        fill:SetStatusBarColor(color[1], color[2], color[3])
-        bar.fill, host = fill, fill
-    end
-    bar.text = host:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    bar.text = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     bar.text:SetPoint("CENTER", bar, "CENTER", 0, 0)
     return bar
 end
 
 -- Points spent on the rimmed bar, and the tree in a window that scrolls.
 local function BuildView(frame)
-    local spentBar = ns.RimBar(frame)
+    local spentBar = RimBar(frame)
     spentBar:SetWidth(258)
     spentBar:SetPoint("TOP", frame, "TOP", 12, -48)
     frame.spentBar, frame.spent = spentBar, spentBar.text
@@ -511,9 +501,11 @@ function ns.TalentWindow(name, spec)
     return frame
 end
 
--- The tree's own pieces (the tree, its scroll bar, the foot and foot tabs) shown or hidden, for a window that shows
--- another page in their place; the title and the points bar stay. The next DrawTalentTab sets the foot tabs again.
+-- The tree's own pieces (the talent art, points bar, tree, scroll bar, foot and foot tabs) shown or hidden, for a
+-- window that shows another page in their place; the title stays. The next DrawTalentTab sets the foot tabs again.
 function ns.TalentTreeShown(frame, shown)
+    for _, tex in ipairs(frame.quarters) do tex:SetShown(shown) end
+    frame.spentBar:SetShown(shown)
     frame.scroll:SetShown(shown)
     frame.foot:SetShown(shown)
     if not shown then
@@ -531,50 +523,11 @@ function ns.TalentWindowShown(frame, shown)
     end
 end
 
--- A plain backdrop in place of Era's art, the whole tree's length: the quest log's parchment, or the marble or stone of
--- the add-on's panes tiled.
-local BACKDROPS = {
-    -- The parchment is the sheet's top-left 300 x 336 of 512, as the quest map's detail pane cuts it; the rest is dark.
-    parchment = { key = "questParchment", coords = { 8 / 512, 300 / 512, 4 / 512, 336 / 512 } },
-    marble = { key = "marbleBg", tile = true, shade = 1.35 },
-    stone = { key = "rockBg", tile = true },
-}
-
-local function DrawBackdrop(frame, backdrop)
-    local fill = frame.backdrop
-    if not backdrop then
-        if fill then fill:Hide() end
-        return
-    end
-    if not fill then
-        fill = frame.child:CreateTexture(nil, "BACKGROUND", nil, -1)
-        fill:SetAllPoints(frame.child)
-        frame.backdrop = fill
-    end
-    if frame.backdropKey ~= backdrop.key then
-        frame.backdropKey = backdrop.key
-        if backdrop.tile then
-            fill:SetTexCoord(0, 1, 0, 1)
-            ns.TileTex(fill, backdrop.key, nil, backdrop.shade or 1)
-        else
-            fill:SetTexture((ns.TexPath(backdrop.key)))
-            fill:SetHorizTile(false)
-            fill:SetVertTile(false)
-            fill:SetVertexColor(1, 1, 1)
-            fill:SetTexCoord(unpack(backdrop.coords))
-        end
-    end
-    fill:Show()
-end
-
 -- The background, pulled to the tree's length. Lower files are 128 tall but painted for 75 rows (the old cut);
 -- drawn whole they left the tree's foot bare.
 local function DrawBackground(frame, name, height)
     local top, bottom = height * 256 / 331, height * 75 / 331
     local art = frame.background
-    local backdrop = BACKDROPS[name]
-    DrawBackdrop(frame, backdrop)
-    if backdrop then name = nil end
     for key, piece in pairs(art) do
         if name then
             if frame.backgroundName ~= name then piece:SetTexture(ART .. name .. "-" .. key) end
@@ -639,9 +592,9 @@ local function DrawFootTabs(frame, tree, names)
     end
 end
 
--- DrawTalentTab(frame, tree, look): the picked tab drawn. look: background(tab) -> an Era tree's art, "parchment",
--- "marble", "stone" or nil; title; points (the foot's points-left text); tabNames (each foot tab a tree of its own: tree
--- is the picked one, drawn whole). A missing or empty tree draws nothing.
+-- DrawTalentTab(frame, tree, look): the picked tab drawn. look: background(tab) -> an Era tree's art or nil; title;
+-- points (the foot's points-left text); tabNames (each foot tab a tree of its own: tree is the picked one, drawn
+-- whole). A missing or empty tree draws nothing.
 function ns.DrawTalentTab(frame, tree, look)
     frame.tree, frame.tab = tree, nil
     ReleaseAll(frame.branchPool)
