@@ -518,8 +518,10 @@ local ROUND_RING, ROUND_RING_OFFSET = 2.5, 0.26
 local ROUND_HOVER = ROUND_RING * 32 / 52
 
 local FULL = { 0, 1, 0, 1 }
--- The quickslot ring isn't drawn: the band has a socket per bag, and the ring showed brown slivers between them that 1.x never had.
-local BAG_NORMAL = { coords = FULL, point = "CENTER", y = -1, alpha = 0 }
+-- Era's quickslot ring (64 over a 37 slot, 1 low), only its part inside the slot: its dark line hides the icon's silver
+-- bevel as in Era; the part past the slot showed brown slivers between the band's sockets.
+local BAG_NORMAL = { coords = { 13.5 / 64, 50.5 / 64, 12.5 / 64, 49.5 / 64 }, fill = true, alpha = 1 }
+local BAG_NORMAL_ROUND = { coords = FULL, fill = true, alpha = 0 }
 -- Square art; a round slot shows none, as the old minimap buttons.
 local BAG_PUSHED = { coords = FULL, fill = true, alpha = 1 }
 local BAG_PUSHED_ROUND = { coords = FULL, fill = true, alpha = 0 }
@@ -535,7 +537,7 @@ local function ApplyBagArt(button)
     if not state or not state.active then return end
     local size = state.size
     local round = state.round
-    Dress(StateTexture(button, "Normal"), "slotNormal", BAG_NORMAL, button, nil, nil, size * 50 / 30, size * 50 / 30)
+    Dress(StateTexture(button, "Normal"), "slotNormal", round and BAG_NORMAL_ROUND or BAG_NORMAL, button)
     Dress(StateTexture(button, "Pushed"), "slotPushed", round and BAG_PUSHED_ROUND or BAG_PUSHED, button)
     local highlight = StateTexture(button, "Highlight")
     if round then
@@ -554,7 +556,10 @@ local function ApplyBagArt(button)
             Dress(button.IconBorder, "trackingBorder", BAG_RING, button, -off, off, size * ROUND_RING, size * ROUND_RING)
             -- A gold sheet: grey like the bags beside it, bronze with the theme.
             ns.BronzeTint(button.IconBorder, nil, true)
+            ns.SetAlphaIf(button.IconBorder, 1)
         else
+            -- Era hides every quality border; Forever's gray one for a common bag read as a silver frame.
+            ns.SetAlphaIf(button.IconBorder, ns.ThemeLook() == "classic" and 0 or 1)
             ns.SetTex(button.IconBorder, "iconFrame")
             -- Thin frame round a bag's picture, bronze with the theme, and Forever's frame over the picture's grey bevel.
             ns.BronzeTint(button.IconBorder)
@@ -572,7 +577,15 @@ local function ApplyBagArt(button)
     if state.bagSlot and button.icon and button.GetID then
         local empty = not GetInventoryItemTexture("player", button:GetID())
         if empty then button.icon:SetTexture("Interface\\PaperDoll\\UI-PaperDoll-Slot-Bag") end
-        button.icon:SetDesaturated(empty and not round)
+        -- The empty slot's picture takes the theme as the bar's empty slots do; grey with none, as before.
+        if empty and not round then
+            ns.BronzeTint(button.icon, nil, true)
+            state.tintedIcon = true
+        elseif state.tintedIcon then
+            ns.UntintBronze(button.icon)
+            state.tintedIcon = false
+        end
+        if not state.tintedIcon then button.icon:SetDesaturated(false) end
         -- Opaque as in 1.x: see-through let the band socket's relief show beside it as a second bag.
         button.icon:SetAlpha(1)
         button.icon:SetTexCoord(0, 1, 0, 1)
@@ -585,15 +598,17 @@ local function ApplyBagArt(button)
     end
 end
 
--- The client's backpack Count also takes the ammo count (inventory slot 0 on every BAG_UPDATE): faded, ours shows free slots.
-local FREE_SLOTS = "(%s)"
+-- Free slots: Forever's FreeSlots, shown by the game's Show Free Bag Space as in Era, its Count left to the ammo (inventory
+-- slot 0 on every BAG_UPDATE) and faded; retail's Count, always shown. Both in Era's font; on our row at Era's spot.
 local FREE_EVENTS = { "BAG_UPDATE_DELAYED", "PLAYER_ENTERING_WORLD" }
+-- Era's: CENTER 1, -7 on its 37 backpack (Classic MainMenuBarBagButtons.xml). The client's: CENTER 0, -10.
+local ERA_BACKPACK, ERA_FREE_X, ERA_FREE_Y = 37, 1, -7
 local freeWatch, freeWatching
 
-local function ShowFreeSlots(button, state)
-    local calc = C_Container and C_Container.CalculateTotalNumberOfFreeBagSlots
-    state.count:SetText(FREE_SLOTS:format(calc and calc() or 0))
-    -- That same client update tints and greys the icon by the ammo's state.
+local function FreeCount(button) return button.FreeSlots or button.Count end
+
+-- That same client update tints and greys the icon by the ammo's state.
+local function ClearAmmoTint(button)
     local icon = button.icon
     if icon then
         ns.SetVertexColorIf(icon, 1, 1, 1)
@@ -603,17 +618,22 @@ end
 
 local function OnFreeSlotsEvent()
     for button, state in pairs(bags) do
-        if state.backpack and (state.active or state.game) and state.count then ShowFreeSlots(button, state) end
+        if state.free then ClearAmmoTint(button) end
     end
 end
 
+-- Era's spot at the row's bag size.
+local function PlaceFreeCount(button, state)
+    local free = FreeCount(button)
+    if not free or state.freeAt == state.size then return end
+    local k = state.size / ERA_BACKPACK
+    ns.SetPointOnce(free, "CENTER", ERA_FREE_X * k, ERA_FREE_Y * k)
+    state.freeAt = state.size
+end
+
 local function SkinFreeSlots(button, state)
-    if not state.count then
-        state.count = button:CreateFontString(nil, "ARTWORK", "NumberFontNormalSmall")
-        state.count:SetPoint("BOTTOM", button, "BOTTOM", 0, 3)
-    end
-    state.count:Show()
-    if button.Count then ns.SetAlphaIf(button.Count, 0) end
+    state.free = true
+    if button.FreeSlots and button.Count then ns.SetAlphaIf(button.Count, 0) end
     if not freeWatch then
         freeWatch = ns.EventFrame(FREE_EVENTS, OnFreeSlotsEvent)
         freeWatching = true
@@ -621,17 +641,20 @@ local function SkinFreeSlots(button, state)
         freeWatching = true
         ns.RegisterEvents(freeWatch, FREE_EVENTS)
     end
-    ShowFreeSlots(button, state)
+    ClearAmmoTint(button)
 end
 
 local function UnskinFreeSlots(button, state)
-    if state.count then state.count:Hide() end
+    state.free = false
+    local free = FreeCount(button)
+    if state.freeAt and free then ns.SetPointOnce(free, "CENTER", 0, -10) end
+    state.freeAt = nil
     if button.Count then ns.SetAlphaIf(button.Count, 1) end
     if freeWatch then freeWatch:UnregisterAllEvents() end
     freeWatching = false
 end
 
--- Our bar off: the game's own backpack takes the ammo count too, so it shows the free slots the same way, on its spot.
+-- Our bar off: the game's own backpack takes the ammo count too; its free slot count stays the client's.
 function ns.GameBackpackFreeSlots()
     local button = MainMenuBarBackpackButton
     if not (button and button.Count) then return end
@@ -641,11 +664,6 @@ function ns.GameBackpackFreeSlots()
         bags[button] = state
     end
     state.game = true
-    if not state.count then
-        state.count = button:CreateFontString(nil, "ARTWORK")
-        state.count:SetFontObject(button.Count:GetFontObject() or "NumberFontNormalSmall")
-        state.count:SetPoint("CENTER", button.Count, "CENTER", 0, 0)
-    end
     SkinFreeSlots(button, state)
 end
 
@@ -681,7 +699,10 @@ function ns.SkinBagButton(button, size, isBackpack, round)
     local fresh = not state.active
     state.active = true
     ApplyBagArt(button)
-    if fresh and state.backpack then SkinFreeSlots(button, state) end
+    if state.backpack then
+        if fresh then SkinFreeSlots(button, state) end
+        PlaceFreeCount(button, state)
+    end
 end
 
 function ns.UnskinBagButton(button)
@@ -692,6 +713,7 @@ function ns.UnskinBagButton(button)
     if button.IconBorder then
         button.IconBorder:ClearAllPoints()
         button.IconBorder:SetAllPoints(button)
+        ns.SetAlphaIf(button.IconBorder, 1)
     end
     local pushed = StateTexture(button, "Pushed")
     if pushed then pushed:SetAlpha(1) end
@@ -705,20 +727,44 @@ end
 -- 1.x key ring: an 18x39 key from its own sheet. Without a key ring it goes on the reagent bag so the slot still opens
 -- something. The client refreshes bag textures often; the hook reapplies it.
 local keyrings = {}
-local KEY_RING = { set = "tex", highlightSet = "tex", coords = { 0, 0.5625, 0, 0.609375 }, fill = true, alpha = 1, add = true,
+local KEY_U, KEY_V, KEY_W, KEY_H = 0.5625, 0.609375, 18, 39
+local KEY_RING = { set = "tex", highlightSet = "tex", coords = { 0, KEY_U, 0, KEY_V }, alpha = 1, add = true,
     states = KEY_STATES }
+-- Laid flat (the band section's key ring by a column of bags): the same crop turned a quarter, as the column's floor.
+local function KeySpec(coords)
+    local spec = {}
+    for k, v in pairs(KEY_RING) do spec[k] = v end
+    spec.coords = coords
+    return spec
+end
+local KEY_FLAT = { cw = KeySpec({ 0, KEY_V, KEY_U, KEY_V, 0, 0, KEY_U, 0 }),
+    ccw = KeySpec({ KEY_U, 0, 0, 0, KEY_U, KEY_V, 0, KEY_V }) }
+
+-- The key at its own size on the button's middle, by crop: the game turns its art a quarter and swaps the button's size
+-- for a column of bags (KeyRingMixin:UpdateOrientation) on passes of its own.
+local function KeyArt(tex, button, turn)
+    if not tex then return end
+    if tex.GetRotation and tex:GetRotation() ~= 0 then tex:SetRotation(0) end
+    ns.SetPointOnce(tex, "CENTER", button, "CENTER", 0, 0)
+    if turn then tex:SetSize(KEY_H, KEY_W) else tex:SetSize(KEY_W, KEY_H) end
+end
 
 local function ApplyKeyRingArt(button)
     local state = keyrings[button]
     if not state or not state.active then return end
-    ns.DressStates(button, "keyRingUp", "keyRingDown", nil, "keyRingHighlight", KEY_RING)
+    local turn = state.turn
+    ns.DressStates(button, "keyRingUp", "keyRingDown", nil, "keyRingHighlight", turn and KEY_FLAT[turn] or KEY_RING)
+    KeyArt(StateTexture(button, "Normal"), button, turn)
+    KeyArt(StateTexture(button, "Pushed"), button, turn)
+    KeyArt(StateTexture(button, "Highlight"), button, turn)
     -- Only the three state textures stay seen.
     FadeTextures(button, 0, nil, StateTexture(button, "Normal"), StateTexture(button, "Pushed"), StateTexture(button, "Highlight"))
     if button.CircleMask then button.CircleMask:Hide() end
     if button.Count then button.Count:SetAlpha(0) end
 end
 
-function ns.SkinKeyRing(button)
+-- turn: "cw" or "ccw", the band section's key ring laid flat as a column's floor; nil upright.
+function ns.SkinKeyRing(button, turn)
     local state = keyrings[button]
     if not state then
         state = {}
@@ -728,6 +774,7 @@ function ns.SkinKeyRing(button)
         end
     end
     state.active = true
+    state.turn = turn
     ApplyKeyRingArt(button)
 end
 

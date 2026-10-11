@@ -82,10 +82,14 @@ end
 -- 1.x tab order: Friends, Who, Guild, Communities, then the client's others.
 -- Era's gap: the client's tabs past the first have no anchors of their own, so a measured gap read its layout's state.
 local TAB_GAP = -14
-local SOCIAL_TAB_PAD = 38
+local SOCIAL_TAB_PAD = 38   -- five tabs where 1.x had four: 19 either side of the label
+local FOUR_TAB_PAD = 50     -- Communities as a button (S.fourTabs): 1.x's four, 25 either side
 -- Foot tab row, placed from the window's foot; its faces are Era's (Windows/Tabs.lua).
 local SOCIAL_TAB_X = 5          -- first tab: its left from the window's left (+ right)
 local SOCIAL_TAB_Y = 2          -- tab row: its top above the window's foot (+ up; moves the picked tab too)
+-- A row too long for the window (German): the first tab starts further left, then every tab gives up the same padding.
+local TIGHT_TAB_X = 0           -- first tab's left at most this far in (+ right)
+local TIGHT_TAB_PAD = 24        -- least padding a tab keeps round its label
 -- Retail's client has a Who tab of its own (Forever's has none): unseen and off the row while ours stands in it.
 local clientWhoOff = false
 local function ClientWho() return FRIEND_TAB_WHO and _G["FriendsFrameTab" .. FRIEND_TAB_WHO] or nil end
@@ -193,6 +197,26 @@ local function RaidTab()
     if raidTab then ns.SetShownIf(raidTab, ours) end
 end
 
+-- The first tab's left and every tab's padding, so the shown tabs end inside the window.
+local function RowFit(order)
+    local labels, shown = 0, 0
+    for _, entry in ipairs(order) do
+        local text = entry:IsShown() and (entry.Text or entry:GetFontString())
+        if text then
+            labels = labels + math.ceil(text:GetStringWidth() or 0)
+            shown = shown + 1
+        end
+    end
+    local room = FriendsFrame:GetWidth()
+    local pad = S.fourTabs and FOUR_TAB_PAD or SOCIAL_TAB_PAD
+    if shown == 0 or not room or room <= 0 then return SOCIAL_TAB_X, pad end
+    local over = SOCIAL_TAB_X + labels + shown * pad + (shown - 1) * TAB_GAP - room
+    if over <= 0 then return SOCIAL_TAB_X, pad end
+    if over <= SOCIAL_TAB_X - TIGHT_TAB_X then return SOCIAL_TAB_X - over, pad end
+    over = over - (SOCIAL_TAB_X - TIGHT_TAB_X)
+    return TIGHT_TAB_X, math.max(TIGHT_TAB_PAD, pad - math.ceil(over / shown))
+end
+
 function S.PlaceTabs()
     local blizzard = S.FriendsFrameTabs()
     local clientWho = clientWhoOff and ClientWho() or nil
@@ -211,10 +235,10 @@ function S.PlaceTabs()
     for i = 2, #blizzard do
         if blizzard[i] ~= clientWho and blizzard[i] ~= clientQuick then order[#order + 1] = blizzard[i] end
     end
-    -- Five tabs where 1.x had four: 19 either side of the label, not 25.
+    local x, pad = RowFit(order)
     for _, entry in ipairs(order) do
-        if entry.fcuiPad ~= SOCIAL_TAB_PAD then
-            entry.fcuiPad = SOCIAL_TAB_PAD
+        if entry.fcuiPad ~= pad then
+            entry.fcuiPad = pad
             ns.FitBottomTab(entry)
         end
     end
@@ -226,7 +250,7 @@ function S.PlaceTabs()
                 entry:SetPoint("LEFT", previous, "RIGHT", TAB_GAP, 0)
                 entry:SetPoint("BOTTOM", previous, "BOTTOM", 0, 0)
             else
-                entry:SetPoint("TOPLEFT", FriendsFrame, "BOTTOMLEFT", SOCIAL_TAB_X, SOCIAL_TAB_Y)
+                entry:SetPoint("TOPLEFT", FriendsFrame, "BOTTOMLEFT", x, SOCIAL_TAB_Y)
             end
             previous = entry
         end
@@ -342,7 +366,7 @@ local function ListRow(parent, index, columns, onClick, onDoubleClick)
 end
 
 -- The column plates on a band of the window's stone; each(header, column)
--- runs as each plate is made. Returns the header row and the plates.
+-- runs as each plate is made. Returns the header row, the plates and the band.
 function S.HeaderRow(panel, host, columns, onClick, each)
     local headerBand = ns.NewFrame("Frame", nil, panel)
     headerBand:SetHeight(22)
@@ -361,7 +385,7 @@ function S.HeaderRow(panel, host, columns, onClick, each)
         headers[#headers + 1] = last
         if each then each(last, column) end
     end
-    return headerRow, headers
+    return headerRow, headers, headerBand
 end
 
 -- The box the list sits in, from under the plates down to bottom.
@@ -375,6 +399,8 @@ end
 
 -- The who list's foot line under a list box (panel.listBox): the client's lens, its X once typed. onEnter(box) on Enter;
 -- the box is panel.query.
+-- The search glass: grey with no theme, the theme's metal under one.
+local LENS_SHADE = { shade = 0.6, off = 0.6 }
 function S.SearchLine(panel, onEnter)
     local query = ns.NewFrame("EditBox", nil, panel.listBox, "InputBoxTemplate")
     panel.query = query
@@ -387,7 +413,7 @@ function S.SearchLine(panel, onEnter)
     lens:SetTexture("Interface/Common/UI-Searchbox-Icon")
     lens:SetSize(14, 14)
     lens:SetPoint("LEFT", query, "LEFT", 1, -2)
-    lens:SetVertexColor(0.6, 0.6, 0.6)
+    ns.BronzeTint(lens, LENS_SHADE)
     query:SetTextInsets(16, 20, 0, 0)
     local clear = ns.SearchClear(query)
     query:HookScript("OnTextChanged", function(self)

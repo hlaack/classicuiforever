@@ -2,7 +2,7 @@
 ## Title: ClassicUI Forever
 ## Notes: The original Classic look on WoW Forever: the gryphon bar, square buttons, 1.x unit frames, cast bars, minimap, nameplates, quest tracker and window frames, each one a toggle.
 ## Author: justawower
-## Version: 0.22.1
+## Version: 0.25.0
 ## X-Curse-Project-ID: 1700043
 ## IconTexture: Interface\MainMenuBar\UI-MainMenuBar-EndCap-Dwarf
 ## Category: UI
@@ -17,6 +17,7 @@ Locales\enUS.lua
 Locales\enUS_WhatsNew.lua
 Locales\enUS_Help.lua
 Locales\enUS_Legacy.lua
+Locales\enUS_Windows.lua
 Locales\deDE.lua
 Locales\deDE_WhatsNew.lua
 Locales\deDE_Legacy.lua
@@ -55,6 +56,7 @@ UI\Colors.lua
 UI\FriendsWindow.lua
 UI\Windows.lua
 UI\WindowList.lua
+UI\GameSpot.lua
 UI\WindowHandles.lua
 UI\WindowLayouts.lua
 UI\WindowsEditMode.lua
@@ -113,12 +115,15 @@ Units\StatusFont.lua
 Units\MirrorTimers.lua
 Units\ComboPoints.lua
 Map\Minimap.lua
+Map\MinimapTracking.lua
+Map\MinimapDiel.lua
 Map\MinimapCalendar.lua
 Map\TrackingBuff.lua
 Map\MinimapEye.lua
 Map\MinimapButton.lua
 Map\MinimapMicro.lua
 Map\MinimapCollector.lua
+Map\MinimapSquare.lua
 UI\ClassicFonts.lua
 Units\NamePlates.lua
 Units\NamePlateOptions.lua
@@ -153,12 +158,15 @@ Social\FinderTabs.lua
 Social\GroupFinder.lua
 Units\LastNames.lua
 Map\MapFade.lua
+Map\WorldMapEraLarge.lua
+Map\WorldMapOptions.lua
 Map\WorldMapClassic.lua
 Windows\BagBand.lua
 Windows\Bags.lua
 Windows\DamageMeter.lua
 Character\CharacterModel.lua
 Character\CharacterCore.lua
+Character\CharacterSlots.lua
 Character\CharacterStats.lua
 Character\CharacterLists.lua
 Character\SkillDetail.lua
@@ -200,6 +208,7 @@ Options\Diagnostics.lua
 Options\Options.lua
 Options\OptionsSearch.lua
 Options\ThemeRows.lua
+Options\CameraRow.lua
 Options\OptionsWindow.lua
 Options\Profiles.lua
 Options\HelpPanes.lua
@@ -207,4 +216,5 @@ Options\GameMenu.lua
 Options\SettingsPanel.lua
 Options\Welcome.lua
 Options\Status.lua
+Options\VersionCheck.lua
 Core\API.lua

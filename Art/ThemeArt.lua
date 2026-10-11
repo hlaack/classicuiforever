@@ -9,15 +9,20 @@ ChatFrame-Atlas
 ClockBackground
 Common-Input-Border
 CommonDropdownClassic
+EraLFGBrowseTop
+EraLFGFrame
 HelpFrameTab-Active
 HelpFrameTab-Inactive
 MailItemBorder
+Nameplate-Border-Castbar
 Nameplate-Border
 NumericThreatBorder
 PetHappinessFaces
 QuickJoin-Atlas
 RedButtonCaps
 RedButtonCenter
+SkillFrame-BotLeft
+SkillFrame-BotRight
 SpellBook-SkillLineTab
 UI-BackpackBackground
 UI-Bag-Components-KeyRing
@@ -56,6 +61,7 @@ UI-ChatIcon-Voice-Up
 UI-CheckBox-Down
 UI-CheckBox-Up
 UI-ClassTrainer-HorizontalBar
+UI-ClassTrainer-ScrollBar
 UI-DialogBox-Border
 UI-DialogBox-Header
 UI-EmptySlot
@@ -67,6 +73,7 @@ UI-MainMenu-ScrollDownButton-Up
 UI-MainMenu-ScrollUpButton-Disabled
 UI-MainMenu-ScrollUpButton-Down
 UI-MainMenu-ScrollUpButton-Up
+UI-MainMenuBar-LatencyBar
 UI-Merchant-BottomBorder
 UI-Merchant-LabelSlots
 UI-MicroButton-achievement-disabled
@@ -185,7 +192,10 @@ UI-SpellbookPanel-TopLeft
 UI-SpellbookPanel-TopRight
 UI-TalentFrame-BotLeft
 UI-TalentFrame-BotRight
+UI-TOD-Indicator
 UI-TradeFrame-EnchantIcon
+UI-WorldMapSmall-Left
+UI-WorldMapSmall-Right
 UIFrame-HTile-Atlas
 UIFrame-Inner-Atlas
 UIFrame-VTile-Atlas

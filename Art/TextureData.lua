@@ -78,9 +78,11 @@ ns.TEX = {
     zoomOutDown = "Minimap\\UI-Minimap-ZoomOutButton-Down",
     zoomOutDisabled = "Minimap\\UI-Minimap-ZoomOutButton-Disabled",
     zoomHighlight = "Minimap\\UI-Minimap-ZoomButton-Highlight",
-    trackingBorder = "Minimap\\MiniMap-TrackingBorder",
+    -- Era's: Forever's copy of MiniMap-TrackingBorder is a plain gold ring, without the stone rim and shadow.
+    trackingBorder = "!EraMinimapTrackingBorder",
     -- The client's copy is a wider redraw; ours is the 128x32 original.
     nameplateBorder = "!Nameplate-Border",
+    nameplateCastBorder = "Tooltips\\Nameplate-Border-Castbar",
     questTrackerButtons = "Buttons\\QuestTrackerButtons",
     barFill = "TargetingFrame\\UI-TargetingFrame-BarFill",
     -- The client's copies are near-black stand-ins; ours are the Era originals.
@@ -111,6 +113,8 @@ ns.TEX = {
     questLogTabRight = "QuestFrame\\UI-QuestLogSortTab-Right",
     charGeneralTopLeft = "PaperDollInfoFrame\\UI-Character-General-TopLeft",
     charGeneralTopRight = "PaperDollInfoFrame\\UI-Character-General-TopRight",
+    -- The game's guild emblem with no tabard designed: the horned helm the Communities window shows.
+    guildNoLogo = "GuildFrame\\GuildLogo-NoLogo",
     charGeneralBotLeft = "PaperDollInfoFrame\\UI-Character-General-BottomLeft",
     charGeneralBotRight = "PaperDollInfoFrame\\UI-Character-General-BottomRight",
     charTabTopLeft = "PaperDollInfoFrame\\UI-Character-CharacterTab-L1",
@@ -155,6 +159,10 @@ ns.TEX = {
     lootPanel = "!UI-LootPanel",
     -- Era scroll track beside the character sheet's lists.
     charScrollBar = "!UI-Character-ScrollBar",
+    -- Era's reading window page (a book, letter or plaque).
+    mailPage = "=MailFrame\\UI-MailFrameBG",
+    -- Era's ammo slot socket and its arrow to the ranged slot.
+    ammoSlot = "=PaperDollInfoFrame\\UI-Character-AmmoSlot",
     -- Era art (the client's are stand-ins): inset marble, rock to the border, frame sheet (title
     -- strip, streaks), merchant bottom strip (repair slots) and item name slots.
     marbleBg = "!UI-Background-Marble",
@@ -206,6 +214,15 @@ ns.TEX = {
     barKeyringClassic = "!UI-MainMenuBar-KeyRing-Classic.blp",
     -- The client's left page with Archaeology's fossil swapped for the old First Aid drop. Ours only.
     professionsBookLeft = "!Professions-Book-Left-FirstAid.tga",
+    -- That page's secondary emblems as a shading and a highlight layer, for the small book's parchment. Ours only.
+    professionsEmblemsMod = "!Professions-Emblems-Mod.tga",
+    professionsEmblemsAdd = "!Professions-Emblems-Add.tga",
+    -- The full book's two pages in the spellbook parchment's tones (dev/tools/prof_emblems.py). Ours only.
+    professionsBookLeftParchment = "!Professions-Book-Left-Parchment.tga",
+    professionsBookRightParchment = "!Professions-Book-Right-Parchment.tga",
+    -- Its primary bands and patterned strip the same way.
+    professionsBandsMod = "!Professions-Bands-Mod.tga",
+    professionsBandsAdd = "!Professions-Bands-Add.tga",
     -- window chrome
     frameMetal = "FrameGeneral\\UIFrameMetal",
     frameMetalH = "FrameGeneral\\UIFrameMetalHorizontal",
@@ -398,7 +415,7 @@ local METAL = {
     zoomInUp = true, zoomInDown = true, zoomInDisabled = true, zoomOutUp = true, zoomOutDown = true, zoomOutDisabled = true,
     frameMetal = true, frameMetalH = true, frameMetalV = true,
     tabActive = true, tabInactive = true,
-    slotNormal = true,
+    slotNormal = true, ammoSlot = true,
     maxLevel = true, repBar = true, groupIndicator = true,
     plateElite = true, plateRare = true,
 }

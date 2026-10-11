@@ -34,6 +34,8 @@ local ns = setmetatable({
     Unfade = function(frame) frame.writes = frame.writes + 1 end,
 }, { __index = function() return Any end })
 assert(loadfile(ROOT .. "/Map/Minimap.lua"))("ClassicUIForever", ns)
+assert(loadfile(ROOT .. "/Map/MinimapTracking.lua"))("ClassicUIForever", ns)
+assert(loadfile(ROOT .. "/Map/MinimapDiel.lua"))("ClassicUIForever", ns)
 assert(module and module.apply and module.restore, "the minimap module registers apply and restore")
 
 -- Its calendar half is Map/MinimapCalendar.lua's: the button back on the map, seen.
@@ -41,6 +43,8 @@ function ns.MM.HideCalendar()
     GameTimeFrame:SetParent(Minimap)
     GameTimeFrame:SetAlpha(1)
 end
+-- The eye's half is Map/MinimapEye.lua's.
+function ns.MM.UnplaceEye() end
 
 -- Held elsewhere: the day/night, the coordinates and the calendar sit under a hidden frame that is not ours.
 local hidden = {}

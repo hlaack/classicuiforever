@@ -111,11 +111,7 @@ local function IsFree(entry)
     return Freed()[Leader(entry).key] == true
 end
 
-local function Ratio(frame)
-    local scale, screen = Plain(frame:GetEffectiveScale()), UIParent:GetEffectiveScale()
-    if not scale or not screen or screen <= 0 then return nil end
-    return scale / screen
-end
+local Ratio = ns.WindowRatio
 
 -- Maximized, the map fills the screen as the client lays it: none of our place or size.
 local function Full(entry, frame)
@@ -295,33 +291,19 @@ local handles = {}
 -- The map's placeholder: with its quest log pane (as it opens) or the map alone; one place and size for both.
 local mapOnly = false
 
--- Era's spot for a new-style window (social, professions): the game's own, with no old frame margin to take off.
-local GAME_LEFT, GAME_TOP = 16, 116
-
--- The game's left spot for a window, with its panel offsets (the professions book's -4, -2): left, and down from the top.
-local function GameHome(frame)
-    local function Offset(name)
-        local value = Plain(frame:GetAttribute("UIPanelLayout-" .. name))
-        if value == nil and UIPanelWindows and frame.GetName then
-            local registered = UIPanelWindows[frame:GetName() or ""]
-            value = registered and registered[name]
-        end
-        return type(value) == "number" and value or 0
-    end
-    return GAME_LEFT + Offset("xoffset"), GAME_TOP - Offset("yoffset")
-end
-
--- A game window open alone goes to the game's own left spot now (the sheet's Era pass takes it on); beside another it
--- waits for its next opening, when the game lays it.
-local function GameSpot(frame)
-    if not frame:IsShown() or (InCombatLockdown() and ns.WindowLocked(frame)) then return end
-    local w, h = Plain(frame:GetWidth()), Plain(frame:GetHeight())
-    local k = Ratio(frame)
-    local left, down = GameHome(frame)
-    if not (w and h and k) or ns.WindowCovers(frame, left * k, UIParent:GetHeight() - down * k, w * k, h * k) then
-        return
-    end
-    pcall(frame.SetPoint, frame, "TOPLEFT", UIParent, "TOPLEFT", left, -down)
+-- A game window our layout grew after the game laid it (the classic map opening at the game's height): raised as the
+-- game's own fit raises a tall window, its left kept. One the player placed stays.
+function ns.FitGameWindow(key)
+    local entry = byKey[key]
+    local frame = entry and ns.WindowFrame(entry)
+    if not frame or PlaceOf(entry) or Full(entry, frame) or not frame:IsShown() then return end
+    if InCombatLockdown() and ns.WindowLocked(frame) then return end
+    local left, top, h, k = Plain(frame:GetLeft()), Plain(frame:GetTop()), Plain(frame:GetHeight()), Ratio(frame)
+    if not (left and top and h and k) then return end
+    local _, down = ns.GameHome(frame, h * k)
+    local want = UIParent:GetHeight() - down
+    if top * k >= want - 0.5 then return end
+    pcall(frame.SetPoint, frame, "TOPLEFT", UIParent, "TOPLEFT", left, -down / k)
 end
 
 -- Back where the client or our slots put it: ours on the slots, the game's at its own spot or on their next opening.
@@ -337,7 +319,7 @@ local function Return(entry)
         end
         ns.ReturnClassicWindow(frame)
         -- The map is a game window too: the game's left panel spot.
-        if (entry.client or entry.quests) and not Full(entry, frame) then GameSpot(frame) end
+        if (entry.client or entry.quests) and not Full(entry, frame) then ns.GameSpot(frame) end
     end
 end
 
@@ -373,13 +355,19 @@ local function HandleRect(entry)
     local w, h = PreviewSize(entry, frame)
     w, h = w * k, h * k
     if left and not OnRing(entry) then return left, top, w, h end
-    if frame and not full and frame:IsShown() then
+    -- A piece shown only at times (the tracking spell's icon) still has its spot on the minimap while hidden.
+    if frame and not full and (frame:IsShown() or entry.piece) then
         local x, y = Plain(frame:GetLeft()), Plain(frame:GetTop())
         if x and y then return x * k, y * k, w, h end
     end
+    -- A ring button turned off has no frame yet: its box where it would stand on the ring.
+    if entry.piece then
+        local cx, cy = ns.RingButtonSpot(entry.key)
+        if cx then return cx - w / 2, cy + h / 2, w, h end
+    end
     if (entry.client or entry.quests) and not entry.cut then
-        local x, down = GAME_LEFT, GAME_TOP
-        if frame then x, down = GameHome(frame) end
+        local x, down = ns.GameHome(nil, h)
+        if frame then x, down = ns.GameHome(frame, h) end
         return x, UIParent:GetHeight() - down, w, h
     end
     return SLOT_LEFT, UIParent:GetHeight() - SLOT_TOP, w, h

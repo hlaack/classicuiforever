@@ -1,7 +1,9 @@
 local ADDON, ns = ...
 local L = ns.L
 
-ns.PREFIX = "|cffe6c56cClassicUI Forever|r: "
+-- Chat lines lead with the 1.x bar's gryphon (the addon list icon), cut to its body: 128 x 76 of the file at 24 x 14.
+ns.PREFIX = "|TInterface\\AddOns\\" .. ADDON .. "\\media\\UI-MainMenuBar-EndCap-Dwarf:14:24:0:0:128:128:0:128:52:128|t "
+    .. "|cffe6c56cClassicUI Forever|r: "
 
 -- { key = db key, apply, restore, init, id }, walked in ns.MODULE_ORDER so bar art lays out
 -- after end caps. id defaults to key (pageArrows rides classicBar's toggle).
@@ -411,6 +413,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         ns.db = ForeverClassicUIDB
         -- Saved before this version (dbVersion 1): read before the defaults fill the gaps.
         local saved = next(ns.db) ~= nil and (ns.db.dbVersion or 1)
+        ns.freshSettings = not saved
         local upgraded = saved and saved < 2
         local big = ns.db.defaultBarSize == true
         if saved and saved < 3 then ns.KeepOldLook() elseif saved == 3 then ns.NoteBarsLook() end
@@ -425,6 +428,9 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         if saved and saved < 13 then ns.FreeAddonBag() end
         if saved and saved < 14 then ns.KeepAchievementsButton() end
         if saved and saved < 15 then ns.KeepPieceSpots() end
+        if saved and saved < 16 then ns.OneProfTabsChoice() end
+        if saved and saved < 17 then ns.KeepQuestLogSingle() end
+        if saved and saved < 17 then ns.KeepMapNav() end
         ns.CopyDefaults(ns.db, ns.DB_DEFAULTS)
         if upgraded then ns.KeepBarSize(big) end
         ns.BarSizeKey()
@@ -463,6 +469,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
             ns.layoutChecked = true
             C_Timer.After(3, function()
                 if ns.SelectClassicLayoutIfPending then ns.SelectClassicLayoutIfPending() end
+                if ns.EraSizeOnFreshInstall then ns.EraSizeOnFreshInstall() end
                 ns.FirstRun()
                 if ns.OfferBarSize then ns.OfferBarSize() end
                 if ns.OfferClassicLook then ns.OfferClassicLook() end

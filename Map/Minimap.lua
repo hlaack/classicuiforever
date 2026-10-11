@@ -55,14 +55,22 @@ MM.PIECE_KEYS = PIECES
 local SHOW_IDS = { "MinimapZone", "MinimapTracking", "MinimapMail", "MinimapZoomIn", "MinimapZoomOut", "MinimapClock",
     "MinimapDiel", "MinimapCalendar", "MinimapCoords", "MinimapDifficulty" }
 local ZOOM_R = 79
+local ZOOM_DISC = 18
+local discMasks = setmetatable({}, { __mode = "k" })
 local DIEL_RING = "UI-HUD-Minimap-Frame-Cycle"
 -- Other addons' minimap buttons wear the old gold tracking ring (MiniMap-TrackingBorder): tinted as ours.
 local TRACKING_RING = 136430
 local RING_SHARE = { dark = 1.28 }
+local eraRings = setmetatable({}, { __mode = "k" })   -- another addon's ring -> its own file, given back at restore
 local function TintRing(region)
     if not (region.GetTexture and region.IsObjectType and region:IsObjectType("Texture")) then return end
     local file = ns.Safe(region:GetTexture())
     if file == TRACKING_RING or (type(file) == "string" and file:lower():find("minimap%-trackingborder")) then
+        -- Our minimap's: Era's ring, stone rim and shadow, in place of Forever's plain gold copy of the file.
+        if MM.active then
+            eraRings[region] = file
+            region:SetTexture(ns.TexPath("trackingBorder"))
+        end
         if ns.Once(region, "themeRing") then ns.BronzeTint(region, RING_SHARE) end
         -- Hide button borders is our minimap's: the game's map keeps its rings.
         if MM.active then ns.MinimapButtonBorder(region) end
@@ -99,8 +107,32 @@ function ns.MinimapButtonBorder(tex)
     buttonBorders[tex] = true
     ns.SetAlphaIf(tex, ns.db.hideButtonBorders and 0 or 1)
 end
+-- Rings drawn into a button's own art (day and night, zoom): cut to the disc inside them by a round mask instead.
+local DISC_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+local discs = setmetatable({}, { __mode = "k" })     -- texture -> its mask
+local cut = setmetatable({}, { __mode = "k" })       -- texture -> true while masked
+local function CutDisc(tex)
+    local on = MM.active and ns.db.hideButtonBorders == true
+    if (cut[tex] or false) == on then return end
+    cut[tex] = on or nil
+    if on then tex:AddMaskTexture(discs[tex]) else tex:RemoveMaskTexture(discs[tex]) end
+end
+-- A round mask d across, centred on owner, for its textures' discs.
+function ns.MinimapDiscMask(owner, d)
+    local mask = owner:CreateMaskTexture()
+    mask:SetTexture(DISC_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    mask:SetSize(d, d)
+    mask:SetPoint("CENTER", owner, "CENTER", 0, 0)
+    return mask
+end
+function ns.MinimapButtonDisc(tex, mask)
+    if not (tex and mask) then return end
+    discs[tex] = mask
+    CutDisc(tex)
+end
 local function ButtonBordersApply()
     for tex in pairs(buttonBorders) do ns.SetAlphaIf(tex, ns.db.hideButtonBorders and 0 or 1) end
+    for tex in pairs(discs) do CutDisc(tex) end
 end
 
 -- The game's coordinates line and the map container it hangs in (Blizzard_Minimap Minimap.xml).
@@ -136,11 +168,9 @@ local function CommaShift(coords)
     ns.SetTwoPointsIf(text, "TOPLEFT", coords, "TOPLEFT", shift, 0, "BOTTOMRIGHT", coords, "BOTTOMRIGHT", shift, 0)
 end
 
+-- The game's ring stays faded under Era's picture (MinimapDiel.lua): not one of Hide button borders' rings.
 local function DrainDielRing(region)
-    if region.GetAtlas and ns.Safe(region:GetAtlas()) == DIEL_RING then
-        ns.DrainBronze(region)
-        ns.MinimapButtonBorder(region)
-    end
+    if region.GetAtlas and ns.Safe(region:GetAtlas()) == DIEL_RING then ns.DrainBronze(region) end
 end
 local homes = {}
 
@@ -263,121 +293,6 @@ local function LayRingHome(key, parent, level, w, h)
     return home
 end
 
--------------------------------------------------------- classic tracking
-
--- 1.x MiniMapTracking: the active tracking spell on the rim; right-click cancels it.
--- Its buff leaves the buff bar meanwhile (TrackingBuff.lua).
-local C_Minimap = _G.C_Minimap
-local trackFrame
--- 52 like the mail and eye rings; ring centre is at (20, 19) on the 64px sheet.
-local TRACK_RING = 52
-local TRACK_CX, TRACK_CY = TRACK_RING * 20 / 64, TRACK_RING * 19 / 64
-local TRACK_BORDER = { layer = "ARTWORK", w = TRACK_RING, h = TRACK_RING, point = "TOPLEFT" }
-local TRACK_EVENTS = { "MINIMAP_UPDATE_TRACKING", "SPELLS_CHANGED", "PLAYER_ENTERING_WORLD" }
-
-local function TrackingOn() return MM.active and ns.db and ns.db.classicTracking ~= false end
-
-local function ActiveTrackingSpell()
-    if not (C_Minimap and C_Minimap.GetNumTrackingTypes and C_Minimap.GetTrackingInfo) then return nil end
-    local count = C_Minimap.GetNumTrackingTypes()
-    if ns.IsSecret(count) or type(count) ~= "number" then return nil end
-    for i = 1, count do
-        local info = C_Minimap.GetTrackingInfo(i)
-        if info and not ns.AnySecret(info.active, info.type) and info.active and info.type == "spell" then
-            return i, info
-        end
-    end
-    return nil
-end
-
-local function UpdateTracking()
-    local frame = trackFrame
-    local index, info
-    if frame and TrackingOn() then index, info = ActiveTrackingSpell() end
-    if MM.TrackingBuff then MM.TrackingBuff(info) end
-    if not frame then return end
-    frame.index = index
-    frame.spellID = info and not ns.IsSecret(info.spellID) and info.spellID or nil
-    frame.name = info and info.name
-    if info then
-        frame.icon:SetTexture(info.texture)
-        ns.RoundIcon(frame.icon)
-    end
-    frame:SetShown(index ~= nil)
-end
-
-local function QueueTracking() ns.Sched.Soon("minimap.tracking", UpdateTracking) end
-
-local function TrackingMouseUp(self, button)
-    if button == "RightButton" and self.index and C_Minimap.SetTracking then
-        C_Minimap.SetTracking(self.index, false)
-    end
-end
-
-local function TrackingEnter(self)
-    GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
-    if self.spellID and GameTooltip.SetSpellByID then
-        GameTooltip:SetSpellByID(self.spellID)
-    else
-        GameTooltip:SetText(self.name or "", 1, 1, 1)
-    end
-    GameTooltip:Show()
-end
-
--- Era's rim spot, in our backdrop's coordinates, until it is dragged round the ring (shift-drag, or edit mode): then at
--- its angle, as far from the map's middle as Era's spot is.
-local TRACK_KEY, TRACK_ANGLE, TRACK_R = "minimapTrackingIcon", "trackingIconAngle", 83.6
-local function PlaceTracking()
-    local frame = trackFrame
-    if not frame then return end
-    local degrees = ns.db and ns.db[TRACK_ANGLE]
-    if degrees then
-        ns.RingPoint(frame, degrees, TRACK_R, frame:GetEffectiveScale() / Minimap:GetEffectiveScale())
-    else
-        ns.SetPointOnce(frame, "TOPLEFT", frame:GetParent(), "TOPLEFT", 11, -26)
-    end
-end
-function ns.LayTrackingIcon(key)
-    if key == TRACK_KEY then PlaceTracking() end
-end
-
-local function TrackingFrame(backdrop, level)
-    local frame = trackFrame
-    if not frame then
-        frame = CreateFrame("Frame", "ForeverClassicUIMinimapTrackingIcon", backdrop)
-        trackFrame = frame
-        frame:Hide()
-        frame:SetSize(32, 32)
-        frame:EnableMouse(true)
-        -- Shift-drag round the ring, as our ring buttons move.
-        frame:RegisterForDrag("LeftButton")
-        local drag = ns.Sched.OnFrame(CreateFrame("Frame", nil, frame), { name = "minimap.trackingDrag", every = 0,
-            awake = false, fn = function()
-                ns.db[TRACK_ANGLE] = ns.MinimapCursorAngle()
-                PlaceTracking()
-            end })
-        frame:SetScript("OnDragStart", function() if IsShiftKeyDown() then drag:Wake() end end)
-        frame:SetScript("OnDragStop", function() drag:Sleep() end)
-        if ns.PlaceSavedWindows then ns.PlaceSavedWindows() end
-        local border = ns.DressNew(frame, "trackingBorder", TRACK_BORDER)
-        ns.MinimapButtonBorder(border)
-        -- Round, slightly wider than the hole so its edge hides under the ring.
-        local icon = frame:CreateTexture(nil, "BORDER")
-        icon:SetSize(22, 22)
-        icon:SetPoint("CENTER", border, "TOPLEFT", TRACK_CX, -TRACK_CY)
-        frame.icon = icon
-        ns.RoundIcon(icon)
-        frame:SetScript("OnMouseUp", TrackingMouseUp)
-        frame:SetScript("OnEnter", TrackingEnter)
-        frame:SetScript("OnLeave", GameTooltip_Hide)
-        frame:SetScript("OnEvent", QueueTracking)
-        ns.RegisterEvents(frame, TRACK_EVENTS)
-        UpdateTracking()
-    end
-    frame:SetFrameLevel(level)
-    PlaceTracking()
-end
-
 ----------------------------------------------------- the tracking glass
 
 -- The glass button's Normal and Pushed textures, re-read each Layout.
@@ -429,7 +344,8 @@ end
 -- Sole writer of MM.active.
 local function SetActive(on)
     MM.active = on
-    UpdateTracking()
+    MM.UpdateTracking()
+    for tex in pairs(discs) do CutDisc(tex) end
 end
 
 ------------------------------------------------------------------- layout
@@ -481,6 +397,7 @@ local function Layout()
         map:SetPoint("CENTER", cluster, "TOP", 9, -92)
     end
     if map.SetMaskTexture then map:SetMaskTexture((ns.TexPath("portraitMask"))) end
+    ns.FadeSquareBorders(true)
     backdrop:SetSize(CLUSTER, CLUSTER)
     ns.SetPointOnce(backdrop, "CENTER", cluster, "CENTER", 0, -20)
     if backdrop.StaticOverlayTexture then ns.Fade(backdrop.StaticOverlayTexture) end
@@ -521,6 +438,13 @@ local function Layout()
             local disabled = button:GetDisabledTexture()
             if disabled and disabled.SetDesaturated then disabled:SetDesaturated(false) end
             button:GetHighlightTexture():SetBlendMode("ADD")
+            -- Hide button borders: the plus or minus on its grey disc, 18 across, without the rims round it.
+            local disc = discMasks[button] or ns.MinimapDiscMask(button, ZOOM_DISC)
+            discMasks[button] = disc
+            for _, tex in ipairs({ button:GetNormalTexture(), button:GetPushedTexture(), disabled,
+                button:GetHighlightTexture() }) do
+                ns.MinimapButtonDisc(tex, disc)
+            end
             button:SetHitRectInsets(4, 4, 2, 6)
             ns.SetPointOnce(button, "CENTER", zoomHome, "CENTER", 0, 0)
             button:Show()
@@ -528,12 +452,12 @@ local function Layout()
     end
 
     -- Tracking upper left: the spell at Era's spot, the glass (client menu) below, clear of the eye.
-    TrackingFrame(backdrop, above)
+    MM.TrackingFrame(backdrop, above)
     local tracking = cluster.Tracking
     if tracking then
         -- With the spell icon off the glass keeps its old spot.
         local glassHome = LayHome("minimapTracking", backdrop, above, 32, 32, backdrop, "TOPLEFT", 9 + 16,
-            (TrackingOn() and -64 or -45) - 16)
+            (MM.TrackingOn() and -64 or -45) - 16)
         tracking:SetParent(glassHome)
         tracking:SetFrameLevel(above + 1)
         tracking:SetSize(32, 32)
@@ -586,8 +510,9 @@ local function Layout()
         local dielHome = LayHome("minimapDiel", cluster, above, w, h, map, "TOPRIGHT", 20 - w / 2, -2 - h / 2)
         if diel:GetParent() ~= dielHome then diel:SetParent(dielHome) end
         ns.SetPointOnce(diel, "CENTER", dielHome, "CENTER", 0, 0)
-        -- Its bronze ring follows the theme (silver off, darkened with Dark).
+        -- Its bronze ring follows the theme (silver off, darkened with Dark); Era's picture over it.
         if ns.Once(diel, "themeRing") then ns.EachRegion(diel, DrainDielRing) end
+        MM.EraDiel(diel, dielHome)
     end
     -- The game's coordinates under the map, in a home edit mode moves.
     local coords = PlayerCoords()
@@ -742,9 +667,15 @@ end
 -- place otherwise. OwnTexture never re-shows, so the ring needs a reload.
 local function Restore()
     SetActive(false)
+    for region, file in pairs(eraRings) do
+        region:SetTexture(file)
+        eraRings[region] = nil
+    end
     ThemeRingsOnGameMap()
     if not MM.taken then return end
     MM.taken = false
+    ns.FadeSquareBorders(false)
+    MM.UnplaceEye()
     HideOwn(MinimapCluster)
     HideOwn(MinimapBackdrop)
     MM.HideCalendar()
@@ -756,6 +687,7 @@ local function Restore()
     if diel then
         diel:SetParent(MinimapCluster)
         ns.SetPointOnce(diel, "CENTER", MinimapCluster, "CENTER", 63, 72)
+        MM.EraDielOff(diel)
     end
     local coords, box = PlayerCoords()
     if coords and Minimap then

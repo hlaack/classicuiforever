@@ -474,6 +474,14 @@ local function Build(canvas)
             Grouped(dark)
             Add(dark, "themeDark")
         end
+        if entry[1] == "addonMessages" then
+            local head, camera = O.CameraRow(child, LIST_W / COLUMNS - 2 * INDENT - 14)
+            head.text:SetWidth(LIST_W / COLUMNS - 30)
+            Grouped(head)
+            Add(head)
+            Grouped(camera)
+            Add(camera, head.key)
+        end
         if entry[1] == "themeCustom" then
             local color = O.ColorRow(child, "themeColor", L["OPTWIN_COLOUR"],
                 L["OPTWIN_THE_CUSTOM_THEME_S_COLOUR"])
@@ -521,7 +529,7 @@ local function Build(canvas)
     end
 
     -- Word starts in name, keywords or section title first, tooltip only when nothing matched those; whole sections show,
-    -- their matches lit and the rest dimmed; empty shows all.
+    -- their matches lit and the rest dimmed (Only show matches: the matching rows alone); empty: all.
     local search = ns.SearchBox(frame, width - 60, L["OPTWIN_SEARCH_TOGGLES"])
     search:SetPoint("TOP", frame, "TOP", 4, canvas and -16 or -50)
     frame.search = search
@@ -536,20 +544,10 @@ local function Build(canvas)
             level[box] = #words > 0 and ns.OptionMatchLevel(box, words) or 0
             if level[box] > best then best = level[box] end
         end
-        -- A section shows whole or not at all: any match brings its top row and every line under it.
-        local hit, matched = {}, {}
-        local function MarkAll(key)
-            hit[key] = true
-            for _, other in ipairs(kids[key] or EMPTY) do MarkAll(other.key) end
-        end
-        for _, box in ipairs(boxes) do
-            matched[box] = best > 0 and level[box] == best
-            if text == "" or matched[box] then
-                local head = box.key
-                while parentOf[head] do head = parentOf[head] end
-                MarkAll(head)
-            end
-        end
+        local matched = {}
+        for _, box in ipairs(boxes) do matched[box] = best > 0 and level[box] == best end
+        local only = text ~= "" and ns.db.searchOnlyMatches == true
+        local hit = ns.OptionSearchHits(boxes, matched, kids, parentOf, text ~= "", only)
         -- Sections in list order, head first, gathered under their group's header; a block is one header and its rows.
         local blocks, byTitle, count = {}, {}, 0
         -- Every row under key, depth first.
@@ -563,10 +561,11 @@ local function Build(canvas)
                 end
             end
         end
+        -- Only show matches: each match on its own line under its group header, its parent rows left out.
         for _, box in ipairs(boxes) do
             if not hit[box.key] then
                 box:Hide()
-            elseif not box.parent then
+            elseif only or not box.parent then
                 local title = box.group or ""
                 local block = byTitle[title]
                 if not block then
@@ -578,7 +577,7 @@ local function Build(canvas)
                 block[#block + 1] = box
                 block.rows = block.rows + 1
                 count = count + 1
-                AddKids(block, box.key)
+                if not only then AddKids(block, box.key) end
             end
         end
         for title, head in pairs(heads) do
@@ -610,7 +609,7 @@ local function Build(canvas)
                 row = row + 1
             end
             for _, box in ipairs(block) do
-                Put(row, box, (box.depth or 0) * INDENT)
+                Put(row, box, only and 0 or (box.depth or 0) * INDENT)
                 row = row + 1
             end
             if row > per then per = row end
@@ -622,6 +621,18 @@ local function Build(canvas)
     end
     search:SetScript("OnTextChanged", function(self) frame:PlaceBoxes(self:GetText()) end)
     frame:PlaceBoxes("")
+    -- Its box's left under the search bar's, on the bulk buttons' line.
+    local onlyMatches = ns.SmallCheck(frame, L["OPTWIN_ONLY_MATCHES"], 1, 0.82, 0)
+    onlyMatches:SetPoint("TOPLEFT", search, "BOTTOMLEFT", -8, -5)
+    onlyMatches:SetChecked(ns.db.searchOnlyMatches == true)
+    onlyMatches:SetScript("OnClick", function(self)
+        ns.CheckSound(self)
+        ns.db.searchOnlyMatches = self:GetChecked() and true or false
+        frame:PlaceBoxes(search:GetText())
+    end)
+    onlyMatches.tooltip = L["OPTWIN_ONLY_MATCHES_TIP"]
+    onlyMatches.label = L["OPTWIN_ONLY_MATCHES"]
+    ns.AttachTip(onlyMatches, OPTION_TIP)
 
     local note = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     note:SetPoint("BOTTOM", frame, "BOTTOM", 0, 78)
@@ -663,7 +674,7 @@ local function Build(canvas)
     defaults.label = L["OPTWIN_RESET_TOGGLES"]
     ns.AttachTip(defaults, OPTION_TIP)
     -- The foot joins this list once built: the other tabs are reading, not settings.
-    local togglesOnly = { search, none, defaults, child }
+    local togglesOnly = { search, onlyMatches, none, defaults, child }
     AddTabs(frame, list, child, togglesOnly, listRows)
 
     -- Foot left: layout button over Reload UI; on the classic layout it offers a reset.
@@ -703,7 +714,7 @@ local function Build(canvas)
     preferredHover:EnableMouse(true)
     ns.AttachTip(preferredHover, PREFERRED_TIP)
     local status = ns.PanelButton(frame, L["OPTWIN_STATUS_REPORT"], 130)
-    status:SetPoint("RIGHT", github, "LEFT", -6, 0)
+    status:SetPoint("BOTTOM", frame, "BOTTOM", 0, 46)
     status:SetScript("OnClick", function() ns.ShowStatus() end)
     status.tooltip = L["OPTWIN_OPENS_A_WINDOW_WITH_YOUR"]
     status.label = L["OPTWIN_STATUS_REPORT"]

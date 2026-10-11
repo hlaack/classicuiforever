@@ -66,9 +66,6 @@ local BROWSE_SHEETS = {
     { key = "eraLfgFrame", tc = { 0, 1, 0.236, 0.5 }, x = 0, y = -121, w = 512, h = 135 },
     { key = "eraLfgFrame", tc = { 0, 1, 0.5, 1 }, x = 0, y = -256, w = 512, h = 256 },
 }
--- Era's classic dropdown on its sheet: the text holder round the button, the gold arrow at its right.
-local HOLDER_COORDS = { 0.38672, 0.81641, 0.00391, 0.16406 }
-local ARROW_COORDS = { 0.80078, 0.89063, 0.17188, 0.25781 }
 -- Role buttons: Era's 48 at a 73 step, 60 down; this client's are 64 (the new player box 84).
 local ROLE_SCALE, ROLE_STEP, ROLE_X, ROLE_Y = 48 / 64, 73, 67, 60
 -- The new player flag drawn as big as a role (its 84 art to the roles' 85 drawn), centred one role step on.
@@ -78,7 +75,17 @@ local ERA_EYE, ERA_EYE_BACK = 136317, 337500
 -- Where Era draws them in the window (its dump): eye 9, 5 and backing 12, 5, both 64 square.
 local ERA_EYE_X, ERA_EYE_Y, ERA_EYE_BACK_X, ERA_EYE_BACK_Y = 9, 5, 12, 5
 local eyeHost
+local C_LFGList = _G.C_LFGList
+local ERA_EYE_FIRST = { 0, 0.125, 0, 0.25 }
+local eyeTurn = 0
 local FRIENDLY_CX, ROLE_CY = ROLE_X + 24 + 3 * ROLE_STEP, ROLE_Y + 24
+
+-- While the window shows: Era's eye turns while you are listed (its LFGEyeTemplate), on its first frame otherwise.
+local function TurnEye(job)
+    local listed = C_LFGList and C_LFGList.HasActiveEntryInfo()
+    eyeTurn = listed and (eyeTurn + 1) % ns.ERA_EYE_FRAMES or 0
+    ns.EraEyeFrame(job.eye, eyeTurn, ERA_EYE_FIRST)
+end
 
 local function Size() return ERA_W, ERA_H end
 
@@ -160,28 +167,10 @@ local function FootPair(left, right, first)
     At(right, FOOT_RIGHT[1], FOOT_Y, FOOT_RIGHT[2], FOOT_H)
 end
 
-local function EraDropdown(dropdown, x, y, width, first, arrowX, arrowY, labelRight)
+local function EraDropdown(dropdown, x, y, width, arrowX, arrowY, labelRight)
     if not dropdown then return end
     At(dropdown, x, y, width, 24)
-    local holder = ns.OwnTexture(dropdown, "eraHolder", "BACKGROUND", 1)
-    local arrow = ns.OwnTexture(dropdown, "eraArrow", "OVERLAY", 1)
-    if first then
-        Hide(dropdown.Background)
-        Hide(dropdown.Arrow)
-        ns.SetTex(holder, "dropdownClassic")
-        holder:SetTexCoord(unpack(HOLDER_COORDS))
-        ns.SetTex(arrow, "dropdownClassic")
-        arrow:SetTexCoord(unpack(ARROW_COORDS))
-        arrow:SetSize(23, 22)
-    end
-    ns.SetTwoPointsIf(holder, "TOPLEFT", dropdown, "TOPLEFT", -9, 8, "BOTTOMRIGHT", dropdown, "BOTTOMRIGHT", 8, -9)
-    PointIf(arrow, "TOPRIGHT", dropdown, "TOPRIGHT", arrowX, arrowY)
-    -- Era's label: right-aligned against the arrow, 9 in from the left.
-    local text = dropdown.Text
-    if text then
-        text:SetJustifyH("RIGHT")
-        ns.SetTwoPointsIf(text, "LEFT", dropdown, "LEFT", 9, 0, "RIGHT", dropdown, "RIGHT", labelRight, 0)
-    end
+    ns.EraDropdownArt(dropdown, arrowX, arrowY, labelRight)
 end
 
 local function PlaceList(page)
@@ -199,9 +188,9 @@ end
 
 local function DressBrowse(page, first)
     EraChrome(page, BROWSE_SHEETS, first)
-    EraDropdown(page.CategoryDropdown, 26, 94, 118, first, CATEGORY_DROPDOWN_ARROW_X, CATEGORY_DROPDOWN_ARROW_Y,
+    EraDropdown(page.CategoryDropdown, 26, 94, 118, CATEGORY_DROPDOWN_ARROW_X, CATEGORY_DROPDOWN_ARROW_Y,
         CATEGORY_DROPDOWN_LABEL_RIGHT)
-    EraDropdown(page.ActivityDropdown, 149, 94, 167, first, ACTIVITY_DROPDOWN_ARROW_X, ACTIVITY_DROPDOWN_ARROW_Y,
+    EraDropdown(page.ActivityDropdown, 149, 94, 167, ACTIVITY_DROPDOWN_ARROW_X, ACTIVITY_DROPDOWN_ARROW_Y,
         ACTIVITY_DROPDOWN_LABEL_RIGHT)
     At(page.RefreshButton, 315, 90, 32, 32)
     PlaceList(page)
@@ -295,10 +284,10 @@ local function DressParent(parent, first)
         At(close, 326, 8, 32, 32)
         ns.SetLevelIf(close, parent:GetFrameLevel() + 20)
     end
-    -- Era's eye (the first frame of its sheet) on its black backing, UNDER the pages: their ring overlaps it, as in Era.
-    -- This client's own eye button is faded, not moved; it animates that one.
+    -- Era's eye on its black backing, UNDER the pages: their ring overlaps it, as in Era. Turning while listed, as Era's.
+    -- This client's own eye button is faded whole (its animation draws on more than its texture), not moved.
     local portrait = _G["LFGParentFramePortrait"]
-    if portrait and first then Hide(portrait.texture) end
+    if portrait then ns.SetAlphaIf(portrait, 0) end
     local eyeFrame = eyeHost or ns.NewFrame("Frame", nil, parent)
     if not eyeHost then
         eyeHost = eyeFrame
@@ -312,6 +301,8 @@ local function DressParent(parent, first)
         eye:SetTexCoord(0, 0.125, 0, 0.25)
         eye:SetSize(64, 64)
         eye:SetPoint("TOPLEFT", eyeFrame, "TOPLEFT", ERA_EYE_X, -ERA_EYE_Y)
+        local turn = ns.Sched.Attach(eyeFrame, { name = "groupFinder.eye", every = ns.ERA_EYE_TIME, fn = TurnEye })
+        if turn then turn.eye = eye end
     end
     PointIf(eyeFrame, "TOPLEFT", Origin(), "TOPLEFT", 0, 0)
     ns.SetLevelIf(eyeFrame, parent:GetFrameLevel())
