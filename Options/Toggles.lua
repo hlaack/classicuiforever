@@ -200,6 +200,7 @@ ns.TOGGLES = {
 
     { "bags", L["OPT_bags"], L["OPT_bags_TIP"], group = L["GROUP_BAGS"] },
     { "plainQuestItems", L["OPT_plainQuestItems"], L["OPT_plainQuestItems_TIP"], parent = "bags", search = "quest border glow" },
+    { "hideLockedSlots", L["OPT_hideLockedSlots"], L["OPT_hideLockedSlots_TIP"], parent = "bags", search = "authenticator 2fa padlock backpack" },
     { "oneBag", L["OPT_oneBag"], L["OPT_oneBag_TIP"] },
     { "bagsBesideBars", L["OPT_bagsBesideBars"], L["OPT_bagsBesideBars_TIP"] },
 
@@ -209,6 +210,8 @@ ns.TOGGLES = {
     { "hideMinimapZone", L["OPT_hideMinimapZone"], SHOW_TIP, parent = "minimap", radio = "minimapZoneShow", drop = true },
     { "hideMinimapHeader", L["OPT_hideMinimapHeader"], L["OPT_hideMinimapHeader_TIP"], parent = "minimap", search = "zone bar top" },
     { "classicTracking", L["OPT_classicTracking"], L["OPT_classicTracking_TIP"], parent = "minimap" },
+    { "eyeSnapMinimap", L["OPT_eyeSnapMinimap"], L["OPT_eyeSnapMinimap_TIP"], parent = "minimap",
+        search = "group finder lfg queue eye snap rim edit mode" },
     { "trackingSameSize", L["OPT_trackingSameSize"], L["OPT_trackingSameSize_TIP"], parent = "minimap", needs = "classicTracking",
         search = "tracking ring size big small uniform" },
     { "showMinimapTracking", L["OPT_showMinimapTracking"], SHOW_TIP, parent = "minimap", radio = "minimapTrackingShow", drop = true },

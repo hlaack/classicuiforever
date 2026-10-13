@@ -339,6 +339,8 @@ L["OPT_bags"] = "Bag windows"
 L["OPT_bags_TIP"] = "The 1.x bag windows: bag art with the portrait ring, the money strip and the old slots. Off takes full effect after a reload."
 L["OPT_plainQuestItems"] = "Plain quest items"
 L["OPT_plainQuestItems_TIP"] = "Quest items in your bags and bank show as plain icons, without the quest border or its ! mark."
+L["OPT_hideLockedSlots"] = "Hide locked slots"
+L["OPT_hideLockedSlots_TIP"] = "Hides the backpack's slots that stay locked until your account has an authenticator, so it shows only the ones you can use."
 L["GROUP_BAGS"] = "Bags"
 L["OPT_oneBag"] = "One bag"
 L["OPT_oneBag_TIP"] = "All bags open as one window in the old art. This is the game's Combine Bags setting."
@@ -350,6 +352,8 @@ L["GROUP_MINIMAP"] = "Minimap"
 L["GROUP_CHAT"] = "Chat"
 L["OPT_classicTracking"] = "Tracking icon"
 L["OPT_classicTracking_TIP"] = "Your tracking spell's icon in a ring on the minimap, as in 1.x. Right-click it to stop tracking."
+L["OPT_eyeSnapMinimap"] = "Group finder eye on the minimap"
+L["OPT_eyeSnapMinimap_TIP"] = "The eye stays on the minimap's rim; in Edit Mode it lands on the rim where you drop it. Off, Edit Mode places it anywhere."
 L["OPT_trackingSameSize"] = "Tracking icon: same size as other buttons"
 L["OPT_trackingSameSize_TIP"] = "The tracking icon's ring at the size of the other minimap buttons, not Era's larger one."
 L["OPT_showMinimapZone"] = "Zone name: shown"
@@ -479,6 +483,9 @@ L["MAP_LEFT_CLICK_THE_OTHER_ADDONS"] = "Left-click: the other addons' minimap bu
 
 -- Map/MinimapEye.lua
 L["MAP_DEFAULT_SIZE"] = "Default Size"
+L["MAP_EYE_SNAP"] = "Snap to minimap"
+L["MAP_EYE_IDLE"] = "Show when not queued"
+L["MAP_EYE_OPTIONS_APPLY"] = "These options apply and save the moment you change them."
 
 -- Options/OptionsWindow.lua
 L["OPTWIN_WHY_GITHUB"] = "Why GitHub"

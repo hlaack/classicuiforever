@@ -340,7 +340,7 @@ local function BuildShell(name, spec)
     frame:EnableMouse(true)
     -- Era's margins: past the art the world takes the mouse.
     frame:SetHitRectInsets(0, 30, 0, 45)
-    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, -104)
+    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", ns.ClassicSlot())
     frame:Hide()
     -- Hosted, the game's window places and closes it; otherwise our window handles move it.
     if not spec.hosted then ns.CloseWithGameMenu(frame) end
@@ -543,6 +543,14 @@ local function DrawBackground(frame, name, height)
     art.BottomRight:SetSize(64, bottom)
     art.BottomLeft:SetTexCoord(0, 1, 0, 75 / 128)
     art.BottomRight:SetTexCoord(0, 1, 0, 75 / 128)
+end
+
+-- Public API (Core/API.lua): a talent window's shown button for a talent's spell (talents, the Legacy tree).
+function ns.TalentWindowButtonFor(frame, spellID)
+    if not (frame and frame:IsShown() and frame.buttons) or type(spellID) ~= "number" then return nil end
+    for _, button in ipairs(frame.buttons) do
+        if button:IsVisible() and button.talent and button.talent.spellID == spellID then return button end
+    end
 end
 
 local function DrawButtons(frame, tab)

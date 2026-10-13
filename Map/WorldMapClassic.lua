@@ -114,9 +114,28 @@ end
 
 -- The header style the map wears now, nil for the game's own.
 local function EraStyle()
+    local style = Map() and P.active and ns.db.worldMap ~= false and NavStyle()
+    if style and style ~= "forever" then return style end
+end
+
+-- Maximized, an Era style keeps its own layout scaled up to the screen as the game's fills it (its height, 30 short of
+-- its width); the game holds it by its top over its black backdrop. Our window manager wears the scale.
+local FULL_SIDE_MARGIN = 30
+local fullScale
+local function Fill(k)
+    if k == fullScale then return end
+    local was = fullScale
+    fullScale = k
+    ns.PlaceSavedWindows()
+    -- Restored: the game placed it while it still wore the big scale.
     local map = Map()
-    local style = map and P.active and ns.db.worldMap ~= false and NavStyle()
-    if style and style ~= "forever" and not map:IsMaximized() then return style end
+    if was and not k and not map:IsMaximized() and not ns.WindowPlaced("map") then ns.GameSpot(map) end
+end
+function ns.FullMapScale() return fullScale end
+
+local function FullScale(t)
+    local screenW, screenH = UIParent:GetSize()
+    return math.min(screenH / t.h, (screenW - FULL_SIDE_MARGIN) / t.w)
 end
 
 local function PaneShown()
@@ -353,6 +372,44 @@ local function Coords(map)
     return coords
 end
 
+-- One line in the footer under the picture, from its left edge, level with Map Options' middle (its box 24 tall, 5 up):
+-- the player's, the cursor's beside it. The game stacks its rows; only their labels move, its settings still show them.
+local FOOT_MID = 17
+local COORDS_GAP = 16
+local labelPoints = {}   -- label -> the game's points, taken back with its look
+
+local function PlaceLabel(label, rel, relPoint, x, y)
+    if not labelPoints[label] then
+        local points = {}
+        for i = 1, label:GetNumPoints() do points[i] = { label:GetPoint(i) } end
+        labelPoints[label] = points
+    end
+    ns.SetPointIf(label, "LEFT", rel, relPoint, x, y)
+end
+
+local function PlaceCoords(map, style)
+    local panel = Coords(map)
+    if not panel then return end
+    local rel, x, y
+    if style == "classic" then rel, x, y = ns.MapLarge.FootLeft() else rel, x, y = Art(), CANVAS_LEFT, -ERA_H end
+    y = y + FOOT_MID
+    local player = panel.PlayerCoords.Label
+    PlaceLabel(player, rel, "TOPLEFT", x, y)
+    local after = panel.PlayerCoords:IsShown()
+    -- The cursor's and the gamepad crosshair's take turns on the canvas: one spot for both.
+    for _, row in ipairs({ panel.CursorCoords, panel.CrosshairCoords }) do
+        if after then PlaceLabel(row.Label, player, "RIGHT", COORDS_GAP, 0) else PlaceLabel(row.Label, rel, "TOPLEFT", x, y) end
+    end
+end
+
+local function GameCoords()
+    for label, points in pairs(labelPoints) do
+        label:ClearAllPoints()
+        for _, p in ipairs(points) do label:SetPoint(p[1], p[2], p[3], p[4], p[5]) end
+    end
+    wipe(labelPoints)
+end
+
 -- The pane's two scroll bars moved right by shift, or back on the game's own points (nil).
 local barPoints = setmetatable({}, { __mode = "k" })
 local function PaneBars()
@@ -414,7 +471,8 @@ local function DressSmall(map, close, sizer)
         ns.SetScaleIf(sizer, 1)
         ns.SetPointIf(sizer, "RIGHT", close, "LEFT", MAXIMIZE_GAP, 0)
     end
-    ns.MapOptions.Place(map, a, a:GetWidth() + NONE_MAP_OPTIONS_X, NONE_MAP_OPTIONS_Y - ERA_H, 1)
+    local x = math.min(NONE_MAP_OPTIONS_X, -ns.WindowGripRoom("map"))
+    ns.MapOptions.Place(map, a, a:GetWidth() + x, NONE_MAP_OPTIONS_Y - ERA_H, 1)
 end
 
 -- Era's large map: its sheets, header and buttons (WorldMapEraLarge.lua).
@@ -445,11 +503,11 @@ local function DressEra(style)
     if map.SidePanelToggle then
         ns.SetLevelIf(map.SidePanelToggle, map.ScrollContainer:GetFrameLevel() + FOOT_LINE_OVER_MAP + 1)
     end
-    HoldHidden(Coords(map))
     ShiftBars(PANE_BAR_SHIFT[style])
     ns.QuestPaneFloor(true)
     local close, sizer = border.CloseButton, border.MaximizeMinimizeFrame
     if style == "classic" then DressLarge(map, close, sizer) else DressSmall(map, close, sizer) end
+    PlaceCoords(map, style)
     eraDressed = style
 end
 
@@ -464,6 +522,7 @@ local function DressForever()
     end
     ns.MapLarge.Hide()
     ns.MapOptions.Release(map)
+    GameCoords()
     ShiftBars(nil)
     ns.QuestPaneFloor(false)
     border.NineSlice:SetAlpha(1)
@@ -564,7 +623,7 @@ local function FadeOutside(map, style)
     if not rect[1] then return end
     local border = map.BorderFrame
     for _, piece in ipairs({ a, a.titleHost, map.ScrollContainer, map.QuestLog, border.CloseButton,
-        border.MaximizeMinimizeFrame }) do
+        border.MaximizeMinimizeFrame, map.BlackoutFrame }) do
         if piece then keep[piece] = true end
     end
     ns.MapLarge.Keep(keep)
@@ -597,17 +656,20 @@ local function Pass()
         if Laid(t) then
             DressEra(style)
             Unfade()
+            Fill(map:IsMaximized() and FullScale(t) or nil)
         elseif InCombatLockdown() and PictureLaid(t) then
             DressEra(style)
             FadeOutside(map, style)
         else
             Unfade()
             DressForever()
+            Fill(nil)
         end
     elseif touched then
         Unfade()
         DressForever()
         Lay(Target(nil))
+        Fill(nil)
     end
     Refit()
 end

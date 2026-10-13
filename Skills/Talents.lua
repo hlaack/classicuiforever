@@ -146,6 +146,17 @@ function ns.ShowTalents(tab)
     return frame:IsShown()
 end
 
+-- Public API: the player's talents shown on the tree tab holding a talent's spell; false when no tab holds it.
+function ns.ShowTalentSpell(spellID)
+    local tree = TL.ReadTree and TL.ReadTree()
+    for i, tab in ipairs(tree and tree.tabs or ns.EMPTY) do
+        for _, talent in ipairs(tab.nodes) do
+            if talent.spellID == spellID then return ns.ShowTalents(i) end
+        end
+    end
+    return false
+end
+
 -- The inspect window's Talents button, which opened the client's window.
 local function ShowInspect(unit)
     if not unit then return end
@@ -187,6 +198,13 @@ local TakeButton = ns.WindowMicro({ "TalentMicroButton", "PlayerSpellsMicroButto
 end)
 local key = ns.WindowKey("ClassicUIForeverTalentsBind", "TOGGLETALENTS", Toggle, "talents")
 
+-- While the game's spell window leaves ours no room, the key and the micro button close it first in the player's name
+-- (UI/WindowCloser.lua): the key's own secure click, and a pad over the button that presses the key.
+local function CloserMacro()
+    if active and not Hosted() and ns.GameSpellsCloser(frame) then return "/click " .. key.name end
+end
+ns.OnGameSpellsRoom(function() key:PressFirst(active and not Hosted() and ns.GameSpellsCloser(frame) or nil) end)
+
 local function Apply()
     active = true
     if Hosted() then
@@ -197,6 +215,7 @@ local function Apply()
     TakeButton(true)
     TakeInspectButton(true)
     key:Set(true)
+    if ns.MapPad and _G.TalentMicroButton then ns.MapPad(_G.TalentMicroButton, nil, nil, CloserMacro, function() return active end) end
 end
 
 local function Restore()

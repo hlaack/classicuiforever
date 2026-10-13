@@ -6,7 +6,6 @@ local L = ns.L
 -- anyone moves the window, never inside the client's pass.
 
 local WINDOWS = ns.WINDOW_LIST
-local SLOT_LEFT, SLOT_TOP = 0, 104
 -- The whole painted title bar, clear of the portrait on the left and the lock and close on the right.
 local STRIP_H, STRIP_LEFT, STRIP_RIGHT = 40, 60, 90
 local STRIP_LIFT = 20
@@ -105,6 +104,13 @@ function ns.WindowPlaced(key)
 end
 -- A place carried over from an older record (the gryphons' old handle).
 function ns.SetWindowPlace(key, x, y) SetPlace(byKey[key], x, y) end
+-- A window the player placed (ours or the game's): out of the windows' row.
+function ns.FramePlaced(frame)
+    for _, entry in ipairs(WINDOWS) do
+        if not entry.piece and ns.WindowFrame(entry) == frame then return PlaceOf(entry) ~= nil end
+    end
+    return false
+end
 
 local function IsFree(entry)
     if entry.toggle then return ns.db[entry.toggle] == true end
@@ -113,10 +119,11 @@ end
 
 local Ratio = ns.WindowRatio
 
--- Maximized, the map fills the screen as the client lays it: none of our place or size.
+-- Maximized, the map fills the screen: none of our place or size, the game's own or an Era style's scale.
 local function Full(entry, frame)
     return entry.quests and frame and frame.IsMaximized and frame:IsMaximized() and true or false
 end
+local function FullScale() return ns.FullMapScale and ns.FullMapScale() or nil end
 
 -- The part of the window its art fills, in its own units.
 local function DrawnSize(entry, frame)
@@ -151,7 +158,7 @@ local function Apply(entry)
     if not frame or moving[frame] then return end
     local left, top = PlaceOf(entry)
     local scale = Scales()[SizeKey(entry)]
-    if Full(entry, frame) then left, scale = nil, nil end
+    if Full(entry, frame) then left, scale = nil, FullScale() end
     if not (left or scale or scaled[frame]) then return end
     -- calm: its casting layer moves out of combat only.
     if InCombatLockdown() and (entry.calm or ns.WindowLocked(frame)) then
@@ -268,7 +275,9 @@ PlaceAll = function()
     for _, entry in ipairs(WINDOWS) do
         local frame = ns.WindowFrame(entry)
         if ns.MakeWindowLock then ns.MakeWindowLock(entry) end
-        if PlaceOf(entry) or Scales()[SizeKey(entry)] or IsFree(entry) or (frame and scaled[frame]) then
+        if ns.MakeWindowGrip then ns.MakeWindowGrip(entry) end
+        if PlaceOf(entry) or Scales()[SizeKey(entry)] or IsFree(entry) or (frame and scaled[frame])
+            or (entry.quests and FullScale()) then
             Watch(entry)
             Apply(entry)
         end
@@ -370,7 +379,8 @@ local function HandleRect(entry)
         if frame then x, down = ns.GameHome(frame, h) end
         return x, UIParent:GetHeight() - down, w, h
     end
-    return SLOT_LEFT, UIParent:GetHeight() - SLOT_TOP, w, h
+    local x, y = ns.ClassicSlot()
+    return x, UIParent:GetHeight() + y, w, h
 end
 
 local function LayHandle(entry)
@@ -762,7 +772,7 @@ ns.windowEdit = {
     Ratio = Ratio, PlaceAll = PlaceAll, LayHandle = LayHandle, Refresh = Refresh, IsFree = IsFree, Full = Full, Reset = Reset,
     STRIP_LEFT = STRIP_LEFT, STRIP_LIFT = STRIP_LIFT, StripOf = function(frame) return strips[frame] end,
     ShowHandle = ShowHandle, Set = Set, DialogKeys = DialogKeys, PlaceOf = PlaceOf, SetFree = SetFree, SetPlace = SetPlace,
-    Leader = Leader,
+    Leader = Leader, SizeKey = SizeKey, DrawnSize = DrawnSize, SaveFrom = SaveFrom,
     HideDialog = function() if dialog then dialog:Hide() end end,
 }
 

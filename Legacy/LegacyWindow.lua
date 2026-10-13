@@ -201,11 +201,19 @@ end)
 -- The game's Legacy key opens this window too.
 local key = ns.WindowKey("ClassicUIForeverLegacyBind", "TOGGLELEGACYSYSTEM", Toggle, "legacy")
 
+-- While the game's spell window leaves ours no room, the key and the micro button close it first in the player's name
+-- (UI/WindowCloser.lua): the key's own secure click, and a pad over the button that presses the key.
+local function CloserMacro()
+    if active and ns.GameSpellsCloser(frame) then return "/click " .. key.name end
+end
+ns.OnGameSpellsRoom(function() key:PressFirst(active and ns.GameSpellsCloser(frame) or nil) end)
+
 local function Apply()
     if not Supported() then return end
     active = true
     TakeButton(true)
     key:Set(true)
+    if ns.MapPad and _G.LegacyMicroButton then ns.MapPad(_G.LegacyMicroButton, nil, nil, CloserMacro, function() return active end) end
 end
 
 local function Restore()
@@ -217,6 +225,21 @@ end
 
 -- The gamepad cannot navigate our windows (Core/Gamepad.lua): with it on at login the game's window stays.
 ns.RegisterModule("legacyWindow", { apply = Apply, restore = Restore, padLogin = true })
+
+-- Public API (Core/API.lua): the window shown, on a page if given (its key: rewards, challenges, tree; or its tab
+-- number); false when it cannot show.
+function ns.ShowLegacy(page)
+    if not (active and Supported()) or ns.padSession then return false end
+    Build()
+    if not frame:IsShown() then frame:Show() end
+    local want = type(page) == "number" and LG.pages[page] or nil
+    for _, each in pairs(LG.pages) do
+        if each.key == page then want = each end
+    end
+    if want then ShowPage(want) end
+    return frame:IsShown()
+end
+function ns.LegacyPageTab(n) return tabs[n] end
 
 -- Opens or closes the window (/fcui legacy); false when this client or session cannot show it (said in chat).
 function ns.ToggleLegacy()

@@ -746,7 +746,7 @@ local function CreateBook()
     -- Only the painted book takes the mouse: under its foot tabs and past its border the world does.
     f:SetHitRectInsets(0, 34, 0, 79)
     f:EnableMouseWheel(true)
-    f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, -104)
+    f:SetPoint("TOPLEFT", UIParent, "TOPLEFT", ns.ClassicSlot())
     f:Hide()
     -- Not a UIPanel: the panel manager refuses addon show/hide in combat (the
     -- book stuck open). Escape and placement are ours: the left window slot,
@@ -755,7 +755,7 @@ local function CreateBook()
     -- Its professions tab is the game's window, closed by the book's key in a fight too: a fight begun with it open
     -- homed the book beside it, where its casting layer then held it.
     ns.SetSlotShares(f, { ProfessionsFrame = true })
-    if not Hosted() then ns.RegisterClassicWindow(f, true, "spellBook") end
+    if not Hosted() then ns.RegisterClassicWindow(f, true) end
     ns.db.spellBookPos = nil
     -- Our Escape out of combat: the client's clears the target first, 1.x closed
     -- windows first. Closes like the X: a bare hide in combat leaves the layer up
@@ -859,7 +859,7 @@ local function CreateBook()
     clicks:EnableMouse(false)
     -- Anchored to UIParent: anchoring to the book would protect the book.
     clicks:SetSize(BOOK_W, BOOK_H)
-    clicks:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, -104)
+    clicks:SetPoint("TOPLEFT", UIParent, "TOPLEFT", ns.ClassicSlot())
     clicks:SetFrameStrata("HIGH")
     clicks:Hide()
     f.Clicks = clicks
@@ -872,7 +872,8 @@ local function CreateBook()
         if left and top then
             clicks:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
         else
-            clicks:SetPoint("TOPLEFT", UIParent, "TOPLEFT", f.fcuiSlotX or 0, -104)
+            local x, y = ns.ClassicSlot()
+            clicks:SetPoint("TOPLEFT", UIParent, "TOPLEFT", f.fcuiSlotX or x, y)
         end
     end
     f.OnClassicPlaced = function() FollowBook() end
@@ -1898,9 +1899,18 @@ function ns.BookPadMacro()
         clickProxy:SetScript("PostClick", FollowLayer)
     end
     local layer = book and book.Clicks
-    if layer and layer.fcuiLinked then return "/click ForeverClassicUISpellBookClicks\n/click " .. CLICK_NAME end
-    return "/click " .. CLICK_NAME
+    local first = ns.GameSpellsCloseLine(book)
+    if layer and layer.fcuiLinked then return first .. "/click ForeverClassicUISpellBookClicks\n/click " .. CLICK_NAME end
+    return first .. "/click " .. CLICK_NAME
 end
+
+-- While the game's spell window leaves the book no room, the key's macro closes it first, in the player's name
+-- (UI/WindowCloser.lua); the micro pad presses the key.
+ns.OnGameSpellsRoom(function()
+    local layer = book and book.Clicks
+    if not (active and bindButton and layer and layer.fcuiLinked) or Hosted() then return end
+    ns.SetAttributeIf(bindButton, "macrotext", ns.GameSpellsCloseLine(book) .. BookMacro())
+end)
 -- The professions key and micro button: our layer down first (our code cannot in a fight), then the client's opener; the
 -- book then goes as a client window replaces ours.
 local PROF_BIND_NAME = "ForeverClassicUIProfessionsBind"
@@ -2086,6 +2096,41 @@ function ns.SpellBookButtonFor(spellID)
     if not name then return nil end
     book.Search:SetText(name)
     return PageButtonFor(spellID)
+end
+
+-- Public API: the book opened on the tab and page that show a spell (the player's, else the pet's), out of a fight; false
+-- when no tab lists it.
+function ns.SpellBookShowSpell(spellID)
+    if not active or InCombatLockdown() or type(spellID) ~= "number" then return false end
+    local function PageIn(bank, line)
+        for i, slot in ipairs(SlotsFor(bank, line, "")) do
+            local info = ItemInfo(slot, bank)
+            if info and (info.spellID == spellID or info.actionID == spellID) then return math.ceil(i / SPELLS_PER_PAGE) end
+        end
+    end
+    local bank, line, page = BANK_PLAYER, nil, nil
+    for l = 1, C_SpellBook.GetNumSpellBookSkillLines() or 0 do
+        page = PageIn(BANK_PLAYER, l)
+        if page then
+            line = l
+            break
+        end
+    end
+    if not page then
+        page = PageIn(BANK_PET, state.line)
+        if not page then return false end
+        bank = BANK_PET
+    end
+    if book and book.Search then book.Search:SetText("") end
+    state.bank, state.search = bank, ""
+    if line then
+        state.line = line
+        heldLine = nil
+    end
+    state.pages[line or "pet"] = page
+    Show()
+    if book and book:IsShown() then book:Refresh() end
+    return book ~= nil and book:IsShown()
 end
 
 function ns.ToggleSpellBook()
